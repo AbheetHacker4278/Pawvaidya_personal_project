@@ -102,7 +102,7 @@ const DoctorChat = () => {
         const initGemini = async () => {
             try {
                 const { GoogleGenerativeAI } = await import('@google/generative-ai');
-                const API_KEY = import.meta.env.VITE_API_KEY_GEMINI_2 || 'AIzaSyAj8HmH61IiXQ-pXHB1slpT3Ma2T37dq6A';
+                const API_KEY = import.meta.env.VITE_API_KEY_GEMINI_2;
                 const genAIInstance = new GoogleGenerativeAI(API_KEY);
                 setGenAI(genAIInstance);
                 // User requested specific model

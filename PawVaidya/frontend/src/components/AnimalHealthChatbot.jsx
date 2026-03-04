@@ -19,7 +19,7 @@ const PawIcon = ({ size = 28, color = 'white' }) => (
 );
 
 // ─── Gemini setup ─────────────────────────────────────────────────────────────
-const API_KEY = import.meta.env.VITE_API_KEY_GEMINI_2 || 'AIzaSyAj8HmH61IiXQ-pXHB1slpT3Ma2T37dq6A';
+const API_KEY = import.meta.env.VITE_API_KEY_GEMINI_2;
 const genAI = new GoogleGenerativeAI(API_KEY);
 const model = genAI.getGenerativeModel({ model: 'gemini-3-flash-preview' });
 

@@ -309,7 +309,7 @@ const DeletionRequestModal = ({ onClose, onSubmit, isSubmitting }) => {
 const MyProfile = () => {
   const { t } = useTranslation();
   // Initialize Gemini
-  const apikey2 = import.meta.env.VITE_API_KEY_GEMINI_2 || 'AIzaSyAj8HmH61IiXQ-pXHB1slpT3Ma2T37dq6A';
+  const apikey2 = import.meta.env.VITE_API_KEY_GEMINI_2;
   const genAI = new GoogleGenerativeAI(apikey2);
   const model = genAI.getGenerativeModel({ model: 'gemini-3-flash-preview' });
 

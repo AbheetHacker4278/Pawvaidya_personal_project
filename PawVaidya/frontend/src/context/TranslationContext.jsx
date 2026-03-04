@@ -22,7 +22,7 @@ export const TranslationProvider = ({ children }) => {
         if (translationCache[cacheKey]) return translationCache[cacheKey];
 
         try {
-            const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyDJXu-zXCRi4gWLKPwGNKgDqhvfQfxgfHU');
+            const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
             const model = genAI.getGenerativeModel({
                 model: 'gemini-1.5-flash',
                 systemInstruction: "You are a professional medical and veterinary translator for 'PawVaidya', India's #1 Veterinary Platform. Translate the following text accurately into the target language. Maintain a professional, empathetic, and expert tone. Only return the translated text, nothing else."
@@ -68,7 +68,7 @@ export const TranslationProvider = ({ children }) => {
         if (missingTexts.length === 0) return results;
 
         try {
-            const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyDJXu-zXCRi4gWLKPwGNKgDqhvfQfxgfHU');
+            const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
             const model = genAI.getGenerativeModel({
                 model: 'gemini-1.5-flash',
                 systemInstruction: "You are a professional veterinary translator. Translate each item in the provided JSON array to the target language. Maintain professional tone. Return a JSON array of strings in the same order."

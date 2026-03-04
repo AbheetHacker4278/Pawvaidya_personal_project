@@ -1,0 +1,52 @@
+import express from 'express';
+
+import { registeruser, loginUser, getprofile, updateprofile, bookappointment, listAppointment, cancelAppointment, sendVerifyOtp, verifyEmail, isAuthenticated, sendResetOtp, resetpassword, getuserdata, logout, getUserMessages, markMessageAsRead, getUserById, updateUserLocation, validateDiscount, rateDoctor, requestAccountDeletion } from '../controllers/userController.js';
+import { getNearbyDoctors } from '../controllers/doctorController.js';
+import { createBlog, getAllBlogs, getBlogById, updateBlog, deleteBlog, toggleLike, addComment, deleteComment, getUserBlogs } from '../controllers/blogController.js';
+import authuser from '../middleware/authuser.js';
+import upload from '../middleware/multer.js';
+import { uploadBlogFiles } from '../middleware/multerBlogs.js';
+
+export const userRouter = express.Router()
+
+userRouter.post('/register', registeruser)
+userRouter.post('/login', loginUser)
+userRouter.post('/logout', logout)
+userRouter.get('/get-profile', authuser, getprofile)
+userRouter.post('/update-profile', upload.single('image'), authuser, updateprofile)
+userRouter.post('/book-appointment', authuser, bookappointment)
+userRouter.get("/appointments", authuser, listAppointment)
+userRouter.post("/cancel-appointment", authuser, cancelAppointment)
+userRouter.post("/send-verify-otp", authuser, sendVerifyOtp)
+userRouter.post("/verify-account", authuser, verifyEmail)
+userRouter.get("/is-auth", authuser, isAuthenticated)
+userRouter.post("/send-reset-otp", sendResetOtp)
+userRouter.post("/reset-password", resetpassword)
+userRouter.get("/data", authuser, getuserdata)
+userRouter.get("/profile/:userId", getUserById)
+userRouter.post("/location", authuser, updateUserLocation)
+userRouter.post("/nearby-doctors", authuser, getNearbyDoctors)
+userRouter.post("/validate-discount", authuser, validateDiscount)
+
+// Blog routes
+userRouter.post('/blogs/create', authuser, uploadBlogFiles, createBlog)
+userRouter.get('/blogs', getAllBlogs)
+userRouter.get('/blogs/:blogId', getBlogById)
+userRouter.put('/blogs/:blogId', authuser, uploadBlogFiles, updateBlog)
+userRouter.delete('/blogs/:blogId', authuser, deleteBlog)
+userRouter.post('/blogs/:blogId/like', authuser, toggleLike)
+userRouter.post('/blogs/:blogId/comment', authuser, addComment)
+userRouter.delete('/blogs/:blogId/comments/:commentId', authuser, deleteComment)
+userRouter.get('/blogs/user/:userId', getUserBlogs)
+
+// User messages routes
+userRouter.get('/messages', authuser, getUserMessages)
+userRouter.post('/messages/read', authuser, markMessageAsRead)
+
+// Rating routes
+userRouter.post('/rate-doctor', authuser, rateDoctor)
+
+// Account Deletion route
+userRouter.post('/request-deletion', authuser, requestAccountDeletion)
+
+export default userRouter

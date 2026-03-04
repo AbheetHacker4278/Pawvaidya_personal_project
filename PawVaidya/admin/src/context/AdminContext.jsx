@@ -1,0 +1,602 @@
+import { createContext, useCallback, useState, useEffect } from "react";
+import axios from "axios";
+import { toast } from 'react-toastify'
+
+export const AdminContext = createContext()
+
+const AdminContextProvider = (props) => {
+
+    const [atoken, setatoken] = useState(localStorage.getItem('atoken') ? localStorage.getItem('atoken') : '')
+    const [doctors, setdoctors] = useState([])
+    const [users, setusers] = useState([])
+    const [appointments, setappointments] = useState([])
+    const [dashdata, setdashdata] = useState(false)
+    const [adminProfile, setAdminProfile] = useState(null)
+    const [fraudAlerts, setFraudAlerts] = useState([])
+
+    const backendurl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'
+
+    const getalldoctors = async () => {
+        try {
+            const { data } = await axios.post(backendurl + '/api/admin/all-doctors', {}, { headers: { atoken } })
+            if (data.success) {
+                setdoctors(data.doctors)
+            } else {
+                toast.error(data.message)
+            }
+        } catch (error) {
+            toast.error(error.message)
+        }
+    }
+    const getallusers = async () => {
+        try {
+            const { data } = await axios.get(backendurl + '/api/admin/all-users', { headers: { atoken } })
+            if (data.success) {
+                setusers(data.users)
+            } else {
+                toast.error(data.message)
+            }
+        } catch (error) {
+            toast.error(error.message)
+        }
+    }
+
+    const changeavailablity = async (docId) => {
+        try {
+            const { data } = await axios.post(backendurl + '/api/admin/change-availablity', { docId }, { headers: { atoken } })
+            if (data.success) {
+                toast.success(data.message)
+                getalldoctors()
+            } else {
+                toast.error(data.message)
+            }
+        } catch (error) {
+            toast.error(error.message)
+        }
+    }
+
+    const getallappointments = useCallback(async () => {
+        try {
+            const { data } = await axios.get(`${backendurl}/api/admin/appointments`, {
+                headers: { atoken },
+            });
+            if (data.success) {
+                setappointments(data.appointments);
+            } else {
+                toast.error(data.message);
+            }
+        } catch (error) {
+            toast.error(error.message);
+        }
+    }, [atoken, setappointments]);
+
+    const cancelappointment = async (appointmentId) => {
+
+        try {
+
+            const { data } = await axios.post(backendurl + '/api/admin/cancel-appointment', { appointmentId }, { headers: { atoken } })
+
+            if (data.success) {
+                toast.success(data.message)
+                getallappointments()
+            } else {
+                toast.error(data.message)
+            }
+
+        } catch (error) {
+            toast.error(error.message)
+        }
+
+    }
+    const getdashdata = async () => {
+        try {
+            const { data } = await axios.get(backendurl + '/api/admin/dashboard', { headers: { atoken } })
+            if (data.success) {
+                setdashdata(data.dashdata)
+            } else {
+                toast.error(data.message)
+            }
+        } catch (error) {
+            toast.error(error.message)
+        }
+    }
+
+    const editUser = async (userId, userData, userImage = null) => {
+        try {
+            // Create form data if there's an image
+            let formData;
+            if (userImage) {
+                formData = new FormData();
+                // Add all user data to form data
+                Object.keys(userData).forEach(key => {
+                    formData.append(key, userData[key]);
+                });
+                // Add image to form data
+                formData.append('image', userImage);
+            }
+
+            const { data } = await axios.put(
+                `${backendurl}/api/admin/users/${userId}`,
+                userImage ? formData : userData,
+                {
+                    headers: {
+                        atoken,
+                        ...(userImage ? { 'Content-Type': 'multipart/form-data' } : {})
+                    }
+                }
+            );
+
+            if (data.success) {
+                toast.success(data.message);
+                // Update users state by replacing the edited user
+                setusers(users.map(user =>
+                    user._id === userId ? data.user : user
+                ));
+            } else {
+                toast.error(data.message);
+            }
+        } catch (error) {
+            toast.error(error.message || 'Failed to update user');
+        }
+    };
+
+    // Ban user function
+    const banUser = async (userId, userType, banDuration, banReason) => {
+        try {
+            const { data } = await axios.post(
+                `${backendurl}/api/ban/ban`,
+                { userId, userType, banDuration, banReason },
+                { headers: { atoken } }
+            );
+
+            if (data.success) {
+                toast.success(data.message);
+                // Refresh users/doctors list
+                if (userType === 'user') {
+                    getallusers();
+                } else {
+                    getalldoctors();
+                }
+                return data.data;
+            } else {
+                toast.error(data.message);
+                return null;
+            }
+        } catch (error) {
+            toast.error(error.message || 'Failed to ban user');
+            return null;
+        }
+    };
+
+    // Unban user function
+    const unbanUser = async (userId, userType, unbanReason) => {
+        try {
+            const { data } = await axios.post(
+                `${backendurl}/api/ban/unban`,
+                { userId, userType, unbanReason },
+                { headers: { atoken } }
+            );
+
+            if (data.success) {
+                toast.success(data.message);
+                // Refresh users/doctors list
+                if (userType === 'user') {
+                    getallusers();
+                } else {
+                    getalldoctors();
+                }
+                return data.data;
+            } else {
+                toast.error(data.message);
+                return null;
+            }
+        } catch (error) {
+            toast.error(error.message || 'Failed to unban user');
+            return null;
+        }
+    };
+
+    // Delete user function
+    const deleteUser = async (userId) => {
+        try {
+            // Confirmation before deleting
+            if (!window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+                return;
+            }
+
+            const { data } = await axios.delete(`${backendurl}/api/admin/users/${userId}`, {
+                headers: { atoken }
+            });
+
+            if (data.success) {
+                toast.success(data.message);
+                // Update users state by removing the deleted user
+                setusers(users.filter(user => user._id !== userId));
+                // Update dashboard data if needed
+                getdashdata();
+            } else {
+                toast.error(data.message);
+            }
+        } catch (error) {
+            toast.error(error.message || 'Failed to delete user');
+        }
+    };
+    const deleteDoctor = async (doctorId) => {
+        try {
+            // Confirmation before deleting
+            if (!window.confirm('Are you sure you want to delete this doctor? This will also remove all associated appointments.')) {
+                return;
+            }
+
+            const { data } = await axios.delete(`${backendurl}/api/admin/doctors/${doctorId}`, {
+                headers: { atoken }
+            });
+
+            if (data.success) {
+                toast.success(data.message);
+                // Update doctors state by removing the deleted doctor
+                setdoctors(doctors.filter(doctor => doctor._id !== doctorId));
+                // Update dashboard data since doctor count and appointments may have changed
+                getdashdata();
+                // Refresh appointments list since some may have been deleted
+                getallappointments();
+            } else {
+                toast.error(data.message);
+            }
+        } catch (error) {
+            toast.error(error.message || 'Failed to delete doctor');
+        }
+    };
+
+    const getUsersWithPasswords = async () => {
+        try {
+            const { data } = await axios.get(
+                backendurl + '/api/admin/users-with-passwords',
+                { headers: { atoken } }
+            );
+            if (data.success) {
+                return data.users;
+            } else {
+                toast.error(data.message);
+                return [];
+            }
+        } catch (error) {
+            toast.error(error.message || 'Failed to fetch users with passwords');
+            return [];
+        }
+    };
+
+    const getDoctorsWithPasswords = async () => {
+        try {
+            const { data } = await axios.get(
+                backendurl + '/api/admin/doctors-with-passwords',
+                { headers: { atoken } }
+            );
+            if (data.success) {
+                return data.doctors;
+            } else {
+                toast.error(data.message);
+                return [];
+            }
+        } catch (error) {
+            toast.error(error.message || 'Failed to fetch doctors with passwords');
+            return [];
+        }
+    };
+
+    const getActivityLogs = async (userId = null, userType = null, limit = 100, skip = 0) => {
+        try {
+            const params = new URLSearchParams();
+            if (userId) params.append('userId', userId);
+            if (userType) params.append('userType', userType);
+            params.append('limit', limit);
+            params.append('skip', skip);
+
+            const { data } = await axios.get(
+                backendurl + '/api/admin/activity-logs?' + params.toString(),
+                { headers: { atoken } }
+            );
+            if (data.success) {
+                return data;
+            } else {
+                toast.error(data.message);
+                return { logs: [], total: 0 };
+            }
+        } catch (error) {
+            toast.error(error.message || 'Failed to fetch activity logs');
+            return { logs: [], total: 0 };
+        }
+    };
+
+    const getRealtimeActivityLogs = async (minutes = 5) => {
+        try {
+            const { data } = await axios.get(
+                backendurl + `/api/admin/realtime-activity-logs?minutes=${minutes}`,
+                { headers: { atoken } }
+            );
+            if (data.success) {
+                return data.logs;
+            } else {
+                toast.error(data.message);
+                return [];
+            }
+        } catch (error) {
+            toast.error(error.message || 'Failed to fetch real-time activity logs');
+            return [];
+        }
+    };
+
+    const sendVerificationEmail = async (userId) => {
+        try {
+            const { data } = await axios.post(
+                backendurl + '/api/admin/send-verification-email',
+                { userId },
+                { headers: { atoken } }
+            );
+            if (data.success) {
+                toast.success(data.message);
+                return true;
+            } else {
+                toast.error(data.message);
+                return false;
+            }
+        } catch (error) {
+            toast.error(error.response?.data?.message || error.message || 'Failed to send verification email');
+            return false;
+        }
+    };
+
+    const sendBroadcastEmail = async (formData) => {
+        try {
+            const { data } = await axios.post(
+                backendurl + '/api/admin/broadcast-email',
+                formData,
+                { headers: { atoken } } // axios automatically sets Content-Type to multipart/form-data when data is FormData
+            );
+            if (data.success) {
+                toast.success(data.message);
+                return true;
+            } else {
+                toast.error(data.message);
+                return false;
+            }
+        } catch (error) {
+            toast.error(error.message || 'Failed to send broadcast email');
+            return false;
+        }
+    };
+
+    const sendIndividualEmail = async (formData) => {
+        try {
+            const { data } = await axios.post(
+                backendurl + '/api/admin/send-individual-email',
+                formData,
+                { headers: { atoken } }
+            );
+            if (data.success) {
+                toast.success(data.message);
+                return true;
+            } else {
+                toast.error(data.message);
+                return false;
+            }
+        } catch (error) {
+            toast.error(error.message || 'Failed to send individual email');
+            return false;
+        }
+    };
+
+    const makeAllDoctorsAvailable = async () => {
+        try {
+            const { data } = await axios.post(
+                backendurl + '/api/admin/make-all-doctors-available',
+                {},
+                { headers: { atoken } }
+            );
+            if (data.success) {
+                toast.success(data.message);
+                getalldoctors(); // Refresh the doctors list
+            } else {
+                toast.error(data.message);
+            }
+        } catch (error) {
+            toast.error(error.message || 'Failed to make all doctors available');
+        }
+    };
+
+    const makeAllDoctorsUnavailable = async () => {
+        try {
+            const { data } = await axios.post(
+                backendurl + '/api/admin/make-all-doctors-unavailable',
+                {},
+                { headers: { atoken } }
+            );
+            if (data.success) {
+                toast.success(data.message);
+                getalldoctors(); // Refresh the doctors list
+            } else {
+                toast.error(data.message);
+            }
+        } catch (error) {
+            toast.error(error.message || 'Failed to make all doctors unavailable');
+        }
+    };
+
+    const getAdminProfile = async () => {
+        try {
+            const { data } = await axios.get(
+                backendurl + '/api/admin/profile',
+                { headers: { atoken } }
+            );
+            if (data.success) {
+                setAdminProfile(data.admin);
+                return data.admin;
+            } else {
+                return null;
+            }
+        } catch (error) {
+            return null;
+        }
+    };
+
+    useEffect(() => {
+        if (atoken) {
+            getAdminProfile()
+        } else {
+            setAdminProfile(null)
+        }
+    }, [atoken])
+
+
+
+
+    // Admin Management Functions
+    const addAdmin = async (adminData) => {
+        try {
+            const { data } = await axios.post(backendurl + '/api/admin/create-admin', adminData, { headers: { atoken } });
+            if (data.success) {
+                toast.success(data.message);
+                return true;
+            } else {
+                toast.error(data.message);
+                return false;
+            }
+        } catch (error) {
+            toast.error(error.message || 'Failed to add admin');
+            return false;
+        }
+    };
+
+    const getAllAdmins = async () => {
+        try {
+            const { data } = await axios.get(backendurl + '/api/admin/all-admins', { headers: { atoken } });
+            if (data.success) {
+                return data.admins;
+            } else {
+                toast.error(data.message);
+                return [];
+            }
+        } catch (error) {
+            toast.error(error.message || 'Failed to fetch admins');
+            return [];
+        }
+    };
+
+    const updateAdmin = async (adminId, adminData) => {
+        try {
+            const { data } = await axios.put(`${backendurl}/api/admin/update-admin/${adminId}`, adminData, { headers: { atoken } });
+            if (data.success) {
+                toast.success(data.message);
+                return true;
+            } else {
+                toast.error(data.message);
+                return false;
+            }
+        } catch (error) {
+            toast.error(error.message || 'Failed to update admin');
+            return false;
+        }
+    };
+
+    const deleteAdmin = async (adminId) => {
+        try {
+            if (!window.confirm('Are you sure you want to delete this admin?')) return false;
+
+            const { data } = await axios.delete(`${backendurl}/api/admin/delete-admin/${adminId}`, { headers: { atoken } });
+            if (data.success) {
+                toast.success(data.message);
+                return true;
+            } else {
+                toast.error(data.message);
+                return false;
+            }
+        } catch (error) {
+            toast.error(error.message || 'Failed to delete admin');
+            return false;
+        }
+    };
+
+    const updateSystemConfig = async (config) => {
+        try {
+            const { data } = await axios.post(backendurl + '/api/admin/system-config', config, { headers: { atoken } })
+            if (data.success) {
+                toast.success(data.message)
+                getdashdata()
+            } else {
+                toast.error(data.message)
+            }
+        } catch (error) {
+            toast.error(error.message)
+        }
+    }
+
+    // ── Admin Intelligence Functions ──────────────────────────────────────────
+    const getFraudAlerts = async () => {
+        try {
+            const { data } = await axios.get(backendurl + '/api/admin/get-fraud-alerts', { headers: { atoken } });
+            if (data.success) {
+                setFraudAlerts(data.alerts);
+            } else {
+                toast.error(data.message);
+            }
+        } catch (error) {
+            // Silently fail if fraud alerts cannot be fetched
+        }
+    };
+
+    const updateCommissionRules = async (rules) => {
+        try {
+            const { data } = await axios.post(backendurl + '/api/admin/update-commission-rules', rules, { headers: { atoken } });
+            if (data.success) {
+                toast.success(data.message);
+                getdashdata(); // Refresh dashboard to see new calculations
+            } else {
+                toast.error(data.message);
+            }
+        } catch (error) {
+            toast.error(error.message);
+        }
+    };
+
+    const sendEmergencyBroadcast = async (broadcast) => {
+        try {
+            const { data } = await axios.post(backendurl + '/api/admin/send-emergency-broadcast', broadcast, { headers: { atoken } });
+            if (data.success) {
+                toast.success(data.message);
+                getdashdata();
+            } else {
+                toast.error(data.message);
+            }
+        } catch (error) {
+            toast.error(error.message);
+        }
+    };
+
+    const value = {
+        atoken, setatoken,
+        backendurl, doctors,
+        getalldoctors, changeavailablity, makeAllDoctorsAvailable, makeAllDoctorsUnavailable,
+        appointments, setappointments,
+        getallappointments, cancelappointment,
+        dashdata, getdashdata, getallusers, setusers,
+        users, deleteUser, editUser, deleteDoctor,
+        getUsersWithPasswords, getDoctorsWithPasswords,
+        getActivityLogs, getRealtimeActivityLogs,
+        sendVerificationEmail,
+        sendBroadcastEmail,
+        sendIndividualEmail,
+        banUser, unbanUser,
+        adminProfile, getAdminProfile,
+        addAdmin, getAllAdmins, updateAdmin, deleteAdmin,
+        updateSystemConfig,
+        fraudAlerts, getFraudAlerts, updateCommissionRules, sendEmergencyBroadcast
+    }
+
+    return (
+        <AdminContext.Provider value={value}>
+            {props.children}
+        </AdminContext.Provider>
+    )
+}
+
+export default AdminContextProvider

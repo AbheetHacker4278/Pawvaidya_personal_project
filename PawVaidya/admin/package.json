@@ -1,0 +1,59 @@
+{
+  "name": "admin",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
+    "@mui/icons-material": "^6.2.0",
+    "@mui/material": "^6.2.0",
+    "@zegocloud/zego-uikit-prebuilt": "^2.17.2",
+    "axios": "^1.7.8",
+    "chart.js": "^4.5.1",
+    "context": "^3.0.33",
+    "cors": "^2.8.5",
+    "face-api.js": "^0.22.2",
+    "framer-motion": "^11.15.0",
+    "local-storage": "^2.0.0",
+    "lucide-react": "^0.461.0",
+    "multer": "^1.4.5-lts.1",
+    "nodemailer": "^6.10.0",
+    "react": "^18.3.1",
+    "react-calendar-heatmap": "^1.10.0",
+    "react-chartjs-2": "^5.3.1",
+    "react-dom": "^18.3.1",
+    "react-grid-layout": "^2.2.2",
+    "react-icons": "^5.5.0",
+    "react-router-dom": "^7.0.1",
+    "react-toastify": "^10.0.6",
+    "react-tooltip": "^5.30.0",
+    "recharts": "^3.3.0",
+    "shadcn-ui": "^0.9.4",
+    "socket.io-client": "^4.8.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.15.0",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^9.15.0",
+    "eslint-plugin-react": "^7.37.2",
+    "eslint-plugin-react-hooks": "^5.0.0",
+    "eslint-plugin-react-refresh": "^0.4.14",
+    "globals": "^15.12.0",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.15",
+    "vite": "^6.0.0"
+  },
+  "engines": {
+    "node": "20.x"
+  }
+}

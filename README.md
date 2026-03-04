@@ -29,6 +29,16 @@ PawVaidya is a state-of-the-art, comprehensive veterinary consultancy platform d
 - **Supabase Integration**: Activity logging and analytics offloaded to Supabase for enhanced performance.
 - **Fraud Detection**: AI-monitored system to identify and alert about suspicious activities.
 - **Stream Management**: Control live veterinary sessions and Q&A.
+- **🆕 Service Health Command Center**: Live health monitoring for all connected services:
+  - **MongoDB** — Ping latency, DB size, connections, collections, documents, indexes, uptime, version
+  - **Cloudinary** — Ping latency, plan tier, storage/bandwidth usage, total assets, transformations
+  - **Nodemailer (SMTP)** — SMTP verify, Brevo relay status, connection latency
+  - **Supabase** — Query latency, table readiness, configuration status
+  - **Gemini AI** — API key configuration check
+- **🆕 Real-Time Data Congestion Monitor**: Memory pressure bar, active WebSocket count, heap/RSS usage, server uptime, Node.js version, and total DB operations.
+- **🆕 System Stress Gauges**: Radial SVG gauges for live **CPU**, **RAM**, and **Storage** utilization with color-coded severity levels (Low → Medium → High → Critical).
+- **🆕 Thermal Monitor**: Animated SVG thermometer with mercury level, pulsing bulb, per-core temperature bars, and spinning fan blades (RPM-proportional speed) via `systeminformation`.
+- **🆕 Graceful Error Handling**: Suppressed repeated Supabase "missing table" errors after first occurrence — no more terminal spam.
 
 ---
 
@@ -41,6 +51,7 @@ PawVaidya is a state-of-the-art, comprehensive veterinary consultancy platform d
 | **Real-time** | Socket.io, ZegoCloud (Video SDK) |
 | **AI/ML** | Google Gemini AI API, OpenAI API, face-api.js |
 | **Infrastructure** | Supabase (Logging), Cloudinary (Images), Razorpay (Payments) |
+| **Monitoring** | systeminformation (Hardware Sensors), Node.js `os` module |
 
 ---
 
@@ -51,6 +62,7 @@ PawVaidya is a state-of-the-art, comprehensive veterinary consultancy platform d
 - MongoDB Atlas Account
 - Gemini AI API Key
 - Cloudinary Credentials
+- Supabase Project (URL + Anon Key) — see [SUPABASE_SETUP.md](./PawVaidya/SUPABASE_SETUP.md)
 
 ### Installation
 
@@ -104,7 +116,7 @@ PawVaidya/
 ├── admin/                  # React Admin Dashboard
 │   ├── public/             # Static assets
 │   └── src/
-│       ├── components/     # UI Components (Sidebar, Navbar, etc.)
+│       ├── components/     # UI Components (Sidebar, Navbar, ServiceHealthDashboard, etc.)
 │       ├── context/        # Admin Global State
 │       ├── pages/          # Admin Views (Dashboard, Doctor Chat, etc.)
 │       └── utils/          # Admin Helpers
@@ -115,13 +127,16 @@ PawVaidya/
 │       ├── context/        # App Global State
 │       ├── pages/          # User Views (Home, Profile, Appointments)
 │       └── i18n/           # Multilingual Translations
-└── backend/                # Node.js/Express API Server
-    ├── config/             # DB & Cloudinary Configuration
-    ├── controllers/        # Business Logic (User, Doctor, Admin)
-    ├── middleware/         # Auth & Validation Middleware
-    ├── models/             # Mongoose Schemas (User, Doctor, Appt)
-    ├── routes/             # API Endpoints
-    └── socketServer.js     # Real-time WebSocket Logic
+├── backend/                # Node.js/Express API Server
+│   ├── config/             # DB, Cloudinary, Nodemailer, Supabase Config
+│   ├── controllers/        # Business Logic (User, Doctor, Admin, ServiceHealth)
+│   ├── services/           # Supabase Service (metrics & activity logging)
+│   ├── middleware/         # Auth & Validation Middleware
+│   ├── models/             # Mongoose Schemas (User, Doctor, Appt)
+│   ├── routes/             # API Endpoints
+│   └── socketServer.js     # Real-time WebSocket Logic
+├── SUPABASE_SETUP.md       # SQL setup guide for Supabase tables
+└── DEPLOYMENT.md           # Deployment instructions
 ```
 
 ---

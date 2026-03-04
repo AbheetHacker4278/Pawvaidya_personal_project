@@ -447,7 +447,7 @@ export const getAdminActivityLogs = async (req, res) => {
             rawLogs = (await supabaseService.getActivityLogs(200)) || [];
         } catch (error) {
             const msg = error.message || String(error);
-            if (!msg.toLowerCase().includes('fetch')) {
+            if (!msg.toLowerCase().includes('fetch') && !msg.includes('schema cache')) {
                 console.error("Supabase Activity Logs fetch error:", msg);
             }
         }
@@ -499,7 +499,7 @@ export const getDoctorAttendanceLogs = async (req, res) => {
             logs = (await supabaseService.getActivityLogs(200)) || [];
         } catch (error) {
             const msg = error.message || String(error);
-            if (!msg.toLowerCase().includes('fetch')) {
+            if (!msg.toLowerCase().includes('fetch') && !msg.includes('schema cache')) {
                 console.error("Supabase Attendance Logs fetch error:", msg);
             }
         }
@@ -1107,7 +1107,7 @@ export const admindashboard = async (req, res) => {
             recentLogs = logData || [];
         } catch (err) {
             const msg = err.message || String(err);
-            if (!msg.toLowerCase().includes('fetch')) {
+            if (!msg.toLowerCase().includes('fetch') && !msg.includes('schema cache')) {
                 console.warn("Supabase data fetch failed:", msg);
             }
         }
@@ -1225,7 +1225,7 @@ export const admindashboard = async (req, res) => {
             supabaseRecordCounts.system_metrics = systemMetricsCount.count || 0;
         } catch (e) {
             const msg = e.message || String(e);
-            if (!msg.toLowerCase().includes('fetch')) {
+            if (!msg.toLowerCase().includes('fetch') && !msg.includes('schema cache')) {
                 console.warn("Failed to fetch Supabase counts:", msg);
             }
         }
@@ -1480,7 +1480,7 @@ export const getActivityLogs = async (req, res) => {
             rawLogs = (await supabaseService.getActivityLogs(500)) || [];
         } catch (error) {
             const msg = error.message || String(error);
-            if (!msg.toLowerCase().includes('fetch')) {
+            if (!msg.toLowerCase().includes('fetch') && !msg.includes('schema cache')) {
                 console.error("Supabase generic logs fetch error:", msg);
             }
         }
@@ -1549,7 +1549,7 @@ export const getRealtimeActivityLogs = async (req, res) => {
             rawLogs = (await supabaseService.getActivityLogs(50)) || [];
         } catch (error) {
             const msg = error.message || String(error);
-            if (!msg.toLowerCase().includes('fetch')) {
+            if (!msg.toLowerCase().includes('fetch') && !msg.includes('schema cache')) {
                 console.error("Supabase real-time fetch error:", msg);
             }
         }
@@ -2672,7 +2672,7 @@ export const getFraudAlerts = async (req, res) => {
             logs = (await supabaseService.getActivityLogs(100)) || [];
         } catch (error) {
             const msg = error.message || String(error);
-            if (!msg.toLowerCase().includes('fetch')) {
+            if (!msg.toLowerCase().includes('fetch') && !msg.includes('schema cache')) {
                 console.error("Supabase Fraud Alerts fetch error:", msg);
             }
         }
@@ -2717,8 +2717,9 @@ export const getSupabaseHealth = async (req, res) => {
     } catch (error) {
         const msg = error.message || String(error);
         const isFetchError = msg.toLowerCase().includes('fetch');
+        const isSchemaCacheError = msg.includes('schema cache');
 
-        if (!isFetchError) {
+        if (!isFetchError && !isSchemaCacheError) {
             console.error("Supabase Health Check Error:", error);
         }
 

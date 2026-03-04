@@ -4,6 +4,7 @@ import { AppContext } from '../../context/AppContext'
 import BroadcastComposer from '../../components/BroadcastComposer'
 import SupabaseHealthMonitor from '../../components/SupabaseHealthMonitor'
 import ActivePortsMonitor from '../../components/ActivePortsMonitor'
+import ServiceHealthDashboard from '../../components/ServiceHealthDashboard'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   PieChart, Pie, Cell, AreaChart, Area,
@@ -752,6 +753,11 @@ const Dashboard = () => {
           <StatCard title="Live Sockets" value={systemHealth.liveSockets} icon="🔌" from="from-cyan-500" to="to-cyan-700" />
           <StatCard title="DB Size (MB)" value={parseFloat(systemHealth.dbStats.totalSize)} icon="💾" from="from-emerald-500" to="to-emerald-700" />
           <StatCard title="Cancelled" value={dashdata.canceledAppointmentCount} icon="❌" from="from-rose-500" to="to-rose-700" />
+        </div>
+
+        {/* ── Service Health Command Center ─────────────────────────────── */}
+        <div className="mb-6">
+          <ServiceHealthDashboard />
         </div>
 
         {/* ── Platform Activity & Blog Metrics ─────────────────────────────── */}

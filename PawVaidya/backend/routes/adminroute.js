@@ -1,5 +1,6 @@
 import express from 'express';
 import { addDoctor, allDoctors, loginAdmin, registerFace, loginWithFace, logAdminActivity, getAdminActivityLogs, getDoctorAttendanceLogs, appointmenetsAdmin, Appointmentcancel, admindashboard, allUsers, deleteUser, editUser, deleteDoctor, makeAllDoctorsAvailable, makeAllDoctorsUnavailable, getUserDetailsWithPassword, getDoctorDetailsWithPassword, getAllUsersWithPasswords, getAllDoctorsWithPasswords, getActivityLogs, getRealtimeActivityLogs, sendVerificationEmailToUser, createAdminMessage, getAllAdminMessages, updateAdminMessage, deleteAdminMessage, getBlogReports, updateBlogReportStatus, banFromBlogging, unbanFromBlogging, getUnbanRequests, handleUnbanRequest, deleteBlogReport, bulkDeleteBlogReports, addAdmin, allAdmins, updateAdmin, deleteAdmin, sendBroadcastEmail, sendIndividualEmail, getDoctorRankings, giveIncentive, omniSearch, sendBroadcastAlert, getSystemConfig, updateSystemConfig, getCloudinaryAssets, deleteCloudinaryAsset, getSystemSettings, getFraudAlerts, updateCommissionRules, sendEmergencyBroadcast, getSupabaseHealth, getDeletionRequests, processDeletionRequest } from '../controllers/adminController.js';
+import { getServiceHealth } from '../controllers/serviceHealthController.js';
 import { initializeAdmin, getAdminProfile, updateAdminProfile, updateAdminPassword } from '../controllers/adminProfileController.js';
 import upload from '../middleware/multer.js';
 import authAdmin from '../middleware/authAdmin.js';
@@ -94,6 +95,7 @@ adminRouter.get('/get-fraud-alerts', authAdmin, getFraudAlerts);
 adminRouter.post('/update-commission-rules', authAdmin, updateCommissionRules);
 adminRouter.post('/send-emergency-broadcast', authAdmin, sendEmergencyBroadcast);
 adminRouter.get('/supabase-health', authAdmin, getSupabaseHealth);
+adminRouter.get('/service-health', authAdmin, getServiceHealth);
 adminRouter.get('/deletion-requests', authAdmin, getDeletionRequests);
 adminRouter.post('/process-deletion', authAdmin, processDeletionRequest);
 

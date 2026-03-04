@@ -46,6 +46,7 @@
     "razorpay": "^2.9.6",
     "socket.io": "^4.8.1",
     "speakeasy": "^2.0.0",
+    "systeminformation": "^5.31.2",
     "twilio": "^5.12.2",
     "validator": "^13.12.0"
   },

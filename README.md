@@ -101,11 +101,27 @@ Each sub-directory requires its own `.env` file. Key variables include:
 
 ```text
 PawVaidya/
-├── admin/            # React-based Admin Dashboard
-├── frontend/         # React-based User Portal
-├── backend/          # Node.js/Express API Server
-├── render.yaml       # Deployment configuration for Render
-└── DEPLOYMENT.md     # Comprehensive deployment guide
+├── admin/                  # React Admin Dashboard
+│   ├── public/             # Static assets
+│   └── src/
+│       ├── components/     # UI Components (Sidebar, Navbar, etc.)
+│       ├── context/        # Admin Global State
+│       ├── pages/          # Admin Views (Dashboard, Doctor Chat, etc.)
+│       └── utils/          # Admin Helpers
+├── frontend/               # React User Portal
+│   ├── public/             # Static assets
+│   └── src/
+│       ├── components/     # Reusable UI Components
+│       ├── context/        # App Global State
+│       ├── pages/          # User Views (Home, Profile, Appointments)
+│       └── i18n/           # Multilingual Translations
+└── backend/                # Node.js/Express API Server
+    ├── config/             # DB & Cloudinary Configuration
+    ├── controllers/        # Business Logic (User, Doctor, Admin)
+    ├── middleware/         # Auth & Validation Middleware
+    ├── models/             # Mongoose Schemas (User, Doctor, Appt)
+    ├── routes/             # API Endpoints
+    └── socketServer.js     # Real-time WebSocket Logic
 ```
 
 ---

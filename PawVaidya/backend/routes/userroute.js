@@ -1,6 +1,7 @@
 import express from 'express';
 
 import { registeruser, loginUser, getprofile, updateprofile, bookappointment, listAppointment, cancelAppointment, sendVerifyOtp, verifyEmail, isAuthenticated, sendResetOtp, resetpassword, getuserdata, logout, getUserMessages, markMessageAsRead, getUserById, updateUserLocation, validateDiscount, rateDoctor, requestAccountDeletion } from '../controllers/userController.js';
+import { validateAdminCoupon, getActiveAdminCoupons } from '../controllers/couponController.js';
 import { getNearbyDoctors } from '../controllers/doctorController.js';
 import { createBlog, getAllBlogs, getBlogById, updateBlog, deleteBlog, toggleLike, addComment, deleteComment, getUserBlogs } from '../controllers/blogController.js';
 import authuser from '../middleware/authuser.js';
@@ -27,6 +28,8 @@ userRouter.get("/profile/:userId", getUserById)
 userRouter.post("/location", authuser, updateUserLocation)
 userRouter.post("/nearby-doctors", authuser, getNearbyDoctors)
 userRouter.post("/validate-discount", authuser, validateDiscount)
+userRouter.post("/validate-admin-coupon", authuser, validateAdminCoupon)
+userRouter.get("/admin-coupons", authuser, getActiveAdminCoupons)
 
 // Blog routes
 userRouter.post('/blogs/create', authuser, uploadBlogFiles, createBlog)

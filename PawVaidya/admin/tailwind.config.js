@@ -6,6 +6,10 @@ export default {
   ],
   theme: {
     extend: {
+      colors: {
+        'primary': '#10b981', // emerald-500
+        'primary-dark': '#059669', // emerald-600
+      },
       animation: {
         'fade-in': 'fadeIn 0.6s ease-out forwards',
         'fade-in-up': 'fadeInUp 0.6s ease-out forwards',

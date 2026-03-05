@@ -23,6 +23,13 @@ const appointmentSchema = new mongoose.Schema({
         },
         default: null
     },
+    adminDiscountApplied: {
+        type: {
+            code: String,
+            amount: Number
+        },
+        default: null
+    },
     // Rating
     isRated: { type: Boolean, default: false },
     rating: { type: Number, default: 0 }

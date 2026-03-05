@@ -1,5 +1,6 @@
 import express from 'express';
-import { addDoctor, allDoctors, loginAdmin, registerFace, loginWithFace, logAdminActivity, getAdminActivityLogs, getDoctorAttendanceLogs, appointmenetsAdmin, Appointmentcancel, admindashboard, allUsers, deleteUser, editUser, deleteDoctor, makeAllDoctorsAvailable, makeAllDoctorsUnavailable, getUserDetailsWithPassword, getDoctorDetailsWithPassword, getAllUsersWithPasswords, getAllDoctorsWithPasswords, getActivityLogs, getRealtimeActivityLogs, sendVerificationEmailToUser, createAdminMessage, getAllAdminMessages, updateAdminMessage, deleteAdminMessage, getBlogReports, updateBlogReportStatus, banFromBlogging, unbanFromBlogging, getUnbanRequests, handleUnbanRequest, deleteBlogReport, bulkDeleteBlogReports, addAdmin, allAdmins, updateAdmin, deleteAdmin, sendBroadcastEmail, sendIndividualEmail, getDoctorRankings, giveIncentive, omniSearch, sendBroadcastAlert, getSystemConfig, updateSystemConfig, getCloudinaryAssets, deleteCloudinaryAsset, getSystemSettings, getFraudAlerts, updateCommissionRules, sendEmergencyBroadcast, getSupabaseHealth, getDeletionRequests, processDeletionRequest } from '../controllers/adminController.js';
+import { addDoctor, allDoctors, loginAdmin, verifyAdminOTP, registerFace, loginWithFace, logAdminActivity, getAdminActivityLogs, getDoctorAttendanceLogs, appointmenetsAdmin, Appointmentcancel, admindashboard, allUsers, deleteUser, editUser, deleteDoctor, makeAllDoctorsAvailable, makeAllDoctorsUnavailable, getUserDetailsWithPassword, getDoctorDetailsWithPassword, getAllUsersWithPasswords, getAllDoctorsWithPasswords, getActivityLogs, getRealtimeActivityLogs, sendVerificationEmailToUser, createAdminMessage, getAllAdminMessages, updateAdminMessage, deleteAdminMessage, getBlogReports, updateBlogReportStatus, banFromBlogging, unbanFromBlogging, getUnbanRequests, handleUnbanRequest, deleteBlogReport, bulkDeleteBlogReports, addAdmin, allAdmins, updateAdmin, deleteAdmin, sendBroadcastEmail, sendIndividualEmail, getDoctorRankings, giveIncentive, omniSearch, sendBroadcastAlert, getSystemConfig, updateSystemConfig, getCloudinaryAssets, deleteCloudinaryAsset, getSystemSettings, getFraudAlerts, updateCommissionRules, sendEmergencyBroadcast, getSupabaseHealth, getDeletionRequests, processDeletionRequest, blacklistEmails, getBlacklist, removeFromBlacklist } from '../controllers/adminController.js';
+import { createCoupon, getAllCoupons, toggleCouponStatus, deleteCoupon } from '../controllers/couponController.js';
 import { getServiceHealth } from '../controllers/serviceHealthController.js';
 import { initializeAdmin, getAdminProfile, updateAdminProfile, updateAdminPassword } from '../controllers/adminProfileController.js';
 import upload from '../middleware/multer.js';
@@ -10,6 +11,7 @@ const adminRouter = express.Router();
 
 adminRouter.post('/add-doctor', authAdmin, upload.single('image'), addDoctor);
 adminRouter.post('/login', loginAdmin)
+adminRouter.post('/verify-otp', verifyAdminOTP);
 adminRouter.post('/register-face', authAdmin, registerFace)
 adminRouter.post('/login-face', loginWithFace);
 adminRouter.post('/log-activity', authAdmin, logAdminActivity);
@@ -98,5 +100,16 @@ adminRouter.get('/supabase-health', authAdmin, getSupabaseHealth);
 adminRouter.get('/service-health', authAdmin, getServiceHealth);
 adminRouter.get('/deletion-requests', authAdmin, getDeletionRequests);
 adminRouter.post('/process-deletion', authAdmin, processDeletionRequest);
+
+// Blacklist Management
+adminRouter.post('/blacklist', authAdmin, blacklistEmails);
+adminRouter.get('/blacklist', authAdmin, getBlacklist);
+adminRouter.post('/remove-blacklist', authAdmin, removeFromBlacklist);
+
+// Coupon Management Routes
+adminRouter.post('/create-coupon', authAdmin, createCoupon);
+adminRouter.get('/all-coupons', authAdmin, getAllCoupons);
+adminRouter.post('/toggle-coupon', authAdmin, toggleCouponStatus);
+adminRouter.post('/delete-coupon', authAdmin, deleteCoupon);
 
 export default adminRouter

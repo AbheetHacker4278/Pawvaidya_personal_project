@@ -57,8 +57,8 @@ const Navbar = ({ toggleSidebar }) => {
   return (
     <nav
       className={`fixed top-0 left-0 right-0 z-50 flex justify-between items-center px-4 sm:px-8 py-3 transition-all duration-500 ${scrolled
-          ? 'bg-white/70 backdrop-blur-xl shadow-lg border-b border-emerald-50/50'
-          : 'bg-white/40 backdrop-blur-md border-b border-white/20'
+        ? 'bg-white/70 backdrop-blur-xl shadow-lg border-b border-emerald-50/50'
+        : 'bg-white/40 backdrop-blur-md border-b border-white/20'
         }`}
     >
       {/* Left Section */}

@@ -16,8 +16,13 @@ function App() {
 
   const backendurl = import.meta.env.VITE_BACKEND_URL
 
-  const { setatoken } = useContext(AdminContext);
-  const { setdtoken } = useContext(DoctorContext); // Fixed useContext here
+  const { verifyAdminOTP } = useContext(AdminContext);
+  const { setdtoken } = useContext(DoctorContext);
+
+  const [isOtpSent, setIsOtpSent] = useState(false);
+  const [otp, setOtp] = useState('');
+  const [timer, setTimer] = useState(90);
+  const [pendingEmail, setPendingEmail] = useState('');
 
   const onSubmitHandler = async (event) => {
     event.preventDefault();
@@ -26,12 +31,17 @@ function App() {
       if (state === 'Admin') {
         const { data } = await axios.post(`${backendurl}/api/admin/login`, { email, password });
         if (data.success) {
-          localStorage.setItem('atoken', data.token);
-          localStorage.removeItem('dtoken', data.token);
-          setatoken(data.token);
-          setTimeout(() => {
+          if (data.requiresOTP) {
+            setIsOtpSent(true);
+            setPendingEmail(email);
+            setTimer(90);
+            toast.success(data.message);
+          } else {
+            // Fallback if OTP is somehow disabled on backend
+            localStorage.setItem('atoken', data.token);
+            setatoken(data.token);
             toast.success(data.message || 'Login successful!');
-          }, 100);
+          }
         } else {
           toast.error(data.message || 'Admin login failed!');
         }
@@ -39,12 +49,8 @@ function App() {
         const { data } = await axios.post(`${backendurl}/api/doctor/login`, { email, password });
         if (data.success) {
           localStorage.setItem('dtoken', data.token);
-          localStorage.removeItem('atoken', data.token);
-          setdtoken(data.token); // Correctly setting the token for doctor
-          console.log(data.token);
-          setTimeout(() => {
-            toast.success(data.message || 'Login successful!');
-          }, 100);
+          setdtoken(data.token);
+          toast.success(data.message || 'Login successful!');
         } else {
           toast.error(data.message || 'Doctor login failed!');
         }
@@ -54,6 +60,32 @@ function App() {
       console.error(error);
     }
   };
+
+  const onVerifyOtpHandler = async (e) => {
+    e.preventDefault();
+    if (otp.length !== 6) {
+      return toast.error("Please enter a 6-digit OTP");
+    }
+
+    const success = await verifyAdminOTP(pendingEmail, otp, showFaceAuth ? 'Face' : 'Email');
+    if (success) {
+      setIsOtpSent(false);
+      setOtp('');
+    }
+  };
+
+  React.useEffect(() => {
+    let interval = null;
+    if (isOtpSent && timer > 0) {
+      interval = setInterval(() => {
+        setTimer((prev) => prev - 1);
+      }, 1000);
+    } else if (timer === 0) {
+      setIsOtpSent(false);
+      toast.error("Security code expired. Please login again.");
+    }
+    return () => clearInterval(interval);
+  }, [isOtpSent, timer]);
 
   return (
     <div className="flex min-h-screen">
@@ -84,87 +116,135 @@ function App() {
             <p className="text-[#f8e7d3]">Access expert advice for your furry friends</p>
           </div>
 
-          <form onSubmit={onSubmitHandler} className="mt-8 space-y-6">
-            <div className="space-y-4">
-              <div className="relative">
-                <MailIcon className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
-                <input
-                  onChange={(e) => setemail(e.target.value)}
-                  value={email}
-                  type="email"
-                  required
-                  className="w-full pl-10 pr-4 py-3 rounded-lg bg-white/90 border border-transparent focus:border-white focus:ring-2 focus:ring-white/30 focus:outline-none"
-                  placeholder="Your email or username"
-                />
+          {!isOtpSent ? (
+            <form onSubmit={onSubmitHandler} className="mt-8 space-y-6">
+              <div className="space-y-4">
+                <div className="relative">
+                  <MailIcon className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
+                  <input
+                    onChange={(e) => setemail(e.target.value)}
+                    value={email}
+                    type="email"
+                    required
+                    className="w-full pl-10 pr-4 py-3 rounded-lg bg-white/90 border border-transparent focus:border-white focus:ring-2 focus:ring-white/30 focus:outline-none"
+                    placeholder="Your email or username"
+                  />
+                </div>
+
+                <div className="relative">
+                  <LockIcon className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
+                  <input
+                    onChange={(e) => setpassword(e.target.value)}
+                    value={password}
+                    type="password"
+                    required
+                    className="w-full pl-10 pr-4 py-3 rounded-lg bg-white/90 border border-transparent focus:border-white focus:ring-2 focus:ring-white/30 focus:outline-none"
+                    placeholder="Password"
+                  />
+                </div>
               </div>
 
-              <div className="relative">
-                <LockIcon className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
+              <div className="flex items-center">
                 <input
-                  onChange={(e) => setpassword(e.target.value)}
-                  value={password}
-                  type="password"
-                  required
-                  className="w-full pl-10 pr-4 py-3 rounded-lg bg-white/90 border border-transparent focus:border-white focus:ring-2 focus:ring-white/30 focus:outline-none"
-                  placeholder="Password"
+                  type="checkbox"
+                  id="remember"
+                  className="h-4 w-4 rounded border-gray-300 text-[#97c7b7] focus:ring-[#97c7b7]"
                 />
+                <label htmlFor="remember" className="ml-2 text-sm text-white">
+                  Remember me
+                </label>
               </div>
-            </div>
 
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                id="remember"
-                className="h-4 w-4 rounded border-gray-300 text-[#97c7b7] focus:ring-[#97c7b7]"
-              />
-              <label htmlFor="remember" className="ml-2 text-sm text-white">
-                Remember me
-              </label>
-            </div>
-
-            <button
-              type="submit"
-              className="w-full py-3 px-4 bg-white text-[#97c7b7] rounded-lg font-semibold hover:bg-[#f8e7d3] transition duration-200"
-            >
-              Login as {state}
-            </button>
-
-            {state === 'Admin' && (
               <button
-                type="button"
-                onClick={() => setShowFaceAuth(true)}
-                className="w-full py-3 px-4 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition duration-200 flex items-center justify-center gap-2"
+                type="submit"
+                className="w-full py-3 px-4 bg-white text-[#97c7b7] rounded-lg font-semibold hover:bg-[#f8e7d3] transition duration-200"
               >
-                📷 Login with Face
+                Login as {state}
               </button>
-            )}
 
-            <div className="text-center text-white">
-              {state === 'Admin' ? (
-                <p>
-                  Doctor Login?{' '}
-                  <button
-                    type="button"
-                    onClick={() => setState('Doctor')}
-                    className="underline hover:text-[#f8e7d3]"
-                  >
-                    Click here
-                  </button>
-                </p>
-              ) : (
-                <p>
-                  Admin Login?{' '}
-                  <button
-                    type="button"
-                    onClick={() => setState('Admin')}
-                    className="underline hover:text-[#f8e7d3]"
-                  >
-                    Click here
-                  </button>
-                </p>
+              {state === 'Admin' && (
+                <button
+                  type="button"
+                  onClick={() => setShowFaceAuth(true)}
+                  className="w-full py-3 px-4 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition duration-200 flex items-center justify-center gap-2"
+                >
+                  📷 Login with Face
+                </button>
               )}
-            </div>
-          </form>
+
+              <div className="text-center text-white">
+                {state === 'Admin' ? (
+                  <p>
+                    Doctor Login?{' '}
+                    <button
+                      type="button"
+                      onClick={() => setState('Doctor')}
+                      className="underline hover:text-[#f8e7d3]"
+                    >
+                      Click here
+                    </button>
+                  </p>
+                ) : (
+                  <p>
+                    Admin Login?{' '}
+                    <button
+                      type="button"
+                      onClick={() => setState('Admin')}
+                      className="underline hover:text-[#f8e7d3]"
+                    >
+                      Click here
+                    </button>
+                  </p>
+                )}
+              </div>
+            </form>
+          ) : (
+            <form onSubmit={onVerifyOtpHandler} className="mt-8 space-y-6">
+              <div className="text-center space-y-4">
+                <div className="flex justify-center flex-col items-center gap-2">
+                  <div className="bg-white/20 p-4 rounded-full">
+                    <MailIcon className="h-8 w-8 text-white" />
+                  </div>
+                  <h4 className="text-xl font-bold text-white uppercase tracking-wider">Verification Code</h4>
+                  <p className="text-white/80 text-sm">Sent to {pendingEmail}</p>
+                </div>
+
+                <div className="relative pt-4">
+                  <input
+                    onChange={(e) => setOtp(e.target.value)}
+                    value={otp}
+                    type="text"
+                    maxLength="6"
+                    required
+                    autoFocus
+                    className="w-full text-center text-3xl font-bold tracking-[1em] py-4 rounded-xl bg-white/90 border-2 border-transparent focus:border-white focus:outline-none"
+                    placeholder="000000"
+                  />
+                </div>
+
+                <div className="flex justify-between items-center text-white text-sm font-medium">
+                  <span>Expires in: <span className={timer < 11 ? 'text-red-500 animate-pulse' : 'text-[#f8e7d3]'}>{timer}s</span></span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsOtpSent(false);
+                      setOtp('');
+                    }}
+                    className="underline hover:text-[#f8e7d3]"
+                  >
+                    Back to Login
+                  </button>
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full py-4 px-4 bg-white text-[#97c7b7] rounded-xl font-bold text-lg hover:bg-[#f8e7d3] transition duration-200 shadow-lg"
+                >
+                  VERIFY & LOGIN
+                </button>
+              </div>
+            </form>
+          )}
         </div>
       </div>
 
@@ -172,11 +252,18 @@ function App() {
         <FaceAuth
           mode="login"
           onAuthSuccess={(data) => {
-            localStorage.setItem('atoken', data.token);
-            localStorage.removeItem('dtoken');
-            setatoken(data.token);
-            setShowFaceAuth(false);
-            toast.success("Face Login Successful!");
+            if (data.requiresOTP) {
+              setPendingEmail(data.email);
+              setIsOtpSent(true);
+              setTimer(90);
+              setShowFaceAuth(false);
+              toast.success(data.message);
+            } else {
+              localStorage.setItem('atoken', data.token);
+              setatoken(data.token);
+              setShowFaceAuth(false);
+              toast.success("Face Login Successful!");
+            }
           }}
           onCancel={() => setShowFaceAuth(false)}
         />

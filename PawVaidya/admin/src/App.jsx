@@ -43,6 +43,8 @@ import DoctorAttendance from './pages/Admin/DoctorAttendance';
 import CommandPalette from './components/CommandPalette';
 import MediaRegistry from './pages/Admin/MediaRegistry';
 import AppIssueReports from './pages/Admin/AppIssueReports';
+import BlacklistManagement from './pages/Admin/BlacklistManagement';
+import ManageCoupons from './pages/Admin/ManageCoupons';
 import GlobalBroadcastListener from './components/GlobalBroadcastListener';
 import { io } from 'socket.io-client';
 import MaintenanceMode from './components/MaintenanceMode';
@@ -142,6 +144,8 @@ const App = () => {
               <Route path='/doctor-attendance' element={<DoctorAttendance />} />
               <Route path='/media-registry' element={<MediaRegistry />} />
               <Route path='/app-issue-reports' element={<AppIssueReports />} />
+              <Route path='/blacklist-management' element={<BlacklistManagement />} />
+              <Route path='/manage-coupons' element={<ManageCoupons />} />
 
               <Route path='/doctor-dashboard' element={<DoctorDashboard />} />
               <Route path='/doctor-appointments' element={<DoctorAppointments />} />

@@ -572,6 +572,153 @@ const AdminContextProvider = (props) => {
         }
     };
 
+    const blacklistEmails = async (emails, type, reason) => {
+        try {
+            const { data } = await axios.post(
+                `${backendurl}/api/admin/blacklist`,
+                { emails, type, reason },
+                { headers: { atoken } }
+            );
+
+            if (data.success) {
+                toast.success(data.message);
+                return true;
+            } else {
+                toast.error(data.message);
+                return false;
+            }
+        } catch (error) {
+            toast.error(error.message || 'Failed to blacklist emails');
+            return false;
+        }
+    };
+
+    const getBlacklist = async () => {
+        try {
+            const { data } = await axios.get(
+                `${backendurl}/api/admin/blacklist`,
+                { headers: { atoken } }
+            );
+            if (data.success) {
+                return data.blacklist;
+            } else {
+                toast.error(data.message);
+                return [];
+            }
+        } catch (error) {
+            toast.error(error.message || 'Failed to fetch blacklist');
+            return [];
+        }
+    };
+
+    const removeFromBlacklist = async (email) => {
+        try {
+            const { data } = await axios.post(
+                `${backendurl}/api/admin/remove-blacklist`,
+                { email },
+                { headers: { atoken } }
+            );
+
+            if (data.success) {
+                toast.success(data.message);
+                return true;
+            } else {
+                toast.error(data.message);
+                return false;
+            }
+        } catch (error) {
+            toast.error(error.message || 'Failed to remove from blacklist');
+            return false;
+        }
+    };
+
+    const verifyAdminOTP = async (email, otp, method = 'email') => {
+        try {
+            const { data } = await axios.post(
+                `${backendurl}/api/admin/verify-otp`,
+                { email, otp, method }
+            );
+
+            if (data.success) {
+                setatoken(data.token);
+                localStorage.setItem('atoken', data.token);
+                toast.success("Login Successful");
+                return true;
+            } else {
+                toast.error(data.message);
+                return false;
+            }
+        } catch (error) {
+            toast.error(error.message || 'Verification failed');
+            return false;
+        }
+    };
+
+    // ── Coupon Management Functions ──────────────────────────────────────────
+    const getAllCoupons = async () => {
+        try {
+            const { data } = await axios.get(`${backendurl}/api/admin/all-coupons`, { headers: { atoken } });
+            if (data.success) {
+                return data.coupons;
+            } else {
+                toast.error(data.message);
+                return [];
+            }
+        } catch (error) {
+            toast.error(error.message || 'Failed to fetch coupons');
+            return [];
+        }
+    };
+
+    const createCoupon = async (couponData) => {
+        try {
+            const { data } = await axios.post(`${backendurl}/api/admin/create-coupon`, couponData, { headers: { atoken } });
+            if (data.success) {
+                toast.success(data.message);
+                return true;
+            } else {
+                toast.error(data.message);
+                return false;
+            }
+        } catch (error) {
+            toast.error(error.message || 'Failed to create coupon');
+            return false;
+        }
+    };
+
+    const toggleCoupon = async (couponId) => {
+        try {
+            const { data } = await axios.post(`${backendurl}/api/admin/toggle-coupon`, { couponId }, { headers: { atoken } });
+            if (data.success) {
+                toast.success(data.message);
+                return true;
+            } else {
+                toast.error(data.message);
+                return false;
+            }
+        } catch (error) {
+            toast.error(error.message || 'Failed to toggle coupon');
+            return false;
+        }
+    };
+
+    const deleteCoupon = async (couponId) => {
+        try {
+            if (!window.confirm('Are you sure you want to delete this coupon?')) return false;
+            const { data } = await axios.post(`${backendurl}/api/admin/delete-coupon`, { couponId }, { headers: { atoken } });
+            if (data.success) {
+                toast.success(data.message);
+                return true;
+            } else {
+                toast.error(data.message);
+                return false;
+            }
+        } catch (error) {
+            toast.error(error.message || 'Failed to delete coupon');
+            return false;
+        }
+    };
+
     const value = {
         atoken, setatoken,
         backendurl, doctors,
@@ -589,7 +736,10 @@ const AdminContextProvider = (props) => {
         adminProfile, getAdminProfile,
         addAdmin, getAllAdmins, updateAdmin, deleteAdmin,
         updateSystemConfig,
-        fraudAlerts, getFraudAlerts, updateCommissionRules, sendEmergencyBroadcast
+        fraudAlerts, getFraudAlerts, updateCommissionRules, sendEmergencyBroadcast,
+        blacklistEmails, getBlacklist, removeFromBlacklist,
+        verifyAdminOTP,
+        getAllCoupons, createCoupon, toggleCoupon, deleteCoupon
     }
 
     return (

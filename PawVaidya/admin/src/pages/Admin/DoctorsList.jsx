@@ -47,10 +47,11 @@ import BlockIcon from '@mui/icons-material/Block'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 
 const DoctorsList = () => {
-  const { doctors, atoken, getalldoctors, changeavailablity, deleteDoctor, makeAllDoctorsAvailable, makeAllDoctorsUnavailable, getDoctorsWithPasswords, getActivityLogs, banUser, unbanUser } = useContext(AdminContext)
+  const { doctors, atoken, getalldoctors, changeavailablity, deleteDoctor, makeAllDoctorsAvailable, makeAllDoctorsUnavailable, getDoctorsWithPasswords, getActivityLogs, banUser, unbanUser, blacklistEmails } = useContext(AdminContext)
   const [deletingDoctorId, setDeletingDoctorId] = useState(null)
   const [isMakingAllAvailable, setIsMakingAllAvailable] = useState(false)
   const [isMakingAllUnavailable, setIsMakingAllUnavailable] = useState(false)
+  const [selectedDoctors, setSelectedDoctors] = useState([])
 
   // State for view details dialog
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false)
@@ -107,6 +108,18 @@ const DoctorsList = () => {
         : 'border-red-200 hover:border-red-400 bg-gradient-to-b from-red-50 to-white'
         } rounded-2xl overflow-hidden cursor-pointer group transition-all duration-300 hover:shadow-xl hover:scale-105`}>
         {isDeleting && <LoadingSpinner />}
+
+        <div className="absolute top-3 left-3 z-20">
+          <input
+            type="checkbox"
+            checked={selectedDoctors.includes(doctor.email)}
+            onChange={(e) => {
+              e.stopPropagation();
+              handleSelectDoctor(doctor.email);
+            }}
+            className="w-5 h-5 cursor-pointer accent-green-600"
+          />
+        </div>
 
         {/* Doctor Image */}
         <div className={`relative h-48 overflow-hidden ${isAvailable ? 'bg-green-100' : 'bg-red-100'
@@ -286,6 +299,34 @@ const DoctorsList = () => {
     handleBanDialogClose();
   };
 
+  const handleSelectAll = (event) => {
+    if (event.target.checked) {
+      setSelectedDoctors(doctors.map(doc => doc.email));
+    } else {
+      setSelectedDoctors([]);
+    }
+  };
+
+  const handleSelectDoctor = (email) => {
+    setSelectedDoctors(prev =>
+      prev.includes(email)
+        ? prev.filter(e => e !== email)
+        : [...prev, email]
+    );
+  };
+
+  const handleBulkBlacklist = async () => {
+    if (selectedDoctors.length === 0) return;
+
+    if (window.confirm(`Are you sure you want to blacklist ${selectedDoctors.length} doctor email(s)? This will prevent them from registering again.`)) {
+      const success = await blacklistEmails(selectedDoctors, 'doctor', 'Bulk blacklisted by admin');
+      if (success) {
+        setSelectedDoctors([]);
+        getalldoctors();
+      }
+    }
+  };
+
   return (
     <div className='p-4 md:p-6 lg:p-8 max-h-[90vh] overflow-y-auto'>
       {/* Header Section */}
@@ -345,6 +386,28 @@ const DoctorsList = () => {
               </>
             )}
           </button>
+
+          <div className="flex items-center gap-3">
+            <div className="flex items-center bg-white px-4 py-2 rounded-xl border-2 border-green-200">
+              <input
+                type="checkbox"
+                checked={selectedDoctors.length === doctors.length && doctors.length > 0}
+                onChange={handleSelectAll}
+                className="w-5 h-5 cursor-pointer accent-green-600 mr-2"
+              />
+              <span className="text-sm font-bold text-green-800">Select All ({selectedDoctors.length})</span>
+            </div>
+
+            {selectedDoctors.length > 0 && (
+              <button
+                onClick={handleBulkBlacklist}
+                className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold bg-red-600 text-white hover:bg-red-700 transition-all shadow-md transform hover:scale-105"
+              >
+                <BlockIcon sx={{ fontSize: 20 }} />
+                Blacklist Selected
+              </button>
+            )}
+          </div>
         </div>
       </div>
 

@@ -167,6 +167,12 @@ const Sidebar = ({ isOpen }) => {
               {adminProfile?.role === 'master' && (
                 <SidebarItem to="/media-registry" icon={Database} label="Media Registry" subtext="Cloud Assets" isOpen={isOpen} onClick={() => logNavigation('Media Registry')} />
               )}
+              {adminProfile?.role === 'master' && (
+                <SidebarItem to="/blacklist-management" icon={ShieldAlert} label="Blacklist" subtext="Blocked Emails" isOpen={isOpen} onClick={() => logNavigation('Blacklist')} />
+              )}
+              {adminProfile?.role === 'master' && (
+                <SidebarItem to="/manage-coupons" icon={Tag} label="Coupons" subtext="Admin Subsidy" isOpen={isOpen} onClick={() => logNavigation('Coupons')} />
+              )}
 
               <SectionHeader label="Communication" isOpen={isOpen} />
               {hasPerm('doctors') && (

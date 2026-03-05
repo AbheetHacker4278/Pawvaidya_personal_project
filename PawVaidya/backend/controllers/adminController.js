@@ -16,6 +16,7 @@ import VERIFICATION_EMAIL_TEMPLATE from '../mailservice/emailtemplate2.js';
 import VERIFICATION_REMINDER_TEMPLATE from '../mailservice/verificationReminderTemplate.js';
 import adminMessageModel from '../models/adminMessageModel.js';
 import adminModel from '../models/adminModel.js';
+import ADMIN_OTP_TEMPLATE from '../mailservice/adminOTPTemplate.js';
 import blogModel from '../models/blogModel.js';
 import reportModel from '../models/reportModel.js';
 import { getIO } from '../socketServer.js';
@@ -27,6 +28,7 @@ import supabaseService from '../services/supabaseService.js';
 import supabase from '../config/supabase.js';
 import activityLogModel from '../models/activityLogModel.js';
 import deletionRequestModel from '../models/deletionRequestModel.js';
+import blacklistModel from '../models/blacklistModel.js';
 
 const execAsync = promisify(exec);
 
@@ -98,6 +100,15 @@ export const addDoctor = async (req, res) => {
         // Hash the password
         const salt = await bcryptjs.genSalt(10);
         const hashedPassword = await argon2.hash(password, salt);
+
+        // Check if email is blacklisted
+        const isBlacklisted = await blacklistModel.findOne({ email });
+        if (isBlacklisted) {
+            return res.json({
+                success: false,
+                message: "This email is blacklisted and cannot be used for registration.",
+            });
+        }
 
         // Upload image to Cloudinary
         const imageUpload = await cloudinary.uploader.upload(imageFile.path, { resource_type: 'image' });
@@ -253,36 +264,61 @@ export const deleteDoctor = async (req, res) => {
 export const loginAdmin = async (req, res) => {
     try {
         const { email, password } = req.body;
+        let admin = null;
 
         // 1. Check Master Admin Credentials (from Env)
         if (email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD) {
-            const token = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '1h' });
-            // For master admin, we might not have ID, use 'master' or fetch if created
-            await logActivity('master', 'admin', 'login', 'Master Admin Logged in via Email', req, { method: 'email' });
-            return res.json({
-                success: true,
-                token,
-                role: 'master',
-                permissions: ['all'],
-                name: 'Master Admin'
-            });
+            // Find or create master admin record in DB to store OTP
+            admin = await adminModel.findOne({ email });
+            if (!admin) {
+                // Hash env password for the DB record
+                const salt = await bcryptjs.genSalt(10);
+                const hashedPassword = await argon2.hash(password);
+                admin = new adminModel({
+                    name: 'Master Admin',
+                    email,
+                    password: hashedPassword,
+                    role: 'master',
+                    permissions: ['all']
+                });
+                await admin.save();
+            }
+        } else {
+            // 2. Check Child Admin Credentials (from Database)
+            admin = await adminModel.findOne({ email });
+            if (admin) {
+                const isMatch = await argon2.verify(admin.password, password);
+                if (!isMatch) admin = null;
+            }
         }
 
-        // 2. Check Child Admin Credentials (from Database)
-        const admin = await adminModel.findOne({ email });
         if (admin) {
-            const isMatch = await argon2.verify(admin.password, password);
-            if (isMatch) {
-                const token = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '1h' });
-                await logActivity(admin._id, 'admin', 'login', 'Logged in via Email', req, { method: 'email' });
-                return res.json({
-                    success: true,
-                    token,
-                    role: admin.role,
-                    permissions: admin.permissions,
-                    name: admin.name
+            // Generate OTP
+            const otp = Math.floor(100000 + Math.random() * 900000).toString();
+            const otpExpires = new Date(Date.now() + 90 * 1000); // 90 seconds
+
+            admin.otp = otp;
+            admin.otpExpires = otpExpires;
+            await admin.save();
+
+            // Send OTP Email
+            try {
+                await transporter.sendMail({
+                    from: process.env.SENDER_EMAIL,
+                    to: admin.email,
+                    subject: 'Admin Login Security Code',
+                    html: ADMIN_OTP_TEMPLATE.replace('{otp}', otp)
                 });
+            } catch (mailErr) {
+                console.error("Failed to send OTP email:", mailErr);
+                return res.json({ success: false, message: "Failed to send security code. Please try again." });
             }
+
+            return res.json({
+                success: true,
+                requiresOTP: true,
+                message: "A security code has been sent to your email."
+            });
         }
 
         res.json({
@@ -296,6 +332,51 @@ export const loginAdmin = async (req, res) => {
             success: false,
             error: error.message,
         });
+    }
+};
+
+// API to verify admin OTP
+export const verifyAdminOTP = async (req, res) => {
+    try {
+        const { email, otp } = req.body;
+
+        const admin = await adminModel.findOne({ email });
+        if (!admin || !admin.otp || !admin.otpExpires) {
+            return res.json({ success: false, message: "Invalid session. Please login again." });
+        }
+
+        if (new Date() > admin.otpExpires) {
+            admin.otp = null;
+            admin.otpExpires = null;
+            await admin.save();
+            return res.json({ success: false, message: "Security code expired. Please request a new one." });
+        }
+
+        if (admin.otp !== otp) {
+            return res.json({ success: false, message: "Incorrect security code." });
+        }
+
+        // OTP Verified
+        admin.otp = null;
+        admin.otpExpires = null;
+        admin.lastLogin = new Date();
+        await admin.save();
+
+        const token = jwt.sign({ email: admin.email }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+        await logActivity(admin._id, 'admin', 'login', `Logged in via ${req.body.method || 'Email'} after 2FA`, req, { method: req.body.method || 'email' });
+
+        res.json({
+            success: true,
+            token,
+            role: admin.role,
+            permissions: admin.permissions,
+            name: admin.name
+        });
+
+    } catch (error) {
+        console.error("Error verifying OTP:", error);
+        res.status(500).json({ success: false, message: error.message });
     }
 };
 
@@ -381,9 +462,7 @@ export const loginWithFace = async (req, res) => {
         }
 
         if (bestMatch) {
-            const token = jwt.sign({ email: bestMatch.email }, process.env.JWT_SECRET, { expiresIn: '1h' });
-
-            // Upload captured image for log (async to not block response too long, or await if critical)
+            // Upload captured image for log (async to not block response too long)
             let faceImageUrl = '';
             if (image) {
                 try {
@@ -394,14 +473,32 @@ export const loginWithFace = async (req, res) => {
                 }
             }
 
-            await logActivity(bestMatch._id, 'admin', 'login', 'Logged in via Face', req, { method: 'face' }, faceImageUrl);
+            // Generate OTP
+            const otp = Math.floor(100000 + Math.random() * 900000).toString();
+            const otpExpires = new Date(Date.now() + 90 * 1000); // 90 seconds
+
+            bestMatch.otp = otp;
+            bestMatch.otpExpires = otpExpires;
+            await bestMatch.save();
+
+            // Send OTP Email
+            try {
+                await transporter.sendMail({
+                    from: process.env.SENDER_EMAIL,
+                    to: bestMatch.email,
+                    subject: 'Admin Login Security Code (Face ID Authentication)',
+                    html: ADMIN_OTP_TEMPLATE.replace('{otp}', otp)
+                });
+            } catch (mailErr) {
+                console.error("Failed to send OTP email:", mailErr);
+                return res.json({ success: false, message: "Failed to send security code. Please try again." });
+            }
 
             res.json({
                 success: true,
-                token,
-                role: bestMatch.role,
-                permissions: bestMatch.permissions,
-                name: bestMatch.name
+                requiresOTP: true,
+                email: bestMatch.email, // Need this for verification
+                message: "Face recognized. A security code has been sent to your email."
             });
         } else {
             res.status(401).json({ success: false, message: "Face not recognized" });
@@ -998,10 +1095,22 @@ export const admindashboard = async (req, res) => {
             {
                 $group: {
                     _id: null,
-                    totalEarnings: { $sum: { $multiply: [{ $ifNull: ["$amount", 0] }, commissionRate] } },
+                    totalEarnings: {
+                        $sum: {
+                            $subtract: [
+                                { $multiply: [{ $add: [{ $ifNull: ["$amount", 0] }, { $ifNull: ["$adminDiscountApplied.amount", 0] }] }, commissionRate] },
+                                { $ifNull: ["$adminDiscountApplied.amount", 0] }
+                            ]
+                        }
+                    },
                     monthlyRevenue: {
                         $push: {
-                            amount: { $multiply: [{ $ifNull: ["$amount", 0] }, commissionRate] },
+                            amount: {
+                                $subtract: [
+                                    { $multiply: [{ $add: [{ $ifNull: ["$amount", 0] }, { $ifNull: ["$adminDiscountApplied.amount", 0] }] }, commissionRate] },
+                                    { $ifNull: ["$adminDiscountApplied.amount", 0] }
+                                ]
+                            },
                             date: "$date"
                         }
                     }
@@ -1031,12 +1140,24 @@ export const admindashboard = async (req, res) => {
                 $group: {
                     _id: null,
                     daily: {
-                        $sum: { $cond: [{ $gte: ["$date", startOfDay] }, { $multiply: ["$amount", doctorShareRate] }, 0] }
+                        $sum: {
+                            $cond: [
+                                { $gte: ["$date", startOfDay] },
+                                { $multiply: [{ $add: [{ $ifNull: ["$amount", 0] }, { $ifNull: ["$adminDiscountApplied.amount", 0] }] }, doctorShareRate] },
+                                0
+                            ]
+                        }
                     },
                     weekly: {
-                        $sum: { $cond: [{ $gte: ["$date", startOfWeek] }, { $multiply: ["$amount", doctorShareRate] }, 0] }
+                        $sum: {
+                            $cond: [
+                                { $gte: ["$date", startOfWeek] },
+                                { $multiply: [{ $add: [{ $ifNull: ["$amount", 0] }, { $ifNull: ["$adminDiscountApplied.amount", 0] }] }, doctorShareRate] },
+                                0
+                            ]
+                        }
                     },
-                    monthly: { $sum: { $multiply: ["$amount", doctorShareRate] } }
+                    monthly: { $sum: { $multiply: [{ $add: [{ $ifNull: ["$amount", 0] }, { $ifNull: ["$adminDiscountApplied.amount", 0] }] }, doctorShareRate] } }
                 }
             }
         ]);
@@ -2782,6 +2903,72 @@ export const processDeletionRequest = async (req, res) => {
 
     } catch (error) {
         console.error("Error processing deletion request:", error);
+        res.json({ success: false, message: error.message });
+    }
+}
+
+// API to blacklist emails in bulk
+export const blacklistEmails = async (req, res) => {
+    try {
+        const { emails, type, reason } = req.body;
+        const adminId = req.admin?.id || 'master';
+
+        if (!emails || !Array.isArray(emails) || emails.length === 0) {
+            return res.json({ success: false, message: "No emails provided for blacklisting." });
+        }
+
+        const blacklistEntries = emails.map(email => ({
+            email: email.toLowerCase(),
+            type,
+            reason: reason || 'Blacklisted by admin',
+            blacklistedBy: adminId
+        }));
+
+        // Use insertMany with ordered: false to skip duplicates instead of failing
+        await blacklistModel.insertMany(blacklistEntries, { ordered: false });
+
+        await logActivity(adminId, 'admin', 'blacklist_emails', `Blacklisted emails: ${emails.join(', ')}`, req, { emails, type, reason });
+
+        res.json({ success: true, message: `${emails.length} email(s) added to blacklist successfully.` });
+
+    } catch (error) {
+        // If it's just a duplicate key error for some, we can still call it a partial success or handle accordingly
+        if (error.code === 11000) {
+            return res.json({ success: true, message: "Emails added to blacklist (duplicates were skipped)." });
+        }
+        console.error("Error blacklisting emails:", error);
+        res.json({ success: false, message: error.message });
+    }
+}
+
+// API to get all blacklisted emails
+export const getBlacklist = async (req, res) => {
+    try {
+        const blacklist = await blacklistModel.find().sort({ createdAt: -1 });
+        res.json({ success: true, blacklist });
+    } catch (error) {
+        console.error("Error fetching blacklist:", error);
+        res.json({ success: false, message: error.message });
+    }
+}
+
+// API to remove an email from blacklist
+export const removeFromBlacklist = async (req, res) => {
+    try {
+        const { email } = req.body;
+        const adminId = req.admin?.id || 'master';
+
+        if (!email) {
+            return res.json({ success: false, message: "Email is required." });
+        }
+
+        await blacklistModel.findOneAndDelete({ email: email.toLowerCase() });
+
+        await logActivity(adminId, 'admin', 'remove_blacklist', `Removed from blacklist: ${email}`, req, { email });
+
+        res.json({ success: true, message: "Email removed from blacklist successfully." });
+    } catch (error) {
+        console.error("Error removing from blacklist:", error);
         res.json({ success: false, message: error.message });
     }
 }

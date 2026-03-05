@@ -18,6 +18,8 @@ import adminMessageModel from '../models/adminMessageModel.js';
 import systemConfigModel from '../models/systemConfigModel.js';
 import { getLocationFromIP, checkImpossibleTravel } from '../utils/fraudTracker.js';
 import deletionRequestModel from '../models/deletionRequestModel.js';
+import blacklistModel from '../models/blacklistModel.js';
+import adminCouponModel from '../models/adminCouponModel.js';
 
 export const registeruser = async (req, res) => {
     try {
@@ -36,6 +38,16 @@ export const registeruser = async (req, res) => {
                 message: 'Email Format is not valid'
             })
         }
+
+        // Check if email is blacklisted
+        const isBlacklisted = await blacklistModel.findOne({ email });
+        if (isBlacklisted) {
+            return res.json({
+                success: false,
+                message: "This email is blacklisted and cannot be used for registration. Please contact support.",
+            });
+        }
+
         if (password.length < 8) {
             return res.json({
                 success: false,
@@ -663,7 +675,7 @@ export const updateprofile = async (req, res) => {
 
 export const bookappointment = async (req, res) => {
     try {
-        const { userId, docId, slotDate, slotTime, discountCode } = req.body;
+        const { userId, docId, slotDate, slotTime, discountCode, adminCouponCode } = req.body;
         const meetLink = "https://meet.google.com/qfv-rcwa-sec";
 
 
@@ -783,6 +795,44 @@ export const bookappointment = async (req, res) => {
                 { $inc: { 'discounts.$.usedCount': 1 } }
             );
         }
+
+        // ─── Admin Coupon Handling ──────────────────────────────────────────
+        let adminDiscountData = null;
+        if (adminCouponCode) {
+            const code = adminCouponCode.toUpperCase().trim();
+            const coupon = await adminCouponModel.findOne({ code, isActive: true });
+
+            if (coupon) {
+                const now = new Date();
+                const isExpired = new Date(coupon.expiryDate) < now;
+                const limitReached = coupon.usageLimit > 0 && coupon.usedCount >= coupon.usageLimit;
+                const amountValid = docData.fees >= coupon.minAmount;
+
+                if (!isExpired && !limitReached && amountValid) {
+                    let discountAmount = 0;
+                    if (coupon.discountType === 'percentage') {
+                        discountAmount = (finalFee * coupon.discountValue) / 100;
+                        if (coupon.maxDiscount) {
+                            discountAmount = Math.min(discountAmount, coupon.maxDiscount);
+                        }
+                    } else {
+                        discountAmount = coupon.discountValue;
+                    }
+
+                    discountAmount = Math.round(discountAmount);
+                    finalFee = Math.max(0, finalFee - discountAmount);
+
+                    adminDiscountData = {
+                        code: coupon.code,
+                        amount: discountAmount
+                    };
+
+                    // Increment usedCount
+                    coupon.usedCount += 1;
+                    await coupon.save();
+                }
+            }
+        }
         // ──────────────────────────────────────────────────────────────────
 
         // Prepare appointment data
@@ -796,7 +846,8 @@ export const bookappointment = async (req, res) => {
             slotDate,
             meetLink, // Add the meet link to the appointment data
             date: new Date(),
-            ...(appliedDiscount && { discountApplied: appliedDiscount })
+            ...(appliedDiscount && { discountApplied: appliedDiscount }),
+            ...(adminDiscountData && { adminDiscountApplied: adminDiscountData })
         };
 
 
@@ -1477,47 +1528,102 @@ export const validateDiscount = async (req, res) => {
     try {
         const { docId, discountCode } = req.body;
 
-        if (!docId || !discountCode) {
-            return res.json({ success: false, message: 'Doctor ID and discount code are required' });
-        }
-
-        const doctor = await doctorModel.findById(docId).select('discounts fees');
-        if (!doctor) {
-            return res.json({ success: false, message: 'Doctor not found' });
+        if (!discountCode) {
+            return res.json({ success: false, message: 'Discount code is required' });
         }
 
         const code = discountCode.toUpperCase().trim();
-        const discountEntry = doctor.discounts?.find(d => d.code === code && d.isActive);
 
-        if (!discountEntry) {
-            return res.json({ success: false, message: 'Invalid or inactive discount code' });
-        }
-        if (discountEntry.expiresAt && new Date(discountEntry.expiresAt) < new Date()) {
-            return res.json({ success: false, message: 'This discount code has expired' });
-        }
-        if (discountEntry.maxUses > 0 && discountEntry.usedCount >= discountEntry.maxUses) {
-            return res.json({ success: false, message: 'Discount code usage limit reached' });
-        }
+        // 1. Try to find Doctor-specific discount first
+        if (docId) {
+            const doctor = await doctorModel.findById(docId).select('discounts fees');
+            if (doctor) {
+                const discountEntry = doctor.discounts?.find(d => d.code === code && d.isActive);
 
-        let discountedFee;
-        if (discountEntry.discountType === 'percentage') {
-            discountedFee = Math.max(0, doctor.fees - (doctor.fees * discountEntry.discountValue) / 100);
-        } else {
-            discountedFee = Math.max(0, doctor.fees - discountEntry.discountValue);
-        }
-        discountedFee = Math.round(discountedFee);
+                if (discountEntry) {
+                    if (discountEntry.expiresAt && new Date(discountEntry.expiresAt) < new Date()) {
+                        return res.json({ success: false, message: 'This doctor discount code has expired' });
+                    }
+                    if (discountEntry.maxUses > 0 && discountEntry.usedCount >= discountEntry.maxUses) {
+                        return res.json({ success: false, message: 'Doctor discount code usage limit reached' });
+                    }
 
-        return res.json({
-            success: true,
-            message: 'Discount applied!',
-            discount: {
-                code: discountEntry.code,
-                discountType: discountEntry.discountType,
-                discountValue: discountEntry.discountValue,
-                originalFee: doctor.fees,
-                discountedFee
+                    let discountedFee;
+                    if (discountEntry.discountType === 'percentage') {
+                        discountedFee = Math.max(0, doctor.fees - (doctor.fees * discountEntry.discountValue) / 100);
+                    } else {
+                        discountedFee = Math.max(0, doctor.fees - discountEntry.discountValue);
+                    }
+                    discountedFee = Math.round(discountedFee);
+
+                    return res.json({
+                        success: true,
+                        message: 'Doctor discount applied!',
+                        type: 'doctor',
+                        discount: {
+                            code: discountEntry.code,
+                            discountType: discountEntry.discountType,
+                            discountValue: discountEntry.discountValue,
+                            originalFee: doctor.fees,
+                            discountedFee
+                        }
+                    });
+                }
             }
-        });
+        }
+
+        // 2. Fallback to Admin Coupons if no doctor discount found
+        const adminCoupon = await adminCouponModel.findOne({ code, isActive: true });
+
+        if (adminCoupon) {
+            if (new Date(adminCoupon.expiryDate) < new Date()) {
+                return res.json({ success: false, message: 'This platform coupon has expired' });
+            }
+
+            if (adminCoupon.usageLimit > 0 && adminCoupon.usedCount >= adminCoupon.usageLimit) {
+                return res.json({ success: false, message: 'Platform coupon usage limit reached' });
+            }
+
+            // For admin coupons, we need the doc fees to calculate the final price
+            let docFees = 0;
+            if (docId) {
+                const doctor = await doctorModel.findById(docId).select('fees');
+                docFees = doctor ? doctor.fees : 0;
+            }
+
+            if (docFees < adminCoupon.minAmount) {
+                return res.json({ success: false, message: `Minimum amount of ₹${adminCoupon.minAmount} required for this coupon` });
+            }
+
+            let discountAmount = 0;
+            if (adminCoupon.discountType === 'percentage') {
+                discountAmount = (docFees * adminCoupon.discountValue) / 100;
+                if (adminCoupon.maxDiscount) {
+                    discountAmount = Math.min(discountAmount, adminCoupon.maxDiscount);
+                }
+            } else {
+                discountAmount = adminCoupon.discountValue;
+            }
+
+            const discountedFee = Math.round(Math.max(0, docFees - discountAmount));
+
+            return res.json({
+                success: true,
+                message: 'Platform discount applied!',
+                type: 'admin',
+                discount: {
+                    code: adminCoupon.code,
+                    discountType: adminCoupon.discountType,
+                    discountValue: adminCoupon.discountValue,
+                    originalFee: docFees,
+                    discountedFee,
+                    discountAmount: Math.round(discountAmount)
+                }
+            });
+        }
+
+        return res.json({ success: false, message: 'Invalid or inactive discount code' });
+
     } catch (error) {
         console.error('Error validating discount:', error);
         res.json({ success: false, message: error.message });

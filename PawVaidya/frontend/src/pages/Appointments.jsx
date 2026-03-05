@@ -40,6 +40,7 @@ const Appointments = () => {
   const [discountLoading, setDiscountLoading] = useState(false);
   const [discountError, setDiscountError] = useState('');
   const [activeCoupons, setActiveCoupons] = useState([]);
+  const [adminCoupons, setAdminCoupons] = useState([]);
 
   const loadingMessages = [
     "Checking Available Slots...",
@@ -227,6 +228,17 @@ const Appointments = () => {
         // silent — coupons are optional
       }
     }
+
+    // Fetch active admin coupons
+    const fetchAdminCoupons = async () => {
+      try {
+        const { data } = await axios.get(backendurl + '/api/user/admin-coupons', { headers: { token } });
+        if (data.success) setAdminCoupons(data.coupons);
+      } catch (e) {
+        console.error("Error fetching admin coupons", e);
+      }
+    };
+    if (token) fetchAdminCoupons();
   };
 
   // Fetch doctor's schedule
@@ -373,23 +385,34 @@ const Appointments = () => {
     return true;
   };
 
-  const applyDiscount = async () => {
-    if (!discountCode.trim()) {
+  const applyDiscount = async (codeToApply = null) => {
+    const code = codeToApply || discountCode;
+    if (!code || !code.trim()) {
       setDiscountError('Please enter a discount code');
       return;
     }
+
+    if (codeToApply) {
+      setDiscountCode(codeToApply.trim());
+    }
+
     setDiscountLoading(true);
     setDiscountError('');
     setDiscountInfo(null);
     try {
       const { data } = await axios.post(
         backendurl + '/api/user/validate-discount',
-        { docId, discountCode: discountCode.trim() },
+        { docId, discountCode: code.trim() },
         { headers: { token } }
       );
       if (data.success) {
-        setDiscountInfo(data.discount);
-        toast.success(`Discount applied! You save ${data.discount.discountType === 'percentage' ? data.discount.discountValue + '%' : '₹' + data.discount.discountValue}`);
+        const unifiedDiscount = { ...data.discount, type: data.type };
+        setDiscountInfo(unifiedDiscount);
+        if (data.type === 'admin') {
+          toast.success(`Platform Coupon applied! You save ₹${data.discount.discountAmount}`);
+        } else {
+          toast.success(`Doctor Discount applied! You save ${data.discount.discountType === 'percentage' ? data.discount.discountValue + '%' : '₹' + data.discount.discountValue}`);
+        }
       } else {
         setDiscountError(data.message);
       }
@@ -399,6 +422,7 @@ const Appointments = () => {
       setDiscountLoading(false);
     }
   };
+
 
   const bookappointment = async () => {
     if (!token) {
@@ -430,9 +454,23 @@ const Appointments = () => {
       setLoadingStep(1);
       await new Promise(resolve => setTimeout(resolve, 1500));
 
+      const bookingPayload = {
+        docId,
+        slotDate,
+        slotTime
+      };
+
+      if (discountInfo) {
+        if (discountInfo.type === 'admin') {
+          bookingPayload.adminCouponCode = discountCode.trim();
+        } else {
+          bookingPayload.discountCode = discountCode.trim();
+        }
+      }
+
       const { data } = await axios.post(
         backendurl + '/api/user/book-appointment',
-        { docId, slotDate, slotTime, discountCode: discountInfo ? discountCode.trim() : undefined },
+        bookingPayload,
         { headers: { token } }
       );
 
@@ -1063,6 +1101,53 @@ const Appointments = () => {
                       </p>
                     </div>
 
+                    {/* Admin Coupons showcase */}
+                    {adminCoupons.length > 0 && (
+                      <div className="px-5 pb-1 pt-2">
+                        <p className="text-xs font-semibold mb-2 flex items-center gap-1.5" style={{ color: '#10b981' }}>
+                          ✨ Platform Special Offers — subsidized by Admin:
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {adminCoupons.map((coupon, i) => (
+                            <motion.button
+                              key={`admin-${i}`}
+                              initial={{ opacity: 0, scale: 0.85 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              transition={{ delay: i * 0.07 }}
+                              whileHover={{ scale: 1.06, y: -2, boxShadow: '0 6px 18px rgba(16,185,129,0.22)' }}
+                              whileTap={{ scale: 0.97 }}
+                              onClick={() => applyDiscount(coupon.code)}
+                              className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all"
+                              style={{
+                                background: discountInfo?.code === coupon.code
+                                  ? 'linear-gradient(135deg,#10b981,#059669)'
+                                  : 'linear-gradient(135deg,#f0fdf4,#dcfce7)',
+                                border: `1.5px dashed #10b981`,
+                                color: discountInfo?.code === coupon.code ? '#fff' : '#047857'
+                              }}
+                            >
+                              <span className="font-mono tracking-wider">{coupon.code}</span>
+                              <span
+                                className="px-1.5 py-0.5 rounded-md text-xs"
+                                style={{
+                                  background: discountInfo?.code === coupon.code ? 'rgba(255,255,255,0.2)' : '#10b981',
+                                  color: '#fff'
+                                }}
+                              >
+                                {coupon.discountType === 'percentage'
+                                  ? `${coupon.discountValue}% OFF`
+                                  : `₹${coupon.discountValue} OFF`}
+                              </span>
+                              <span className="text-emerald-400 font-normal" style={{ fontSize: '10px' }}>
+                                global
+                              </span>
+                            </motion.button>
+                          ))}
+                        </div>
+                        <div className="my-3 border-t" style={{ borderColor: '#dcfce7' }} />
+                      </div>
+                    )}
+
                     {/* Active Coupons Showcase */}
                     {activeCoupons.length > 0 && (
                       <div className="px-5 pb-1 pt-2">
@@ -1076,27 +1161,7 @@ const Appointments = () => {
                               transition={{ delay: i * 0.07 }}
                               whileHover={{ scale: 1.06, y: -2, boxShadow: '0 6px 18px rgba(200,134,10,0.22)' }}
                               whileTap={{ scale: 0.97 }}
-                              onClick={async () => {
-                                setDiscountCode(coupon.code);
-                                setDiscountInfo(null);
-                                setDiscountError('');
-                                // auto-validate
-                                setDiscountLoading(true);
-                                try {
-                                  const { data } = await axios.post(
-                                    backendurl + '/api/user/validate-discount',
-                                    { docId, discountCode: coupon.code },
-                                    { headers: { token } }
-                                  );
-                                  if (data.success) {
-                                    setDiscountInfo(data.discount);
-                                    toast.success(`Coupon ${coupon.code} applied!`);
-                                  } else {
-                                    setDiscountError(data.message);
-                                  }
-                                } catch { setDiscountError('Failed to apply coupon'); }
-                                finally { setDiscountLoading(false); }
-                              }}
+                              onClick={() => applyDiscount(coupon.code)}
                               className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all"
                               style={{
                                 background: discountInfo?.code === coupon.code

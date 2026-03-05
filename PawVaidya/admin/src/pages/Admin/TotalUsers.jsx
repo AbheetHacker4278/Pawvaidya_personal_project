@@ -54,8 +54,9 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { assets } from '../../assets/assets_admin/assets';
 
 const TotalUsers = () => {
-    const { users, getallusers, dashdata, getdashdata, deleteUser, editUser, getUsersWithPasswords, getActivityLogs, getRealtimeActivityLogs, sendVerificationEmail, sendIndividualEmail, banUser, unbanUser } = useContext(AdminContext);
+    const { users, getallusers, dashdata, getdashdata, deleteUser, editUser, getUsersWithPasswords, getActivityLogs, getRealtimeActivityLogs, sendVerificationEmail, sendIndividualEmail, banUser, unbanUser, blacklistEmails } = useContext(AdminContext);
     const [selectedState, setSelectedState] = useState('');
+    const [selectedUsers, setSelectedUsers] = useState([]);
 
     // State for edit dialog
     const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -163,6 +164,35 @@ const TotalUsers = () => {
 
     const handleStateChange = (event) => {
         setSelectedState(event.target.value);
+        setSelectedUsers([]); // Clear selection when filter changes
+    };
+
+    const handleSelectAll = (event) => {
+        if (event.target.checked) {
+            setSelectedUsers(filteredUsers.map(user => user.email));
+        } else {
+            setSelectedUsers([]);
+        }
+    };
+
+    const handleSelectUser = (email) => {
+        setSelectedUsers(prev =>
+            prev.includes(email)
+                ? prev.filter(e => e !== email)
+                : [...prev, email]
+        );
+    };
+
+    const handleBulkBlacklist = async () => {
+        if (selectedUsers.length === 0) return;
+
+        if (window.confirm(`Are you sure you want to blacklist ${selectedUsers.length} email(s)? This will prevent them from registering again.`)) {
+            const success = await blacklistEmails(selectedUsers, 'user', 'Bulk blacklisted by admin');
+            if (success) {
+                setSelectedUsers([]);
+                getallusers();
+            }
+        }
     };
 
     const filteredUsers = selectedState
@@ -326,34 +356,62 @@ const TotalUsers = () => {
                 </Typography>
 
                 {/* Dropdown for State Filter */}
-                <FormControl sx={{ width: { xs: '100%', sm: '300px' }, mb: 3 }}>
-                    <InputLabel
-                        id="state-select-label"
-                        sx={{ color: 'green.700', fontWeight: 'bold' }}
-                    >
-                        Filter by State
-                    </InputLabel>
-                    <Select
-                        labelId="state-select-label"
-                        value={selectedState}
-                        onChange={handleStateChange}
-                        label="Filter by State"
-                        sx={{
-                            color: 'green.800',
-                            backgroundColor: 'white',
-                            borderRadius: 3,
-                            '& .MuiOutlinedInput-notchedOutline': { borderColor: 'green.300' },
-                            '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'green.500' },
-                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: 'green.700' },
-                        }}
-                    >
-                        <MenuItem value="">All States</MenuItem>
-                        <MenuItem value="NEW DELHI">NEW DELHI</MenuItem>
-                        <MenuItem value="GUJARAT">GUJARAT</MenuItem>
-                        <MenuItem value="HARYANA">HARYANA</MenuItem>
-                        <MenuItem value="MUMBAI">MUMBAI</MenuItem>
-                    </Select>
-                </FormControl>
+                <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2, alignItems: { sm: 'center' }, mb: 3 }}>
+                    <FormControl sx={{ width: { xs: '100%', sm: '300px' } }}>
+                        <InputLabel
+                            id="state-select-label"
+                            sx={{ color: 'green.700', fontWeight: 'bold' }}
+                        >
+                            Filter by State
+                        </InputLabel>
+                        <Select
+                            labelId="state-select-label"
+                            value={selectedState}
+                            onChange={handleStateChange}
+                            label="Filter by State"
+                            sx={{
+                                color: 'green.800',
+                                backgroundColor: 'white',
+                                borderRadius: 3,
+                                '& .MuiOutlinedInput-notchedOutline': { borderColor: 'green.300' },
+                                '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'green.500' },
+                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: 'green.700' },
+                            }}
+                        >
+                            <MenuItem value="">All States</MenuItem>
+                            <MenuItem value="NEW DELHI">NEW DELHI</MenuItem>
+                            <MenuItem value="GUJARAT">GUJARAT</MenuItem>
+                            <MenuItem value="HARYANA">HARYANA</MenuItem>
+                            <MenuItem value="MUMBAI">MUMBAI</MenuItem>
+                        </Select>
+                    </FormControl>
+
+                    <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', bgcolor: 'white', px: 2, py: 1, borderRadius: 3, border: '1px solid', borderColor: 'green.300' }}>
+                            <input
+                                type="checkbox"
+                                checked={selectedUsers.length === filteredUsers.length && filteredUsers.length > 0}
+                                onChange={handleSelectAll}
+                                style={{ transform: 'scale(1.2)', marginRight: '8px' }}
+                            />
+                            <Typography variant="body2" fontWeight="bold" color="green.800">
+                                Select All ({selectedUsers.length})
+                            </Typography>
+                        </Box>
+
+                        {selectedUsers.length > 0 && (
+                            <Button
+                                variant="contained"
+                                color="error"
+                                startIcon={<BlockIcon />}
+                                onClick={handleBulkBlacklist}
+                                sx={{ borderRadius: 3, fontWeight: 'bold' }}
+                            >
+                                Blacklist Selected
+                            </Button>
+                        )}
+                    </Box>
+                </Box>
             </Box>
 
             {filteredUsers.length > 0 ? (
@@ -380,6 +438,14 @@ const TotalUsers = () => {
                             >
                                 {/* User Header */}
                                 <Box display="flex" alignItems="flex-start" mb={2}>
+                                    <Box sx={{ mr: 1, mt: 2.5 }}>
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedUsers.includes(user.email)}
+                                            onChange={() => handleSelectUser(user.email)}
+                                            style={{ transform: 'scale(1.3)' }}
+                                        />
+                                    </Box>
                                     <Avatar
                                         src={user.image || assets.people_icon}
                                         alt={user.name}

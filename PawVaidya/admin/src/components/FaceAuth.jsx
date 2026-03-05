@@ -148,7 +148,6 @@ const FaceAuth = ({ mode, onAuthSuccess, onCancel, email }) => {
                 );
 
                 if (data.success) {
-                    toast.success("Login Successful");
                     if (onAuthSuccess) onAuthSuccess(data);
                 } else {
                     toast.error(data.message);

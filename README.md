@@ -16,6 +16,7 @@ PawVaidya is a state-of-the-art, comprehensive veterinary consultancy platform d
 - **Smart Appointment Booking**: Easy scheduling with specialized vets (Small Animal, Avian, Exotic, etc.) featuring real-time slot availability.
 - **Video Consultations**: Crystal-clear video calls powered by **ZegoCloud** for remote diagnosis.
 - **Multilingual Support**: Seamless transition between English, Hindi, Tamil, and Telugu using **i18next** and AI-powered translations.
+- **🆕 Unified Coupon System**: Automatic fallback between doctor-specific discounts and platform-wide admin coupons (Manual & Click-to-Apply).
 - **Pet ID Cards**: Generate digital, verifiable premium IDs for your pets.
 - **Community Hub**: Share experiences and learn from expert blogs.
 
@@ -38,6 +39,8 @@ PawVaidya is a state-of-the-art, comprehensive veterinary consultancy platform d
 - **🆕 Real-Time Data Congestion Monitor**: Memory pressure bar, active WebSocket count, heap/RSS usage, server uptime, Node.js version, and total DB operations.
 - **🆕 System Stress Gauges**: Radial SVG gauges for live **CPU**, **RAM**, and **Storage** utilization with color-coded severity levels (Low → Medium → High → Critical).
 - **🆕 Thermal Monitor**: Animated SVG thermometer with mercury level, pulsing bulb, per-core temperature bars, and spinning fan blades (RPM-proportional speed) via `systeminformation`.
+- **🆕 Platform Coupon Management**: Full suite for creating, toggling, and monitoring platform-wide discounts.
+- **🆕 Blacklist System**: Centralized user management with status tracking and history.
 - **🆕 Graceful Error Handling**: Suppressed repeated Supabase "missing table" errors after first occurrence — no more terminal spam.
 
 ---

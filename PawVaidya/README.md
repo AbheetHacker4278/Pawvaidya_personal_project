@@ -61,10 +61,11 @@ PawVaidya/
 
 - User registration and authentication
 - Doctor profiles and scheduling
-- Appointment booking
+- Appointment booking with Unified Coupon/Discount System (Manual & Click-to-Apply)
+- Platform-wide Admin Coupons and Special Offers
 - Real-time chat
 - Payment integration
-- Admin dashboard
+- Admin dashboard with Blacklist/User Management
 - Community blogs
 - And more...
 

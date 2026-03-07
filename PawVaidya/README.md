@@ -59,6 +59,9 @@ PawVaidya/
 
 ## Features
 
+- **Interactive Community Polls**: Admin-created polls for users and doctors with real-time visual results and voting feedback.
+- **Advanced Admin Analytics**: Integrated GitHub Repository Health dashboard with live stats (Stars, Forks, Issues) and a Commit Discovery Stream.
+- **Multilingual Support**: Platform localized for English, Hindi, Telugu, and Tamil.
 - User registration and authentication
 - Doctor profiles and scheduling
 - Appointment booking with Unified Coupon/Discount System (Manual & Click-to-Apply)
@@ -72,8 +75,8 @@ PawVaidya/
 ## Tech Stack
 
 - **Backend**: Node.js, Express, MongoDB, Socket.io
-- **Frontend**: React, Vite, Tailwind CSS
-- **Admin**: React, Vite, Material-UI
+- **Frontend**: React, Vite, Tailwind CSS, i18next
+- **Admin**: React, Vite, Framer Motion, Lucide Icons
 - **Deployment**: Render.com
 
 ## Environment Variables

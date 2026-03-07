@@ -17,11 +17,13 @@ PawVaidya is a state-of-the-art, comprehensive veterinary consultancy platform d
 - **Video Consultations**: Crystal-clear video calls powered by **ZegoCloud** for remote diagnosis.
 - **Multilingual Support**: Seamless transition between English, Hindi, Tamil, and Telugu using **i18next** and AI-powered translations.
 - **🆕 Unified Coupon System**: Automatic fallback between doctor-specific discounts and platform-wide admin coupons (Manual & Click-to-Apply).
+- **🆕 Community Polls**: Interactive voting system for users to participate in platform-wide questions and riddles with real-time feedback.
 - **Pet ID Cards**: Generate digital, verifiable premium IDs for your pets.
 - **Community Hub**: Share experiences and learn from expert blogs.
 
 ### 🏥 For Veterinarians
 - **Dynamic Scheduling**: Manage consultation hours and availability slots.
+- **🆕 Collaborative Polls**: Engage with doctors-only polls for professional insights and platform feedback.
 - **Quick Chats**: Real-time messaging with pet owners for follow-ups.
 - **Profile Management**: Showcase expertise, experience, and consultancy fees.
 
@@ -41,6 +43,8 @@ PawVaidya is a state-of-the-art, comprehensive veterinary consultancy platform d
 - **🆕 Thermal Monitor**: Animated SVG thermometer with mercury level, pulsing bulb, per-core temperature bars, and spinning fan blades (RPM-proportional speed) via `systeminformation`.
 - **🆕 Platform Coupon Management**: Full suite for creating, toggling, and monitoring platform-wide discounts.
 - **🆕 Blacklist System**: Centralized user management with status tracking and history.
+- **🆕 GitHub Repo Health**: Integrated repository analytics tracking stars, forks, issues, and community health score.
+- **🆕 Live Commit Stream**: Real-time discovery feed of the latest 10 commits with author avatars and relative timestamps.
 - **🆕 Graceful Error Handling**: Suppressed repeated Supabase "missing table" errors after first occurrence — no more terminal spam.
 
 ---

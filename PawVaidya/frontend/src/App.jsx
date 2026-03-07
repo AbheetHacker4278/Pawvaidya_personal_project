@@ -27,6 +27,7 @@ import LiveStreams from './pages/LiveStreams'
 import ReportIssue from './pages/ReportIssue'
 import AnimalHealthChatbot from './components/AnimalHealthChatbot'
 import MyPets from './pages/MyPets'
+import Polls from './pages/Polls'
 import GlobalBroadcastListener from './components/GlobalBroadcastListener'
 import MaintenanceMode from './components/MaintenanceMode'
 import { AppContext } from './context/AppContext'
@@ -84,6 +85,7 @@ const App = () => {
         <Route path='/live-stream/:streamID' element={<LiveStreams />} />
         <Route path='/my-pets' element={<MyPets />} />
         <Route path='/report-issue' element={<ReportIssue />} />
+        <Route path='/polls' element={<Polls />} />
       </Routes>
 
       {location.pathname != "/login-form" && location.pathname != "/login" && <Footer />}

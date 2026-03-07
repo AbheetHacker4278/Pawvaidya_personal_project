@@ -44,7 +44,8 @@
     "myPets": "My Pets",
     "live": "Live",
     "reportIssue": "Report Issue",
-    "notifications": "Notifications"
+    "notifications": "Notifications",
+    "communityPolls": "Polls"
   },
   "home": {
     "bookAppointment": "Book Appointment With Trusted Doctors",

@@ -7,6 +7,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { Gift, Calendar, Award } from 'lucide-react';
 import DoctorCalendar from '../../components/DoctorCalendar';
 import AnalogClock from '../../components/AnalogClock';
+import DoctorPollCard from '../../components/DoctorPollCard';
 
 const DoctorDashboard = () => {
   const { dtoken, dashdata, getdashdata, cancelAppointment, completeAppointment, getDoctorReminders } = useContext(DoctorContext);
@@ -439,6 +440,9 @@ const DoctorDashboard = () => {
           </div>
         </motion.div>
       </motion.div>
+
+      {/* Doctor Polls Section */}
+      <DoctorPollCard />
 
       {/* Badge History Section */}
       {dashdata.incentiveHistory && dashdata.incentiveHistory.some(item => item.type === 'badge') && (

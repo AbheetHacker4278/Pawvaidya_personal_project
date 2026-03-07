@@ -4,6 +4,7 @@ import SpecialityMenu from '../components/SpecialityMenu'
 import TopDoctors from '../components/TopDoctors'
 import Banner from '../components/Banner'
 import PawBackground from '../components/PawBackground'
+import PollCard from '../components/PollCard'
 
 export const Home = () => {
   return (
@@ -12,6 +13,7 @@ export const Home = () => {
       <Header />
       <SpecialityMenu />
       <TopDoctors />
+      <PollCard />
       <Banner />
     </div>
   )

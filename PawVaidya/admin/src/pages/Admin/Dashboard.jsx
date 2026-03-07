@@ -5,12 +5,16 @@ import BroadcastComposer from '../../components/BroadcastComposer'
 import SupabaseHealthMonitor from '../../components/SupabaseHealthMonitor'
 import ActivePortsMonitor from '../../components/ActivePortsMonitor'
 import ServiceHealthDashboard from '../../components/ServiceHealthDashboard'
+import RepoHealth from '../../components/RepoHealth'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   PieChart, Pie, Cell, AreaChart, Area,
   Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
   LineChart, Line
 } from 'recharts'
+import { FileText, Download, Loader2, FileDown } from 'lucide-react'
+import axios from 'axios'
+import { toast } from 'react-toastify'
 
 // ─── Colour system ────────────────────────────────────────────────────────────
 const PALETTE = ['#818cf8', '#34d399', '#fbbf24', '#f87171', '#a78bfa', '#22d3ee', '#f472b6', '#2dd4bf']
@@ -652,8 +656,34 @@ const SupabaseRecordMonitor = ({ counts }) => (
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 const Dashboard = () => {
-  const { atoken, getdashdata, dashdata, updateSystemConfig, getFraudAlerts, fraudAlerts, updateCommissionRules, sendEmergencyBroadcast } = useContext(AdminContext)
+  const { atoken, getdashdata, dashdata, updateSystemConfig, getFraudAlerts, fraudAlerts, updateCommissionRules, sendEmergencyBroadcast, backendurl } = useContext(AdminContext)
   const { slotDateFormat, currency } = useContext(AppContext)
+  const [isExporting, setIsExporting] = useState(false)
+
+  const exportReport = async () => {
+    try {
+      setIsExporting(true)
+      const response = await axios.get(backendurl + '/api/admin/export-all-data', {
+        headers: { atoken },
+        responseType: 'blob'
+      })
+
+      const url = window.URL.createObjectURL(new Blob([response.data]))
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', `PawVaidya_System_Report_${new Date().toLocaleDateString().replace(/\//g, '-')}.docx`)
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+      toast.success("System Report Downloaded Successfully")
+    } catch (error) {
+      console.error("Export failed:", error)
+      toast.error("Failed to export report")
+    } finally {
+      setIsExporting(false)
+    }
+  }
 
   useEffect(() => {
     if (atoken) {
@@ -739,6 +769,14 @@ const Dashboard = () => {
             <p className="text-gray-500 text-sm mt-1 font-medium">Real-time Command Center for PawVaidya</p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
+            <button
+              onClick={exportReport}
+              disabled={isExporting}
+              className="group flex items-center gap-2.5 bg-white text-indigo-700 px-5 py-2.5 rounded-2xl border border-indigo-100 shadow-sm hover:shadow-xl hover:bg-indigo-50/50 hover:-translate-y-0.5 transition-all duration-300 font-black text-xs uppercase tracking-widest disabled:opacity-50"
+            >
+              {isExporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4 group-hover:scale-110 transition-transform" />}
+              {isExporting ? "Compiling..." : "Global Data Export (Word)"}
+            </button>
             <HealthPulsar status={platformHealth.backend} label="API" />
             <HealthPulsar status={platformHealth.database} label="DB" />
             <HealthPulsar status={platformHealth.gemini} label="AI" />
@@ -928,6 +966,7 @@ const Dashboard = () => {
               </div>
             </div>
           </Card>
+          <RepoHealth />
         </div>
 
         {/* ── Analytical Row 2 ────────────────────────────────────────────── */}
@@ -1083,7 +1122,7 @@ const Dashboard = () => {
         )}
 
       </div>
-    </div >
+    </div>
   )
 }
 

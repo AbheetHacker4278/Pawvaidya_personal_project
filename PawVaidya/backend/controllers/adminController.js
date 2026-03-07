@@ -19,6 +19,7 @@ import adminModel from '../models/adminModel.js';
 import ADMIN_OTP_TEMPLATE from '../mailservice/adminOTPTemplate.js';
 import blogModel from '../models/blogModel.js';
 import reportModel from '../models/reportModel.js';
+import ACCOUNT_DELETION_TEMPLATE from '../mailservice/accountDeletionTemplate.js';
 import { getIO } from '../socketServer.js';
 import serviceHealthModel from '../models/serviceHealthModel.js';
 import backgroundJobModel from '../models/backgroundJobModel.js';
@@ -29,6 +30,8 @@ import supabase from '../config/supabase.js';
 import activityLogModel from '../models/activityLogModel.js';
 import deletionRequestModel from '../models/deletionRequestModel.js';
 import blacklistModel from '../models/blacklistModel.js';
+import adminCouponModel from '../models/adminCouponModel.js';
+import { Document, Packer, Paragraph, Table, TableRow, TableCell, WidthType, AlignmentType, HeadingLevel, TextRun, BorderStyle } from "docx";
 
 const execAsync = promisify(exec);
 
@@ -791,12 +794,44 @@ export const deleteUser = async (req, res) => {
             await appointmentModel.deleteMany({ userId });
         }
 
+        // Capture user details for email notification
+        const userEmail = user.email;
+        const userName = user.name || 'User';
+
         // Delete the user
         await userModel.findByIdAndDelete(userId);
 
+        // Send deletion notification email
+        try {
+            const mailOptions = {
+                from: process.env.SENDER_EMAIL,
+                to: userEmail,
+                subject: 'Important: Your PawVaidya Account Has Been Deleted',
+                html: ACCOUNT_DELETION_TEMPLATE
+                    .replace('{name}', userName)
+                    .replace('{email}', userEmail)
+            };
+
+            await transporter.sendMail(mailOptions);
+
+            // Log the email activity
+            await logActivity(
+                userId.toString(),
+                'user',
+                'account_deletion_email_sent',
+                `Account deletion notification sent to ${userEmail}`,
+                req,
+                { email: userEmail, name: userName, adminAction: true }
+            );
+        } catch (mailError) {
+            console.error("Error sending account deletion email:", mailError.message);
+            // We don't fail the whole request if only the email fails, 
+            // but the activity log will reflect the deletion regardless.
+        }
+
         res.json({
             success: true,
-            message: "User deleted successfully"
+            message: "User deleted successfully and notification email sended"
         });
     } catch (error) {
         console.error("Error deleting user:", error.message);
@@ -2938,6 +2973,122 @@ export const blacklistEmails = async (req, res) => {
         }
         console.error("Error blacklisting emails:", error);
         res.json({ success: false, message: error.message });
+    }
+}
+
+// API to export all admin data to a single Word file
+export const exportDataToWord = async (req, res) => {
+    try {
+        const [doctors, users, appointments, admins, coupons, reports, logs] = await Promise.all([
+            doctorModel.find({}),
+            userModel.find({}),
+            appointmentModel.find({}).populate('docData'),
+            adminModel.find({}),
+            adminCouponModel.find({}),
+            reportModel.find({}),
+            activityLogModel.find({}).sort({ timestamp: -1 }).limit(100)
+        ]);
+
+        const createTable = (headers, rows) => {
+            return new Table({
+                width: { size: 100, type: WidthType.PERCENTAGE },
+                rows: [
+                    new TableRow({
+                        children: headers.map(header => new TableCell({
+                            children: [new Paragraph({ text: header, bold: true })],
+                            shading: { fill: "E0E0E0" }
+                        }))
+                    }),
+                    ...rows.map(row => new TableRow({
+                        children: row.map(cell => new TableCell({
+                            children: [new Paragraph({ text: String(cell || '—') })]
+                        }))
+                    }))
+                ]
+            });
+        };
+
+        const doc = new Document({
+            sections: [{
+                properties: {},
+                children: [
+                    new Paragraph({
+                        text: "PawVaidya Global Administration Report",
+                        heading: HeadingLevel.HEADING_1,
+                        alignment: AlignmentType.CENTER,
+                    }),
+                    new Paragraph({
+                        text: `Generated on: ${new Date().toLocaleString()}`,
+                        alignment: AlignmentType.CENTER,
+                        spacing: { after: 400 }
+                    }),
+
+                    new Paragraph({ text: "1. SUMMARY STATISTICS", heading: HeadingLevel.HEADING_2, spacing: { before: 400, after: 200 } }),
+                    new Paragraph({ text: `Total Doctors: ${doctors.length}` }),
+                    new Paragraph({ text: `Total Users: ${users.length}` }),
+                    new Paragraph({ text: `Total Appointments: ${appointments.length}` }),
+                    new Paragraph({ text: `Total Admin Staff: ${admins.length}` }),
+                    new Paragraph({ text: `Active Coupons: ${coupons.filter(c => c.isActive).length}`, spacing: { after: 400 } }),
+
+                    new Paragraph({ text: "2. DOCTOR DIRECTORY", heading: HeadingLevel.HEADING_2, spacing: { before: 400, after: 200 } }),
+                    createTable(
+                        ["Name", "Speciality", "Email", "Experience", "Fees"],
+                        doctors.map(d => [d.name, d.speciality, d.email, d.experience, String(d.fees)])
+                    ),
+
+                    new Paragraph({ text: "3. REGISTERED USERS", heading: HeadingLevel.HEADING_2, spacing: { before: 400, after: 200 } }),
+                    createTable(
+                        ["Name", "Email", "Gender", "DOB", "Verified"],
+                        users.map(u => [u.name, u.email, u.gender, u.dob, u.isAccountverified ? 'Yes' : 'No'])
+                    ),
+
+                    new Paragraph({ text: "4. RECENT APPOINTMENTS", heading: HeadingLevel.HEADING_2, spacing: { before: 400, after: 200 } }),
+                    createTable(
+                        ["Doctor", "Date", "Time", "Amount", "Status"],
+                        appointments.slice(0, 50).map(a => [a.docData?.name, a.slotDate, a.slotTime, String(a.amount), a.cancelled ? 'Cancelled' : (a.isCompleted ? 'Completed' : 'Pending')])
+                    ),
+
+                    new Paragraph({ text: "5. ACTIVE COUPONS", heading: HeadingLevel.HEADING_2, spacing: { before: 400, after: 200 } }),
+                    createTable(
+                        ["Code", "Type", "Value", "Min Amount", "Expiry"],
+                        coupons.map(c => [c.code, c.discountType, String(c.discountValue), String(c.minAmount), new Date(c.expiryDate).toLocaleDateString()])
+                    ),
+
+                    new Paragraph({ text: "6. SYSTEM REPORTS / ISSUES", heading: HeadingLevel.HEADING_2, spacing: { before: 400, after: 200 } }),
+                    createTable(
+                        ["Type", "Description", "Status", "Date"],
+                        reports.map(r => [r.type, r.description, r.status, new Date(r.createdAt).toLocaleDateString()])
+                    ),
+
+                    new Paragraph({ text: "7. RECENT ACTIVITY LOGS", heading: HeadingLevel.HEADING_2, spacing: { before: 400, after: 200 } }),
+                    createTable(
+                        ["Admin ID", "Action", "Description", "Date"],
+                        logs.map(l => [l.adminId, l.activityType, l.activityDescription, new Date(l.timestamp).toLocaleString()])
+                    ),
+
+                    new Paragraph({
+                        text: "End of Report",
+                        alignment: AlignmentType.CENTER,
+                        spacing: { before: 800 }
+                    }),
+                    new Paragraph({
+                        text: "Confidential - For Administrator Use Only",
+                        alignment: AlignmentType.CENTER,
+                        italics: true
+                    })
+                ]
+            }]
+        });
+
+        const buffer = await Packer.toBuffer(doc);
+
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+        res.setHeader('Content-Disposition', 'attachment; filename=PawVaidya_System_Report.docx');
+        res.send(buffer);
+
+    } catch (error) {
+        console.error("Error exporting Word data:", error);
+        res.status(500).json({ success: false, message: error.message });
     }
 }
 

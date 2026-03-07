@@ -1,8 +1,9 @@
 import express from 'express';
-import { addDoctor, allDoctors, loginAdmin, verifyAdminOTP, registerFace, loginWithFace, logAdminActivity, getAdminActivityLogs, getDoctorAttendanceLogs, appointmenetsAdmin, Appointmentcancel, admindashboard, allUsers, deleteUser, editUser, deleteDoctor, makeAllDoctorsAvailable, makeAllDoctorsUnavailable, getUserDetailsWithPassword, getDoctorDetailsWithPassword, getAllUsersWithPasswords, getAllDoctorsWithPasswords, getActivityLogs, getRealtimeActivityLogs, sendVerificationEmailToUser, createAdminMessage, getAllAdminMessages, updateAdminMessage, deleteAdminMessage, getBlogReports, updateBlogReportStatus, banFromBlogging, unbanFromBlogging, getUnbanRequests, handleUnbanRequest, deleteBlogReport, bulkDeleteBlogReports, addAdmin, allAdmins, updateAdmin, deleteAdmin, sendBroadcastEmail, sendIndividualEmail, getDoctorRankings, giveIncentive, omniSearch, sendBroadcastAlert, getSystemConfig, updateSystemConfig, getCloudinaryAssets, deleteCloudinaryAsset, getSystemSettings, getFraudAlerts, updateCommissionRules, sendEmergencyBroadcast, getSupabaseHealth, getDeletionRequests, processDeletionRequest, blacklistEmails, getBlacklist, removeFromBlacklist } from '../controllers/adminController.js';
+import { addDoctor, allDoctors, loginAdmin, verifyAdminOTP, registerFace, loginWithFace, logAdminActivity, getAdminActivityLogs, getDoctorAttendanceLogs, appointmenetsAdmin, Appointmentcancel, admindashboard, allUsers, deleteUser, editUser, deleteDoctor, makeAllDoctorsAvailable, makeAllDoctorsUnavailable, getUserDetailsWithPassword, getDoctorDetailsWithPassword, getAllUsersWithPasswords, getAllDoctorsWithPasswords, getActivityLogs, getRealtimeActivityLogs, sendVerificationEmailToUser, createAdminMessage, getAllAdminMessages, updateAdminMessage, deleteAdminMessage, getBlogReports, updateBlogReportStatus, banFromBlogging, unbanFromBlogging, getUnbanRequests, handleUnbanRequest, deleteBlogReport, bulkDeleteBlogReports, addAdmin, allAdmins, updateAdmin, deleteAdmin, sendBroadcastEmail, sendIndividualEmail, getDoctorRankings, giveIncentive, omniSearch, sendBroadcastAlert, getSystemConfig, updateSystemConfig, getCloudinaryAssets, deleteCloudinaryAsset, getSystemSettings, getFraudAlerts, updateCommissionRules, sendEmergencyBroadcast, getSupabaseHealth, getDeletionRequests, processDeletionRequest, blacklistEmails, getBlacklist, removeFromBlacklist, exportDataToWord } from '../controllers/adminController.js';
 import { createCoupon, getAllCoupons, toggleCouponStatus, deleteCoupon } from '../controllers/couponController.js';
 import { getServiceHealth } from '../controllers/serviceHealthController.js';
 import { initializeAdmin, getAdminProfile, updateAdminProfile, updateAdminPassword } from '../controllers/adminProfileController.js';
+import { createPoll, getAllPolls, togglePollStatus, deletePoll, voteInPoll } from '../controllers/pollController.js';
 import upload from '../middleware/multer.js';
 import authAdmin from '../middleware/authAdmin.js';
 import changeavailablity from '../controllers/doctorController.js';
@@ -100,6 +101,7 @@ adminRouter.get('/supabase-health', authAdmin, getSupabaseHealth);
 adminRouter.get('/service-health', authAdmin, getServiceHealth);
 adminRouter.get('/deletion-requests', authAdmin, getDeletionRequests);
 adminRouter.post('/process-deletion', authAdmin, processDeletionRequest);
+adminRouter.get('/export-all-data', authAdmin, exportDataToWord);
 
 // Blacklist Management
 adminRouter.post('/blacklist', authAdmin, blacklistEmails);
@@ -111,5 +113,12 @@ adminRouter.post('/create-coupon', authAdmin, createCoupon);
 adminRouter.get('/all-coupons', authAdmin, getAllCoupons);
 adminRouter.post('/toggle-coupon', authAdmin, toggleCouponStatus);
 adminRouter.post('/delete-coupon', authAdmin, deleteCoupon);
+
+// Poll Management Routes
+adminRouter.post('/create-poll', authAdmin, createPoll);
+adminRouter.get('/all-polls', authAdmin, getAllPolls);
+adminRouter.post('/toggle-poll', authAdmin, togglePollStatus);
+adminRouter.post('/delete-poll', authAdmin, deletePoll);
+adminRouter.post('/vote-poll', voteInPoll); // This might be used by users/doctors too, but keeping it here for now as requested for admin panel integration
 
 export default adminRouter

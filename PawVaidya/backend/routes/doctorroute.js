@@ -1,6 +1,7 @@
 import express from 'express';
 import { appointmentCancel, appointmentComplete, appointmentsDoctor, doctorDashboard, doctorProfile, doctorslist, logindoctor, updateDoctorProfile, logoutdoctor, getDoctorMessages, markDoctorMessageAsRead, getDoctorById, updateDoctorLocation, createReminder, getDoctorReminders, updateReminder, deleteReminder, getDailyEarnings, createDiscount, getDoctorDiscounts, updateDiscount, deleteDiscount, getPublicDoctorDiscounts, registerFaceDr, clockInDr, checkAttendanceStatus, changeavailablity } from '../controllers/doctorController.js';
 import { createDoctorBlog, getDoctorBlogs, updateDoctorBlog, deleteDoctorBlog, getAllBlogsForDoctor, toggleLikeBlog, addCommentToBlog, incrementBlogView, getBlogDetails } from '../controllers/doctorBlogController.js';
+import { getActivePolls, voteInPoll } from '../controllers/pollController.js';
 import { authDoctor } from '../middleware/authDoctor.js';
 import upload from '../middleware/multer.js';
 
@@ -58,5 +59,9 @@ doctorrouter.post('/change-availability', authDoctor, changeavailablity)
 
 // Public route — active coupons for a doctor (no auth, for frontend display)
 doctorrouter.get('/discounts/public/:docId', getPublicDoctorDiscounts)
+
+// Poll routes
+doctorrouter.get('/active-polls', authDoctor, getActivePolls)
+doctorrouter.post('/vote-poll', authDoctor, voteInPoll)
 
 export default doctorrouter

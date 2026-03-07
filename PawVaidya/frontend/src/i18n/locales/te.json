@@ -39,7 +39,8 @@
     "login": "లాగిన్",
     "myProfile": "నా ప్రొఫైల్",
     "myAppointments": "నా అపాయింట్‌మెంట్‌లు",
-    "logout": "లాగ్అవుట్"
+    "logout": "లాగ్అవుట్",
+    "communityPolls": "పోల్స్"
   },
   "home": {
     "bookAppointment": "నమ్మకమైన వైద్యులతో బుకింగ్ చేయండి",

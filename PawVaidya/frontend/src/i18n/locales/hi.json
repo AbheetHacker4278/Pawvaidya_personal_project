@@ -39,7 +39,8 @@
     "login": "लॉगिन",
     "myProfile": "मेरी प्रोफ़ाइल",
     "myAppointments": "मेरी अपॉइंटमेंट",
-    "logout": "लॉगआउट"
+    "logout": "लॉगआउट",
+    "communityPolls": "पोल"
   },
   "home": {
     "bookAppointment": "विश्वसनीय डॉक्टरों के साथ अपॉइंटमेंट बुक करें",

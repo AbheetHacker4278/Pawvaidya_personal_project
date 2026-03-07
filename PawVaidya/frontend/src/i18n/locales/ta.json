@@ -39,7 +39,8 @@
     "login": "உள்நுழை",
     "myProfile": "எனது சுயவிவரம்",
     "myAppointments": "எனது நியமனங்கள்",
-    "logout": "வெளியேறு"
+    "logout": "வெளியேறு",
+    "communityPolls": "வாக்கெடுப்புகள்"
   },
   "home": {
     "bookAppointment": "நம்பகமான மருத்துவர்களுடன் பதிவு செய்யுங்கள்",

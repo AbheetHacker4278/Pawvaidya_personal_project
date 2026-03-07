@@ -4,6 +4,7 @@ import { registeruser, loginUser, getprofile, updateprofile, bookappointment, li
 import { validateAdminCoupon, getActiveAdminCoupons } from '../controllers/couponController.js';
 import { getNearbyDoctors } from '../controllers/doctorController.js';
 import { createBlog, getAllBlogs, getBlogById, updateBlog, deleteBlog, toggleLike, addComment, deleteComment, getUserBlogs } from '../controllers/blogController.js';
+import { getActivePolls, voteInPoll } from '../controllers/pollController.js';
 import authuser from '../middleware/authuser.js';
 import upload from '../middleware/multer.js';
 import { uploadBlogFiles } from '../middleware/multerBlogs.js';
@@ -51,5 +52,9 @@ userRouter.post('/rate-doctor', authuser, rateDoctor)
 
 // Account Deletion route
 userRouter.post('/request-deletion', authuser, requestAccountDeletion)
+
+// Poll routes
+userRouter.get('/active-polls', authuser, getActivePolls)
+userRouter.post('/vote-poll', authuser, voteInPoll)
 
 export default userRouter

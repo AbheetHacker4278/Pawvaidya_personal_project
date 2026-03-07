@@ -29,6 +29,7 @@ const NAV_LINKS = [
   { to: '/contact', labelKey: 'navbar.contact' },
   { to: '/community-blogs', labelKey: 'navbar.communityBlogs' },
   { to: '/my-pets', labelKey: 'navbar.myPets' },
+  { to: '/polls', labelKey: 'navbar.communityPolls' },
   { to: '/live-streams', labelKey: 'navbar.live', live: true },
 ];
 

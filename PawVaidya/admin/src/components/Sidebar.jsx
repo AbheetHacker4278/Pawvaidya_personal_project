@@ -10,7 +10,7 @@ import {
   Stethoscope, Trophy, Radio, MessageSquare, Mail,
   AlertTriangle, Trash2, ShieldCheck, Database,
   Clock, BookOpen, ClipboardList, Tag, Tv, Search,
-  Menu, X, ChevronRight, Bell, ShieldAlert
+  Menu, X, ChevronRight, Bell, ShieldAlert, BarChart3
 } from 'lucide-react';
 
 const SidebarItem = ({ to, icon: Icon, label, isOpen, onClick, subtext, badge }) => {
@@ -172,6 +172,9 @@ const Sidebar = ({ isOpen }) => {
               )}
               {adminProfile?.role === 'master' && (
                 <SidebarItem to="/manage-coupons" icon={Tag} label="Coupons" subtext="Admin Subsidy" isOpen={isOpen} onClick={() => logNavigation('Coupons')} />
+              )}
+              {hasPerm('all') && (
+                <SidebarItem to="/polls" icon={BarChart3} label="Polls" subtext="Riddles & Questions" isOpen={isOpen} onClick={() => logNavigation('Polls')} />
               )}
 
               <SectionHeader label="Communication" isOpen={isOpen} />

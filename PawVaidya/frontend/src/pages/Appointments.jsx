@@ -892,7 +892,7 @@ const Appointments = () => {
                             Request Pending
                           </div>
                           <p className="text-xs text-white/70 text-center">
-                            Attempts: {unbanAttempts}/3
+                            Attempts used: {unbanAttempts}/3 ({3 - unbanAttempts} remaining)
                           </p>
                         </div>
                       ) : hasUnbanRequest && unbanRequestStatus === 'approved' ? (
@@ -901,9 +901,18 @@ const Appointments = () => {
                             <CheckCircle className="w-5 h-5" />
                             Request Approved
                           </div>
-                          <p className="text-xs text-white/70 text-center">
-                            Your account will be unbanned shortly
+                          <p className="text-xs text-white/70 text-center mb-4">
+                            Your account will be unbanned shortly.
                           </p>
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={checkActiveAppointments}
+                            className="w-full px-4 py-2 bg-white/20 hover:bg-white/30 text-white font-semibold rounded-lg border border-white/30 transition flex items-center justify-center gap-2"
+                          >
+                            <Loader className="w-4 h-4 animate-spin" />
+                            Refresh Status
+                          </motion.button>
                         </div>
                       ) : (
                         <div className="space-y-2">
@@ -924,7 +933,7 @@ const Appointments = () => {
                             {hasUnbanRequest && unbanRequestStatus === 'denied' ? 'Request Again' : 'Request Unban'}
                           </motion.button>
                           <p className="text-xs text-white/70 text-center">
-                            Attempts: {unbanAttempts}/3
+                            Attempts used: {unbanAttempts}/3 ({3 - unbanAttempts} remaining)
                           </p>
                         </div>
                       )}

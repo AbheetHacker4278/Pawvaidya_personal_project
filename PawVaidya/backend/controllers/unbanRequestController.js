@@ -54,8 +54,8 @@ export const submitUnbanRequest = async (req, res) => {
             });
         }
 
-        // Increment unban request attempts
-        requester.unbanRequestAttempts += 1;
+        // Increment unban request attempts safely
+        requester.unbanRequestAttempts = (requester.unbanRequestAttempts || 0) + 1;
         await requester.save();
 
         // Create unban request
@@ -140,6 +140,21 @@ export const approveUnbanRequest = async (req, res) => {
         }
 
         await account.save();
+
+        // Direct database update as fallback to ensure consistency
+        const updateData = {
+            isBanned: false,
+            banReason: '',
+            bannedAt: null,
+            bannedBy: null,
+            unbanAt: null,
+            unbanRequestAttempts: 0
+        };
+        if (request.requesterType === 'user') {
+            await userModel.updateOne({ _id: request.requesterId }, { $set: updateData });
+        } else {
+            await doctorModel.updateOne({ _id: request.requesterId }, { $set: { ...updateData, available: true } });
+        }
 
         // Update request status
         request.status = 'approved';

@@ -25,15 +25,17 @@ const BanUserDialog = ({ open, onClose, user, userType, onBan, onUnban, defaultB
     const [customDuration, setCustomDuration] = useState('');
     const [customUnit, setCustomUnit] = useState('h');
     const [banIp, setBanIp] = useState(defaultBanIp);
+    const [manualIp, setManualIp] = useState(user.lastLoginIp || '');
     const [isBanning, setIsBanning] = useState(false);
     const [isUnbanning, setIsUnbanning] = useState(false);
 
-    // Update banIp when dialog opens based on prop
+    // Update banIp and manualIp when dialog opens based on prop
     React.useEffect(() => {
         if (open) {
             setBanIp(defaultBanIp);
+            setManualIp(user.lastLoginIp || '');
         }
-    }, [open, defaultBanIp]);
+    }, [open, defaultBanIp, user.lastLoginIp]);
 
     const durationOptions = [
         { value: '1h', label: '1 Hour' },
@@ -69,7 +71,7 @@ const BanUserDialog = ({ open, onClose, user, userType, onBan, onUnban, defaultB
 
         setIsBanning(true);
         try {
-            await onBan(user._id, userType, finalDuration, banReason, banIp, user.lastLoginIp);
+            await onBan(user._id, userType, finalDuration, banReason, banIp, manualIp || user.lastLoginIp);
             onClose();
             // Reset form
             setBanDuration('24h');
@@ -216,24 +218,34 @@ const BanUserDialog = ({ open, onClose, user, userType, onBan, onUnban, defaultB
                             <Chip label="Policy Violation" onClick={() => setBanReason('Violation of platform policies')} clickable />
                         </Box>
 
-                        {user.lastLoginIp && (
-                            <Box sx={{ mt: 2 }}>
-                                <FormControl component="fieldset">
-                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                        <input
-                                            type="checkbox"
-                                            id="ban-ip-checkbox"
-                                            checked={banIp}
-                                            onChange={(e) => setBanIp(e.target.checked)}
-                                            style={{ cursor: 'pointer' }}
-                                        />
-                                        <label htmlFor="ban-ip-checkbox" style={{ cursor: 'pointer', fontSize: '0.875rem' }}>
-                                            <strong>Also ban this IP address ({user.lastLoginIp})</strong>
-                                        </label>
-                                    </Box>
-                                </FormControl>
-                            </Box>
-                        )}
+                        <Box sx={{ mt: 2 }}>
+                            <FormControl component="fieldset">
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                    <input
+                                        type="checkbox"
+                                        id="ban-ip-checkbox"
+                                        checked={banIp}
+                                        onChange={(e) => setBanIp(e.target.checked)}
+                                        style={{ cursor: 'pointer' }}
+                                    />
+                                    <label htmlFor="ban-ip-checkbox" style={{ cursor: 'pointer', fontSize: '0.875rem' }}>
+                                        <strong>Ban this IP address {user.lastLoginIp ? `(${user.lastLoginIp})` : ''}</strong>
+                                    </label>
+                                </Box>
+                                {banIp && !user.lastLoginIp && (
+                                    <TextField
+                                        fullWidth
+                                        size="small"
+                                        label="IP Address to Ban"
+                                        value={manualIp}
+                                        onChange={(e) => setManualIp(e.target.value)}
+                                        placeholder="e.g. 192.168.1.1"
+                                        sx={{ mt: 1 }}
+                                        required
+                                    />
+                                )}
+                            </FormControl>
+                        </Box>
                     </>
                 ) : (
                     <Alert severity="info" sx={{ mb: 3 }}>

@@ -647,7 +647,7 @@ const TotalUsers = () => {
                                         >
                                             {user.isBanned ? 'Unban User' : 'Ban User'}
                                         </Button>
-                                        {user.lastLoginIp && !user.isBanned && (
+                                        {!user.isBanned && (
                                             <Button
                                                 variant="outlined"
                                                 color="warning"

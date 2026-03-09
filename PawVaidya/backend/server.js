@@ -26,6 +26,7 @@ import contentModerationMiddleware from './middleware/contentModeration.js';
 
 // app config
 const app = express();
+app.set('trust proxy', true);
 const port = process.env.PORT || 4000;
 const server = http.createServer(app);
 

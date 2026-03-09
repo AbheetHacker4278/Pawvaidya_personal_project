@@ -208,7 +208,7 @@ const DoctorsList = () => {
               {doctor.isBanned ? <CheckCircleIcon sx={{ fontSize: 16 }} /> : <BlockIcon sx={{ fontSize: 16 }} />}
               {doctor.isBanned ? 'Unban' : 'Ban'}
             </button>
-            {doctor.lastLoginIp && !doctor.isBanned && (
+            {!doctor.isBanned && (
               <button
                 onClick={() => handleBanDoctor(doctor, true)}
                 disabled={isDeleting}

@@ -27,7 +27,7 @@ PawVaidya is a state-of-the-art, comprehensive veterinary consultancy platform d
 - **Quick Chats**: Real-time messaging with pet owners for follow-ups.
 - **Profile Management**: Showcase expertise, experience, and consultancy fees.
 
-### ⚙️ For Administrators (Admin Panel)
+### ⚙️ For Administrators (Admin Panel) (https://pawvaidya-admin-uy9o.onrender.com/)
 - **Advanced Analytics**: Real-time dashboard using **Chart.js** and **Recharts** to track status codes, activity trends, and system health.
 - **Supabase Integration**: Activity logging and analytics offloaded to Supabase for enhanced performance.
 - **Fraud Detection**: AI-monitored system to identify and alert about suspicious activities.

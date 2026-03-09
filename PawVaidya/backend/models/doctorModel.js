@@ -22,6 +22,7 @@ const doctorSchema = new mongoose.Schema({
     lastLogout: { type: Date, default: null },
     totalSessionTime: { type: Number, default: 0 }, // Total time in seconds
     currentSessionStart: { type: Date, default: null },
+    lastLoginIp: { type: String, default: null },
     // Ban/Suspension tracking
     isBanned: { type: Boolean, default: false },
     banReason: { type: String, default: '' },

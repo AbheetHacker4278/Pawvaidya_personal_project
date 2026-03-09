@@ -154,6 +154,12 @@ const DoctorsList = () => {
               <PhoneIcon sx={{ fontSize: 14 }} />
               <span>+91 {doctor.docphone}</span>
             </div>
+            {doctor.lastLoginIp && (
+              <div className='flex items-center gap-2 text-gray-600 text-sm'>
+                <LoginIcon sx={{ fontSize: 14 }} />
+                <span>IP: <strong>{doctor.lastLoginIp}</strong></span>
+              </div>
+            )}
           </div>
 
           {/* Availability Toggle */}
@@ -897,8 +903,8 @@ const DoctorsList = () => {
         onClose={handleBanDialogClose}
         user={doctorToBan}
         userType="doctor"
-        onBan={async (id, type, duration, reason) => {
-          const result = await banUser(id, type, duration, reason);
+        onBan={async (id, type, duration, reason, banIp, ipAddress) => {
+          const result = await banUser(id, type, duration, reason, banIp, ipAddress);
           await getalldoctors();
           return result;
         }}

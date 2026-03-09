@@ -169,11 +169,11 @@ const AdminContextProvider = (props) => {
     };
 
     // Ban user function
-    const banUser = async (userId, userType, banDuration, banReason) => {
+    const banUser = async (userId, userType, banDuration, banReason, banIp = false, ipAddress = null) => {
         try {
             const { data } = await axios.post(
                 `${backendurl}/api/ban/ban`,
-                { userId, userType, banDuration, banReason },
+                { userId, userType, banDuration, banReason, banIp, ipAddress },
                 { headers: { atoken } }
             );
 

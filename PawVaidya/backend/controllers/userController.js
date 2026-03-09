@@ -192,6 +192,7 @@ export const loginUser = async (req, res) => {
             // Update login tracking with new location
             user.lastLogin = now;
             user.currentSessionStart = now;
+            user.lastLoginIp = ip;
             if (currentLocation) {
                 user.location = {
                     latitude: currentLocation.latitude,

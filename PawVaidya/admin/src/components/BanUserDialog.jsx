@@ -24,6 +24,7 @@ const BanUserDialog = ({ open, onClose, user, userType, onBan, onUnban }) => {
     const [banReason, setBanReason] = useState('');
     const [customDuration, setCustomDuration] = useState('');
     const [customUnit, setCustomUnit] = useState('h');
+    const [banIp, setBanIp] = useState(false);
     const [isBanning, setIsBanning] = useState(false);
     const [isUnbanning, setIsUnbanning] = useState(false);
 
@@ -61,7 +62,7 @@ const BanUserDialog = ({ open, onClose, user, userType, onBan, onUnban }) => {
 
         setIsBanning(true);
         try {
-            await onBan(user._id, userType, finalDuration, banReason);
+            await onBan(user._id, userType, finalDuration, banReason, banIp, user.lastLoginIp);
             onClose();
             // Reset form
             setBanDuration('24h');
@@ -93,17 +94,17 @@ const BanUserDialog = ({ open, onClose, user, userType, onBan, onUnban }) => {
 
     return (
         <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-            <DialogTitle sx={{ 
-                bgcolor: user.isBanned ? 'success.main' : 'error.main', 
-                color: 'white', 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: 1 
+            <DialogTitle sx={{
+                bgcolor: user.isBanned ? 'success.main' : 'error.main',
+                color: 'white',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1
             }}>
                 {user.isBanned ? 'Unban User' : 'Ban User'}
                 {user.isBanned ? <AccessTimeIcon /> : <BlockIcon />}
             </DialogTitle>
-            
+
             <DialogContent sx={{ pt: 3 }}>
                 <Box sx={{ mb: 3 }}>
                     <Typography variant="h6" gutterBottom>
@@ -112,7 +113,12 @@ const BanUserDialog = ({ open, onClose, user, userType, onBan, onUnban }) => {
                     <Typography variant="body2" color="text.secondary" gutterBottom>
                         Email: {user.email}
                     </Typography>
-                    
+                    {user.lastLoginIp && (
+                        <Typography variant="body2" color="text.secondary">
+                            Last Login IP: <strong>{user.lastLoginIp}</strong>
+                        </Typography>
+                    )}
+
                     {user.isBanned && (
                         <Alert severity="warning" sx={{ mt: 2 }}>
                             <Typography variant="body2">
@@ -202,6 +208,25 @@ const BanUserDialog = ({ open, onClose, user, userType, onBan, onUnban }) => {
                             <Chip label="Payment Issues" onClick={() => setBanReason('Payment fraud or chargebacks')} clickable />
                             <Chip label="Policy Violation" onClick={() => setBanReason('Violation of platform policies')} clickable />
                         </Box>
+
+                        {user.lastLoginIp && (
+                            <Box sx={{ mt: 2 }}>
+                                <FormControl component="fieldset">
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        <input
+                                            type="checkbox"
+                                            id="ban-ip-checkbox"
+                                            checked={banIp}
+                                            onChange={(e) => setBanIp(e.target.checked)}
+                                            style={{ cursor: 'pointer' }}
+                                        />
+                                        <label htmlFor="ban-ip-checkbox" style={{ cursor: 'pointer', fontSize: '0.875rem' }}>
+                                            <strong>Also ban this IP address ({user.lastLoginIp})</strong>
+                                        </label>
+                                    </Box>
+                                </FormControl>
+                            </Box>
+                        )}
                     </>
                 ) : (
                     <Alert severity="info" sx={{ mb: 3 }}>
@@ -211,7 +236,7 @@ const BanUserDialog = ({ open, onClose, user, userType, onBan, onUnban }) => {
                     </Alert>
                 )}
             </DialogContent>
-            
+
             <DialogActions sx={{ px: 3, py: 2 }}>
                 <Button onClick={onClose} color="inherit" variant="outlined">
                     Cancel

@@ -1,5 +1,6 @@
 import userModel from '../models/userModel.js';
 import doctorModel from '../models/doctorModel.js';
+import bannedIpModel from '../models/bannedIpModel.js';
 import { logActivity } from '../utils/activityLogger.js';
 
 /**
@@ -10,7 +11,7 @@ import { logActivity } from '../utils/activityLogger.js';
  */
 export const banUser = async (req, res) => {
     try {
-        const { userId, userType, banDuration, banReason } = req.body;
+        const { userId, userType, banDuration, banReason, banIp, ipAddress } = req.body;
         const adminId = req.adminId; // From authAdmin middleware
 
         if (!userId || !userType || !banDuration || !banReason) {
@@ -87,6 +88,26 @@ export const banUser = async (req, res) => {
 
         await user.save();
 
+        // Optional IP Ban
+        let ipBanned = false;
+        if (banIp && ipAddress) {
+            let expiresAt = unbanAt; // Use same expiry as user ban
+            await bannedIpModel.findOneAndUpdate(
+                { ipAddress },
+                {
+                    reason: banReason,
+                    bannedBy: adminId,
+                    bannedAt: new Date(),
+                    expiresAt,
+                    isActive: true,
+                    associatedUserId: userId,
+                    associatedUserType: userType
+                },
+                { upsert: true, new: true }
+            );
+            ipBanned = true;
+        }
+
         // Log the ban activity
         await logActivity(
             adminId,
@@ -107,7 +128,7 @@ export const banUser = async (req, res) => {
 
         return res.json({
             success: true,
-            message: `${userType.charAt(0).toUpperCase() + userType.slice(1)} banned successfully for ${banDuration}`,
+            message: `${userType.charAt(0).toUpperCase() + userType.slice(1)} banned successfully${ipBanned ? ' (IP also banned)' : ''} for ${banDuration}`,
             data: {
                 userId: user._id,
                 name: user.name,
@@ -115,7 +136,8 @@ export const banUser = async (req, res) => {
                 banDuration,
                 banReason,
                 unbanAt,
-                bannedAt: user.bannedAt
+                bannedAt: user.bannedAt,
+                ipBanned
             }
         });
 

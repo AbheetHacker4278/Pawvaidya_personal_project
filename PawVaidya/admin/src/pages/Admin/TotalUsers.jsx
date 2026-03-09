@@ -1141,8 +1141,8 @@ const TotalUsers = () => {
                 onClose={handleBanDialogClose}
                 user={userToBan}
                 userType="user"
-                onBan={async (id, type, duration, reason) => {
-                    const result = await banUser(id, type, duration, reason);
+                onBan={async (id, type, duration, reason, banIp, ipAddress) => {
+                    const result = await banUser(id, type, duration, reason, banIp, ipAddress);
                     await getallusers();
                     return result;
                 }}

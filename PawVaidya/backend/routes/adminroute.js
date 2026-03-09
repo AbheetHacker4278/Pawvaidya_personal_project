@@ -1,5 +1,6 @@
 import express from 'express';
 import { addDoctor, allDoctors, loginAdmin, verifyAdminOTP, registerFace, loginWithFace, logAdminActivity, getAdminActivityLogs, getDoctorAttendanceLogs, appointmenetsAdmin, Appointmentcancel, admindashboard, allUsers, deleteUser, editUser, deleteDoctor, makeAllDoctorsAvailable, makeAllDoctorsUnavailable, getUserDetailsWithPassword, getDoctorDetailsWithPassword, getAllUsersWithPasswords, getAllDoctorsWithPasswords, getActivityLogs, getRealtimeActivityLogs, sendVerificationEmailToUser, createAdminMessage, getAllAdminMessages, updateAdminMessage, deleteAdminMessage, getBlogReports, updateBlogReportStatus, banFromBlogging, unbanFromBlogging, getUnbanRequests, handleUnbanRequest, deleteBlogReport, bulkDeleteBlogReports, addAdmin, allAdmins, updateAdmin, deleteAdmin, sendBroadcastEmail, sendIndividualEmail, getDoctorRankings, giveIncentive, omniSearch, sendBroadcastAlert, getSystemConfig, updateSystemConfig, getCloudinaryAssets, deleteCloudinaryAsset, getSystemSettings, getFraudAlerts, updateCommissionRules, sendEmergencyBroadcast, getSupabaseHealth, getDeletionRequests, processDeletionRequest, blacklistEmails, getBlacklist, removeFromBlacklist, exportDataToWord, getSecurityIncidents, resolveSecurityIncident, getUnreadSecurityIncidentCount } from '../controllers/adminController.js';
+import { getContentViolations, resolveContentViolation, banIpAddress, getBannedIps, unbanIpAddress, banFromViolation } from '../controllers/contentModerationController.js';
 import { createCoupon, getAllCoupons, toggleCouponStatus, deleteCoupon } from '../controllers/couponController.js';
 import { getServiceHealth } from '../controllers/serviceHealthController.js';
 import { initializeAdmin, getAdminProfile, updateAdminProfile, updateAdminPassword } from '../controllers/adminProfileController.js';
@@ -126,5 +127,15 @@ adminRouter.get('/all-polls', authAdmin, getAllPolls);
 adminRouter.post('/toggle-poll', authAdmin, togglePollStatus);
 adminRouter.post('/delete-poll', authAdmin, deletePoll);
 adminRouter.post('/vote-poll', voteInPoll); // This might be used by users/doctors too, but keeping it here for now as requested for admin panel integration
+
+// Content Moderation Routes
+adminRouter.get('/content-violations', authAdmin, getContentViolations);
+adminRouter.post('/content-violations/:violationId/resolve', authAdmin, resolveContentViolation);
+adminRouter.post('/ban-from-violation', authAdmin, banFromViolation);
+
+// IP Ban Management Routes
+adminRouter.post('/ban-ip', authAdmin, banIpAddress);
+adminRouter.get('/banned-ips', authAdmin, getBannedIps);
+adminRouter.post('/unban-ip', authAdmin, unbanIpAddress);
 
 export default adminRouter

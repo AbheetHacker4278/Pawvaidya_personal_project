@@ -25,17 +25,17 @@ const BanUserDialog = ({ open, onClose, user, userType, onBan, onUnban, defaultB
     const [customDuration, setCustomDuration] = useState('');
     const [customUnit, setCustomUnit] = useState('h');
     const [banIp, setBanIp] = useState(defaultBanIp);
-    const [manualIp, setManualIp] = useState(user.lastLoginIp || '');
+    const [manualIp, setManualIp] = useState(user?.lastLoginIp || '');
     const [isBanning, setIsBanning] = useState(false);
     const [isUnbanning, setIsUnbanning] = useState(false);
 
     // Update banIp and manualIp when dialog opens based on prop
     React.useEffect(() => {
-        if (open) {
+        if (open && user) {
             setBanIp(defaultBanIp);
             setManualIp(user.lastLoginIp || '');
         }
-    }, [open, defaultBanIp, user.lastLoginIp]);
+    }, [open, defaultBanIp, user?.lastLoginIp]);
 
     const durationOptions = [
         { value: '1h', label: '1 Hour' },

@@ -30,6 +30,7 @@ import MyPets from './pages/MyPets'
 import Polls from './pages/Polls'
 import GlobalBroadcastListener from './components/GlobalBroadcastListener'
 import MaintenanceMode from './components/MaintenanceMode'
+import LocationHandler from './components/LocationHandler'
 import { AppContext } from './context/AppContext'
 import { useContext } from 'react'
 
@@ -45,6 +46,7 @@ const App = () => {
           message={systemConfig.maintenanceMessage}
         />
       )}
+      <LocationHandler />
       {location.pathname != "/login-form" && location.pathname != "/login" && <Navbar />}
       <ToastContainer
         position="top-right"

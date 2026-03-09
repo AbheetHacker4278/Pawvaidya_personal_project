@@ -21,6 +21,7 @@ import { initializeSocket } from './socketServer.js';
 import initScheduler from './utils/scheduler.js';
 import telemetryMiddleware from './middleware/telemetryMiddleware.js';
 import maintenanceMiddleware from './middleware/maintenanceMiddleware.js';
+import securityMonitor from './middleware/securityMonitor.js';
 
 // app config
 const app = express();
@@ -42,10 +43,12 @@ const allowedorigins = process.env.ALLOWED_ORIGINS
   : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175'];
 
 app.use(express.json())
+app.use(express.urlencoded({ extended: true }))
 app.use(cors({ origin: allowedorigins, credentials: true }));
 app.use(cookieParser())
 app.use(telemetryMiddleware)
 app.use(maintenanceMiddleware)
+app.use(securityMonitor)
 
 //api endpoint
 try {

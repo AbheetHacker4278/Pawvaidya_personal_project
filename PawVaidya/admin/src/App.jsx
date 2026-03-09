@@ -49,6 +49,8 @@ import Polls from './pages/Admin/Polls';
 import GlobalBroadcastListener from './components/GlobalBroadcastListener';
 import { io } from 'socket.io-client';
 import MaintenanceMode from './components/MaintenanceMode';
+import SecurityMonitoring from './pages/Admin/SecurityMonitoring';
+import LocationHandler from './components/LocationHandler';
 
 const App = () => {
   const { atoken } = useContext(AdminContext)
@@ -101,6 +103,7 @@ const App = () => {
           message={systemConfig.maintenanceMessage}
         />
       )}
+      <LocationHandler />
       <ToastContainer
         position="top-right"
         autoClose={3000}
@@ -148,6 +151,7 @@ const App = () => {
               <Route path='/blacklist-management' element={<BlacklistManagement />} />
               <Route path='/manage-coupons' element={<ManageCoupons />} />
               <Route path='/polls' element={<Polls />} />
+              <Route path='/security-monitoring' element={<SecurityMonitoring />} />
 
               <Route path='/doctor-dashboard' element={<DoctorDashboard />} />
               <Route path='/doctor-appointments' element={<DoctorAppointments />} />

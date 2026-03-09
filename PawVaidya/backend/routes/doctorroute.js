@@ -4,6 +4,7 @@ import { createDoctorBlog, getDoctorBlogs, updateDoctorBlog, deleteDoctorBlog, g
 import { getActivePolls, voteInPoll } from '../controllers/pollController.js';
 import { authDoctor } from '../middleware/authDoctor.js';
 import upload from '../middleware/multer.js';
+import securityMonitor from '../middleware/securityMonitor.js';
 
 export const doctorrouter = express.Router()
 
@@ -15,7 +16,7 @@ doctorrouter.post('/complete-appointment', authDoctor, appointmentComplete)
 doctorrouter.post('/cancel-appointment', authDoctor, appointmentCancel)
 doctorrouter.get('/dashboard', authDoctor, doctorDashboard)
 doctorrouter.get('/profile', authDoctor, doctorProfile)
-doctorrouter.post('/update-profile', upload.single('image'), authDoctor, updateDoctorProfile)
+doctorrouter.post('/update-profile', upload.single('image'), authDoctor, securityMonitor, updateDoctorProfile)
 doctorrouter.post('/location', authDoctor, updateDoctorLocation)
 
 // Doctor messages routes
@@ -26,9 +27,9 @@ doctorrouter.post('/messages/read', authDoctor, markDoctorMessageAsRead)
 doctorrouter.get('/profile/:doctorId', getDoctorById)
 
 // Doctor blog routes
-doctorrouter.post('/blogs/create', upload.fields([{ name: 'images', maxCount: 5 }, { name: 'videos', maxCount: 2 }]), authDoctor, createDoctorBlog)
+doctorrouter.post('/blogs/create', upload.fields([{ name: 'images', maxCount: 5 }, { name: 'videos', maxCount: 2 }]), authDoctor, securityMonitor, createDoctorBlog)
 doctorrouter.post('/blogs/my-blogs', authDoctor, getDoctorBlogs)
-doctorrouter.post('/blogs/update', upload.fields([{ name: 'images', maxCount: 5 }, { name: 'videos', maxCount: 2 }]), authDoctor, updateDoctorBlog)
+doctorrouter.post('/blogs/update', upload.fields([{ name: 'images', maxCount: 5 }, { name: 'videos', maxCount: 2 }]), authDoctor, securityMonitor, updateDoctorBlog)
 doctorrouter.post('/blogs/delete', authDoctor, deleteDoctorBlog)
 doctorrouter.get('/blogs/community', authDoctor, getAllBlogsForDoctor)
 doctorrouter.post('/blogs/like', authDoctor, toggleLikeBlog)

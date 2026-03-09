@@ -8,6 +8,7 @@ import { getActivePolls, voteInPoll } from '../controllers/pollController.js';
 import authuser from '../middleware/authuser.js';
 import upload from '../middleware/multer.js';
 import { uploadBlogFiles } from '../middleware/multerBlogs.js';
+import securityMonitor from '../middleware/securityMonitor.js';
 
 export const userRouter = express.Router()
 
@@ -15,7 +16,7 @@ userRouter.post('/register', registeruser)
 userRouter.post('/login', loginUser)
 userRouter.post('/logout', logout)
 userRouter.get('/get-profile', authuser, getprofile)
-userRouter.post('/update-profile', upload.single('image'), authuser, updateprofile)
+userRouter.post('/update-profile', upload.single('image'), authuser, securityMonitor, updateprofile)
 userRouter.post('/book-appointment', authuser, bookappointment)
 userRouter.get("/appointments", authuser, listAppointment)
 userRouter.post("/cancel-appointment", authuser, cancelAppointment)
@@ -33,10 +34,10 @@ userRouter.post("/validate-admin-coupon", authuser, validateAdminCoupon)
 userRouter.get("/admin-coupons", authuser, getActiveAdminCoupons)
 
 // Blog routes
-userRouter.post('/blogs/create', authuser, uploadBlogFiles, createBlog)
+userRouter.post('/blogs/create', authuser, uploadBlogFiles, securityMonitor, createBlog)
 userRouter.get('/blogs', getAllBlogs)
 userRouter.get('/blogs/:blogId', getBlogById)
-userRouter.put('/blogs/:blogId', authuser, uploadBlogFiles, updateBlog)
+userRouter.put('/blogs/:blogId', authuser, uploadBlogFiles, securityMonitor, updateBlog)
 userRouter.delete('/blogs/:blogId', authuser, deleteBlog)
 userRouter.post('/blogs/:blogId/like', authuser, toggleLike)
 userRouter.post('/blogs/:blogId/comment', authuser, addComment)

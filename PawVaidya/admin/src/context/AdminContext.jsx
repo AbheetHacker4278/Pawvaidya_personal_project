@@ -13,6 +13,8 @@ const AdminContextProvider = (props) => {
     const [dashdata, setdashdata] = useState(false)
     const [adminProfile, setAdminProfile] = useState(null)
     const [fraudAlerts, setFraudAlerts] = useState([])
+    const [securityIncidentCount, setSecurityIncidentCount] = useState(0)
+    const [adminLocation, setAdminLocation] = useState(null)
 
     const backendurl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'
 
@@ -442,10 +444,42 @@ const AdminContextProvider = (props) => {
     useEffect(() => {
         if (atoken) {
             getAdminProfile()
+            fetchSecurityIncidentCount()
+            // Refresh count every 1 minute
+            const interval = setInterval(fetchSecurityIncidentCount, 60000);
+            return () => clearInterval(interval);
         } else {
             setAdminProfile(null)
+            setSecurityIncidentCount(0)
         }
-    }, [atoken])
+    }, [atoken]);
+
+    // Load cached location on mount
+    useEffect(() => {
+        const cachedLocation = localStorage.getItem('adminLocation');
+        if (cachedLocation) {
+            try {
+                const parsedLocation = JSON.parse(cachedLocation);
+                setAdminLocation(parsedLocation);
+                // Set initial axios headers if cached
+                axios.defaults.headers.common['x-client-latitude'] = parsedLocation.latitude || parsedLocation.lat;
+                axios.defaults.headers.common['x-client-longitude'] = parsedLocation.longitude || parsedLocation.lon;
+            } catch (error) {
+                localStorage.removeItem('adminLocation');
+            }
+        }
+    }, []);
+
+    // Update axios headers whenever adminLocation changes
+    useEffect(() => {
+        if (adminLocation && (adminLocation.latitude || adminLocation.lat)) {
+            axios.defaults.headers.common['x-client-latitude'] = adminLocation.latitude || adminLocation.lat;
+            axios.defaults.headers.common['x-client-longitude'] = adminLocation.longitude || adminLocation.lon;
+        }
+    }, [adminLocation]);
+
+    // Refresh count after resolving/fetching in the page (via global state)
+    // The page itself calls setSecurityIncidentCount so it will be in sync
 
 
 
@@ -529,6 +563,20 @@ const AdminContextProvider = (props) => {
             toast.error(error.message)
         }
     }
+
+    const fetchSecurityIncidentCount = async () => {
+        if (!atoken) return;
+        try {
+            const { data } = await axios.get(`${backendurl}/api/admin/security-incidents/unread-count`, {
+                headers: { atoken }
+            });
+            if (data.success) {
+                setSecurityIncidentCount(data.count);
+            }
+        } catch (error) {
+            console.error("Failed to fetch security incident count:", error);
+        }
+    };
 
     // ── Admin Intelligence Functions ──────────────────────────────────────────
     const getFraudAlerts = async () => {
@@ -739,7 +787,9 @@ const AdminContextProvider = (props) => {
         fraudAlerts, getFraudAlerts, updateCommissionRules, sendEmergencyBroadcast,
         blacklistEmails, getBlacklist, removeFromBlacklist,
         verifyAdminOTP,
-        getAllCoupons, createCoupon, toggleCoupon, deleteCoupon
+        getAllCoupons, createCoupon, toggleCoupon, deleteCoupon,
+        securityIncidentCount, setSecurityIncidentCount,
+        adminLocation, setAdminLocation
     }
 
     return (

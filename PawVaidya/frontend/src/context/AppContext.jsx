@@ -183,8 +183,11 @@ const AppContextProvider = (props) => {
         if (cachedLocation) {
             try {
                 const parsedLocation = JSON.parse(cachedLocation);
-                if (isLocationValid(parsedLocation)) {
+                if (parsedLocation && (parsedLocation.latitude || parsedLocation.lat)) {
                     setUserLocation(parsedLocation);
+                    // Initial axios header set
+                    axios.defaults.headers.common['x-client-latitude'] = parsedLocation.latitude || parsedLocation.lat;
+                    axios.defaults.headers.common['x-client-longitude'] = parsedLocation.longitude || parsedLocation.lon;
                 } else {
                     localStorage.removeItem('userLocation');
                 }
@@ -193,6 +196,14 @@ const AppContextProvider = (props) => {
             }
         }
     }, []);
+
+    // Inject location headers into axios
+    useEffect(() => {
+        if (userLocation && (userLocation.latitude || userLocation.lat)) {
+            axios.defaults.headers.common['x-client-latitude'] = userLocation.latitude || userLocation.lat;
+            axios.defaults.headers.common['x-client-longitude'] = userLocation.longitude || userLocation.lon;
+        }
+    }, [userLocation]);
 
     const value = {
         doctors, getdoctorsdata,

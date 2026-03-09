@@ -31,6 +31,7 @@ import activityLogModel from '../models/activityLogModel.js';
 import deletionRequestModel from '../models/deletionRequestModel.js';
 import blacklistModel from '../models/blacklistModel.js';
 import adminCouponModel from '../models/adminCouponModel.js';
+import securityIncidentModel from '../models/securityIncidentModel.js';
 import { Document, Packer, Paragraph, Table, TableRow, TableCell, WidthType, AlignmentType, HeadingLevel, TextRun, BorderStyle } from "docx";
 
 const execAsync = promisify(exec);
@@ -3123,3 +3124,49 @@ export const removeFromBlacklist = async (req, res) => {
         res.json({ success: false, message: error.message });
     }
 }
+
+// API to get all security incidents
+export const getSecurityIncidents = async (req, res) => {
+    try {
+        const incidents = await securityIncidentModel.find().sort({ createdAt: -1 });
+        res.json({ success: true, incidents });
+    } catch (error) {
+        console.error("Error fetching security incidents:", error);
+        res.json({ success: false, message: error.message });
+    }
+};
+
+// API to resolve a security incident
+export const resolveSecurityIncident = async (req, res) => {
+    try {
+        const { incidentId } = req.params;
+        const { status } = req.body; // resolved or ignored
+
+        await securityIncidentModel.findByIdAndUpdate(incidentId, { status });
+
+        await logActivity(
+            req.admin?.id || 'master',
+            'admin',
+            'resolve_security_incident',
+            `Marked security incident ${incidentId} as ${status}`,
+            req,
+            { incidentId, status }
+        );
+
+        res.json({ success: true, message: `Incident marked as ${status}` });
+    } catch (error) {
+        console.error("Error resolving security incident:", error);
+        res.json({ success: false, message: error.message });
+    }
+};
+
+// API to get unread security incident count
+export const getUnreadSecurityIncidentCount = async (req, res) => {
+    try {
+        const count = await securityIncidentModel.countDocuments({ status: 'new' });
+        res.json({ success: true, count });
+    } catch (error) {
+        console.error("Error fetching unread security incident count:", error);
+        res.json({ success: false, message: error.message });
+    }
+};

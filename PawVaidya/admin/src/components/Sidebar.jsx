@@ -94,7 +94,7 @@ const SectionHeader = ({ label, isOpen }) => (
 );
 
 const Sidebar = ({ isOpen }) => {
-  const { atoken, backendurl, adminProfile } = useContext(AdminContext);
+  const { atoken, backendurl, adminProfile, securityIncidentCount } = useContext(AdminContext);
   const { dtoken } = useContext(DoctorContext);
 
   const logNavigation = async (section) => {
@@ -175,6 +175,9 @@ const Sidebar = ({ isOpen }) => {
               )}
               {hasPerm('all') && (
                 <SidebarItem to="/polls" icon={BarChart3} label="Polls" subtext="Riddles & Questions" isOpen={isOpen} onClick={() => logNavigation('Polls')} />
+              )}
+              {adminProfile?.role === 'master' && (
+                <SidebarItem to="/security-monitoring" icon={ShieldAlert} label="Security Monitor" subtext="Threat Detection" isOpen={isOpen} onClick={() => logNavigation('Security Monitor')} badge={securityIncidentCount} />
               )}
 
               <SectionHeader label="Communication" isOpen={isOpen} />

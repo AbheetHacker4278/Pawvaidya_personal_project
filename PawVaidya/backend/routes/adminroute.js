@@ -1,16 +1,17 @@
 import express from 'express';
-import { addDoctor, allDoctors, loginAdmin, verifyAdminOTP, registerFace, loginWithFace, logAdminActivity, getAdminActivityLogs, getDoctorAttendanceLogs, appointmenetsAdmin, Appointmentcancel, admindashboard, allUsers, deleteUser, editUser, deleteDoctor, makeAllDoctorsAvailable, makeAllDoctorsUnavailable, getUserDetailsWithPassword, getDoctorDetailsWithPassword, getAllUsersWithPasswords, getAllDoctorsWithPasswords, getActivityLogs, getRealtimeActivityLogs, sendVerificationEmailToUser, createAdminMessage, getAllAdminMessages, updateAdminMessage, deleteAdminMessage, getBlogReports, updateBlogReportStatus, banFromBlogging, unbanFromBlogging, getUnbanRequests, handleUnbanRequest, deleteBlogReport, bulkDeleteBlogReports, addAdmin, allAdmins, updateAdmin, deleteAdmin, sendBroadcastEmail, sendIndividualEmail, getDoctorRankings, giveIncentive, omniSearch, sendBroadcastAlert, getSystemConfig, updateSystemConfig, getCloudinaryAssets, deleteCloudinaryAsset, getSystemSettings, getFraudAlerts, updateCommissionRules, sendEmergencyBroadcast, getSupabaseHealth, getDeletionRequests, processDeletionRequest, blacklistEmails, getBlacklist, removeFromBlacklist, exportDataToWord } from '../controllers/adminController.js';
+import { addDoctor, allDoctors, loginAdmin, verifyAdminOTP, registerFace, loginWithFace, logAdminActivity, getAdminActivityLogs, getDoctorAttendanceLogs, appointmenetsAdmin, Appointmentcancel, admindashboard, allUsers, deleteUser, editUser, deleteDoctor, makeAllDoctorsAvailable, makeAllDoctorsUnavailable, getUserDetailsWithPassword, getDoctorDetailsWithPassword, getAllUsersWithPasswords, getAllDoctorsWithPasswords, getActivityLogs, getRealtimeActivityLogs, sendVerificationEmailToUser, createAdminMessage, getAllAdminMessages, updateAdminMessage, deleteAdminMessage, getBlogReports, updateBlogReportStatus, banFromBlogging, unbanFromBlogging, getUnbanRequests, handleUnbanRequest, deleteBlogReport, bulkDeleteBlogReports, addAdmin, allAdmins, updateAdmin, deleteAdmin, sendBroadcastEmail, sendIndividualEmail, getDoctorRankings, giveIncentive, omniSearch, sendBroadcastAlert, getSystemConfig, updateSystemConfig, getCloudinaryAssets, deleteCloudinaryAsset, getSystemSettings, getFraudAlerts, updateCommissionRules, sendEmergencyBroadcast, getSupabaseHealth, getDeletionRequests, processDeletionRequest, blacklistEmails, getBlacklist, removeFromBlacklist, exportDataToWord, getSecurityIncidents, resolveSecurityIncident, getUnreadSecurityIncidentCount } from '../controllers/adminController.js';
 import { createCoupon, getAllCoupons, toggleCouponStatus, deleteCoupon } from '../controllers/couponController.js';
 import { getServiceHealth } from '../controllers/serviceHealthController.js';
 import { initializeAdmin, getAdminProfile, updateAdminProfile, updateAdminPassword } from '../controllers/adminProfileController.js';
 import { createPoll, getAllPolls, togglePollStatus, deletePoll, voteInPoll } from '../controllers/pollController.js';
 import upload from '../middleware/multer.js';
 import authAdmin from '../middleware/authAdmin.js';
+import securityMonitor from '../middleware/securityMonitor.js';
 import changeavailablity from '../controllers/doctorController.js';
 
 const adminRouter = express.Router();
 
-adminRouter.post('/add-doctor', authAdmin, upload.single('image'), addDoctor);
+adminRouter.post('/add-doctor', authAdmin, upload.single('image'), securityMonitor, addDoctor);
 adminRouter.post('/login', loginAdmin)
 adminRouter.post('/verify-otp', verifyAdminOTP);
 adminRouter.post('/register-face', authAdmin, registerFace)
@@ -27,7 +28,7 @@ adminRouter.post('/cancel-appointment', authAdmin, Appointmentcancel)
 adminRouter.get('/dashboard', authAdmin, admindashboard)
 adminRouter.get('/all-users', authAdmin, allUsers)
 adminRouter.delete('/users/:userId', authAdmin, deleteUser);
-adminRouter.put('/users/:userId', authAdmin, upload.single('image'), editUser);
+adminRouter.put('/users/:userId', authAdmin, upload.single('image'), securityMonitor, editUser);
 adminRouter.delete('/doctors/:doctorId', authAdmin, deleteDoctor);
 
 // New endpoints for detailed user/doctor information with passwords and stats
@@ -39,9 +40,9 @@ adminRouter.get('/realtime-activity-logs', authAdmin, getRealtimeActivityLogs);
 adminRouter.post('/send-verification-email', authAdmin, sendVerificationEmailToUser);
 
 // Admin messages routes
-adminRouter.post('/messages', authAdmin, upload.array('attachments', 5), createAdminMessage);
+adminRouter.post('/messages', authAdmin, upload.array('attachments', 5), securityMonitor, createAdminMessage);
 adminRouter.get('/messages', authAdmin, getAllAdminMessages);
-adminRouter.put('/messages/:messageId', authAdmin, upload.array('attachments', 5), updateAdminMessage);
+adminRouter.put('/messages/:messageId', authAdmin, upload.array('attachments', 5), securityMonitor, updateAdminMessage);
 adminRouter.delete('/messages/:messageId', authAdmin, deleteAdminMessage);
 
 // Blog reports routes
@@ -65,14 +66,14 @@ adminRouter.delete('/delete-admin/:adminId', authAdmin, deleteAdmin);
 // Admin profile management routes
 adminRouter.post('/initialize', initializeAdmin); // One-time migration (no auth required)
 adminRouter.get('/profile', authAdmin, getAdminProfile);
-adminRouter.put('/profile', authAdmin, upload.single('image'), updateAdminProfile);
+adminRouter.put('/profile', authAdmin, upload.single('image'), securityMonitor, updateAdminProfile);
 adminRouter.put('/password', authAdmin, updateAdminPassword);
 
 // Broadcast Email
-adminRouter.post('/broadcast-email', authAdmin, upload.array('attachments'), sendBroadcastEmail);
+adminRouter.post('/broadcast-email', authAdmin, upload.array('attachments'), securityMonitor, sendBroadcastEmail);
 
 // Individual Email
-adminRouter.post('/send-individual-email', authAdmin, upload.array('attachments'), sendIndividualEmail);
+adminRouter.post('/send-individual-email', authAdmin, upload.array('attachments'), securityMonitor, sendIndividualEmail);
 
 // Doctor Rankings and Incentives
 adminRouter.get('/doctor-rankings', authAdmin, getDoctorRankings);
@@ -107,6 +108,11 @@ adminRouter.get('/export-all-data', authAdmin, exportDataToWord);
 adminRouter.post('/blacklist', authAdmin, blacklistEmails);
 adminRouter.get('/blacklist', authAdmin, getBlacklist);
 adminRouter.post('/remove-blacklist', authAdmin, removeFromBlacklist);
+
+// Security Incident Management
+adminRouter.get('/security-incidents', authAdmin, getSecurityIncidents);
+adminRouter.post('/security-incidents/:incidentId/resolve', authAdmin, resolveSecurityIncident);
+adminRouter.get('/security-incidents/unread-count', authAdmin, getUnreadSecurityIncidentCount);
 
 // Coupon Management Routes
 adminRouter.post('/create-coupon', authAdmin, createCoupon);

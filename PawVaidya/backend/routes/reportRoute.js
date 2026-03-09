@@ -21,7 +21,7 @@ import {
     deletePostByAdmin
 } from '../controllers/reportController.js';
 import authAdmin from '../middleware/authAdmin.js';
-import authUser from '../middleware/authUser.js';
+import authuser from '../middleware/authuser.js';
 import { authDoctor } from '../middleware/authDoctor.js';
 
 const reportRouter = express.Router();

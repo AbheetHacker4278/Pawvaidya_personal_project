@@ -40,7 +40,7 @@ initializeSocket(server);
 //middleware
 const allowedorigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
-  : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175'];
+  : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175' , 'https://pawvaidya-79qq.onrender.com'];
 
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))

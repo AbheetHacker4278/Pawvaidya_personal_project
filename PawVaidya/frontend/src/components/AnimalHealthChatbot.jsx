@@ -21,7 +21,7 @@ const PawIcon = ({ size = 28, color = 'white' }) => (
 // ─── Gemini setup ─────────────────────────────────────────────────────────────
 const API_KEY = import.meta.env.VITE_API_KEY_GEMINI_2;
 const genAI = new GoogleGenerativeAI(API_KEY);
-const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
 // ─── System prompt (prepended to every request) ───────────────────────────────
 const SYSTEM_PROMPT = `You are PawBot, the official AI assistant for PawVaidya — a veterinary consultancy platform for pet owners in India.

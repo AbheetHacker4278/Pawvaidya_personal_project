@@ -135,7 +135,7 @@ const BanModal = ({ violation, onClose, onBan }) => {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 const SecurityMonitoring = () => {
-    const { atoken, backendurl, setSecurityIncidentCount } = useContext(AdminContext);
+    const { atoken, backendurl, setSecurityIncidentCount, setContentViolationCount } = useContext(AdminContext);
 
     // Security incidents
     const [incidents, setIncidents] = useState([]);
@@ -171,7 +171,10 @@ const SecurityMonitoring = () => {
         try {
             setViolationsLoading(true);
             const { data } = await axios.get(`${backendurl}/api/admin/content-violations`, { headers: { atoken } });
-            if (data.success) setViolations(data.violations);
+            if (data.success) {
+                setViolations(data.violations);
+                setContentViolationCount(data.unreadCount ?? 0); // sync global context badge
+            }
         } catch (err) { toast.error(err.message); }
         finally { setViolationsLoading(false); }
     };

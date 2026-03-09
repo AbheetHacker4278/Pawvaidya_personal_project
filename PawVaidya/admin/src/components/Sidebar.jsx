@@ -52,9 +52,11 @@ const SidebarItem = ({ to, icon: Icon, label, isOpen, onClick, subtext, badge })
         )}
       </AnimatePresence>
 
-      {/* Badge / Indicator */}
+      {/* Badge / Indicator — show numeric count */}
       {badge > 0 && (
-        <span className={`absolute ${isOpen ? 'right-3' : 'top-2 right-2'} flex h-2 w-2 rounded-full bg-rose-500 animate-pulse border border-white`} />
+        <span className={`absolute ${isOpen ? 'right-2' : 'top-1 right-1'} flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-rose-500 text-white text-[9px] font-black border border-white shadow-sm shadow-rose-200 animate-pulse`}>
+          {badge > 99 ? '99+' : badge}
+        </span>
       )}
 
       {/* Tooltip for collapsed mode */}
@@ -94,7 +96,7 @@ const SectionHeader = ({ label, isOpen }) => (
 );
 
 const Sidebar = ({ isOpen }) => {
-  const { atoken, backendurl, adminProfile, securityIncidentCount } = useContext(AdminContext);
+  const { atoken, backendurl, adminProfile, securityIncidentCount, contentViolationCount } = useContext(AdminContext);
   const { dtoken } = useContext(DoctorContext);
 
   const logNavigation = async (section) => {
@@ -177,7 +179,7 @@ const Sidebar = ({ isOpen }) => {
                 <SidebarItem to="/polls" icon={BarChart3} label="Polls" subtext="Riddles & Questions" isOpen={isOpen} onClick={() => logNavigation('Polls')} />
               )}
               {adminProfile?.role === 'master' && (
-                <SidebarItem to="/security-monitoring" icon={ShieldAlert} label="Security Monitor" subtext="Threat Detection" isOpen={isOpen} onClick={() => logNavigation('Security Monitor')} badge={securityIncidentCount} />
+                <SidebarItem to="/security-monitoring" icon={ShieldAlert} label="Security Monitor" subtext="Threats & Content" isOpen={isOpen} onClick={() => logNavigation('Security Monitor')} badge={securityIncidentCount + contentViolationCount} />
               )}
 
               <SectionHeader label="Communication" isOpen={isOpen} />

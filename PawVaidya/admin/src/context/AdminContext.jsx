@@ -14,9 +14,35 @@ const AdminContextProvider = (props) => {
     const [adminProfile, setAdminProfile] = useState(null)
     const [fraudAlerts, setFraudAlerts] = useState([])
     const [securityIncidentCount, setSecurityIncidentCount] = useState(0)
+    const [contentViolationCount, setContentViolationCount] = useState(0)
     const [adminLocation, setAdminLocation] = useState(null)
 
     const backendurl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'
+
+    // ── Global alert count polling (security + content violations) ─────────────
+    const fetchAlertCounts = useCallback(async () => {
+        if (!atoken) return;
+        try {
+            const [incRes, violRes] = await Promise.allSettled([
+                axios.get(`${backendurl}/api/admin/security-incidents`, { headers: { atoken } }),
+                axios.get(`${backendurl}/api/admin/content-violations`, { headers: { atoken } })
+            ]);
+            if (incRes.status === 'fulfilled' && incRes.value.data.success) {
+                const newCount = incRes.value.data.incidents.filter(i => i.status === 'new').length;
+                setSecurityIncidentCount(newCount);
+            }
+            if (violRes.status === 'fulfilled' && violRes.value.data.success) {
+                setContentViolationCount(violRes.value.data.unreadCount ?? 0);
+            }
+        } catch (_) { /* silent — don't spam toast on poll */ }
+    }, [atoken, backendurl]);
+
+    useEffect(() => {
+        if (!atoken) return;
+        fetchAlertCounts(); // initial fetch
+        const interval = setInterval(fetchAlertCounts, 30000); // poll every 30s
+        return () => clearInterval(interval);
+    }, [atoken, fetchAlertCounts]);
 
     const getalldoctors = async () => {
         try {
@@ -794,6 +820,7 @@ const AdminContextProvider = (props) => {
         verifyAdminOTP,
         getAllCoupons, createCoupon, toggleCoupon, deleteCoupon,
         securityIncidentCount, setSecurityIncidentCount,
+        contentViolationCount, setContentViolationCount,
         adminLocation, setAdminLocation
     }
 

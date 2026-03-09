@@ -33,6 +33,8 @@ const userSchema = new mongoose.Schema({
     banReason: { type: String, default: '' },
     bannedAt: { type: Date, default: null },
     bannedBy: { type: String, default: null },
+    unbanAt: { type: Date, default: null },
+    unbanRequestAttempts: { type: Number, default: 0 },
     // Verification reminder tracking
     verificationRemindersSent: { type: Number, default: 0 },
     lastVerificationReminderAt: { type: Date, default: null },

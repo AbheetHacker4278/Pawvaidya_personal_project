@@ -10,7 +10,7 @@ export const submitUnbanRequest = async (req, res) => {
         // Check if user/doctor exists and is banned
         let requester;
         let requesterModel;
-        
+
         if (requesterType === 'user') {
             requester = await userModel.findById(requesterId);
             requesterModel = 'user';
@@ -20,24 +20,24 @@ export const submitUnbanRequest = async (req, res) => {
         }
 
         if (!requester) {
-            return res.json({ 
-                success: false, 
-                message: `${requesterType} not found` 
+            return res.json({
+                success: false,
+                message: `${requesterType} not found`
             });
         }
 
         if (!requester.isBanned) {
-            return res.json({ 
-                success: false, 
-                message: 'Account is not banned' 
+            return res.json({
+                success: false,
+                message: 'Account is not banned'
             });
         }
 
         // Check if user has exceeded 3 attempts
         if (requester.unbanRequestAttempts >= 3) {
-            return res.json({ 
-                success: false, 
-                message: 'You have exceeded the maximum number of unban requests (3 attempts). Please contact support directly.' 
+            return res.json({
+                success: false,
+                message: 'You have exceeded the maximum number of unban requests (3 attempts). Please contact support directly.'
             });
         }
 
@@ -48,9 +48,9 @@ export const submitUnbanRequest = async (req, res) => {
         });
 
         if (existingRequest) {
-            return res.json({ 
-                success: false, 
-                message: 'You already have a pending unban request' 
+            return res.json({
+                success: false,
+                message: 'You already have a pending unban request'
             });
         }
 
@@ -72,9 +72,9 @@ export const submitUnbanRequest = async (req, res) => {
 
         await unbanRequest.save();
 
-        res.json({ 
-            success: true, 
-            message: 'Unban request submitted successfully. Admin will review your request.' 
+        res.json({
+            success: true,
+            message: 'Unban request submitted successfully. Admin will review your request.'
         });
 
     } catch (error) {
@@ -90,9 +90,9 @@ export const getAllUnbanRequests = async (req, res) => {
             .sort({ createdAt: -1 })
             .populate('reviewedBy', 'name email');
 
-        res.json({ 
-            success: true, 
-            requests 
+        res.json({
+            success: true,
+            requests
         });
 
     } catch (error) {
@@ -132,8 +132,9 @@ export const approveUnbanRequest = async (req, res) => {
         account.banReason = '';
         account.bannedAt = null;
         account.bannedBy = null;
+        account.unbanAt = null;
         account.unbanRequestAttempts = 0; // Reset attempts on approval
-        
+
         if (request.requesterType === 'doctor') {
             account.available = true; // Make doctor available again
         }
@@ -150,9 +151,9 @@ export const approveUnbanRequest = async (req, res) => {
 
         await request.save();
 
-        res.json({ 
-            success: true, 
-            message: `${request.requesterName} has been unbanned successfully` 
+        res.json({
+            success: true,
+            message: `${request.requesterName} has been unbanned successfully`
         });
 
     } catch (error) {
@@ -185,9 +186,9 @@ export const denyUnbanRequest = async (req, res) => {
 
         await request.save();
 
-        res.json({ 
-            success: true, 
-            message: 'Unban request denied' 
+        res.json({
+            success: true,
+            message: 'Unban request denied'
         });
 
     } catch (error) {
@@ -206,17 +207,17 @@ export const getMyUnbanRequest = async (req, res) => {
         }).sort({ createdAt: -1 });
 
         if (!request) {
-            return res.json({ 
-                success: true, 
+            return res.json({
+                success: true,
                 hasRequest: false,
                 request: null
             });
         }
 
-        res.json({ 
-            success: true, 
+        res.json({
+            success: true,
             hasRequest: true,
-            request 
+            request
         });
 
     } catch (error) {

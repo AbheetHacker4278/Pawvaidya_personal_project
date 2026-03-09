@@ -147,7 +147,7 @@ const Appointments = () => {
           setUnbanAttempts(userData.unbanRequestAttempts || 0);
 
           // Check if user has an unban request
-          const unbanReqRes = await axios.get(backendurl + `/api/unban-request/my-request/${userData.id}`);
+          const unbanReqRes = await axios.get(backendurl + `/api/unban-request/my-request/${userData._id || userData.id}`);
           if (unbanReqRes.data.success && unbanReqRes.data.hasRequest) {
             setHasUnbanRequest(true);
             setUnbanRequestStatus(unbanReqRes.data.request.status);
@@ -192,7 +192,7 @@ const Appointments = () => {
         backendurl + '/api/unban-request/submit',
         {
           requesterType: 'user',
-          requesterId: userdata.id,
+          requesterId: userdata?._id || userdata?.id,
           requestMessage: unbanRequestMessage
         }
       );

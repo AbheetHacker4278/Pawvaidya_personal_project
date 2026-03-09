@@ -44,8 +44,27 @@ PawVaidya is a state-of-the-art, comprehensive veterinary consultancy platform d
 - **🆕 Platform Coupon Management**: Full suite for creating, toggling, and monitoring platform-wide discounts.
 - **🆕 Blacklist System**: Centralized user management with status tracking and history.
 - **🆕 GitHub Repo Health**: Integrated repository analytics tracking stars, forks, issues, and community health score.
+- **🆕 Advanced Security Monitoring**: 24/7 automated threat detection for **SQL Injection (SQLi)** and **Cross-Site Scripting (XSS)**.
+- **🆕 Offender Identity Tracking**: Deep metadata capturing including:
+  - **Beautified IP Addressing** — Localhost (`::1`) mapping and proxy header resolution.
+  - **Device Fingerprinting** — Browser, OS, and device type extraction from User-Agents.
+  - **Client-Side Geolocation** — High-precision GPS/Network coordinates with user consent.
 - **🆕 Live Commit Stream**: Real-time discovery feed of the latest 10 commits with author avatars and relative timestamps.
 - **🆕 Graceful Error Handling**: Suppressed repeated Supabase "missing table" errors after first occurrence — no more terminal spam.
+
+---
+
+## 🛡️ Advanced Security Monitoring
+
+PawVaidya features a sophisticated security attribution and monitoring layer designed to protect the platform from malicious actors while providing administrators with high-fidelity incident reports.
+
+- **Real-time Detection**: Middleware-level scanning of all incoming `req.body`, `req.query`, and `req.params` for malicious patterns.
+- **Interactive Security Dashboard**: A premium, animated interface in the Admin Panel to:
+  - View live security incidents with severity color-coding.
+  - Explore detailed **Offender Profiles** (Identity, Device, and Location).
+  - Resolve or ignore incidents with activity logging.
+  - Track "Total Scanned" vs "Threats Detected" metrics.
+- **Privacy-First Geolocation**: Requests user permission to share location for enhanced security logs, falling back to IP-based approximate location if denied.
 
 ---
 
@@ -138,8 +157,8 @@ PawVaidya/
 │   ├── config/             # DB, Cloudinary, Nodemailer, Supabase Config
 │   ├── controllers/        # Business Logic (User, Doctor, Admin, ServiceHealth)
 │   ├── services/           # Supabase Service (metrics & activity logging)
-│   ├── middleware/         # Auth & Validation Middleware
-│   ├── models/             # Mongoose Schemas (User, Doctor, Appt)
+│   ├── middleware/         # Auth, Validation, and **Security Monitoring**
+│   ├── models/             # Mongoose Schemas (User, Doctor, Appt, **SecurityIncident**)
 │   ├── routes/             # API Endpoints
 │   └── socketServer.js     # Real-time WebSocket Logic
 ├── SUPABASE_SETUP.md       # SQL setup guide for Supabase tables

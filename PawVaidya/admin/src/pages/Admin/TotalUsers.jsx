@@ -93,6 +93,7 @@ const TotalUsers = () => {
     // State for ban dialog
     const [banDialogOpen, setBanDialogOpen] = useState(false);
     const [userToBan, setUserToBan] = useState(null);
+    const [defaultBanIp, setDefaultBanIp] = useState(false);
 
     // State for email dialog
     const [emailDialogOpen, setEmailDialogOpen] = useState(false);
@@ -324,8 +325,9 @@ const TotalUsers = () => {
     };
 
     // Handle ban user
-    const handleBanUser = (user) => {
+    const handleBanUser = (user, banIp = false) => {
         setUserToBan(user);
+        setDefaultBanIp(banIp);
         setBanDialogOpen(true);
     };
 
@@ -333,6 +335,7 @@ const TotalUsers = () => {
     const handleBanDialogClose = () => {
         setBanDialogOpen(false);
         setUserToBan(null);
+        setDefaultBanIp(false);
     };
 
     // Handle ban/unban completion
@@ -632,17 +635,32 @@ const TotalUsers = () => {
                                             Delete
                                         </Button>
                                     </Box>
-                                    <Button
-                                        variant={user.isBanned ? "contained" : "outlined"}
-                                        color={user.isBanned ? "success" : "error"}
-                                        size="small"
-                                        fullWidth
-                                        startIcon={user.isBanned ? <CheckCircleIcon /> : <BlockIcon />}
-                                        onClick={() => handleBanUser(user)}
-                                        sx={{ fontSize: '0.7rem', py: 0.75, borderRadius: 2 }}
-                                    >
-                                        {user.isBanned ? 'Unban User' : 'Ban User'}
-                                    </Button>
+                                    <Box display="flex" gap={1}>
+                                        <Button
+                                            variant={user.isBanned ? "contained" : "outlined"}
+                                            color={user.isBanned ? "success" : "error"}
+                                            size="small"
+                                            fullWidth
+                                            startIcon={user.isBanned ? <CheckCircleIcon /> : <BlockIcon />}
+                                            onClick={() => handleBanUser(user, false)}
+                                            sx={{ fontSize: '0.7rem', py: 0.75, borderRadius: 2, flex: 1 }}
+                                        >
+                                            {user.isBanned ? 'Unban User' : 'Ban User'}
+                                        </Button>
+                                        {user.lastLoginIp && !user.isBanned && (
+                                            <Button
+                                                variant="outlined"
+                                                color="warning"
+                                                size="small"
+                                                fullWidth
+                                                startIcon={<WarningIcon />}
+                                                onClick={() => handleBanUser(user, true)}
+                                                sx={{ fontSize: '0.7rem', py: 0.75, borderRadius: 2, flex: 1 }}
+                                            >
+                                                Ban IP
+                                            </Button>
+                                        )}
+                                    </Box>
                                 </Box>
                             </Card>
                         </Grid>
@@ -1141,6 +1159,7 @@ const TotalUsers = () => {
                 onClose={handleBanDialogClose}
                 user={userToBan}
                 userType="user"
+                defaultBanIp={defaultBanIp}
                 onBan={async (id, type, duration, reason, banIp, ipAddress) => {
                     const result = await banUser(id, type, duration, reason, banIp, ipAddress);
                     await getallusers();

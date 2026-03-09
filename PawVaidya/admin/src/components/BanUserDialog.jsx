@@ -19,14 +19,21 @@ import WarningIcon from '@mui/icons-material/Warning';
 import BlockIcon from '@mui/icons-material/Block';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 
-const BanUserDialog = ({ open, onClose, user, userType, onBan, onUnban }) => {
+const BanUserDialog = ({ open, onClose, user, userType, onBan, onUnban, defaultBanIp = false }) => {
     const [banDuration, setBanDuration] = useState('24h');
     const [banReason, setBanReason] = useState('');
     const [customDuration, setCustomDuration] = useState('');
     const [customUnit, setCustomUnit] = useState('h');
-    const [banIp, setBanIp] = useState(false);
+    const [banIp, setBanIp] = useState(defaultBanIp);
     const [isBanning, setIsBanning] = useState(false);
     const [isUnbanning, setIsUnbanning] = useState(false);
+
+    // Update banIp when dialog opens based on prop
+    React.useEffect(() => {
+        if (open) {
+            setBanIp(defaultBanIp);
+        }
+    }, [open, defaultBanIp]);
 
     const durationOptions = [
         { value: '1h', label: '1 Hour' },

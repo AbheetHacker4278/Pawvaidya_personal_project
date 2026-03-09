@@ -64,6 +64,7 @@ const DoctorsList = () => {
   // State for ban dialog
   const [banDialogOpen, setBanDialogOpen] = useState(false)
   const [doctorToBan, setDoctorToBan] = useState(null)
+  const [defaultBanIp, setDefaultBanIp] = useState(false)
 
   // Separate available and not available doctors
   const getDoctorsByAvailability = (isAvailable) => {
@@ -182,11 +183,11 @@ const DoctorsList = () => {
           </div>
 
           {/* Action Buttons */}
-          <div className='grid grid-cols-3 gap-2'>
+          <div className='flex flex-wrap gap-2'>
             <button
               onClick={() => handleViewDetails(doctor)}
               disabled={isDeleting}
-              className={`flex items-center justify-center gap-1 py-2 px-3 rounded-lg font-medium text-sm transition-all duration-200 ${isDeleting
+              className={`flex-1 flex items-center justify-center gap-1 py-2 px-3 rounded-lg font-medium text-sm transition-all duration-200 ${isDeleting
                 ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
                 : 'bg-blue-500 text-white hover:bg-blue-600 hover:shadow-md'
                 }`}
@@ -195,9 +196,9 @@ const DoctorsList = () => {
               View
             </button>
             <button
-              onClick={() => handleBanDoctor(doctor)}
+              onClick={() => handleBanDoctor(doctor, false)}
               disabled={isDeleting}
-              className={`flex items-center justify-center gap-1 py-2 px-3 rounded-lg font-medium text-sm transition-all duration-200 ${isDeleting
+              className={`flex-1 flex items-center justify-center gap-1 py-2 px-3 rounded-lg font-medium text-sm transition-all duration-200 ${isDeleting
                 ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
                 : doctor.isBanned
                   ? 'bg-green-500 text-white hover:bg-green-600 hover:shadow-md'
@@ -207,10 +208,23 @@ const DoctorsList = () => {
               {doctor.isBanned ? <CheckCircleIcon sx={{ fontSize: 16 }} /> : <BlockIcon sx={{ fontSize: 16 }} />}
               {doctor.isBanned ? 'Unban' : 'Ban'}
             </button>
+            {doctor.lastLoginIp && !doctor.isBanned && (
+              <button
+                onClick={() => handleBanDoctor(doctor, true)}
+                disabled={isDeleting}
+                className={`flex-1 flex items-center justify-center gap-1 py-2 px-3 rounded-lg font-medium text-sm transition-all duration-200 ${isDeleting
+                  ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                  : 'bg-red-600 text-white hover:bg-red-700 hover:shadow-md'
+                  }`}
+              >
+                <WarningIcon sx={{ fontSize: 16 }} />
+                Ban IP
+              </button>
+            )}
             <button
               onClick={() => handleDeleteDoctor(doctor._id)}
               disabled={isDeleting}
-              className={`py-2 px-3 rounded-lg font-medium text-sm transition-all duration-200 ${isDeleting
+              className={`flex-1 min-w-[30%] py-2 px-3 rounded-lg font-medium text-sm transition-all duration-200 ${isDeleting
                 ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
                 : 'bg-red-500 text-white hover:bg-red-600 hover:shadow-md'
                 }`}
@@ -285,8 +299,9 @@ const DoctorsList = () => {
   };
 
   // Handle ban doctor
-  const handleBanDoctor = (doctor) => {
+  const handleBanDoctor = (doctor, banIp = false) => {
     setDoctorToBan(doctor);
+    setDefaultBanIp(banIp);
     setBanDialogOpen(true);
   };
 
@@ -294,6 +309,7 @@ const DoctorsList = () => {
   const handleBanDialogClose = () => {
     setBanDialogOpen(false);
     setDoctorToBan(null);
+    setDefaultBanIp(false);
   };
 
   // Handle ban/unban completion
@@ -903,6 +919,7 @@ const DoctorsList = () => {
         onClose={handleBanDialogClose}
         user={doctorToBan}
         userType="doctor"
+        defaultBanIp={defaultBanIp}
         onBan={async (id, type, duration, reason, banIp, ipAddress) => {
           const result = await banUser(id, type, duration, reason, banIp, ipAddress);
           await getalldoctors();

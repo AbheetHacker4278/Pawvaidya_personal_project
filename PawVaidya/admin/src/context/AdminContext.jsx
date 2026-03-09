@@ -461,22 +461,27 @@ const AdminContextProvider = (props) => {
             try {
                 const parsedLocation = JSON.parse(cachedLocation);
                 setAdminLocation(parsedLocation);
-                // Set initial axios headers if cached
-                axios.defaults.headers.common['x-client-latitude'] = parsedLocation.latitude || parsedLocation.lat;
-                axios.defaults.headers.common['x-client-longitude'] = parsedLocation.longitude || parsedLocation.lon;
             } catch (error) {
                 localStorage.removeItem('adminLocation');
             }
         }
     }, []);
 
-    // Update axios headers whenever adminLocation changes
+    // Targeted Interceptor: Only send security headers to our backend
     useEffect(() => {
-        if (adminLocation && (adminLocation.latitude || adminLocation.lat)) {
-            axios.defaults.headers.common['x-client-latitude'] = adminLocation.latitude || adminLocation.lat;
-            axios.defaults.headers.common['x-client-longitude'] = adminLocation.longitude || adminLocation.lon;
-        }
-    }, [adminLocation]);
+        const interceptor = axios.interceptors.request.use((config) => {
+            // Check if request is going to our backend
+            if (config.url && config.url.includes(backendurl) && adminLocation) {
+                config.headers['x-client-latitude'] = adminLocation.latitude || adminLocation.lat;
+                config.headers['x-client-longitude'] = adminLocation.longitude || adminLocation.lon;
+            }
+            return config;
+        }, (error) => {
+            return Promise.reject(error);
+        });
+
+        return () => axios.interceptors.request.eject(interceptor);
+    }, [adminLocation, backendurl]);
 
     // Refresh count after resolving/fetching in the page (via global state)
     // The page itself calls setSecurityIncidentCount so it will be in sync

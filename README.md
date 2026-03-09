@@ -11,7 +11,7 @@ PawVaidya is a state-of-the-art, comprehensive veterinary consultancy platform d
 
 ## 🔥 Key Features
 
-### 🐶 For Pet Owners (User Portal)
+### 🐶 For Pet Owners (User Portal) (https://pawvaidya-79qq.onrender.com/)
 - **AI-Powered Diagnostics**: Integrated **Gemini AI** chatbot (PawBot) for instant pet health guidance and symptom checking.
 - **Smart Appointment Booking**: Easy scheduling with specialized vets (Small Animal, Avian, Exotic, etc.) featuring real-time slot availability.
 - **Video Consultations**: Crystal-clear video calls powered by **ZegoCloud** for remote diagnosis.

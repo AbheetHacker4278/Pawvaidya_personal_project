@@ -311,7 +311,7 @@ const MyProfile = () => {
   // Initialize Gemini
   const apikey2 = import.meta.env.VITE_API_KEY_GEMINI_2;
   const genAI = new GoogleGenerativeAI(apikey2);
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+  const model = genAI.getGenerativeModel({ model: 'gemini-3.0-flash' });
 
   const prompt =
     import.meta.env.VITE_PROMPT ||

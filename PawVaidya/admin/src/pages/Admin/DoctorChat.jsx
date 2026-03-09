@@ -105,7 +105,7 @@ const DoctorChat = () => {
                 const API_KEY = import.meta.env.VITE_API_KEY_GEMINI_2;
                 const genAIInstance = new GoogleGenerativeAI(API_KEY);
                 setGenAI(genAIInstance);
-                setModel(genAIInstance.getGenerativeModel({ model: 'gemini-3.0-flash' }));
+                setModel(genAIInstance.getGenerativeModel({ model: 'gemini-3-flash-preview' }));
             } catch (error) {
                 console.error("Failed to initialize Gemini:", error);
             }

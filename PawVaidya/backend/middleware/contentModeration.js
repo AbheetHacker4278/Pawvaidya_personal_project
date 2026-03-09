@@ -1,5 +1,48 @@
-import wash from 'washyourmouthoutwithsoap';
+import { createRequire } from 'module';
 import jwt from 'jsonwebtoken';
+
+const require = createRequire(import.meta.url);
+// Use createRequire to properly load the CommonJS package in an ES module context
+let wash = null;
+try {
+    wash = require('washyourmouthoutwithsoap');
+} catch (e) {
+    console.warn('[Content Moderation] washyourmouthoutwithsoap not available, using built-in list only.');
+}
+
+// ── Custom bad-words list (primary detection layer — always works) ─────────────
+const CUSTOM_BAD_WORDS = [
+    // English profanity
+    'fuck', 'fucking', 'fucked', 'fucker', 'fucks', 'shit', 'shitting', 'shitty',
+    'ass', 'asshole', 'asses', 'bastard', 'bitch', 'bitches', 'bitching',
+    'cunt', 'cunts', 'dick', 'dicks', 'dickhead', 'cock', 'cocks', 'cocksucker',
+    'pussy', 'pussies', 'whore', 'whores', 'slut', 'sluts', 'nigger', 'nigga',
+    'faggot', 'fag', 'retard', 'retarded', 'motherfucker', 'motherfucking',
+    'damn', 'damned', 'hell', 'piss', 'pissed', 'prick', 'wanker', 'wank',
+    'bollocks', 'bugger', 'crap', 'twat', 'arsehole', 'arse',
+    // Common evasions/variations
+    'f*ck', 'f**k', 'sh*t', 'b*tch', 'a**', 'a**hole', 'c**t', 'd*ck',
+    // Hindi/Hinglish abuses
+    'madarchod', 'behenchod', 'bhenchod', 'mc', 'bc', 'bhosdike', 'bhosdika',
+    'chutiya', 'chutiye', 'teri maa', 'sala', 'saala', 'haramzada', 'harami',
+    'gandu', 'gaand', 'randi', 'madar chod', 'behen chod', 'bakchod',
+    'maderchod', 'kutte', 'kuttiya', 'lavde', 'lund', 'lauda',
+    // Racial / hate slurs
+    'spic', 'kike', 'chink', 'wetback', 'cracker', 'gook', 'coon', 'jigaboo',
+    // Threats
+    'i will kill', 'ill kill', 'kill yourself', 'go die', 'i hate you',
+    // Generic abuses
+    'idiot', 'stupid', 'moron', 'loser', 'jerk', 'creep', 'pervert', 'pedophile',
+];
+
+/**
+ * Check text against the custom wordlist (substring match, case-insensitive).
+ * Returns array of matched words.
+ */
+const detectWithCustomList = (text) => {
+    const lowerText = text.toLowerCase();
+    return CUSTOM_BAD_WORDS.filter(word => lowerText.includes(word));
+};
 import contentViolationModel from '../models/contentViolationModel.js';
 import userModel from '../models/userModel.js';
 import doctorModel from '../models/doctorModel.js';
@@ -60,27 +103,36 @@ const extractStrings = (obj, path = '') => {
 };
 
 /**
- * Detect bad words in text using washyourmouthoutwithsoap (multiple locales).
+ * Detect bad words in text — two layers:
+ *  1) Custom wordlist (substring match — always works, catches Hindi + English)
+ *  2) washyourmouthoutwithsoap (token-level, multi-locale) if available
  * Returns an array of detected bad words (deduped).
  */
 const detectBadWords = (text) => {
     if (!text || typeof text !== 'string') return [];
-    const locales = ['en', 'hi', 'de', 'es', 'fr', 'it', 'nl', 'pt', 'ru', 'tr', 'zh'];
     const detected = new Set();
 
-    for (const locale of locales) {
-        try {
-            if (wash.check(locale, text)) {
-                // Get the actual matched words for this locale
-                const wordList = wash.words(locale);
-                const lowerText = text.toLowerCase();
-                for (const word of wordList) {
-                    if (lowerText.includes(word.toLowerCase())) {
-                        detected.add(word);
+    // Layer 1: Custom list (primary — guaranteed to work)
+    for (const word of detectWithCustomList(text)) {
+        detected.add(word);
+    }
+
+    // Layer 2: washyourmouthoutwithsoap (secondary — multi-language token matching)
+    if (wash && typeof wash.check === 'function') {
+        const locales = ['en', 'hi', 'de', 'es', 'fr', 'it', 'nl', 'pt', 'ru', 'tr', 'zh'];
+        const lowerText = text.toLowerCase();
+        for (const locale of locales) {
+            try {
+                if (wash.check(locale, text)) {
+                    const wordList = wash.words(locale);
+                    if (Array.isArray(wordList)) {
+                        for (const word of wordList) {
+                            if (lowerText.includes(word.toLowerCase())) detected.add(word);
+                        }
                     }
                 }
-            }
-        } catch (_) { /* locale not available */ }
+            } catch (_) { /* locale not available */ }
+        }
     }
 
     return Array.from(detected);

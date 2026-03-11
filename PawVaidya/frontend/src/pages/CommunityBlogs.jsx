@@ -6,6 +6,7 @@ import { AppContext } from '../context/AppContext';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import RunningDogLoader from '../components/RunningDogLoader';
+import RoomsList from '../components/RoomsList';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAITranslation } from '../context/TranslationContext';
 import {
@@ -40,6 +41,7 @@ const CommunityBlogs = () => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [sortBy, setSortBy] = useState('newest');
+  const [viewMode, setViewMode] = useState('feed'); // 'feed' or 'rooms'
   const { translateText, translateBatch } = useAITranslation();
   const [translating, setTranslating] = useState(false);
   const [likedCards, setLikedCards] = useState({});
@@ -47,6 +49,9 @@ const CommunityBlogs = () => {
   const [reportReason, setReportReason] = useState('inappropriate_content');
   const [reportDescription, setReportDescription] = useState('');
   const [submittingReport, setSubmittingReport] = useState(false);
+  const [expandedComments, setExpandedComments] = useState({});
+  const [newComments, setNewComments] = useState({});
+  const [submittingComment, setSubmittingComment] = useState(false);
 
   useEffect(() => { fetchBlogs(); }, [page, sortBy]);
 
@@ -159,6 +164,46 @@ const CommunityBlogs = () => {
     }
   };
 
+  const toggleComments = (blogId) => {
+    setExpandedComments(prev => ({ ...prev, [blogId]: !prev[blogId] }));
+  };
+
+  const handleAddComment = async (e, blogId) => {
+    e.preventDefault();
+    if (!token) { toast.error('Please login to comment'); return; }
+    if (userdata.isBanned) { toast.error('Account banned, cannot comment'); return; }
+    if (!newComments[blogId]?.trim()) return;
+
+    setSubmittingComment(true);
+    try {
+      const { data } = await axios.post(
+        `${backendurl}/api/user/blogs/${blogId}/comment`,
+        { userId: userdata.id, comment: newComments[blogId] },
+        { headers: { token } }
+      );
+      if (data.success) {
+        setNewComments(prev => ({ ...prev, [blogId]: '' }));
+        // Optimistically update the blog in the state
+        setBlogs(blogs.map(blog => {
+          if (blog._id === blogId) {
+            return {
+              ...blog,
+              comments: [...(blog.comments || []), data.comment]
+            };
+          }
+          return blog;
+        }));
+        toast.success('Comment added');
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to add comment');
+    } finally {
+      setSubmittingComment(false);
+    }
+  };
+
   const handleDelete = async (blogId) => {
     if (!window.confirm(t('blogs.confirmDelete'))) return;
     try {
@@ -183,8 +228,8 @@ const CommunityBlogs = () => {
       {/* ── Hero Header ──────────────────────────────────────────────────────── */}
       <div className="relative overflow-hidden py-14 px-4" style={{ background: `linear-gradient(135deg, ${B.dark} 0%, ${B.mid} 60%, ${B.light} 100%)` }}>
         {/* Dot grid */}
-        <div className="absolute inset-0 opacity-[0.06] pointer-events-none"
-          style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '28px 28px' }} />
+        <div className="absolute inset-0 opacity-10 pointer-events-none"
+          style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
         {/* Blobs */}
         <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full opacity-10 blur-3xl pointer-events-none" style={{ background: B.amber }} />
         <div className="absolute -bottom-16 -left-16 w-48 h-48 rounded-full opacity-10 blur-3xl pointer-events-none" style={{ background: '#fff' }} />
@@ -208,7 +253,7 @@ const CommunityBlogs = () => {
               whileHover={{ scale: 1.06, boxShadow: `0 8px 24px rgba(200,134,10,0.40)` }}
               whileTap={{ scale: 0.97 }}
               onClick={() => navigate('/create-blog')}
-              className="flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-white shadow-xl flex-shrink-0"
+              className="lg:hidden flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-white shadow-xl flex-shrink-0"
               style={{ background: `linear-gradient(135deg, ${B.amber}, #e8a020)` }}
             >
               <PlusIcon className="w-5 h-5" />
@@ -218,329 +263,459 @@ const CommunityBlogs = () => {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="max-w-6xl mx-auto px-4 py-8 flex flex-col lg:flex-row gap-8 items-start">
+        {/* ── Main Feed / Rooms Column ─────────────────────────────────────── */}
+        <div className="flex-1 min-w-0 w-full">
 
-        {/* ── Sort bar ─────────────────────────────────────────────────────── */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.1 }}
-          className="flex items-center gap-3 mb-8"
-        >
-          <span className="text-sm font-semibold" style={{ color: B.light }}>Sort by:</span>
-          <select
-            value={sortBy}
-            onChange={(e) => { setSortBy(e.target.value); setPage(1); }}
-            className="px-4 py-2 rounded-xl text-sm font-semibold cursor-pointer focus:outline-none transition-all duration-200"
-            style={{
-              background: '#fff',
-              border: `1.5px solid ${B.sand}`,
-              color: B.dark,
-              boxShadow: '0 2px 8px rgba(90,64,53,0.07)',
-            }}
-          >
-            <option value="newest">{t('blogs.newestFirst')}</option>
-            <option value="oldest">{t('blogs.oldestFirst')}</option>
-            <option value="most_liked">{t('blogs.mostLiked')}</option>
-          </select>
-        </motion.div>
-
-        {/* ── Loading ───────────────────────────────────────────────────────── */}
-        {loading || translating ? (
-          <div className="flex flex-col items-center justify-center py-24">
-            <RunningDogLoader />
-            <p className="mt-4 text-sm font-medium animate-pulse" style={{ color: B.light }}>
-              {translating ? t('blogs.translating') : t('common.loading')}
-            </p>
+          {/* ── View Toggle Bar ──────────────────────────────────────────────── */}
+          <div className="flex items-center gap-2 bg-white p-1.5 rounded-2xl mb-6 shadow-sm border inline-flex" style={{ borderColor: B.sand }}>
+            <button
+              onClick={() => setViewMode('feed')}
+              className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all ${viewMode === 'feed' ? 'bg-amber-50 text-amber-700 shadow-sm' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'}`}
+            >
+              Public Feed
+            </button>
+            <button
+              onClick={() => setViewMode('rooms')}
+              className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all ${viewMode === 'rooms' ? 'bg-amber-50 text-amber-700 shadow-sm' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'}`}
+            >
+              Community Rooms
+            </button>
           </div>
 
-        ) : blogs.length === 0 ? (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="text-center py-20 rounded-3xl border"
-            style={{ background: '#fff', borderColor: B.sand }}
-          >
-            <div className="text-5xl mb-4">📝</div>
-            <p className="text-lg font-bold mb-1" style={{ color: B.dark }}>{t('blogs.noBlogs')}</p>
-            <p className="text-sm" style={{ color: B.light }}>Be the first to share something with the community!</p>
-          </motion.div>
+          {viewMode === 'rooms' ? (
+            <RoomsList />
+          ) : (
+            <>
+              {/* ── Sort bar ─────────────────────────────────────────────────────── */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.1 }}
+                className="flex items-center gap-3 mb-8"
+              >
+                <span className="text-sm font-semibold" style={{ color: B.light }}>Sort by:</span>
+                <select
+                  value={sortBy}
+                  onChange={(e) => { setSortBy(e.target.value); setPage(1); }}
+                  className="px-4 py-2 rounded-xl text-sm font-semibold cursor-pointer focus:outline-none transition-all duration-200"
+                  style={{
+                    background: '#fff',
+                    border: `1.5px solid ${B.sand}`,
+                    color: B.dark,
+                    boxShadow: '0 2px 8px rgba(90,64,53,0.07)',
+                  }}
+                >
+                  <option value="newest">{t('blogs.newestFirst')}</option>
+                  <option value="oldest">{t('blogs.oldestFirst')}</option>
+                  <option value="most_liked">{t('blogs.mostLiked')}</option>
+                </select>
+              </motion.div>
 
-        ) : (
-          <>
-            {/* ── Blog Cards ─────────────────────────────────────────────── */}
-            <div className="space-y-6">
-              <AnimatePresence>
-                {blogs.map((blog, index) => {
-                  const isLiked = token && userdata && blog.likes?.some(like => like.userId === userdata.id);
-                  const isOwner = token && userdata && blog.userId === userdata.id;
-                  const links = extractLinks(blog.translatedContent || blog.content);
+              {/* ── Loading ───────────────────────────────────────────────────────── */}
+              {loading || translating ? (
+                <div className="flex flex-col items-center justify-center py-24">
+                  <RunningDogLoader />
+                  <p className="mt-4 text-sm font-medium animate-pulse" style={{ color: B.light }}>
+                    {translating ? t('blogs.translating') : t('common.loading')}
+                  </p>
+                </div>
 
-                  return (
-                    <motion.div
-                      key={blog._id}
-                      initial={{ opacity: 0, y: 24 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -12 }}
-                      transition={{ duration: 0.4, delay: index * 0.07 }}
-                      whileHover={{ y: -4, boxShadow: `0 16px 40px rgba(90,64,53,0.13)` }}
-                      className="rounded-2xl overflow-hidden transition-all duration-300"
-                      style={{
-                        background: '#fff',
-                        border: `1px solid ${B.sand}`,
-                        boxShadow: '0 2px 12px rgba(90,64,53,0.07)',
-                      }}
-                    >
-                      {/* Top accent bar */}
-                      <div className="h-1 w-full" style={{ background: `linear-gradient(to right, ${B.mid}, ${B.amber}, ${B.mid})` }} />
+              ) : blogs.length === 0 ? (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="text-center py-20 rounded-3xl border"
+                  style={{ background: '#fff', borderColor: B.sand }}
+                >
+                  <div className="text-5xl mb-4">📝</div>
+                  <p className="text-lg font-bold mb-1" style={{ color: B.dark }}>{t('blogs.noBlogs')}</p>
+                  <p className="text-sm" style={{ color: B.light }}>Be the first to share something with the community!</p>
+                </motion.div>
 
-                      <div className="p-6">
-                        {/* ── Author row ─────────────────────────────────── */}
-                        <div className="flex items-start justify-between mb-5">
-                          <div className="flex items-center gap-3">
-                            <div className="relative">
-                              <img
-                                src={blog.userImage || assets.profile_pic}
-                                alt={blog.userName}
-                                className="w-12 h-12 rounded-full object-cover"
-                                style={{ border: `2.5px solid ${B.sand}` }}
-                              />
-                              {/* Online dot */}
-                              <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white"
-                                style={{ background: '#22c55e' }} />
+              ) : (
+                <>
+                  {/* ── Blog Cards ─────────────────────────────────────────────── */}
+                  <div className="space-y-6">
+                    <AnimatePresence>
+                      {blogs.map((blog, index) => {
+                        const isLiked = token && userdata && blog.likes?.some(like => like.userId === userdata.id);
+                        const isOwner = token && userdata && blog.userId === userdata.id;
+                        const links = extractLinks(blog.translatedContent || blog.content);
+
+                        return (
+                          <motion.div
+                            key={blog._id}
+                            initial={{ opacity: 0, y: 24 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -12 }}
+                            transition={{ duration: 0.4, delay: index * 0.07 }}
+                            whileHover={{ border: `1px solid #7a5a48` }}
+                            className="rounded-2xl overflow-hidden transition-colors duration-200 flex shadow-sm hover:shadow-md bg-white cursor-pointer"
+                            style={{ border: `1px solid ${B.sand}` }}
+                            onClick={() => navigate(`/blog/${blog._id}`)}
+                          >
+                            {/* ── Left Vote Column ─────────────────────────────── */}
+                            <div className="w-12 sm:w-14 flex-shrink-0 flex flex-col items-center py-4 gap-1.5" style={{ background: B.pale, borderRight: `1px solid ${B.sand}` }} onClick={(e) => e.stopPropagation()}>
+                              <button
+                                onClick={(e) => handleLike(e, blog._id, isLiked)}
+                                className={`p-1.5 rounded-md transition-colors ${isLiked ? 'text-[#2e7d32] bg-[#2e7d32]/10' : 'text-gray-400 hover:bg-[#2e7d32]/10 hover:text-[#2e7d32]'}`}
+                                title={isLiked ? "Unlike" : "Like"}
+                              >
+                                <svg className="w-6 h-6" fill={isLiked ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 15l7-7 7 7" />
+                                </svg>
+                              </button>
+                              <span className={`text-sm font-bold ${isLiked ? 'text-[#2e7d32]' : 'text-gray-600'}`}>
+                                {blog.likes?.length || 0}
+                              </span>
+                              <button
+                                className="p-1.5 rounded-md text-gray-400 hover:bg-gray-100 transition-colors"
+                                title="Downvote"
+                              >
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                              </button>
                             </div>
-                            <div>
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <h3 className="font-bold text-base" style={{ color: B.dark }}>{blog.userName}</h3>
-                                {blog.authorType === 'doctor' && (
-                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold text-white shadow-sm"
-                                    style={{ background: `linear-gradient(135deg, ${B.mid}, ${B.amber})` }}>
-                                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                    </svg>
-                                    {t('blogs.doctor')}
+
+                            {/* ── Right Content Area ───────────────────────────── */}
+                            <div className="flex-1 p-4 sm:p-5 min-w-0">
+                              {/* ── Author row ─────────────────────────────────── */}
+                              <div className="flex items-start justify-between mb-5">
+                                <div className="flex items-center gap-3">
+                                  <div className="relative">
+                                    <img
+                                      src={blog.userImage || assets.profile_pic}
+                                      alt={blog.userName}
+                                      className="w-12 h-12 rounded-full object-cover"
+                                      style={{ border: `2.5px solid ${B.sand}` }}
+                                    />
+                                    {/* Online dot */}
+                                    <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white"
+                                      style={{ background: '#22c55e' }} />
+                                  </div>
+                                  <div>
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <h3 className="font-bold text-base" style={{ color: B.dark }}>{blog.userName}</h3>
+                                      {blog.authorType === 'doctor' && (
+                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold text-white shadow-sm"
+                                          style={{ background: `linear-gradient(135deg, ${B.mid}, ${B.amber})` }}>
+                                          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                          </svg>
+                                          {t('blogs.doctor')}
+                                        </span>
+                                      )}
+                                    </div>
+                                    <p className="text-xs mt-0.5" style={{ color: B.light }}>
+                                      {blog.authorType === 'doctor' && blog.authorSpeciality && (
+                                        <span className="font-semibold" style={{ color: B.amber }}>{blog.authorSpeciality} • </span>
+                                      )}
+                                      {formatDate(blog.createdAt)}
+                                    </p>
+                                  </div>
+                                </div>
+
+                                {/* Owner actions */}
+                                {isOwner && !userdata.isBanned && (
+                                  <div className="flex gap-1.5">
+                                    <motion.button
+                                      whileHover={{ scale: 1.12 }} whileTap={{ scale: 0.93 }}
+                                      onClick={() => navigate(`/edit-blog/${blog._id}`)}
+                                      className="p-2 rounded-xl transition-colors duration-200"
+                                      style={{ color: B.mid, background: '#f5ede8' }}
+                                    >
+                                      <PencilIcon className="w-4 h-4" />
+                                    </motion.button>
+                                    <motion.button
+                                      whileHover={{ scale: 1.12 }} whileTap={{ scale: 0.93 }}
+                                      onClick={() => handleDelete(blog._id)}
+                                      className="p-2 rounded-xl transition-colors duration-200"
+                                      style={{ color: '#c0392b', background: '#fff5f5' }}
+                                    >
+                                      <TrashIcon className="w-4 h-4" />
+                                    </motion.button>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* ── Title ──────────────────────────────────────── */}
+                              <h2
+                                className="text-xl md:text-2xl font-bold mb-3 cursor-pointer transition-colors duration-200 hover:underline"
+                                style={{ color: B.dark }}
+                                onClick={() => navigate(`/blog/${blog._id}`)}
+                              >
+                                {blog.translatedTitle || blog.title}
+                              </h2>
+
+                              {/* ── Content ────────────────────────────────────── */}
+                              <p className="text-sm leading-relaxed mb-4 whitespace-pre-wrap" style={{ color: '#4a3728' }}>
+                                {blog.translatedContent || blog.content}
+                                {links.length > 0 && (
+                                  <span className="block mt-2 flex flex-wrap gap-2">
+                                    {links.map((link, idx) => {
+                                      const source = getLinkSource(link);
+                                      const colorClass = getSourceColor(source);
+                                      return (
+                                        <a key={idx} href={link} target="_blank" rel="noopener noreferrer"
+                                          className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium border ${colorClass} hover:opacity-80 transition-opacity no-underline`}
+                                          onClick={(e) => e.stopPropagation()}>
+                                          🔗 {source}
+                                        </a>
+                                      );
+                                    })}
                                   </span>
                                 )}
-                              </div>
-                              <p className="text-xs mt-0.5" style={{ color: B.light }}>
-                                {blog.authorType === 'doctor' && blog.authorSpeciality && (
-                                  <span className="font-semibold" style={{ color: B.amber }}>{blog.authorSpeciality} • </span>
-                                )}
-                                {formatDate(blog.createdAt)}
                               </p>
-                            </div>
-                          </div>
 
-                          {/* Owner actions */}
-                          {isOwner && !userdata.isBanned && (
-                            <div className="flex gap-1.5">
-                              <motion.button
-                                whileHover={{ scale: 1.12 }} whileTap={{ scale: 0.93 }}
-                                onClick={() => navigate(`/edit-blog/${blog._id}`)}
-                                className="p-2 rounded-xl transition-colors duration-200"
-                                style={{ color: B.mid, background: '#f5ede8' }}
-                              >
-                                <PencilIcon className="w-4 h-4" />
-                              </motion.button>
-                              <motion.button
-                                whileHover={{ scale: 1.12 }} whileTap={{ scale: 0.93 }}
-                                onClick={() => handleDelete(blog._id)}
-                                className="p-2 rounded-xl transition-colors duration-200"
-                                style={{ color: '#c0392b', background: '#fff5f5' }}
-                              >
-                                <TrashIcon className="w-4 h-4" />
-                              </motion.button>
-                            </div>
-                          )}
-                        </div>
+                              {/* ── Tags ───────────────────────────────────────── */}
+                              {blog.tags && blog.tags.length > 0 && (
+                                <div className="flex flex-wrap gap-2 mb-4">
+                                  {blog.tags.map((tag, tagIndex) => (
+                                    <motion.span
+                                      key={tagIndex}
+                                      whileHover={{ scale: 1.08 }}
+                                      className="px-3 py-1 rounded-full text-xs font-semibold cursor-pointer transition-all duration-200"
+                                      style={{ background: '#fff8e6', color: B.amber, border: `1px solid #f0d080` }}
+                                    >
+                                      #{tag}
+                                    </motion.span>
+                                  ))}
+                                </div>
+                              )}
 
-                        {/* ── Title ──────────────────────────────────────── */}
-                        <h2
-                          className="text-xl md:text-2xl font-bold mb-3 cursor-pointer transition-colors duration-200 hover:underline"
-                          style={{ color: B.dark }}
-                          onClick={() => navigate(`/blog/${blog._id}`)}
-                        >
-                          {blog.translatedTitle || blog.title}
-                        </h2>
+                              {/* ── Images ─────────────────────────────────────── */}
+                              {blog.images && blog.images.length > 0 && (
+                                <div className={`grid gap-3 mb-4 ${blog.images.length === 1 ? 'grid-cols-1' : blog.images.length === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}>
+                                  {blog.images.map((image, imgIndex) => (
+                                    <motion.div
+                                      key={imgIndex}
+                                      whileHover={{ scale: 1.02 }}
+                                      className="overflow-hidden rounded-xl shadow-md cursor-pointer group"
+                                      style={{ border: `1px solid ${B.sand}` }}
+                                      onClick={() => window.open(image, '_blank')}
+                                    >
+                                      <img src={image} alt={`Blog image ${imgIndex + 1}`}
+                                        className="w-full h-56 object-cover transition-transform duration-500 group-hover:scale-110" />
+                                    </motion.div>
+                                  ))}
+                                </div>
+                              )}
 
-                        {/* ── Content ────────────────────────────────────── */}
-                        <p className="text-sm leading-relaxed mb-4 whitespace-pre-wrap" style={{ color: '#4a3728' }}>
-                          {blog.translatedContent || blog.content}
-                          {links.length > 0 && (
-                            <span className="block mt-2 flex flex-wrap gap-2">
-                              {links.map((link, idx) => {
-                                const source = getLinkSource(link);
-                                const colorClass = getSourceColor(source);
-                                return (
-                                  <a key={idx} href={link} target="_blank" rel="noopener noreferrer"
-                                    className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium border ${colorClass} hover:opacity-80 transition-opacity no-underline`}
-                                    onClick={(e) => e.stopPropagation()}>
-                                    🔗 {source}
-                                  </a>
-                                );
-                              })}
-                            </span>
-                          )}
-                        </p>
+                              {/* ── Videos ─────────────────────────────────────── */}
+                              {blog.videos && blog.videos.length > 0 && (
+                                <div className="space-y-4 mb-4">
+                                  {blog.videos.map((video, vidIndex) => (
+                                    <div key={vidIndex} className="rounded-xl overflow-hidden shadow-md" style={{ border: `1px solid ${B.sand}` }}>
+                                      <video src={video} controls className="w-full">{t('blogs.videoNotSupported')}</video>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
 
-                        {/* ── Tags ───────────────────────────────────────── */}
-                        {blog.tags && blog.tags.length > 0 && (
-                          <div className="flex flex-wrap gap-2 mb-4">
-                            {blog.tags.map((tag, tagIndex) => (
-                              <motion.span
-                                key={tagIndex}
-                                whileHover={{ scale: 1.08 }}
-                                className="px-3 py-1 rounded-full text-xs font-semibold cursor-pointer transition-all duration-200"
-                                style={{ background: '#fff8e6', color: B.amber, border: `1px solid #f0d080` }}
-                              >
-                                #{tag}
-                              </motion.span>
-                            ))}
-                          </div>
-                        )}
+                              {/* ── Action bar ─────────────────────────────────── */}
+                              <div className="flex items-center gap-2 pt-2 mt-2" onClick={(e) => e.stopPropagation()}>
+                                {/* Comments */}
+                                <motion.button
+                                  whileHover={{ backgroundColor: '#fdf8f0' }}
+                                  onClick={() => toggleComments(blog._id)}
+                                  className={`flex items-center gap-1.5 font-bold text-xs sm:text-sm px-2 py-1.5 rounded-md transition-colors duration-200 ${expandedComments[blog._id] ? 'bg-amber-50 text-amber-600' : ''}`}
+                                  style={{ color: expandedComments[blog._id] ? B.amber : B.light }}
+                                >
+                                  <ChatBubbleLeftIcon className="w-5 h-5" />
+                                  {blog.comments?.length || 0} Comments
+                                </motion.button>
 
-                        {/* ── Images ─────────────────────────────────────── */}
-                        {blog.images && blog.images.length > 0 && (
-                          <div className={`grid gap-3 mb-4 ${blog.images.length === 1 ? 'grid-cols-1' : blog.images.length === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}>
-                            {blog.images.map((image, imgIndex) => (
-                              <motion.div
-                                key={imgIndex}
-                                whileHover={{ scale: 1.02 }}
-                                className="overflow-hidden rounded-xl shadow-md cursor-pointer group"
-                                style={{ border: `1px solid ${B.sand}` }}
-                                onClick={() => window.open(image, '_blank')}
-                              >
-                                <img src={image} alt={`Blog image ${imgIndex + 1}`}
-                                  className="w-full h-56 object-cover transition-transform duration-500 group-hover:scale-110" />
-                              </motion.div>
-                            ))}
-                          </div>
-                        )}
 
-                        {/* ── Videos ─────────────────────────────────────── */}
-                        {blog.videos && blog.videos.length > 0 && (
-                          <div className="space-y-4 mb-4">
-                            {blog.videos.map((video, vidIndex) => (
-                              <div key={vidIndex} className="rounded-xl overflow-hidden shadow-md" style={{ border: `1px solid ${B.sand}` }}>
-                                <video src={video} controls className="w-full">{t('blogs.videoNotSupported')}</video>
+                                {/* Views */}
+                                <div className="flex items-center gap-1.5 font-bold text-xs sm:text-sm px-2 py-1.5 rounded-md" style={{ color: B.light }}>
+                                  <EyeIcon className="w-5 h-5" />
+                                  {blog.views || 0}
+                                </div>
+
+                                {/* Report */}
+                                {userdata?.id !== blog.userId && (
+                                  <motion.button
+                                    whileHover={{ backgroundColor: '#fff5f5' }}
+                                    onClick={() => setReportModal({ isOpen: true, blog })}
+                                    className="flex items-center gap-1.5 font-bold text-xs sm:text-sm px-2 py-1.5 rounded-md transition-colors duration-200 hover:text-red-500"
+                                    style={{ color: B.light }}
+                                    title="Report this post"
+                                  >
+                                    <FlagIcon className="w-5 h-5" />
+                                    <span className="hidden sm:inline">Report</span>
+                                  </motion.button>
+                                )}
                               </div>
-                            ))}
-                          </div>
-                        )}
 
-                        {/* ── Action bar ─────────────────────────────────── */}
-                        <div className="flex items-center gap-6 pt-4 border-t" style={{ borderColor: B.sand }}>
-                          {/* Like */}
-                          <motion.button
-                            type="button"
-                            onClick={(e) => handleLike(e, blog._id, isLiked)}
-                            whileHover={{ scale: 1.12 }}
-                            whileTap={{ scale: 0.88 }}
-                            animate={likedCards[blog._id] ? { scale: [1, 1.4, 1] } : {}}
-                            transition={{ duration: 0.4 }}
-                            className="flex items-center gap-1.5 font-semibold text-sm transition-colors duration-200"
-                            style={{ color: isLiked ? '#e53e3e' : B.light }}
-                          >
-                            {isLiked
-                              ? <HeartSolidIcon className="w-5 h-5" style={{ color: '#e53e3e' }} />
-                              : <HeartIcon className="w-5 h-5" />
-                            }
-                            {blog.likes?.length || 0}
-                          </motion.button>
+                              {/* ── Inline Comments Section ────────────────────── */}
+                              <AnimatePresence>
+                                {expandedComments[blog._id] && (
+                                  <motion.div
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: 'auto' }}
+                                    exit={{ opacity: 0, height: 0 }}
+                                    className="mt-4 pt-4 border-t overflow-hidden"
+                                    style={{ borderColor: B.sand }}
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    {/* Comment Input */}
+                                    {token && userdata && !userdata.isBanned && (
+                                      <form onSubmit={(e) => handleAddComment(e, blog._id)} className="flex gap-3 mb-6">
+                                        <img
+                                          src={userdata.image || assets.profile_pic}
+                                          alt="You"
+                                          className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                                          style={{ border: `1px solid ${B.sand}` }}
+                                        />
+                                        <div className="flex-1 flex gap-2">
+                                          <input
+                                            type="text"
+                                            placeholder="Add a comment..."
+                                            value={newComments[blog._id] || ''}
+                                            onChange={(e) => setNewComments({ ...newComments, [blog._id]: e.target.value })}
+                                            className="flex-1 bg-gray-50 border px-3 py-1.5 rounded-xl text-sm focus:outline-none focus:border-amber-400 focus:bg-white transition-colors"
+                                            style={{ borderColor: B.sand, color: B.dark }}
+                                          />
+                                          <button
+                                            type="submit"
+                                            disabled={submittingComment || !newComments[blog._id]?.trim()}
+                                            className="px-4 py-1.5 rounded-xl text-sm font-bold text-white transition-opacity disabled:opacity-50"
+                                            style={{ background: B.amber }}
+                                          >
+                                            Post
+                                          </button>
+                                        </div>
+                                      </form>
+                                    )}
 
-                          {/* Comments */}
-                          <motion.button
-                            whileHover={{ scale: 1.12 }} whileTap={{ scale: 0.88 }}
-                            onClick={() => navigate(`/blog/${blog._id}`)}
-                            className="flex items-center gap-1.5 font-semibold text-sm transition-colors duration-200"
-                            style={{ color: B.light }}
-                          >
-                            <ChatBubbleLeftIcon className="w-5 h-5" />
-                            {blog.comments?.length || 0}
-                          </motion.button>
+                                    {/* Comments List */}
+                                    <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                                      {blog.comments && blog.comments.length > 0 ? (
+                                        blog.comments.map((comment, cIndex) => (
+                                          <div key={cIndex} className="flex gap-3">
+                                            <img
+                                              src={comment.userImage || assets.profile_pic}
+                                              alt={comment.userName}
+                                              className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                                              style={{ border: `1px solid ${B.sand}` }}
+                                            />
+                                            <div className="flex-1 bg-gray-50 rounded-xl p-3" style={{ border: `1px solid #f0f0f0` }}>
+                                              <div className="flex items-center gap-2 mb-1">
+                                                <span className="font-bold text-sm" style={{ color: B.dark }}>{comment.userName}</span>
+                                                <span className="text-xs" style={{ color: B.light }}>{formatDate(comment.commentedAt)}</span>
+                                              </div>
+                                              <p className="text-sm" style={{ color: B.mid }}>{comment.comment}</p>
+                                            </div>
+                                          </div>
+                                        ))
+                                      ) : (
+                                        <div className="text-center py-6 text-sm italic" style={{ color: B.light }}>
+                                          No comments yet. Be the first to share your thoughts!
+                                        </div>
+                                      )}
+                                    </div>
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
+                            </div>
+                          </motion.div>
+                        );
+                      })}
+                    </AnimatePresence>
+                  </div>
 
-                          {/* Views */}
-                          <div className="flex items-center gap-1.5 font-semibold text-sm" style={{ color: B.light }}>
-                            <EyeIcon className="w-5 h-5" />
-                            {blog.views || 0}
-                          </div>
+                  {/* ── Pagination ───────────────────────────────────────────────── */}
+                  {totalPages > 1 && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.3 }}
+                      className="flex justify-center items-center gap-3 mt-10"
+                    >
+                      <motion.button
+                        whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.95 }}
+                        onClick={() => setPage(p => Math.max(1, p - 1))}
+                        disabled={page === 1}
+                        className="px-6 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                        style={{
+                          background: page === 1 ? B.sand : '#fff',
+                          color: B.mid,
+                          border: `1.5px solid ${B.sand}`,
+                          boxShadow: '0 2px 8px rgba(90,64,53,0.07)',
+                        }}
+                      >
+                        {t('common.previous')}
+                      </motion.button>
 
-                          {/* Report */}
-                          {userdata?.id !== blog.userId && (
-                            <motion.button
-                              whileHover={{ scale: 1.12 }} whileTap={{ scale: 0.88 }}
-                              onClick={() => setReportModal({ isOpen: true, blog })}
-                              className="flex items-center gap-1.5 font-semibold text-sm transition-colors duration-200"
-                              style={{ color: B.light }}
-                              title="Report this post"
-                            >
-                              <FlagIcon className="w-5 h-5 hover:text-red-500 transition-colors" />
-                            </motion.button>
-                          )}
+                      <span className="px-5 py-2.5 rounded-xl font-bold text-sm"
+                        style={{ background: `linear-gradient(135deg, ${B.mid}, ${B.amber})`, color: '#fff', boxShadow: '0 4px 12px rgba(90,64,53,0.20)' }}>
+                        {page} / {totalPages}
+                      </span>
 
-                          {/* Read more */}
-                          <motion.button
-                            whileHover={{ x: 4 }} whileTap={{ scale: 0.95 }}
-                            onClick={() => navigate(`/blog/${blog._id}`)}
-                            className="ml-auto text-xs font-bold px-4 py-1.5 rounded-full transition-all duration-200"
-                            style={{ background: '#f5ede8', color: B.mid, border: `1px solid ${B.sand}` }}
-                          >
-                            Read more →
-                          </motion.button>
-                        </div>
-                      </div>
+                      <motion.button
+                        whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.95 }}
+                        onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                        disabled={page === totalPages}
+                        className="px-6 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                        style={{
+                          background: page === totalPages ? B.sand : '#fff',
+                          color: B.mid,
+                          border: `1.5px solid ${B.sand}`,
+                          boxShadow: '0 2px 8px rgba(90,64,53,0.07)',
+                        }}
+                      >
+                        {t('common.next')}
+                      </motion.button>
                     </motion.div>
-                  );
-                })}
-              </AnimatePresence>
+                  )}
+                </>
+              )}
+            </>
+          )}
+        </div>
+
+        {/* ── Right Sidebar (Community Info) ─────────────────────────────── */}
+        <div className="hidden lg:block w-[320px] flex-shrink-0">
+          <div className="sticky top-24 space-y-6">
+            <div className="rounded-2xl overflow-hidden shadow-sm" style={{ background: '#fff', border: `1px solid ${B.sand}` }}>
+              <div className="h-12" style={{ background: `linear-gradient(135deg, ${B.mid}, ${B.amber})` }} />
+              <div className="p-5 relative">
+                <div className="absolute -top-6 left-5 w-14 h-14 rounded-full border-4 border-white flex items-center justify-center text-2xl shadow-sm" style={{ background: B.cream }}>
+                  🐾
+                </div>
+                <h2 className="font-bold text-lg mt-8 mb-2" style={{ color: B.dark }}>Pawvaidya Community</h2>
+                <p className="text-sm leading-relaxed mb-5" style={{ color: B.light }}>
+                  Welcome to the Pawvaidya Community! Share your pet stories, ask for advice, and connect with other pet lovers and veterinary professionals.
+                </p>
+                {token && userdata && !userdata.isBanned && (
+                  <button
+                    onClick={() => navigate('/create-blog')}
+                    className="w-full flex justify-center items-center gap-2 px-6 py-2.5 rounded-full font-bold text-white shadow-md transition-transform hover:scale-[1.02] active:scale-95 hover:shadow-lg"
+                    style={{ background: `linear-gradient(135deg, ${B.amber}, #e8a020)` }}
+                  >
+                    <PlusIcon className="w-5 h-5" />
+                    Create Post
+                  </button>
+                )}
+              </div>
             </div>
 
-            {/* ── Pagination ───────────────────────────────────────────────── */}
-            {totalPages > 1 && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.3 }}
-                className="flex justify-center items-center gap-3 mt-10"
-              >
-                <motion.button
-                  whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.95 }}
-                  onClick={() => setPage(p => Math.max(1, p - 1))}
-                  disabled={page === 1}
-                  className="px-6 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
-                  style={{
-                    background: page === 1 ? B.sand : '#fff',
-                    color: B.mid,
-                    border: `1.5px solid ${B.sand}`,
-                    boxShadow: '0 2px 8px rgba(90,64,53,0.07)',
-                  }}
-                >
-                  {t('common.previous')}
-                </motion.button>
-
-                <span className="px-5 py-2.5 rounded-xl font-bold text-sm"
-                  style={{ background: `linear-gradient(135deg, ${B.mid}, ${B.amber})`, color: '#fff', boxShadow: '0 4px 12px rgba(90,64,53,0.20)' }}>
-                  {page} / {totalPages}
-                </span>
-
-                <motion.button
-                  whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.95 }}
-                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                  disabled={page === totalPages}
-                  className="px-6 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
-                  style={{
-                    background: page === totalPages ? B.sand : '#fff',
-                    color: B.mid,
-                    border: `1.5px solid ${B.sand}`,
-                    boxShadow: '0 2px 8px rgba(90,64,53,0.07)',
-                  }}
-                >
-                  {t('common.next')}
-                </motion.button>
-              </motion.div>
-            )}
-          </>
-        )}
+            {/* Rules card */}
+            <div className="rounded-2xl p-5 shadow-sm" style={{ background: '#fff', border: `1px solid ${B.sand}` }}>
+              <h3 className="font-bold mb-4 flex items-center gap-2" style={{ color: B.dark }}>
+                <span className="text-lg">📜</span> Community Rules
+              </h3>
+              <ul className="text-sm space-y-3 font-medium" style={{ color: B.mid }}>
+                <li className="flex gap-2"><span>1.</span> Be kind and respectful to everyone.</li>
+                <li className="flex gap-2"><span>2.</span> No medical misinformation. Verify with a vet.</li>
+                <li className="flex gap-2"><span>3.</span> Avoid spam or self-promotion.</li>
+                <li className="flex gap-2"><span>4.</span> Use the report button for inappropriate content.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
       </div>
       {/* ── Report Modal ────────────────────────────────────────────── */}
       <AnimatePresence>

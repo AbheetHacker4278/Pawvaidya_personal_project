@@ -15,6 +15,7 @@ import doctorScheduleRouter from './routes/doctorScheduleRoute.js';
 import banRouter from './routes/banRoute.js';
 import petReportRouter from './routes/petReportRoute.js';
 import appIssueReportRouter from './routes/appIssueReportRoute.js';
+import roomRouter from './routes/roomRoute.js';
 
 import cookieParser from 'cookie-parser';
 import { initializeSocket } from './socketServer.js';
@@ -108,6 +109,11 @@ try {
   app.use('/api/app-issue', appIssueReportRouter);
 } catch (error) {
   console.error("Failed to use appIssueReportRouter:", error.message);
+}
+try {
+  app.use('/api/rooms', roomRouter);
+} catch (error) {
+  console.error("Failed to use roomRouter:", error.message);
 }
 
 // Pet report feature disabled

@@ -11,7 +11,8 @@ const blogSchema = new mongoose.Schema({
     images: [{ type: String }], // Array of image URLs
     videos: [{ type: String }], // Array of video URLs
     tags: [{ type: String }], // Array of tags
-    likes: [{ 
+    roomId: { type: String, default: null, index: true }, // Optional room association
+    likes: [{
         userId: { type: String, required: true },
         likedAt: { type: Date, default: Date.now }
     }],

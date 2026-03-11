@@ -3,6 +3,7 @@ import doctorModel from '../models/doctorModel.js';
 import { v2 as cloudinary } from 'cloudinary';
 import { logActivity } from '../utils/activityLogger.js';
 import fs from 'fs';
+import { checkAndLogViolations } from '../middleware/contentModeration.js';
 
 // Create a new blog post by doctor
 export const createDoctorBlog = async (req, res) => {
@@ -15,6 +16,15 @@ export const createDoctorBlog = async (req, res) => {
             return res.json({
                 success: false,
                 message: 'Title and content are required'
+            });
+        }
+
+        // Auto-Moderation check: Block if the global middleware found bad words OR if the manual check on parsed fields finds bad words
+        const hasFormViolations = await checkAndLogViolations(req, { title, content, tags });
+        if (hasFormViolations || (req.contentViolations && req.contentViolations.length > 0)) {
+            return res.json({
+                success: false,
+                message: 'Your post contains inappropriate language or violates our community guidelines. It has been flagged and removed.'
             });
         }
 
@@ -43,12 +53,12 @@ export const createDoctorBlog = async (req, res) => {
                     console.warn('Invalid file object:', file);
                     continue;
                 }
-                
+
                 if (!fs.existsSync(file.path)) {
                     console.error('File does not exist:', file.path);
                     continue;
                 }
-                
+
                 const result = await cloudinary.uploader.upload(file.path, {
                     resource_type: 'image',
                     folder: 'pawvaidya/blogs/images',
@@ -59,7 +69,7 @@ export const createDoctorBlog = async (req, res) => {
                 if (result && result.secure_url) {
                     imageUrls.push(result.secure_url);
                 }
-                
+
                 try {
                     fs.unlinkSync(file.path);
                 } catch (unlinkError) {
@@ -78,12 +88,12 @@ export const createDoctorBlog = async (req, res) => {
                     console.warn('Invalid file object:', file);
                     continue;
                 }
-                
+
                 if (!fs.existsSync(file.path)) {
                     console.error('File does not exist:', file.path);
                     continue;
                 }
-                
+
                 const result = await cloudinary.uploader.upload(file.path, {
                     resource_type: 'video',
                     folder: 'pawvaidya/blogs/videos',
@@ -92,7 +102,7 @@ export const createDoctorBlog = async (req, res) => {
                 if (result && result.secure_url) {
                     videoUrls.push(result.secure_url);
                 }
-                
+
                 try {
                     fs.unlinkSync(file.path);
                 } catch (unlinkError) {
@@ -212,7 +222,7 @@ export const updateDoctorBlog = async (req, res) => {
         for (const file of imageFiles) {
             try {
                 if (!file || !file.path || !fs.existsSync(file.path)) continue;
-                
+
                 const result = await cloudinary.uploader.upload(file.path, {
                     resource_type: 'image',
                     folder: 'pawvaidya/blogs/images',
@@ -223,7 +233,7 @@ export const updateDoctorBlog = async (req, res) => {
                 if (result && result.secure_url) {
                     imageUrls.push(result.secure_url);
                 }
-                
+
                 try {
                     fs.unlinkSync(file.path);
                 } catch (unlinkError) {
@@ -239,7 +249,7 @@ export const updateDoctorBlog = async (req, res) => {
         for (const file of videoFiles) {
             try {
                 if (!file || !file.path || !fs.existsSync(file.path)) continue;
-                
+
                 const result = await cloudinary.uploader.upload(file.path, {
                     resource_type: 'video',
                     folder: 'pawvaidya/blogs/videos',
@@ -248,7 +258,7 @@ export const updateDoctorBlog = async (req, res) => {
                 if (result && result.secure_url) {
                     videoUrls.push(result.secure_url);
                 }
-                
+
                 try {
                     fs.unlinkSync(file.path);
                 } catch (unlinkError) {

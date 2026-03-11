@@ -14,10 +14,10 @@ try {
 const CUSTOM_BAD_WORDS = [
     // English profanity
     'fuck', 'fucking', 'fucked', 'fucker', 'fucks', 'shit', 'shitting', 'shitty',
-    'ass', 'asshole', 'asses', 'bastard', 'bitch', 'bitches', 'bitching',
+    'ass', 'asshole', 'ass hole', 'a s s', 'asses', 'bastard', 'bitch', 'bitches', 'bitching',
     'cunt', 'cunts', 'dick', 'dicks', 'dickhead', 'cock', 'cocks', 'cocksucker',
     'pussy', 'pussies', 'whore', 'whores', 'slut', 'sluts', 'nigger', 'nigga',
-    'faggot', 'fag', 'retard', 'retarded', 'motherfucker', 'motherfucking',
+    'faggot', 'fag', 'retard', 'retarded', 'motherfucker', 'motherfucking', 'mother fucker',
     'damn', 'damned', 'hell', 'piss', 'pissed', 'prick', 'wanker', 'wank',
     'bollocks', 'bugger', 'crap', 'twat', 'arsehole', 'arse',
     // Common evasions/variations
@@ -159,6 +159,22 @@ const contentModerationMiddleware = async (req, res, next) => {
 
         if (violations.length === 0) return next();
 
+        await logViolationsToDB(req, violations);
+
+        // Attach to request so downstream controllers can block if necessary
+        req.contentViolations = violations;
+        return next();
+    } catch (err) {
+        console.error('[Content Moderation] Error:', err.message);
+        return next();
+    }
+};
+
+/**
+ * Logs violations to the database. Extracted for reuse.
+ */
+const logViolationsToDB = async (req, violations) => {
+    try {
         // --- Collect request metadata ---
         const userAgent = req.headers['user-agent'] || '';
         const deviceInfo = parseUA(userAgent);
@@ -214,13 +230,31 @@ const contentModerationMiddleware = async (req, res, next) => {
 
             console.warn(`[Content Moderation] Bad words detected from ${ip} (${userDetails.email}) in field "${violation.field}": ${violation.detectedWords.join(', ')}`);
         }
-
-        // Do NOT block — just log. Admin will take action from the dashboard.
-        return next();
     } catch (err) {
-        console.error('[Content Moderation] Error:', err.message);
-        return next();
+        console.error('[Content Moderation Logging Error]', err);
     }
+};
+
+/**
+ * Manual trigger for multipart/form-data controllers after multer parsing.
+ * Returns true if violations exist.
+ */
+export const checkAndLogViolations = async (req, bodyToScan) => {
+    const strings = extractStrings(bodyToScan);
+    const violations = [];
+
+    for (const { field, value } of strings) {
+        const detected = detectBadWords(value);
+        if (detected.length > 0) {
+            violations.push({ field, content: value, detectedWords: detected });
+        }
+    }
+
+    if (violations.length === 0) return false;
+
+    await logViolationsToDB(req, violations);
+    req.contentViolations = violations;
+    return true;
 };
 
 export default contentModerationMiddleware;

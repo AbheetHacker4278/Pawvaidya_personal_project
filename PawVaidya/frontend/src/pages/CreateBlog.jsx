@@ -1,5 +1,5 @@
 import React, { useState, useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { AppContext } from '../context/AppContext';
 import axios from 'axios';
@@ -10,6 +10,8 @@ const CreateBlog = () => {
   const { t } = useTranslation();
   const { token, userdata, backendurl } = useContext(AppContext);
   const navigate = useNavigate();
+  const location = useLocation();
+  const roomId = location.state?.roomId || null;
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
@@ -22,14 +24,20 @@ const CreateBlog = () => {
   const [videoPreviews, setVideoPreviews] = useState([]);
 
   React.useEffect(() => {
-    if (!token || !userdata) {
+    // If there's no token at all, redirect to login
+    if (!token) {
       toast.error('Please login to create a blog post');
       navigate('/login-form');
       return;
     }
-    
+
+    // If there is a token but userdata is still loading (false), wait for it
+    if (token && !userdata) {
+      return;
+    }
+
     // Check if user is banned
-    if (userdata.isBanned) {
+    if (userdata && userdata.isBanned) {
       toast.error('Your account is banned. You cannot create blog posts.');
       navigate('/');
     }
@@ -115,7 +123,7 @@ const CreateBlog = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.title.trim() || !formData.content.trim()) {
       toast.error('Title and content are required');
       return;
@@ -139,6 +147,10 @@ const CreateBlog = () => {
         data.append('videos', video);
       });
 
+      if (roomId) {
+        data.append('roomId', roomId);
+      }
+
       const { data: response } = await axios.post(
         `${backendurl}/api/user/blogs/create`,
         data,
@@ -152,7 +164,7 @@ const CreateBlog = () => {
 
       if (response.success) {
         toast.success('Blog post created successfully!');
-        navigate('/community-blogs');
+        navigate(roomId ? `/room/${roomId}` : '/community-blogs');
       } else {
         toast.error(response.message);
       }
@@ -300,7 +312,7 @@ const CreateBlog = () => {
               </button>
               <button
                 type="button"
-                onClick={() => navigate('/community-blogs')}
+                onClick={() => navigate(roomId ? `/room/${roomId}` : '/community-blogs')}
                 className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
               >
                 {t('common.cancel')}

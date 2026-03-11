@@ -26,19 +26,25 @@ const EditBlog = () => {
   const [videoPreviews, setVideoPreviews] = useState([]);
 
   useEffect(() => {
-    if (!token || !userdata) {
+    // If there is no token, redirect to login
+    if (!token) {
       toast.error('Please login to edit a blog post');
       navigate('/login-form');
       return;
     }
-    
+
+    // If there is a token but userdata is still loading, wait for it map
+    if (token && !userdata) {
+      return;
+    }
+
     // Check if user is banned
-    if (userdata.isBanned) {
+    if (userdata && userdata.isBanned) {
       toast.error('Your account is banned. You cannot edit blog posts.');
       navigate('/');
       return;
     }
-    
+
     fetchBlog();
   }, [token, userdata, blogId]);
 
@@ -161,7 +167,7 @@ const EditBlog = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.title.trim() || !formData.content.trim()) {
       toast.error('Title and content are required');
       return;

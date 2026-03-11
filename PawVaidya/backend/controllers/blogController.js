@@ -3,12 +3,13 @@ import userModel from '../models/userModel.js';
 import { v2 as cloudinary } from 'cloudinary';
 import { logActivity } from '../utils/activityLogger.js';
 import fs from 'fs';
+import { checkAndLogViolations } from '../middleware/contentModeration.js';
 
 
 // Create a new blog post
 export const createBlog = async (req, res) => {
     try {
-        const { userId, title, content, tags } = req.body;
+        const { userId, title, content, tags, roomId } = req.body;
         const imageFiles = req.files?.images || [];
         const videoFiles = req.files?.videos || [];
 
@@ -16,6 +17,15 @@ export const createBlog = async (req, res) => {
             return res.json({
                 success: false,
                 message: 'Title and content are required'
+            });
+        }
+
+        // Auto-Moderation check: Block if the global middleware found bad words OR if the manual check on parsed fields finds bad words
+        const hasFormViolations = await checkAndLogViolations(req, { title, content, tags });
+        if (hasFormViolations || (req.contentViolations && req.contentViolations.length > 0)) {
+            return res.json({
+                success: false,
+                message: 'Your post contains inappropriate language or violates our community guidelines. It has been flagged and removed.'
             });
         }
 
@@ -36,13 +46,13 @@ export const createBlog = async (req, res) => {
                     console.warn('Invalid file object:', file);
                     continue;
                 }
-                
+
                 // Check if file exists before uploading
                 if (!fs.existsSync(file.path)) {
                     console.error('File does not exist:', file.path);
                     continue;
                 }
-                
+
                 const result = await cloudinary.uploader.upload(file.path, {
                     resource_type: 'image',
                     folder: 'pawvaidya/blogs/images',
@@ -53,7 +63,7 @@ export const createBlog = async (req, res) => {
                 if (result && result.secure_url) {
                     imageUrls.push(result.secure_url);
                 }
-                
+
                 // Clean up temporary file after upload
                 try {
                     fs.unlinkSync(file.path);
@@ -73,13 +83,13 @@ export const createBlog = async (req, res) => {
                     console.warn('Invalid file object:', file);
                     continue;
                 }
-                
+
                 // Check if file exists before uploading
                 if (!fs.existsSync(file.path)) {
                     console.error('File does not exist:', file.path);
                     continue;
                 }
-                
+
                 const result = await cloudinary.uploader.upload(file.path, {
                     resource_type: 'video',
                     folder: 'pawvaidya/blogs/videos',
@@ -88,7 +98,7 @@ export const createBlog = async (req, res) => {
                 if (result && result.secure_url) {
                     videoUrls.push(result.secure_url);
                 }
-                
+
                 // Clean up temporary file after upload
                 try {
                     fs.unlinkSync(file.path);
@@ -115,7 +125,8 @@ export const createBlog = async (req, res) => {
             content: content.trim(),
             images: imageUrls,
             videos: videoUrls,
-            tags: tagsArray
+            tags: tagsArray,
+            roomId: roomId || null
         });
 
         await blog.save();
@@ -147,18 +158,22 @@ export const createBlog = async (req, res) => {
 // Get all blog posts
 export const getAllBlogs = async (req, res) => {
     try {
-        const { page = 1, limit = 10, sort = 'newest' } = req.query;
+        const { page = 1, limit = 10, sort = 'newest', roomId } = req.query;
         const skip = (parseInt(page) - 1) * parseInt(limit);
+
+        let query = {};
+        if (roomId) query.roomId = roomId; // Room specific blogs
+        else query.roomId = null;          // Global public blogs
 
         let sortOption = { createdAt: -1 }; // Default: newest first
         if (sort === 'oldest') {
             sortOption = { createdAt: 1 };
         } else if (sort === 'most_liked') {
             // Sort by number of likes
-            const blogs = await blogModel.find({}).sort({ createdAt: -1 });
+            const blogs = await blogModel.find(query).sort({ createdAt: -1 });
             const sortedBlogs = blogs.sort((a, b) => b.likes.length - a.likes.length);
             const paginatedBlogs = sortedBlogs.slice(skip, skip + parseInt(limit));
-            
+
             return res.json({
                 success: true,
                 blogs: paginatedBlogs,
@@ -170,13 +185,13 @@ export const getAllBlogs = async (req, res) => {
         }
 
         const blogs = await blogModel
-            .find({})
+            .find(query)
             .sort(sortOption)
             .skip(skip)
             .limit(parseInt(limit));
-        
-        const total = await blogModel.countDocuments({});
-        
+
+        const total = await blogModel.countDocuments(query);
+
         res.json({
             success: true,
             blogs,
@@ -263,7 +278,7 @@ export const updateBlog = async (req, res) => {
         // Update fields
         if (title) blog.title = title.trim();
         if (content) blog.content = content.trim();
-        
+
         // Handle tags
         let tagsArray = [];
         if (tags) {
@@ -271,7 +286,7 @@ export const updateBlog = async (req, res) => {
                 tagsArray = typeof tags === 'string' ? JSON.parse(tags) : tags;
             } catch (e) {
                 // If parsing fails, treat as comma-separated string
-                tagsArray = typeof tags === 'string' 
+                tagsArray = typeof tags === 'string'
                     ? tags.split(',').map(t => t.trim()).filter(t => t)
                     : tags;
             }
@@ -333,13 +348,13 @@ export const updateBlog = async (req, res) => {
                         console.warn('Invalid file object:', file);
                         continue;
                     }
-                    
+
                     // Check if file exists before uploading
                     if (!fs.existsSync(file.path)) {
                         console.error('File does not exist:', file.path);
                         continue;
                     }
-                    
+
                     const result = await cloudinary.uploader.upload(file.path, {
                         resource_type: 'image',
                         folder: 'pawvaidya/blogs/images',
@@ -350,7 +365,7 @@ export const updateBlog = async (req, res) => {
                     if (result && result.secure_url) {
                         imageUrls.push(result.secure_url);
                     }
-                    
+
                     // Clean up temporary file after upload
                     try {
                         fs.unlinkSync(file.path);
@@ -377,13 +392,13 @@ export const updateBlog = async (req, res) => {
                         console.warn('Invalid file object:', file);
                         continue;
                     }
-                    
+
                     // Check if file exists before uploading
                     if (!fs.existsSync(file.path)) {
                         console.error('File does not exist:', file.path);
                         continue;
                     }
-                    
+
                     const result = await cloudinary.uploader.upload(file.path, {
                         resource_type: 'video',
                         folder: 'pawvaidya/blogs/videos',
@@ -392,7 +407,7 @@ export const updateBlog = async (req, res) => {
                     if (result && result.secure_url) {
                         videoUrls.push(result.secure_url);
                     }
-                    
+
                     // Clean up temporary file after upload
                     try {
                         fs.unlinkSync(file.path);
@@ -512,7 +527,7 @@ export const toggleLike = async (req, res) => {
             // Unlike - remove like
             blog.likes.splice(likeIndex, 1);
             await blog.save();
-            
+
             res.json({
                 success: true,
                 message: 'Blog unliked',
@@ -523,7 +538,7 @@ export const toggleLike = async (req, res) => {
             // Like - add like
             blog.likes.push({ userId, likedAt: new Date() });
             await blog.save();
-            
+
             res.json({
                 success: true,
                 message: 'Blog liked',

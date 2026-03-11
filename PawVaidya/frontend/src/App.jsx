@@ -22,6 +22,7 @@ import CommunityBlogs from './pages/CommunityBlogs'
 import CreateBlog from './pages/CreateBlog'
 import BlogDetail from './pages/BlogDetail'
 import EditBlog from './pages/EditBlog'
+import RoomDetail from './pages/RoomDetail'
 import UserMessages from './components/UserMessages'
 import LiveStreams from './pages/LiveStreams'
 import ReportIssue from './pages/ReportIssue'
@@ -82,6 +83,7 @@ const App = () => {
         <Route path='/create-blog' element={<CreateBlog />} />
         <Route path='/edit-blog/:blogId' element={<EditBlog />} />
         <Route path='/blog/:blogId' element={<BlogDetail />} />
+        <Route path='/room/:roomId' element={<RoomDetail />} />
         <Route path='/messages' element={<UserMessages />} />
         <Route path='/live-streams' element={<LiveStreams />} />
         <Route path='/live-stream/:streamID' element={<LiveStreams />} />

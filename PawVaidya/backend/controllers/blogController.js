@@ -4,6 +4,7 @@ import { v2 as cloudinary } from 'cloudinary';
 import { logActivity } from '../utils/activityLogger.js';
 import fs from 'fs';
 import { checkAndLogViolations } from '../middleware/contentModeration.js';
+import reportModel from '../models/reportModel.js';
 
 
 // Create a new blog post
@@ -585,16 +586,68 @@ export const addComment = async (req, res) => {
             });
         }
 
+        // Check for bad words in comment
+        const hasViolations = await checkAndLogViolations(req, { comment });
+
         // Add comment
-        blog.comments.push({
+        const newComment = {
             userId,
             userName: user.name,
             userImage: user.image || '',
             comment: comment.trim(),
             commentedAt: new Date()
-        });
+        };
+        blog.comments.push(newComment);
 
         await blog.save();
+
+        // Get the newly created comment to access its _id
+        const addedComment = blog.comments[blog.comments.length - 1];
+
+        // If violations are found, schedule deletion after 10 seconds and report the user
+        if (hasViolations || (req.contentViolations && req.contentViolations.length > 0)) {
+            setTimeout(async () => {
+                try {
+                    console.log(`[Auto-Moderation] Deleting comment ${addedComment._id} after 10s delay due to bad words.`);
+
+                    // Delete the comment
+                    await blogModel.updateOne(
+                        { _id: blogId },
+                        { $pull: { comments: { _id: addedComment._id } } }
+                    );
+
+                    // Create a report against the user
+                    const report = new reportModel({
+                        reporterType: 'doctor', // Using 'doctor' or 'admin' as system reporter
+                        reporterId: null, // No specific reporter
+                        reporterModel: 'user', // Required field, bypassing
+                        reportedType: 'user',
+                        reportedId: userId,
+                        reportedModel: 'user',
+                        blogId: blogId,
+                        reason: 'inappropriate_content',
+                        description: `Auto-moderation: User posted a comment containing banned words. Comment content: ${comment.trim()}`,
+                        status: 'pending'
+                    });
+
+                    // Fix reporter validation by assigning to a system/admin ID if possible, 
+                    // or modifying the required fields temporarily (we use null for system generated here, handled by mongoose depending on strictness)
+                    // Let's find an admin to be the reporter
+                    const admin = await mongoose.model('admin').findOne() || null;
+                    if (admin) {
+                        report.reporterId = admin._id;
+                        report.reporterType = 'user'; // Mongoose schema requires 'user' or 'doctor'
+                    } else {
+                        // fallback to self report to satisfy schema constraints
+                        report.reporterId = userId;
+                    }
+
+                    await report.save();
+                } catch (err) {
+                    console.error('[Auto-Moderation] Error in delayed comment deletion:', err);
+                }
+            }, 10000); // 10 seconds
+        }
 
         // Log activity
         await logActivity(

@@ -9,7 +9,7 @@ import {
     getRoomManagementData,
     deleteRoom
 } from '../controllers/roomController.js';
-import authUser from '../middleware/authUser.js';
+import authUser from '../middleware/authuser.js';
 
 const roomRouter = express.Router();
 

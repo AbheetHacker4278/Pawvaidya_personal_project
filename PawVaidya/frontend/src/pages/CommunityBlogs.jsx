@@ -204,6 +204,32 @@ const CommunityBlogs = () => {
     }
   };
 
+  const handleDeleteComment = async (blogId, commentId) => {
+    if (!window.confirm('Are you sure you want to delete this comment?')) return;
+    try {
+      const { data } = await axios.delete(
+        `${backendurl}/api/user/blogs/${blogId}/comments/${commentId}`,
+        { headers: { token }, data: { userId: userdata.id } }
+      );
+      if (data.success) {
+        setBlogs(blogs.map(blog => {
+          if (blog._id === blogId) {
+            return {
+              ...blog,
+              comments: blog.comments.filter(c => c._id !== commentId)
+            };
+          }
+          return blog;
+        }));
+        toast.success('Comment deleted');
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to delete comment');
+    }
+  };
+
   const handleDelete = async (blogId) => {
     if (!window.confirm(t('blogs.confirmDelete'))) return;
     try {
@@ -605,6 +631,15 @@ const CommunityBlogs = () => {
                                               <div className="flex items-center gap-2 mb-1">
                                                 <span className="font-bold text-sm" style={{ color: B.dark }}>{comment.userName}</span>
                                                 <span className="text-xs" style={{ color: B.light }}>{formatDate(comment.commentedAt)}</span>
+                                                {token && userdata && userdata.id === comment.userId && !userdata.isBanned && (
+                                                  <button
+                                                    onClick={() => handleDeleteComment(blog._id, comment._id)}
+                                                    className="ml-auto text-red-500 hover:text-red-700 transition-colors"
+                                                    title="Delete your comment"
+                                                  >
+                                                    <TrashIcon className="w-4 h-4" />
+                                                  </button>
+                                                )}
                                               </div>
                                               <p className="text-sm" style={{ color: B.mid }}>{comment.comment}</p>
                                             </div>

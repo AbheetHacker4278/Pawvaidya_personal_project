@@ -14,13 +14,14 @@
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
 }
 
-*{
-    font-family: Outfit;
+* {
+  font-family: Outfit;
 }
 
-body{
-    background-color: #F2E4C6;
-    padding-top: var(--navbar-height); /* Account for fixed navbar */
+body {
+  background-color: #F2E4C6;
+  padding-top: var(--navbar-height);
+  /* Account for fixed navbar */
 }
 
 /* Smooth scrolling for the entire page */
@@ -98,6 +99,7 @@ html {
     transform: translateX(100%);
     opacity: 0;
   }
+
   to {
     transform: translateX(0);
     opacity: 1;
@@ -109,80 +111,87 @@ html {
     transform: translateX(0);
     opacity: 1;
   }
+
   to {
     transform: translateX(100%);
     opacity: 0;
   }
 }
 
-.active hr{
-    @apply block
+.active hr {
+  @apply block
 }
 
-::-webkit-scrollbar{
-    @apply hidden
+::-webkit-scrollbar {
+  @apply hidden
 }
 
-@media (max-width:740px){
-    .active p{
-        @apply text-white bg-green-400
-    }
+@media (max-width:740px) {
+  .active p {
+    @apply text-white bg-green-400
+  }
 }
 
 /* Slide down animation for navbar */
 @keyframes slideDown {
-    from {
-        transform: translateY(-100%);
-        opacity: 0;
-    }
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 /* Modern dropdown animations */
 @keyframes dropdownFadeIn {
-    from {
-        opacity: 0;
-        transform: scale(0.95) translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1) translateY(0);
-    }
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 @keyframes dropdownFadeOut {
-    from {
-        opacity: 1;
-        transform: scale(1) translateY(0);
-    }
-    to {
-        opacity: 0;
-        transform: scale(0.95) translateY(-10px);
-    }
+  from {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+
+  to {
+    opacity: 0;
+    transform: scale(0.95) translateY(-10px);
+  }
 }
 
 @keyframes pulse-notification {
-    0%, 100% {
-        transform: scale(1);
-    }
-    50% {
-        transform: scale(1.1);
-    }
+
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.1);
+  }
 }
 
 .dropdown-enter {
-    animation: dropdownFadeIn 0.2s ease-out forwards;
+  animation: dropdownFadeIn 0.2s ease-out forwards;
 }
 
 .dropdown-exit {
-    animation: dropdownFadeOut 0.15s ease-in forwards;
+  animation: dropdownFadeOut 0.15s ease-in forwards;
 }
 
 .notification-badge {
-    animation: pulse-notification 2s ease-in-out infinite;
+  animation: pulse-notification 2s ease-in-out infinite;
 }
 
 /* ─── PawVaidya Branded Toast Notifications ─────────────────────────────── */
@@ -191,6 +200,7 @@ html {
 .Toastify__toast-container--top-right {
   top: calc(var(--navbar-height, 80px) + 12px);
   right: 16px;
+  z-index: 99999 !important;
 }
 
 /* Base toast card */
@@ -206,6 +216,8 @@ html {
   min-height: 60px;
   color: #3d2b1f;
   backdrop-filter: blur(8px);
+  pointer-events: auto !important;
+  /* Forces the toast to be clickable */
   animation: pawToastSlideIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
@@ -214,6 +226,7 @@ html {
     opacity: 0;
     transform: translateX(60px) scale(0.92);
   }
+
   to {
     opacity: 1;
     transform: translateX(0) scale(1);
@@ -231,12 +244,19 @@ html {
 /* Close button */
 .paw-toast .Toastify__close-button {
   color: #7a5a48;
-  opacity: 0.6;
+  opacity: 0.8;
   align-self: center;
+  z-index: 999999;
+  padding: 8px;
+  /* easier to click */
+  pointer-events: auto !important;
 }
+
 .paw-toast .Toastify__close-button:hover {
   opacity: 1;
   color: #3d2b1f;
+  transform: scale(1.1);
+  transition: all 0.2s ease;
 }
 
 /* Progress bar */
@@ -252,9 +272,11 @@ html {
 .paw-toast.Toastify__toast--success {
   border-left-color: #c8860a;
 }
+
 .paw-toast.Toastify__toast--success .Toastify__toast-icon svg {
   fill: #c8860a;
 }
+
 .paw-toast.Toastify__toast--success .paw-toast-progress.Toastify__progress-bar {
   background: linear-gradient(to right, #c8860a, #e8a020);
 }
@@ -264,9 +286,11 @@ html {
   border-left-color: #c0392b;
   background: #fff5f5;
 }
+
 .paw-toast.Toastify__toast--error .Toastify__toast-icon svg {
   fill: #c0392b;
 }
+
 .paw-toast.Toastify__toast--error .paw-toast-progress.Toastify__progress-bar {
   background: linear-gradient(to right, #c0392b, #e74c3c);
 }
@@ -276,9 +300,11 @@ html {
   border-left-color: #e67e22;
   background: #fffbf0;
 }
+
 .paw-toast.Toastify__toast--warning .Toastify__toast-icon svg {
   fill: #e67e22;
 }
+
 .paw-toast.Toastify__toast--warning .paw-toast-progress.Toastify__progress-bar {
   background: linear-gradient(to right, #e67e22, #f39c12);
 }
@@ -287,9 +313,11 @@ html {
 .paw-toast.Toastify__toast--info {
   border-left-color: #5A4035;
 }
+
 .paw-toast.Toastify__toast--info .Toastify__toast-icon svg {
   fill: #5A4035;
 }
+
 .paw-toast.Toastify__toast--info .paw-toast-progress.Toastify__progress-bar {
   background: linear-gradient(to right, #5A4035, #7a5a48);
 }

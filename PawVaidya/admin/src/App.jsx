@@ -51,6 +51,7 @@ import { io } from 'socket.io-client';
 import MaintenanceMode from './components/MaintenanceMode';
 import SecurityMonitoring from './pages/Admin/SecurityMonitoring';
 import LocationHandler from './components/LocationHandler';
+import AdminDeployments from './pages/Admin/AdminDeployments';
 
 const App = () => {
   const { atoken } = useContext(AdminContext)
@@ -152,6 +153,7 @@ const App = () => {
               <Route path='/manage-coupons' element={<ManageCoupons />} />
               <Route path='/polls' element={<Polls />} />
               <Route path='/security-monitoring' element={<SecurityMonitoring />} />
+              <Route path='/admin-deployments' element={<AdminDeployments />} />
 
               <Route path='/doctor-dashboard' element={<DoctorDashboard />} />
               <Route path='/doctor-appointments' element={<DoctorAppointments />} />

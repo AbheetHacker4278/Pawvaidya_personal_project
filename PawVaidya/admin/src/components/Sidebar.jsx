@@ -10,7 +10,7 @@ import {
   Stethoscope, Trophy, Radio, MessageSquare, Mail,
   AlertTriangle, Trash2, ShieldCheck, Database,
   Clock, BookOpen, ClipboardList, Tag, Tv, Search,
-  Menu, X, ChevronRight, Bell, ShieldAlert, BarChart3
+  Menu, X, ChevronRight, Bell, ShieldAlert, BarChart3, Server
 } from 'lucide-react';
 
 const SidebarItem = ({ to, icon: Icon, label, isOpen, onClick, subtext, badge }) => {
@@ -146,6 +146,9 @@ const Sidebar = ({ isOpen }) => {
             <div className="flex flex-col">
               <SectionHeader label="Insights" isOpen={isOpen} />
               <SidebarItem to="/admin-dashboard" icon={LayoutDashboard} label="Dashboard" subtext="Overview & Stats" isOpen={isOpen} onClick={() => logNavigation('Dashboard')} />
+              {adminProfile?.role === 'master' && (
+                <SidebarItem to="/admin-deployments" icon={Server} label="Deployments" subtext="Render Status" isOpen={isOpen} onClick={() => logNavigation('Deployments')} />
+              )}
 
               <SectionHeader label="Management" isOpen={isOpen} />
               {adminProfile?.role === 'master' && (

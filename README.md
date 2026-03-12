@@ -1,83 +1,74 @@
-# 🐾 PawVaidya - #1 Veterinary Platform in India
+# 🐾 PawVaidya - #1 Veterinary Intelligence Platform in India
 
 [![MERN Stack](https://img.shields.io/badge/MERN-Stack-green.svg)](https://www.mongodb.com/mern-stack)
 [![Vite](https://img.shields.io/badge/Frontend-Vite-blue.svg)](https://vitejs.dev/)
 [![Socket.io](https://img.shields.io/badge/Real--time-Socket.io-black.svg)](https://socket.io/)
 [![Gemini AI](https://img.shields.io/badge/AI-Gemini-purple.svg)](https://deepmind.google/technologies/gemini/)
+[![Render](https://img.shields.io/badge/Deployment-Render-00d1b2.svg)](https://render.com/)
 
-PawVaidya is a state-of-the-art, comprehensive veterinary consultancy platform designed to bridge the gap between pet owners and expert veterinarians. Built with the **MERN Stack**, it features real-time consultation, AI-driven diagnostics, and a robust admin management system.
+**PawVaidya** is a state-of-the-art, comprehensive veterinary consultancy ecosystem designed to bridge the gap between pet owners and expert veterinarians. Built with the **MERN Stack**, it features real-time consultation, AI-driven diagnostics, and a **Military-Grade Admin Command Center**.
+
+---
+
+## 🏛️ System Architecture
+
+```mermaid
+graph TD
+    A[User Portal - React/Vite] -->|REST/WebSockets| B[Backend API - Node.js/Express]
+    C[Admin Panel - React/Vite] -->|REST/WebSockets| B
+    B -->|Mongoose| D[(MongoDB Atlas)]
+    B -->|Real-time| E[Socket.io Server]
+    B -->|Asset Storage| F[Cloudinary]
+    B -->|Video SDK| G[ZegoCloud]
+    B -->|AI Engine| H[Google Gemini AI]
+    B -->|Telemetry| I[Supabase Logging]
+    B -->|Third Party| J[Twilio / Razorpay]
+    C -->|Monitoring| K[Render API v1]
+```
 
 ---
 
 ## 🔥 Key Features
 
-### 🐶 For Pet Owners (User Portal) (https://pawvaidya-79qq.onrender.com/)
+### 🐶 For Pet Owners (User Portal)
+> **Endpoint:** [Live Portal](https://pawvaidya-79qq.onrender.com/)
 - **AI-Powered Diagnostics**: Integrated **Gemini AI** chatbot (PawBot) for instant pet health guidance and symptom checking.
 - **Smart Appointment Booking**: Easy scheduling with specialized vets (Small Animal, Avian, Exotic, etc.) featuring real-time slot availability.
 - **Video Consultations**: Crystal-clear video calls powered by **ZegoCloud** for remote diagnosis.
-- **Multilingual Support**: Seamless transition between English, Hindi, Tamil, and Telugu using **i18next** and AI-powered translations.
-- **🆕 Unified Coupon System**: Automatic fallback between doctor-specific discounts and platform-wide admin coupons (Manual & Click-to-Apply).
-- **🆕 Community Polls**: Interactive voting system for users to participate in platform-wide questions and riddles with real-time feedback.
-- **Pet ID Cards**: Generate digital, verifiable premium IDs for your pets.
+- **Multilingual Support**: Support for English, Hindi, Tamil, and Telugu using **i18next** and AI-powered translations.
+- **Unified Coupon System**: Smart fallback between doctor-specific discounts and platform-wide admin coupons.
 - **Community Hub**: Share experiences and learn from expert blogs.
 
 ### 🏥 For Veterinarians
 - **Dynamic Scheduling**: Manage consultation hours and availability slots.
-- **🆕 Collaborative Polls**: Engage with doctors-only polls for professional insights and platform feedback.
-- **Quick Chats**: Real-time messaging with pet owners for follow-ups.
+- **Collaborative Polls**: Engage with doctors-only polls for professional insights and platform feedback.
 - **Profile Management**: Showcase expertise, experience, and consultancy fees.
 
-### ⚙️ For Administrators (Admin Panel) (https://pawvaidya-admin-uy9o.onrender.com/)
-- **Advanced Analytics**: Real-time dashboard using **Chart.js** and **Recharts** to track status codes, activity trends, and system health.
-- **Supabase Integration**: Activity logging and analytics offloaded to Supabase for enhanced performance.
-- **Fraud Detection**: AI-monitored system to identify and alert about suspicious activities.
-- **Stream Management**: Control live veterinary sessions and Q&A.
-- **🆕 Service Health Command Center**: Live health monitoring for all connected services:
-  - **MongoDB** — Ping latency, DB size, connections, collections, documents, indexes, uptime, version
-  - **Cloudinary** — Ping latency, plan tier, storage/bandwidth usage, total assets, transformations
-  - **Nodemailer (SMTP)** — SMTP verify, Brevo relay status, connection latency
-  - **Supabase** — Query latency, table readiness, configuration status
-  - **Gemini AI** — API key configuration check
-- **🆕 Real-Time Data Congestion Monitor**: Memory pressure bar, active WebSocket count, heap/RSS usage, server uptime, Node.js version, and total DB operations.
-- **🆕 System Stress Gauges**: Radial SVG gauges for live **CPU**, **RAM**, and **Storage** utilization with color-coded severity levels (Low → Medium → High → Critical).
-- **🆕 Thermal Monitor**: Animated SVG thermometer with mercury level, pulsing bulb, per-core temperature bars, and spinning fan blades (RPM-proportional speed) via `systeminformation`.
-- **🆕 Platform Coupon Management**: Full suite for creating, toggling, and monitoring platform-wide discounts.
-- **🆕 Blacklist System**: Centralized user management with status tracking and history.
-- **🆕 GitHub Repo Health**: Integrated repository analytics tracking stars, forks, issues, and community health score.
-- **🆕 Advanced Security Monitoring**: 24/7 automated threat detection for **SQL Injection (SQLi)** and **Cross-Site Scripting (XSS)**.
-- **🆕 Offender Identity Tracking**: Deep metadata capturing including:
-  - **Beautified IP Addressing** — Localhost (`::1`) mapping and proxy header resolution.
-  - **Device Fingerprinting** — Browser, OS, and device type extraction from User-Agents.
-  - **Client-Side Geolocation** — High-precision GPS/Network coordinates with user consent.
-- **🆕 Live Commit Stream**: Real-time discovery feed of the latest 10 commits with author avatars and relative timestamps.
-- **🆕 Graceful Error Handling**: Suppressed repeated Supabase "missing table" errors after first occurrence — no more terminal spam.
+### 🛡️ Admin Command Center (Admin Panel)
+> **Endpoint:** [Admin Panel](https://pawvaidya-admin-uy9o.onrender.com/)
+- **🆕 Render Deployment Monitor**: Full-stack observability for all services:
+  - **Live Status**: Real-time deployment tracking and build history.
+  - **Network Performance**: High-fidelity charts for HTTP Requests and Egress Bandwidth.
+  - **Time Range Control**: Toggle metrics for **12h, 24h, 2d, and 7d**.
+  - **Usage Breakdown**: Categorical data analysis (HTTP, WebSockets, NAT, Private Link).
+- **System Health Gauges**: Radial SVG gauges for live **CPU, RAM, and Storage** utilization via `systeminformation`.
+- **Thermal & Hardware Monitoring**: Animated SVG thermometer with core-level temperature tracking and fan RPM simulation.
+- **Security Incident Suite**: 24/7 automated threat detection for **SQLi and XSS** with deep offender fingerprinting (IP, Device, Geolocation).
+- **Service Health dashboard**: Live connectivity pings for MongoDB, Cloudinary, SMTP, Supabase, and Gemini AI.
 
 ---
 
-## 🛡️ Advanced Security Monitoring
-
-PawVaidya features a sophisticated security attribution and monitoring layer designed to protect the platform from malicious actors while providing administrators with high-fidelity incident reports.
-
-- **Real-time Detection**: Middleware-level scanning of all incoming `req.body`, `req.query`, and `req.params` for malicious patterns.
-- **Interactive Security Dashboard**: A premium, animated interface in the Admin Panel to:
-  - View live security incidents with severity color-coding.
-  - Explore detailed **Offender Profiles** (Identity, Device, and Location).
-  - Resolve or ignore incidents with activity logging.
-  - Track "Total Scanned" vs "Threats Detected" metrics.
-- **Privacy-First Geolocation**: Requests user permission to share location for enhanced security logs, falling back to IP-based approximate location if denied.
-
----
-
-## 🛠️ Tech Stack
+## 🛠️ Deep Tech Stack
 
 | Layer | Technologies |
 | :--- | :--- |
-| **Frontend** | React, Vite, Tailwind CSS, Framer Motion, Lucide Icons, MUI |
-| **Backend** | Node.js, Express, MongoDB (Mongoose), Redis |
-| **Real-time** | Socket.io, ZegoCloud (Video SDK) |
-| **AI/ML** | Google Gemini AI API, OpenAI API, face-api.js |
-| **Infrastructure** | Supabase (Logging), Cloudinary (Images), Razorpay (Payments) |
-| **Monitoring** | systeminformation (Hardware Sensors), Node.js `os` module |
+| **Frontend Core** | React 18, Vite, Tailwind CSS, Framer Motion, Lucide Icons |
+| **Backend Core** | Node.js 20, Express 4.21, MongoDB (Mongoose 6.1) |
+| **Real-time Engine** | Socket.io 4.8, ZegoCloud Video SDK |
+| **AI Integration** | Google Gemini AI (@google/generative-ai), OpenAI SDK |
+| **Data & Assets** | Supabase (PostgreSQL/Logging), Cloudinary (Media), Redis (Caching) |
+| **Infrastructure** | Render API v1 (Metrics), Twilio (SMS), Razorpay (Payments) |
+| **Security** | Argon2/Bcrypt, JWT, Device Fingerprinting, SQLi/XSS Middleware |
 
 ---
 
@@ -85,53 +76,36 @@ PawVaidya features a sophisticated security attribution and monitoring layer des
 
 ### Prerequisites
 - Node.js (v20.x recommended)
-- MongoDB Atlas Account
-- Gemini AI API Key
-- Cloudinary Credentials
-- Supabase Project (URL + Anon Key) — see [SUPABASE_SETUP.md](./PawVaidya/SUPABASE_SETUP.md)
+- MongoDB Atlas Key
+- Google Cloud Gemini API Key
+- Cloudinary Storage Credentials
+- Render API Key (for Deployment Dash)
 
-### Installation
+### Installation & Run
 
-1. **Clone the Repository**
+1. **Clone & Base Setup**
    ```bash
    git clone https://github.com/AbheetHacker4278/Pawvaidya_personal_project.git
    cd Pawvaidya_personal_project/PawVaidya
    ```
 
-2. **Backend Setup**
+2. **Environment Configuration**
+   Each service requires a `.env`. Copy from root reference:
+   - `backend/.env`: PORT, MONGODB_URI, JWT_SECRET, RENDER_API_KEY, RENDER_BACKEND_SERVICE_ID...
+   - `frontend/.env`: VITE_BACKEND_URL, VITE_ZEGO_APP_ID...
+   - `admin/.env`: VITE_BACKEND_URL...
+
+3. **Running Services**
    ```bash
-   cd backend
-   npm install
-   cp .env.example .env # Configure your MongoDB and API keys
-   npm run server
+   # Backend
+   cd backend && npm install && npm run server
+
+   # Frontend
+   cd frontend && npm install && npm run dev
+
+   # Admin
+   cd admin && npm install && npm run dev
    ```
-
-3. **Frontend Setup**
-   ```bash
-   cd ../frontend
-   npm install
-   cp .env.example .env
-   npm run dev
-   ```
-
-4. **Admin Setup**
-   ```bash
-   cd ../admin
-   npm install
-   cp .env.example .env
-   npm run dev
-   ```
-
----
-
-## 🔐 Environment Configuration
-
-Each sub-directory requires its own `.env` file. Key variables include:
-
-- `MONGODB_URI`: Your MongoDB connection string.
-- `VITE_GEMINI_API_KEY`: Your Google Cloud Gemini API key.
-- `VITE_ZEGO_APP_ID` & `VITE_ZEGO_SERVER_SECRET`: For video calling.
-- `CLOUDINARY_CLOUD_NAME`: For media storage.
 
 ---
 
@@ -139,49 +113,24 @@ Each sub-directory requires its own `.env` file. Key variables include:
 
 ```text
 PawVaidya/
-├── admin/                  # React Admin Dashboard
-│   ├── public/             # Static assets
-│   └── src/
-│       ├── components/     # UI Components (Sidebar, Navbar, ServiceHealthDashboard, etc.)
-│       ├── context/        # Admin Global State
-│       ├── pages/          # Admin Views (Dashboard, Doctor Chat, etc.)
-│       └── utils/          # Admin Helpers
-├── frontend/               # React User Portal
-│   ├── public/             # Static assets
-│   └── src/
-│       ├── components/     # Reusable UI Components
-│       ├── context/        # App Global State
-│       ├── pages/          # User Views (Home, Profile, Appointments)
-│       └── i18n/           # Multilingual Translations
-├── backend/                # Node.js/Express API Server
-│   ├── config/             # DB, Cloudinary, Nodemailer, Supabase Config
-│   ├── controllers/        # Business Logic (User, Doctor, Admin, ServiceHealth)
-│   ├── services/           # Supabase Service (metrics & activity logging)
-│   ├── middleware/         # Auth, Validation, and **Security Monitoring**
-│   ├── models/             # Mongoose Schemas (User, Doctor, Appt, **SecurityIncident**)
-│   ├── routes/             # API Endpoints
-│   └── socketServer.js     # Real-time WebSocket Logic
-├── SUPABASE_SETUP.md       # SQL setup guide for Supabase tables
-└── DEPLOYMENT.md           # Deployment instructions
+├── admin/                  # React Admin Dashboard (Vite)
+│   ├── src/pages/Admin/    # AdminDeployments.jsx (New Monitor)
+│   └── src/components/     # ServiceHealthDashboard, ThermalMonitor
+├── frontend/               # React User Portal (Vite)
+│   └── src/pages/          # Appointments, AI Chatbot (PawBot)
+├── backend/                # Node.js REST & Web Socket API
+│   ├── controllers/        # renderController.js (Metrics Logic)
+│   ├── middleware/         # Security Monitor (SQLi/XSS Detection)
+│   ├── routes/             # renderRoute.js (Deployment Hooks)
+│   └── server.js           # Express & Socket.io initialization
+└── docs/                   # SUPABASE_SETUP.md, DEPLOYMENT.md
 ```
 
 ---
 
-## 🤝 Contributing
-
-We welcome contributions! Please follow these steps:
-1. Fork the project.
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`).
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`).
-4. Push to the branch (`git push origin feature/AmazingFeature`).
-5. Open a Pull Request.
-
----
-
 ## 📄 License & Support
-
-© 2026 PawVaidya. All Rights Reserved.
-For support or deployment issues, refer to the [DEPLOYMENT.md](./PawVaidya/DEPLOYMENT.md) or contact the project maintainers.
+© 2026 **PawVaidya**. All Rights Reserved.
+For technical support or security disclosures, please refer to our [Deployment Guide](./PawVaidya/DEPLOYMENT.md).
 
 ---
-*Created with ❤️ for Pet Care Professionals and Owners.*
+*Developed with ❤️ by the PawVaidya Engineering Team.*

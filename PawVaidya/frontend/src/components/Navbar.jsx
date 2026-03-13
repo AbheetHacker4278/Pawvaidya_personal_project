@@ -7,7 +7,7 @@ import { toast } from 'react-toastify';
 import axios from 'axios';
 import LanguageSwitcher from './LanguageSwitcher';
 import LocationRefreshButton from './LocationRefreshButton';
-import { MapPin, Bell, User, Calendar, LogOut, ChevronDown, X, Menu, AlertCircle } from 'lucide-react';
+import { MapPin, Bell, User, Calendar, LogOut, ChevronDown, X, Menu, AlertCircle, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // ─── Brand palette ────────────────────────────────────────────────────────────
@@ -111,7 +111,7 @@ const Navbar = () => {
         initial={{ y: -80, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ type: 'spring', damping: 20, stiffness: 120 }}
-        className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 sm:px-[10%]"
+        className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 lg:px-8 xl:px-[10%]"
         style={{
           height: 'var(--navbar-height, 72px)',
           background: navBg,
@@ -123,49 +123,69 @@ const Navbar = () => {
         }}
       >
         {/* ── Logo ─────────────────────────────────────────────────────────── */}
-        <motion.img
-          whileHover={{ scale: 1.04 }}
-          whileTap={{ scale: 0.97 }}
-          onClick={() => navigate('/')}
-          className="w-40 cursor-pointer"
-          src="https://i.ibb.co/R2Y4vBk/Screenshot-2024-11-23-000108-removebg-preview.png"
-          alt="PawVaidya"
-        />
+        <div className="relative flex items-center shrink-0 py-2">
+          <img
+            onClick={() => navigate('/')}
+            className="w-36 lg:w-40 xl:w-48 cursor-pointer drop-shadow-sm hover:scale-105 transition-transform duration-300"
+            src="https://i.ibb.co/R2Y4vBk/Screenshot-2024-11-23-000108-removebg-preview.png"
+            alt="PawVaidya Logo"
+          />
+          {/* Blacklist Warning Label near Logo */}
+          {userdata && userdata.isBanned && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="absolute -bottom-1 right-0 translate-x-1/4 flex items-center gap-1 px-2 py-0.5 bg-red-100 border border-red-300 rounded-md shadow-sm pointer-events-none"
+              style={{ zIndex: 10 }}
+            >
+              <AlertTriangle className="w-3 h-3 text-red-600" />
+              <span className="text-[10px] font-black text-red-700 tracking-widest uppercase leading-none">Banned</span>
+            </motion.div>
+          )}
+        </div>
 
         {/* ── Desktop Nav Links ─────────────────────────────────────────────── */}
-        <ul className="hidden md:flex items-center gap-1 font-medium text-sm">
+        <ul className="hidden md:flex items-center gap-1 lg:gap-2 font-medium text-sm">
           {NAV_LINKS.map(({ to, labelKey, label, live }) => (
-            <NavLink key={to} to={to}>
+            <NavLink key={to} to={to} className="relative group">
               {({ isActive }) => (
-                <motion.li
-                  whileHover={{ y: -1 }}
-                  className="relative px-3 py-2 rounded-lg cursor-pointer select-none transition-colors duration-200"
-                  style={{
-                    color: isActive ? B.mid : B.dark,
-                    background: isActive ? '#f5ede8' : 'transparent',
-                    fontWeight: isActive ? 700 : 500,
-                  }}
-                >
-                  {live ? (
-                    <span className="flex items-center gap-1.5">
-                      {label}
-                      <span className="relative flex h-2 w-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
-                      </span>
-                    </span>
-                  ) : (
-                    labelKey ? t(labelKey) : label
-                  )}
-                  {/* Active underline */}
+                <div className="relative px-2.5 md:px-2 lg:px-4 py-2 rounded-full cursor-pointer select-none transition-colors duration-300 flex items-center justify-center">
+                  {/* Active Background Pill */}
                   {isActive && (
                     <motion.div
-                      layoutId="nav-underline"
-                      className="absolute bottom-0.5 left-3 right-3 h-0.5 rounded-full"
-                      style={{ background: `linear-gradient(to right, ${B.mid}, ${B.amber})` }}
+                      layoutId="nav-active-bg"
+                      className="absolute inset-0 rounded-full"
+                      style={{ background: '#e8dbce', zIndex: -1, boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.02)' }}
+                      transition={{ type: "spring", stiffness: 300, damping: 30 }}
                     />
                   )}
-                </motion.li>
+                  {/* Hover background for inactive state */}
+                  {!isActive && (
+                    <div className="absolute inset-0 rounded-full bg-[#f5ede8] opacity-0 group-hover:opacity-60 transition-opacity duration-300" style={{ zIndex: -1 }} />
+                  )}
+
+                  <motion.span
+                    whileHover={{ scale: 1.05 }}
+                    style={{
+                      color: isActive ? B.dark : B.mid,
+                      fontWeight: isActive ? 800 : 600,
+                      letterSpacing: '0.01em'
+                    }}
+                    className="relative z-10 flex items-center text-[13px] lg:text-sm tracking-tight"
+                  >
+                    {live ? (
+                      <span className="flex items-center gap-1.5">
+                        {label}
+                        <span className="relative flex h-2 w-2">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
+                        </span>
+                      </span>
+                    ) : (
+                      labelKey ? t(labelKey) : label
+                    )}
+                  </motion.span>
+                </div>
               )}
             </NavLink>
           ))}
@@ -173,10 +193,11 @@ const Navbar = () => {
           {/* Verify email pill */}
           {userdata && !userdata.isAccountverified && (
             <motion.li
-              whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }}
+              whileHover={{ scale: 1.05, boxShadow: "0 4px 12px rgba(192,57,43,0.15)" }}
+              whileTap={{ scale: 0.95 }}
               onClick={sendVerificationOtp}
-              className="px-3 py-1.5 rounded-full text-xs font-bold cursor-pointer border transition-all duration-200"
-              style={{ color: '#c0392b', borderColor: '#c0392b', background: '#fff5f5' }}
+              className="px-4 py-2 rounded-full text-xs font-bold cursor-pointer transition-all duration-300 ml-2"
+              style={{ color: '#fff', background: 'linear-gradient(135deg, #e74c3c, #c0392b)', boxShadow: "0 2px 8px rgba(192,57,43,0.2)" }}
             >
               {t('navbar.verifyEmail')}
             </motion.li>
@@ -184,22 +205,23 @@ const Navbar = () => {
         </ul>
 
         {/* ── Right side ───────────────────────────────────────────────────── */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 lg:gap-4 shrink-0">
           <LanguageSwitcher />
 
           {/* Bell icon (desktop) */}
           {token && userdata && (
             <motion.button
-              whileHover={{ scale: 1.12 }} whileTap={{ scale: 0.93 }}
+              whileHover={{ scale: 1.1, background: '#f0e4db' }}
+              whileTap={{ scale: 0.93 }}
               onClick={() => navigate('/messages')}
-              className="relative p-2 rounded-xl transition-colors duration-200"
+              className="relative p-2 lg:p-2.5 rounded-xl transition-colors duration-300 shrink-0"
               style={{ color: B.mid, background: '#f5ede8' }}
             >
-              <Bell className="w-5 h-5" />
+              <Bell className="w-4.5 h-4.5 lg:w-5 lg:h-5" />
               {unreadMessages > 0 && (
                 <motion.span
                   initial={{ scale: 0 }} animate={{ scale: 1 }}
-                  className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center font-bold notification-badge"
+                  className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] lg:text-[10.5px] rounded-full w-4 h-4 lg:w-4.5 lg:h-4.5 flex items-center justify-center font-bold shadow-md ring-2 ring-white"
                 >
                   {unreadMessages > 9 ? '9+' : unreadMessages}
                 </motion.span>
@@ -211,26 +233,28 @@ const Navbar = () => {
           {token && userdata ? (
             <div className="relative hidden md:block" ref={dropdownRef}>
               <motion.button
-                whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all duration-200"
+                className="flex items-center gap-1.5 lg:gap-2.5 px-2 py-1.5 lg:px-3 lg:py-1.5 rounded-full border transition-all duration-300 hover:shadow-sm shrink-0"
                 style={{
-                  background: isDropdownOpen ? '#f5ede8' : 'rgba(255,255,255,0.6)',
-                  borderColor: isDropdownOpen ? B.sand : 'rgba(232,213,176,0.5)',
-                  backdropFilter: 'blur(8px)',
+                  background: isDropdownOpen ? '#e8dbce' : 'rgba(255,255,255,0.7)',
+                  borderColor: isDropdownOpen ? B.sand : 'rgba(232,213,176,0.6)',
+                  backdropFilter: 'blur(10px)',
+                  boxShadow: isDropdownOpen ? 'inset 0 1px 3px rgba(0,0,0,0.02)' : 'none'
                 }}
               >
                 <img
-                  className="w-8 h-8 rounded-full object-cover"
+                  className="w-7 h-7 lg:w-8 lg:h-8 rounded-full object-cover transition-transform duration-300 shrink-0"
                   style={{ border: `2px solid ${B.sand}` }}
                   src={userdata.image}
                   alt="Profile"
                 />
-                <span className="hidden sm:block text-sm font-semibold" style={{ color: B.dark }}>
+                <span className="hidden sm:block text-sm font-semibold tracking-tight" style={{ color: B.dark }}>
                   {userdata.name}
                 </span>
-                <motion.div animate={{ rotate: isDropdownOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
-                  <ChevronDown className="w-4 h-4" style={{ color: B.light }} />
+                <motion.div animate={{ rotate: isDropdownOpen ? 180 : 0 }} transition={{ type: "spring", stiffness: 200, damping: 20 }}>
+                  <ChevronDown className="w-4 h-4 opacity-75" style={{ color: B.dark }} />
                 </motion.div>
               </motion.button>
 
@@ -238,54 +262,56 @@ const Navbar = () => {
               <AnimatePresence>
                 {isDropdownOpen && (
                   <motion.div
-                    initial={{ opacity: 0, scale: 0.95, y: -8 }}
+                    initial={{ opacity: 0, scale: 0.95, y: -10, transformOrigin: "top right" }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.95, y: -8 }}
-                    transition={{ type: 'spring', damping: 20, stiffness: 200 }}
-                    className="absolute right-0 top-full mt-3 w-64 rounded-2xl overflow-hidden z-50"
+                    exit={{ opacity: 0, scale: 0.95, y: -5 }}
+                    transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                    className="absolute right-0 top-[calc(100%+12px)] w-64 rounded-2xl overflow-hidden z-50"
                     style={{
-                      background: '#fff',
+                      background: 'rgba(255, 255, 255, 0.98)',
+                      backdropFilter: 'blur(16px)',
                       border: `1px solid ${B.sand}`,
-                      boxShadow: `0 16px 48px rgba(61,43,31,0.16)`,
+                      boxShadow: `0 20px 40px -10px rgba(61,43,31,0.15)`,
                     }}
                   >
                     {/* Arrow */}
-                    <div className="absolute -top-2 right-5 w-4 h-4 rotate-45 rounded-sm"
+                    <div className="absolute -top-1.5 right-6 w-3 h-3 rotate-45 rounded-sm"
                       style={{ background: '#fff', borderTop: `1px solid ${B.sand}`, borderLeft: `1px solid ${B.sand}` }} />
 
                     {/* User header */}
-                    <div className="px-4 py-4 border-b" style={{ background: '#f5ede8', borderColor: B.sand }}>
-                      <div className="flex items-center gap-3">
-                        <img className="w-10 h-10 rounded-full object-cover" style={{ border: `2px solid ${B.sand}` }}
+                    <div className="px-5 py-4 border-b relative overflow-hidden" style={{ background: 'linear-gradient(to bottom, #fcfaf8, #f5ede8)', borderColor: B.sand }}>
+                      <div className="flex items-center gap-3 relative z-10">
+                        <img className="w-11 h-11 rounded-full object-cover shadow-sm" style={{ border: `2px solid #fff` }}
                           src={userdata.image} alt="Profile" />
-                        <div>
-                          <p className="font-bold text-sm" style={{ color: B.dark }}>{userdata.name}</p>
-                          <p className="text-xs" style={{ color: B.light }}>{userdata.email}</p>
+                        <div className="flex flex-col justify-center">
+                          <p className="font-bold text-[15px] leading-tight" style={{ color: B.dark }}>{userdata.name}</p>
+                          <p className="text-[12px] opacity-80 mt-0.5" style={{ color: B.light }}>{userdata.email}</p>
                         </div>
                       </div>
                     </div>
 
                     {/* Menu items */}
-                    <div className="py-2">
+                    <div className="py-2.5 px-1.5">
                       {[
-                        { icon: <User className="w-4 h-4" />, label: t('navbar.myProfile'), action: () => { navigate('/my-profile'); setIsDropdownOpen(false); } },
-                        { icon: <Calendar className="w-4 h-4" />, label: t('navbar.myAppointments'), action: () => { navigate('/my-appointments'); setIsDropdownOpen(false); } },
-                        { icon: <Bell className="w-4 h-4" />, label: t('navbar.notifications'), badge: unreadMessages, action: () => { navigate('/messages'); setIsDropdownOpen(false); } },
-                        { icon: <AlertCircle className="w-4 h-4" />, label: t('navbar.reportIssue'), action: () => { navigate('/report-issue'); setIsDropdownOpen(false); } },
+                        { icon: <User className="w-[18px] h-[18px]" />, label: t('navbar.myProfile'), action: () => { navigate('/my-profile'); setIsDropdownOpen(false); } },
+                        { icon: <Calendar className="w-[18px] h-[18px]" />, label: t('navbar.myAppointments'), action: () => { navigate('/my-appointments'); setIsDropdownOpen(false); } },
+                        { icon: <Bell className="w-[18px] h-[18px]" />, label: t('navbar.notifications'), badge: unreadMessages, action: () => { navigate('/messages'); setIsDropdownOpen(false); } },
+                        { icon: <AlertCircle className="w-[18px] h-[18px]" />, label: t('navbar.reportIssue'), action: () => { navigate('/report-issue'); setIsDropdownOpen(false); } },
                       ].map(({ icon, label, badge, action }) => (
                         <motion.button
                           key={label}
-                          whileHover={{ x: 4, background: '#f5ede8' }}
+                          whileHover={{ x: 4, backgroundColor: '#fdf8f5' }}
+                          whileTap={{ scale: 0.98 }}
                           onClick={action}
-                          className="w-full flex items-center justify-between px-4 py-3 text-left transition-colors duration-150"
+                          className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-left transition-colors duration-200"
                           style={{ color: B.dark }}
                         >
                           <div className="flex items-center gap-3">
-                            <span style={{ color: B.amber }}>{icon}</span>
-                            <span className="text-sm font-medium">{label}</span>
+                            <span style={{ color: B.amber }} className="opacity-90">{icon}</span>
+                            <span className="text-[14px] font-medium">{label}</span>
                           </div>
                           {badge > 0 && (
-                            <span className="bg-red-500 text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center font-bold">
+                            <span className="bg-red-500 text-white text-[10px] rounded-full w-5 h-5 flex items-center justify-center font-bold shadow-sm">
                               {badge > 9 ? '9+' : badge}
                             </span>
                           )}
@@ -294,31 +320,32 @@ const Navbar = () => {
                     </div>
 
                     {/* Location section */}
-                    <div className="border-t px-4 py-3" style={{ borderColor: B.sand }}>
+                    <div className="border-t px-5 py-3.5 bg-[#fcfaf8]" style={{ borderColor: B.sand }}>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <MapPin className="w-4 h-4" style={{ color: B.amber }} />
-                          <span className="text-xs font-semibold" style={{ color: B.light }}>Location</span>
+                          <MapPin className="w-4 h-4 opacity-80" style={{ color: B.amber }} />
+                          <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: B.light }}>Location</span>
                         </div>
                         <LocationRefreshButton variant="icon" size="sm" onLocationUpdate={refreshUserLocation} location={userLocation} />
                       </div>
                       {userLocation && (
-                        <p className="text-[10px] mt-1 ml-6" style={{ color: B.light }}>
+                        <p className="text-[11px] mt-1.5 ml-6 font-medium" style={{ color: B.light }}>
                           {userLocation.latitude.toFixed(4)}, {userLocation.longitude.toFixed(4)}
                         </p>
                       )}
                     </div>
 
                     {/* Logout */}
-                    <div className="border-t" style={{ borderColor: B.sand }}>
+                    <div className="border-t p-1.5 bg-[#fff]" style={{ borderColor: B.sand }}>
                       <motion.button
-                        whileHover={{ background: '#fff5f5' }}
+                        whileHover={{ background: '#fff5f5', color: '#e74c3c' }}
+                        whileTap={{ scale: 0.98 }}
                         onClick={() => { Logout(); setIsDropdownOpen(false); }}
-                        className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors duration-150"
+                        className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-left transition-colors duration-200"
                         style={{ color: '#c0392b' }}
                       >
-                        <LogOut className="w-4 h-4" />
-                        <span className="text-sm font-medium">{t('navbar.logout')}</span>
+                        <LogOut className="w-[18px] h-[18px] opacity-90" />
+                        <span className="text-[14px] font-semibold">{t('navbar.logout')}</span>
                       </motion.button>
                     </div>
                   </motion.div>
@@ -328,19 +355,20 @@ const Navbar = () => {
           ) : (
             <div className="hidden md:flex items-center gap-2">
               <motion.button
-                whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }}
+                whileHover={{ scale: 1.05, background: '#fcfaf8' }}
+                whileTap={{ scale: 0.95 }}
                 onClick={() => navigate('/login')}
-                className="px-5 py-2 rounded-full text-sm font-semibold border transition-all duration-200"
-                style={{ color: B.mid, borderColor: B.sand, background: '#fff' }}
+                className="px-5 py-2.5 rounded-full text-[14px] font-bold border transition-all duration-300"
+                style={{ color: B.mid, borderColor: B.sand, background: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(4px)' }}
               >
                 {t('navbar.createAccount')}
               </motion.button>
               <motion.button
-                whileHover={{ scale: 1.05, boxShadow: `0 6px 20px rgba(200,134,10,0.30)` }}
-                whileTap={{ scale: 0.97 }}
+                whileHover={{ scale: 1.05, boxShadow: `0 8px 25px rgba(200,134,10,0.35)`, y: -1 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={() => navigate('/login-form')}
-                className="px-5 py-2 rounded-full text-sm font-bold text-white transition-all duration-200"
-                style={{ background: `linear-gradient(135deg, ${B.mid}, ${B.amber})` }}
+                className="px-6 py-2.5 rounded-full text-[14px] font-bold text-white transition-all duration-300"
+                style={{ background: `linear-gradient(135deg, ${B.mid}, ${B.amber})`, boxShadow: `0 4px 15px rgba(61,43,31,0.15)` }}
               >
                 {t('navbar.login')}
               </motion.button>
@@ -367,8 +395,8 @@ const Navbar = () => {
             <motion.div
               key="backdrop"
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              transition={{ duration: 0.25 }}
-              className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm md:hidden"
+              transition={{ duration: 0.3 }}
+              className="fixed inset-0 z-[60] bg-black/40 backdrop-blur-md md:hidden"
               onClick={() => setShowMenu(false)}
             />
 
@@ -376,12 +404,12 @@ const Navbar = () => {
             <motion.div
               key="drawer"
               initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed right-0 top-0 bottom-0 z-[70] w-4/5 max-w-sm md:hidden flex flex-col"
-              style={{ background: B.pale, borderLeft: `1px solid ${B.sand}` }}
+              transition={{ type: 'spring', damping: 28, stiffness: 220 }}
+              className="fixed right-0 top-0 bottom-0 z-[70] w-[85%] max-w-sm md:hidden flex flex-col shadow-2xl"
+              style={{ background: 'rgba(253, 248, 240, 0.98)', borderLeft: `1px solid rgba(232,213,176,0.5)`, backdropFilter: 'blur(16px)' }}
             >
               {/* Drawer header */}
-              <div className="flex items-center justify-between px-5 py-5 border-b" style={{ borderColor: B.sand }}>
+              <div className="flex items-center justify-between px-6 py-5 border-b" style={{ borderColor: 'rgba(232,213,176,0.3)' }}>
                 <img
                   onClick={() => { navigate('/'); setShowMenu(false); }}
                   className="w-32 cursor-pointer"
@@ -389,9 +417,10 @@ const Navbar = () => {
                   alt="PawVaidya"
                 />
                 <motion.button
-                  whileHover={{ scale: 1.1, rotate: 90 }} whileTap={{ scale: 0.93 }}
+                  whileHover={{ scale: 1.1, rotate: 90, background: '#f0e4db' }}
+                  whileTap={{ scale: 0.93 }}
                   onClick={() => setShowMenu(false)}
-                  className="p-2 rounded-xl"
+                  className="p-2.5 rounded-xl transition-colors duration-200"
                   style={{ color: B.mid, background: '#f5ede8' }}
                 >
                   <X className="w-5 h-5" />
@@ -400,33 +429,34 @@ const Navbar = () => {
 
               {/* User info (if logged in) */}
               {token && userdata && (
-                <div className="px-5 py-4 border-b flex items-center gap-3" style={{ borderColor: B.sand, background: '#f5ede8' }}>
-                  <img className="w-10 h-10 rounded-full object-cover" style={{ border: `2px solid ${B.sand}` }}
+                <div className="px-6 py-5 border-b flex items-center gap-4 shadow-sm" style={{ borderColor: 'rgba(232,213,176,0.3)', background: 'linear-gradient(to bottom, #fcfaf8, #f5ede8)' }}>
+                  <img className="w-12 h-12 rounded-full object-cover shadow-sm" style={{ border: `2px solid #fff` }}
                     src={userdata.image} alt="Profile" />
-                  <div>
-                    <p className="font-bold text-sm" style={{ color: B.dark }}>{userdata.name}</p>
-                    <p className="text-xs" style={{ color: B.light }}>{userdata.email}</p>
+                  <div className="flex flex-col justify-center">
+                    <p className="font-bold text-[16px] leading-tight" style={{ color: B.dark }}>{userdata.name}</p>
+                    <p className="text-[13px] opacity-80 mt-0.5" style={{ color: B.light }}>{userdata.email}</p>
                   </div>
                 </div>
               )}
 
               {/* Nav links */}
-              <ul className="flex flex-col gap-1 p-4 flex-1 overflow-y-auto">
+              <ul className="flex flex-col gap-2 p-5 flex-1 overflow-y-auto w-full">
                 {NAV_LINKS.map(({ to, labelKey, label, live }, i) => (
                   <motion.div
                     key={to}
-                    initial={{ opacity: 0, x: 20 }}
+                    initial={{ opacity: 0, x: 30 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.05 }}
+                    transition={{ delay: i * 0.08 + 0.1, type: "spring", stiffness: 200, damping: 20 }}
                   >
-                    <NavLink onClick={() => setShowMenu(false)} to={to}>
+                    <NavLink onClick={() => setShowMenu(false)} to={to} className="w-full block">
                       {({ isActive }) => (
-                        <li className="px-4 py-3 rounded-xl font-medium text-sm flex items-center justify-between transition-all duration-200"
+                        <div className="px-5 py-3.5 rounded-2xl font-medium text-[15px] flex items-center justify-between transition-all duration-300"
                           style={{
                             color: isActive ? B.mid : B.dark,
                             background: isActive ? '#f5ede8' : 'transparent',
                             fontWeight: isActive ? 700 : 500,
-                            borderLeft: isActive ? `3px solid ${B.amber}` : '3px solid transparent',
+                            borderLeft: isActive ? `4px solid ${B.amber}` : '4px solid transparent',
+                            boxShadow: isActive ? '0 2px 10px rgba(61,43,31,0.05)' : 'none'
                           }}>
                           {live ? (
                             <span className="flex items-center gap-2">
@@ -439,7 +469,7 @@ const Navbar = () => {
                           ) : (
                             labelKey ? t(labelKey) : label
                           )}
-                        </li>
+                        </div>
                       )}
                     </NavLink>
                   </motion.div>
@@ -447,73 +477,88 @@ const Navbar = () => {
 
                 {/* Notifications link */}
                 {token && userdata && (
-                  <NavLink onClick={() => setShowMenu(false)} to="/messages">
-                    <li className="px-4 py-3 rounded-xl font-medium text-sm flex items-center justify-between transition-all duration-200"
-                      style={{ color: B.dark }}>
-                      <span>{t('navbar.notifications')}</span>
-                      {unreadMessages > 0 && (
-                        <span className="bg-red-500 text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center font-bold">
-                          {unreadMessages > 9 ? '9+' : unreadMessages}
-                        </span>
-                      )}
-                    </li>
-                  </NavLink>
+                  <motion.div
+                    initial={{ opacity: 0, x: 30 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: NAV_LINKS.length * 0.08 + 0.1, type: "spring", stiffness: 200, damping: 20 }}
+                  >
+                    <NavLink onClick={() => setShowMenu(false)} to="/messages" className="w-full block">
+                      <div className="px-5 py-3.5 rounded-2xl font-medium text-[15px] flex items-center justify-between transition-all duration-300"
+                        style={{ color: B.dark, borderLeft: '4px solid transparent' }}>
+                        <span>{t('navbar.notifications')}</span>
+                        {unreadMessages > 0 && (
+                          <span className="bg-red-500 text-white text-[11px] rounded-full w-5 h-5 flex items-center justify-center font-bold shadow-sm">
+                            {unreadMessages > 9 ? '9+' : unreadMessages}
+                          </span>
+                        )}
+                      </div>
+                    </NavLink>
+                  </motion.div>
                 )}
 
                 {/* Verify email */}
                 {userdata && !userdata.isAccountverified && (
-                  <li className="px-4 py-3">
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: (NAV_LINKS.length + 1) * 0.08 + 0.1 }}
+                    className="mt-2"
+                  >
                     <button
                       onClick={() => { sendVerificationOtp(); setShowMenu(false); }}
-                      className="w-full text-center text-xs font-bold py-2 px-4 rounded-full border transition-colors"
-                      style={{ color: '#c0392b', borderColor: '#c0392b', background: '#fff5f5' }}
+                      className="w-full text-center text-[13px] font-bold py-3 px-4 rounded-xl transition-all duration-300 shadow-sm"
+                      style={{ color: '#fff', background: 'linear-gradient(135deg, #e74c3c, #c0392b)', boxShadow: "0 4px 12px rgba(192,57,43,0.2)" }}
                     >
                       {t('navbar.verifyEmail')}
                     </button>
-                  </li>
+                  </motion.div>
                 )}
               </ul>
 
               {/* Bottom actions */}
-              <div className="p-4 border-t" style={{ borderColor: B.sand }}>
+              <div className="p-6 border-t bg-white bg-opacity-50" style={{ borderColor: 'rgba(232,213,176,0.5)' }}>
                 {token && userdata ? (
                   <>
                     {/* Location */}
-                    <div className="flex items-center justify-between mb-3 px-1">
+                    <div className="flex items-center justify-between mb-4 px-2">
                       <div className="flex items-center gap-2">
-                        <MapPin className="w-4 h-4" style={{ color: B.amber }} />
-                        <span className="text-xs font-semibold" style={{ color: B.light }}>Location</span>
+                        <MapPin className="w-5 h-5 opacity-90" style={{ color: B.amber }} />
+                        <span className="text-[13px] font-semibold tracking-wide uppercase" style={{ color: B.light }}>Location</span>
                       </div>
                       <LocationRefreshButton variant="icon" size="sm" onLocationUpdate={refreshUserLocation} location={userLocation} />
                     </div>
                     {userLocation && (
-                      <p className="text-[10px] mb-3 ml-6" style={{ color: B.light }}>
+                      <p className="text-[12px] mb-4 ml-8 font-medium" style={{ color: B.light }}>
                         {userLocation.latitude.toFixed(4)}, {userLocation.longitude.toFixed(4)}
                       </p>
                     )}
                     <motion.button
-                      whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
+                      whileHover={{ scale: 1.02, boxShadow: `0 8px 20px rgba(192,57,43,0.25)` }}
+                      whileTap={{ scale: 0.98 }}
                       onClick={() => { Logout(); setShowMenu(false); }}
-                      className="w-full py-3 rounded-xl text-sm font-bold text-white transition-all"
-                      style={{ background: 'linear-gradient(135deg, #c0392b, #e74c3c)' }}
+                      className="w-full py-3.5 rounded-xl text-[15px] font-bold text-white transition-all shadow-sm flex items-center justify-center gap-2"
+                      style={{ background: 'linear-gradient(135deg, #e74c3c, #c0392b)' }}
                     >
+                      <LogOut className="w-4 h-4" />
                       {t('navbar.logout')}
                     </motion.button>
                   </>
                 ) : (
-                  <div className="flex flex-col gap-2">
+                  <div className="flex flex-col gap-3">
                     <motion.button
-                      whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
+                      whileHover={{ scale: 1.02, background: '#fcfaf8' }}
+                      whileTap={{ scale: 0.98 }}
                       onClick={() => { navigate('/login'); setShowMenu(false); }}
-                      className="w-full py-3 rounded-xl text-sm font-bold border transition-all"
+                      className="w-full py-3.5 rounded-xl text-[15px] font-bold border transition-all"
                       style={{ color: B.mid, borderColor: B.sand, background: '#fff' }}
                     >
                       {t('navbar.createAccount')}
                     </motion.button>
                     <motion.button
-                      whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
+                      whileHover={{ scale: 1.02, boxShadow: `0 8px 20px rgba(200,134,10,0.3)` }}
+                      whileTap={{ scale: 0.98 }}
                       onClick={() => { navigate('/login-form'); setShowMenu(false); }}
-                      className="w-full py-3 rounded-xl text-sm font-bold text-white transition-all"
+                      className="w-full py-3.5 rounded-xl text-[15px] font-bold text-white transition-all shadow-md"
                       style={{ background: `linear-gradient(135deg, ${B.mid}, ${B.amber})` }}
                     >
                       {t('navbar.login')}

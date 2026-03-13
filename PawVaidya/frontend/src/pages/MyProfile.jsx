@@ -786,23 +786,32 @@ const MyProfile = () => {
             </AnimatePresence>
 
             <div className="flex gap-4 justify-center md:justify-start">
-              <SaveButton
-                isEdit={isEdit}
-                isSaving={isSaving}
-                onSave={updateUserProfileData}
-                onEdit={() => setIsEdit(true)}
-              />
-              {isEdit && (
-                <motion.button
-                  whileHover={{ scale: 1.05, borderColor: "#7b483d" }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={handleCancelEdit}
-                  className="border-2 border-[#9a6458] text-[#9a6458] px-6 py-2.5 rounded-xl hover:bg-[#f8f3f1]/50 backdrop-blur-sm transition-all duration-300 font-bold shadow-md"
-                  disabled={isSaving}
-                  type="button"
-                >
-                  Cancel
-                </motion.button>
+              {!editedData.isBanned ? (
+                <>
+                  <SaveButton
+                    isEdit={isEdit}
+                    isSaving={isSaving}
+                    onSave={updateUserProfileData}
+                    onEdit={() => setIsEdit(true)}
+                  />
+                  {isEdit && (
+                    <motion.button
+                      whileHover={{ scale: 1.05, borderColor: "#7b483d" }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={handleCancelEdit}
+                      className="border-2 border-[#9a6458] text-[#9a6458] px-6 py-2.5 rounded-xl hover:bg-[#f8f3f1]/50 backdrop-blur-sm transition-all duration-300 font-bold shadow-md"
+                      disabled={isSaving}
+                      type="button"
+                    >
+                      Cancel
+                    </motion.button>
+                  )}
+                </>
+              ) : (
+                <div className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-red-50 text-red-600 font-bold border border-red-200 shadow-sm">
+                  <AlertCircle size={18} />
+                  Profile Locked
+                </div>
               )}
             </div>
 

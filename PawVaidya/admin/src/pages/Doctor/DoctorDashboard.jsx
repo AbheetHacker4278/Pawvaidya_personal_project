@@ -566,6 +566,60 @@ const DoctorDashboard = () => {
         </motion.div>
       )}
 
+      {/* Attendance History Section */}
+      {dashdata.attendanceHistory && dashdata.attendanceHistory.length > 0 && (
+        <motion.div
+          className='mt-8 bg-white p-6 rounded-lg shadow-sm border border-blue-100'
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.0 }}
+        >
+          <h3 className='text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2'>
+            <Calendar className="w-5 h-5 text-blue-500" />
+            Attendance History
+          </h3>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-blue-50 border-b border-blue-100">
+                  <th className="p-3 text-sm font-semibold text-gray-600">Date & Time</th>
+                  <th className="p-3 text-sm font-semibold text-gray-600">Activity</th>
+                  <th className="p-3 text-sm font-semibold text-gray-600">Face Snapshot</th>
+                </tr>
+              </thead>
+              <tbody>
+                {dashdata.attendanceHistory.map((item, index) => (
+                  <tr key={index} className="border-b border-gray-50 last:border-b-0 hover:bg-blue-50/30 transition-colors">
+                    <td className="p-3 text-sm text-gray-500">
+                      {new Date(item.timestamp).toLocaleString(undefined, {
+                        dateStyle: 'medium',
+                        timeStyle: 'short'
+                      })}
+                    </td>
+                    <td className="p-3 text-sm font-medium text-gray-700">
+                      {item.activityDescription || 'Clock-in'}
+                    </td>
+                    <td className="p-3 text-sm">
+                      {item.faceImage ? (
+                        <div className="relative group">
+                          <img
+                            src={item.faceImage}
+                            alt="Scan Snapshot"
+                            className="w-12 h-12 object-cover rounded-md border border-gray-200 shadow-sm cursor-pointer transition-transform duration-200 group-hover:scale-[2.5] origin-left z-10 hover:z-50"
+                          />
+                        </div>
+                      ) : (
+                        <span className="text-gray-400 text-xs italic">No image recorded</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </motion.div>
+      )}
+
       {/* Bookings Graph Section */}
       <motion.div
         className='mt-8 bg-white p-6 rounded-lg shadow-sm border border-gray-100'

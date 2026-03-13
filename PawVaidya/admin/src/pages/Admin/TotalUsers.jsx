@@ -469,13 +469,30 @@ const TotalUsers = () => {
                                         <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem', mb: 0.5 }}>
                                             {user.gender}, {calculateAge(user.dob)} years
                                         </Typography>
-                                        <Chip
-                                            icon={user.isAccountverified ? <VerifiedIcon /> : <ErrorOutlineIcon />}
-                                            label={user.isAccountverified ? 'Verified' : 'Unverified'}
-                                            color={user.isAccountverified ? 'success' : 'error'}
-                                            size="small"
-                                            sx={{ fontSize: '0.7rem', height: 22 }}
-                                        />
+                                        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                                            <Chip
+                                                icon={user.isAccountverified ? <VerifiedIcon /> : <ErrorOutlineIcon />}
+                                                label={user.isAccountverified ? 'Verified' : 'Unverified'}
+                                                color={user.isAccountverified ? 'success' : 'warning'}
+                                                size="small"
+                                                sx={{ fontSize: '0.7rem', height: 22 }}
+                                            />
+                                            {user.isBanned && (
+                                                <Chip
+                                                    icon={<BlockIcon sx={{ fontSize: '1rem' }} />}
+                                                    label="Blacklisted"
+                                                    size="small"
+                                                    sx={{
+                                                        bgcolor: '#fee2e2',
+                                                        color: '#dc2626',
+                                                        fontWeight: 'bold',
+                                                        fontSize: '0.7rem',
+                                                        height: 22,
+                                                        border: '1px solid #fca5a5'
+                                                    }}
+                                                />
+                                            )}
+                                        </Box>
                                     </Box>
                                 </Box>
 

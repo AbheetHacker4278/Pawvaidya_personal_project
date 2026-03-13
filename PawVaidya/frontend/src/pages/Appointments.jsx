@@ -36,7 +36,8 @@ const Appointments = () => {
   const [unbanAttempts, setUnbanAttempts] = useState(0);
   const [doctorSchedules, setDoctorSchedules] = useState([]);
   const [discountCode, setDiscountCode] = useState('');
-  const [discountInfo, setDiscountInfo] = useState(null);
+  const [appliedAdminCoupon, setAppliedAdminCoupon] = useState(null);
+  const [appliedDoctorCoupon, setAppliedDoctorCoupon] = useState(null);
   const [discountLoading, setDiscountLoading] = useState(false);
   const [discountError, setDiscountError] = useState('');
   const [activeCoupons, setActiveCoupons] = useState([]);
@@ -392,13 +393,18 @@ const Appointments = () => {
       return;
     }
 
+    // Check if code is already applied
+    if (appliedAdminCoupon?.code === code.trim() || appliedDoctorCoupon?.code === code.trim()) {
+      setDiscountError('This coupon is already applied');
+      return;
+    }
+
     if (codeToApply) {
       setDiscountCode(codeToApply.trim());
     }
 
     setDiscountLoading(true);
     setDiscountError('');
-    setDiscountInfo(null);
     try {
       const { data } = await axios.post(
         backendurl + '/api/user/validate-discount',
@@ -407,12 +413,21 @@ const Appointments = () => {
       );
       if (data.success) {
         const unifiedDiscount = { ...data.discount, type: data.type };
-        setDiscountInfo(unifiedDiscount);
+
         if (data.type === 'admin') {
+          if (appliedAdminCoupon) {
+            toast.warn('An Admin platform coupon is already applied. Replacing it.');
+          }
+          setAppliedAdminCoupon(unifiedDiscount);
           toast.success(`Platform Coupon applied! You save ₹${data.discount.discountAmount}`);
         } else {
+          if (appliedDoctorCoupon) {
+            toast.warn('A Doctor discount is already applied. Replacing it.');
+          }
+          setAppliedDoctorCoupon(unifiedDiscount);
           toast.success(`Doctor Discount applied! You save ${data.discount.discountType === 'percentage' ? data.discount.discountValue + '%' : '₹' + data.discount.discountValue}`);
         }
+        setDiscountCode(''); // Clear input for the next coupon
       } else {
         setDiscountError(data.message);
       }
@@ -460,12 +475,11 @@ const Appointments = () => {
         slotTime
       };
 
-      if (discountInfo) {
-        if (discountInfo.type === 'admin') {
-          bookingPayload.adminCouponCode = discountCode.trim();
-        } else {
-          bookingPayload.discountCode = discountCode.trim();
-        }
+      if (appliedDoctorCoupon) {
+        bookingPayload.discountCode = appliedDoctorCoupon.code;
+      }
+      if (appliedAdminCoupon) {
+        bookingPayload.adminCouponCode = appliedAdminCoupon.code;
       }
 
       const { data } = await axios.post(
@@ -1128,18 +1142,18 @@ const Appointments = () => {
                               onClick={() => applyDiscount(coupon.code)}
                               className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all"
                               style={{
-                                background: discountInfo?.code === coupon.code
+                                background: appliedAdminCoupon?.code === coupon.code
                                   ? 'linear-gradient(135deg,#10b981,#059669)'
                                   : 'linear-gradient(135deg,#f0fdf4,#dcfce7)',
                                 border: `1.5px dashed #10b981`,
-                                color: discountInfo?.code === coupon.code ? '#fff' : '#047857'
+                                color: appliedAdminCoupon?.code === coupon.code ? '#fff' : '#047857'
                               }}
                             >
                               <span className="font-mono tracking-wider">{coupon.code}</span>
                               <span
                                 className="px-1.5 py-0.5 rounded-md text-xs"
                                 style={{
-                                  background: discountInfo?.code === coupon.code ? 'rgba(255,255,255,0.2)' : '#10b981',
+                                  background: appliedAdminCoupon?.code === coupon.code ? 'rgba(255,255,255,0.2)' : '#10b981',
                                   color: '#fff'
                                 }}
                               >
@@ -1173,18 +1187,18 @@ const Appointments = () => {
                               onClick={() => applyDiscount(coupon.code)}
                               className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all"
                               style={{
-                                background: discountInfo?.code === coupon.code
+                                background: appliedDoctorCoupon?.code === coupon.code
                                   ? 'linear-gradient(135deg,#10b981,#059669)'
                                   : 'linear-gradient(135deg,#fff8ed,#fef3c7)',
-                                border: `1.5px dashed ${discountInfo?.code === coupon.code ? '#10b981' : '#d4a76a'}`,
-                                color: discountInfo?.code === coupon.code ? '#fff' : '#7a5a48'
+                                border: `1.5px dashed ${appliedDoctorCoupon?.code === coupon.code ? '#10b981' : '#d4a76a'}`,
+                                color: appliedDoctorCoupon?.code === coupon.code ? '#fff' : '#7a5a48'
                               }}
                             >
                               <span className="font-mono tracking-wider">{coupon.code}</span>
                               <span
                                 className="px-1.5 py-0.5 rounded-md text-xs"
                                 style={{
-                                  background: discountInfo?.code === coupon.code ? 'rgba(255,255,255,0.2)' : '#7a5a48',
+                                  background: appliedDoctorCoupon?.code === coupon.code ? 'rgba(255,255,255,0.2)' : '#7a5a48',
                                   color: '#fff'
                                 }}
                               >
@@ -1206,7 +1220,7 @@ const Appointments = () => {
 
                     {/* Input area */}
                     <div className="px-5 py-4">
-                      <div className="flex gap-3">
+                      <div className="flex gap-3 mb-4">
                         {/* Code input */}
                         <div className="relative flex-1">
                           <input
@@ -1214,22 +1228,21 @@ const Appointments = () => {
                             value={discountCode}
                             onChange={(e) => {
                               setDiscountCode(e.target.value.toUpperCase());
-                              setDiscountInfo(null);
                               setDiscountError('');
                             }}
                             onKeyDown={(e) => e.key === 'Enter' && applyDiscount()}
                             placeholder="e.g. SAVE20, PAWCARE"
-                            disabled={!!discountInfo}
+                            disabled={appliedAdminCoupon && appliedDoctorCoupon}
                             className="w-full pl-4 pr-10 py-3 rounded-xl font-mono font-bold text-base uppercase focus:outline-none transition-all duration-300"
                             style={{
-                              border: `2px solid ${discountInfo ? '#10b981' : discountError ? '#ef4444' : '#d4a76a'}`,
-                              background: discountInfo ? '#f0fdf4' : '#fff',
+                              border: `2px solid ${(appliedAdminCoupon && appliedDoctorCoupon) ? '#10b981' : discountError ? '#ef4444' : '#d4a76a'}`,
+                              background: (appliedAdminCoupon && appliedDoctorCoupon) ? '#f0fdf4' : '#fff',
                               color: '#3d2b1f',
                               letterSpacing: '0.1em'
                             }}
                           />
                           {/* Clear button */}
-                          {discountCode && !discountInfo && (
+                          {discountCode && (
                             <button
                               onClick={() => { setDiscountCode(''); setDiscountError(''); }}
                               className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
@@ -1237,46 +1250,34 @@ const Appointments = () => {
                               <X className="w-4 h-4" />
                             </button>
                           )}
-                          {discountInfo && (
+                          {(appliedAdminCoupon && appliedDoctorCoupon) && (
                             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-500">
                               <CheckCircle className="w-5 h-5" />
                             </span>
                           )}
                         </div>
 
-                        {/* Apply / Remove button */}
-                        {discountInfo ? (
-                          <motion.button
-                            whileHover={{ scale: 1.04 }}
-                            whileTap={{ scale: 0.97 }}
-                            onClick={() => { setDiscountInfo(null); setDiscountCode(''); setDiscountError(''); }}
-                            className="px-5 py-3 rounded-xl font-semibold text-white text-sm transition-all flex items-center gap-1.5 whitespace-nowrap"
-                            style={{ background: 'linear-gradient(135deg, #ef4444, #dc2626)' }}
-                          >
-                            <X className="w-4 h-4" /> Remove
-                          </motion.button>
-                        ) : (
-                          <motion.button
-                            whileHover={!discountLoading ? { scale: 1.05, boxShadow: '0 8px 20px rgba(200,134,10,0.35)' } : {}}
-                            whileTap={!discountLoading ? { scale: 0.97 } : {}}
-                            onClick={applyDiscount}
-                            disabled={discountLoading || !discountCode.trim()}
-                            className="px-6 py-3 rounded-xl font-bold text-white text-sm transition-all flex items-center gap-2 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
-                            style={{ background: 'linear-gradient(135deg, #c8860a, #e8a020)' }}
-                          >
-                            {discountLoading ? (
-                              <>
-                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                Checking...
-                              </>
-                            ) : (
-                              <>
-                                <CheckCircle className="w-4 h-4" />
-                                Apply
-                              </>
-                            )}
-                          </motion.button>
-                        )}
+                        {/* Apply button */}
+                        <motion.button
+                          whileHover={!discountLoading && !(appliedAdminCoupon && appliedDoctorCoupon) ? { scale: 1.05, boxShadow: '0 8px 20px rgba(200,134,10,0.35)' } : {}}
+                          whileTap={!discountLoading && !(appliedAdminCoupon && appliedDoctorCoupon) ? { scale: 0.97 } : {}}
+                          onClick={() => applyDiscount()}
+                          disabled={discountLoading || !discountCode.trim() || (appliedAdminCoupon && appliedDoctorCoupon)}
+                          className="px-6 py-3 rounded-xl font-bold text-white text-sm transition-all flex items-center gap-2 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+                          style={{ background: 'linear-gradient(135deg, #c8860a, #e8a020)' }}
+                        >
+                          {discountLoading ? (
+                            <>
+                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                              Checking...
+                            </>
+                          ) : (
+                            <>
+                              <CheckCircle className="w-4 h-4" />
+                              Apply
+                            </>
+                          )}
+                        </motion.button>
                       </div>
 
                       {/* Error state */}
@@ -1287,7 +1288,7 @@ const Appointments = () => {
                             animate={{ opacity: 1, x: 0, height: 'auto' }}
                             exit={{ opacity: 0, height: 0 }}
                             transition={{ type: 'spring', stiffness: 400 }}
-                            className="mt-3 flex items-center gap-2 px-4 py-2.5 rounded-xl"
+                            className="mt-3 flex items-center gap-2 px-4 py-2.5 rounded-xl mb-4"
                             style={{ background: '#fef2f2', border: '1.5px solid #fca5a5' }}
                           >
                             <span className="text-red-500 flex-shrink-0">
@@ -1298,69 +1299,84 @@ const Appointments = () => {
                         )}
                       </AnimatePresence>
 
-                      {/* Success state */}
-                      <AnimatePresence>
-                        {discountInfo && (
-                          <motion.div
-                            initial={{ opacity: 0, scale: 0.95, height: 0 }}
-                            animate={{ opacity: 1, scale: 1, height: 'auto' }}
-                            exit={{ opacity: 0, scale: 0.95, height: 0 }}
-                            transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                            className="mt-3 rounded-xl overflow-hidden"
-                            style={{ border: '1.5px solid #10b981' }}
-                          >
-                            {/* Success header */}
-                            <div
-                              className="px-4 py-2 flex items-center gap-2"
-                              style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}
+                      {/* Success states (Render each applied coupon) */}
+                      <div className="flex flex-col gap-3">
+                        <AnimatePresence>
+                          {[appliedAdminCoupon, appliedDoctorCoupon].filter(Boolean).map((coupon, index) => (
+                            <motion.div
+                              key={coupon.code}
+                              initial={{ opacity: 0, scale: 0.95, height: 0 }}
+                              animate={{ opacity: 1, scale: 1, height: 'auto' }}
+                              exit={{ opacity: 0, scale: 0.95, height: 0 }}
+                              transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                              className="rounded-xl overflow-hidden shadow-sm relative group"
+                              style={{ border: '1.5px solid #10b981' }}
                             >
-                              <motion.span
-                                initial={{ scale: 0, rotate: -180 }}
-                                animate={{ scale: 1, rotate: 0 }}
-                                transition={{ type: 'spring', stiffness: 400, delay: 0.1 }}
+                              {/* Remove button explicitly for this coupon */}
+                              <button
+                                onClick={() => {
+                                  if (coupon.type === 'admin') setAppliedAdminCoupon(null);
+                                  else setAppliedDoctorCoupon(null);
+                                }}
+                                className="absolute top-2 right-2 bg-red-100 text-red-600 hover:bg-red-500 hover:text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 z-10"
+                                title="Remove Coupon"
                               >
-                                ✅
-                              </motion.span>
-                              <p className="text-white font-bold text-sm">Discount Applied Successfully!</p>
-                            </div>
+                                <X className="w-4 h-4" />
+                              </button>
 
-                            {/* Price breakdown */}
-                            <div className="px-4 py-3" style={{ background: '#f0fdf4' }}>
-                              <div className="flex items-center justify-between">
-                                <div>
-                                  <p className="text-emerald-800 font-bold text-base">
-                                    {discountInfo.discountType === 'percentage'
-                                      ? `${discountInfo.discountValue}% OFF`
-                                      : `₹${discountInfo.discountValue} OFF`}
-                                  </p>
-                                  <p className="text-emerald-600 text-xs mt-0.5">
-                                    Code: <span className="font-mono font-bold tracking-wider">{discountInfo.code}</span>
-                                  </p>
-                                </div>
-                                <div className="text-right">
-                                  <p className="text-gray-400 line-through text-sm">₹{discountInfo.originalFee}</p>
-                                  <motion.p
-                                    initial={{ scale: 0.5 }}
-                                    animate={{ scale: 1 }}
-                                    transition={{ type: 'spring', stiffness: 400, delay: 0.2 }}
-                                    className="text-emerald-700 font-black text-2xl"
+                              {/* Success header */}
+                              <div
+                                className="px-4 py-2 flex items-center justify-between"
+                                style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}
+                              >
+                                <div className="flex items-center gap-2">
+                                  <motion.span
+                                    initial={{ scale: 0, rotate: -180 }}
+                                    animate={{ scale: 1, rotate: 0 }}
+                                    transition={{ type: 'spring', stiffness: 400, delay: 0.1 }}
                                   >
-                                    ₹{discountInfo.discountedFee}
-                                  </motion.p>
-                                  <p className="text-emerald-500 text-xs font-medium mt-0.5">
-                                    🎉 You save ₹{discountInfo.originalFee - discountInfo.discountedFee}
+                                    ✅
+                                  </motion.span>
+                                  <p className="text-white font-bold text-sm">
+                                    {coupon.type === 'admin' ? 'Platform Coupon Applied!' : 'Doctor Discount Applied!'}
                                   </p>
                                 </div>
                               </div>
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
+
+                              {/* Price breakdown */}
+                              <div className="px-4 py-3" style={{ background: '#f0fdf4' }}>
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <p className="text-emerald-800 font-bold text-base">
+                                      {coupon.discountType === 'percentage'
+                                        ? `${coupon.discountValue}% OFF`
+                                        : `₹${coupon.discountValue} OFF`}
+                                    </p>
+                                    <p className="text-emerald-600 text-xs mt-0.5 flex flex-col gap-0.5">
+                                      <span>Code: <span className="font-mono font-bold tracking-wider">{coupon.code}</span></span>
+                                    </p>
+                                  </div>
+                                  <div className="text-right">
+                                    <motion.p
+                                      initial={{ scale: 0.5 }}
+                                      animate={{ scale: 1 }}
+                                      transition={{ type: 'spring', stiffness: 400, delay: 0.2 }}
+                                      className="text-emerald-700 font-black text-xl"
+                                    >
+                                      -{coupon.type === 'admin' ? `₹${coupon.amount || coupon.discountAmount}` : (coupon.discountType === 'percentage' ? `${coupon.discountValue}%` : `₹${coupon.discountValue}`)}
+                                    </motion.p>
+                                  </div>
+                                </div>
+                              </div>
+                            </motion.div>
+                          ))}
+                        </AnimatePresence>
+                      </div>
 
                       {/* Helper text */}
-                      {!discountInfo && !discountError && (
-                        <p className="text-xs mt-2" style={{ color: '#a08060' }}>
-                          💡 Enter your code above and press Apply or hit Enter
+                      {!(appliedAdminCoupon && appliedDoctorCoupon) && !discountError && (
+                        <p className="text-xs mt-3 flex items-center gap-1.5" style={{ color: '#a08060' }}>
+                          💡 <span className="font-medium bg-amber-50 px-1.5 py-0.5 rounded border border-amber-100">Pro Tip:</span> You can apply up to TWO coupons (1 Platform + 1 Doctor)
                         </p>
                       )}
                     </div>

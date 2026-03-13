@@ -120,11 +120,6 @@ export const registerFaceDr = async (req, res) => {
             return res.status(404).json({ success: false, message: "Doctor not found" });
         }
 
-        if (image) {
-            const uploadResponse = await cloudinary.uploader.upload(image, { resource_type: 'image', folder: 'doctor_faces' });
-            doctor.image = uploadResponse.secure_url;
-        }
-
         doctor.faceDescriptor = faceDescriptor;
         await doctor.save();
 
@@ -746,6 +741,13 @@ export const doctorDashboard = async (req, res) => {
         // Fetch doctor info for ratings and incentives
         const doctor = await doctorModel.findById(docId).select('averageRating totalRatings incentive incentiveHistory');
 
+        // Fetch attendance history for the doctor
+        const attendanceHistory = await activityLogModel.find({
+            userId: docId,
+            userType: 'doctor',
+            activityType: 'doctor_attendance'
+        }).sort({ timestamp: -1 }).limit(100);
+
         // Prepare dashboard data
         const dashData = {
             appointments: appointments.length, // Total number of appointments
@@ -758,7 +760,8 @@ export const doctorDashboard = async (req, res) => {
             averageRating: doctor.averageRating || 0,
             totalRatings: doctor.totalRatings || 0,
             incentive: doctor.incentive,
-            incentiveHistory: doctor.incentiveHistory || []
+            incentiveHistory: doctor.incentiveHistory || [],
+            attendanceHistory: attendanceHistory || []
         };
 
         // Send the response with dashboard data

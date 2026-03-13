@@ -36,7 +36,8 @@ graph TD
 - **Smart Appointment Booking**: Easy scheduling with specialized vets (Small Animal, Avian, Exotic, etc.) featuring real-time slot availability.
 - **Video Consultations**: Crystal-clear video calls powered by **ZegoCloud** for remote diagnosis.
 - **Multilingual Support**: Support for English, Hindi, Tamil, and Telugu using **i18next** and AI-powered translations.
-- **Unified Coupon System**: Smart fallback between doctor-specific discounts and platform-wide admin coupons.
+- **Unified Coupon System**: Stacked support allowing users to apply both doctor-specific discounts and platform-wide admin coupons simultaneously.
+- **Refined UI & Navigation**: Premium, responsive, and animated user interfaces with intelligent space management.
 - **Community Hub**: Share experiences and learn from expert blogs.
 
 ### 🏥 For Veterinarians
@@ -55,6 +56,7 @@ graph TD
 - **Thermal & Hardware Monitoring**: Animated SVG thermometer with core-level temperature tracking and fan RPM simulation.
 - **Security Incident Suite**: 24/7 automated threat detection for **SQLi and XSS** with deep offender fingerprinting (IP, Device, Geolocation).
 - **Service Health dashboard**: Live connectivity pings for MongoDB, Cloudinary, SMTP, Supabase, and Gemini AI.
+- **User Moderation Suite**: Instant visual identification of "Blacklisted" or banned users directly within the user management views.
 
 ---
 

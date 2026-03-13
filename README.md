@@ -57,6 +57,11 @@ graph TD
 - **Security Incident Suite**: 24/7 automated threat detection for **SQLi and XSS** with deep offender fingerprinting (IP, Device, Geolocation).
 - **Service Health dashboard**: Live connectivity pings for MongoDB, Cloudinary, SMTP, Supabase, and Gemini AI.
 - **User Moderation Suite**: Instant visual identification of "Blacklisted" or banned users directly within the user management views.
+- **Advanced Login Security**: 
+  - Tracks failed login attempts and triggers threshold email alerts.
+  - Implements an intelligent auto-approval loop for whitelisted IP addresses.
+  - Pauses logins from unrecognized geolocations until manually approved via email token.
+  - Enforces browser location permissions globally before rendering the login portal.
 
 ---
 

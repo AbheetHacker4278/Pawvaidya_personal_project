@@ -53,7 +53,25 @@ const adminSchema = new mongoose.Schema({
     otpExpires: {
         type: Date,
         default: null
-    }
+    },
+    failedLoginAttempts: {
+        type: Number,
+        default: 0
+    },
+    lastFailedLoginAt: {
+        type: Date,
+        default: null
+    },
+    trustedGeolocations: {
+        type: [String],
+        default: []
+    },
+    pendingLogins: [{
+        ip: String,
+        geolocation: String,
+        token: String,
+        expiresAt: Date
+    }]
 });
 
 const adminModel = mongoose.model('admin', adminSchema);

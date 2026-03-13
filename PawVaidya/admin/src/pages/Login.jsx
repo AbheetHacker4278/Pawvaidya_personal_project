@@ -13,6 +13,8 @@ function App() {
   const [email, setemail] = useState('');
   const [password, setpassword] = useState('');
   const [showFaceAuth, setShowFaceAuth] = useState(false);
+  const [locationGranted, setLocationGranted] = useState(false);
+  const [locationError, setLocationError] = useState('');
 
   const backendurl = import.meta.env.VITE_BACKEND_URL
 
@@ -43,7 +45,11 @@ function App() {
             toast.success(data.message || 'Login successful!');
           }
         } else {
-          toast.error(data.message || 'Admin login failed!');
+          if (data.pendingApproval) {
+            toast.info(data.message, { autoClose: 10000 });
+          } else {
+            toast.error(data.message || 'Admin login failed!');
+          }
         }
       } else {
         const { data } = await axios.post(`${backendurl}/api/doctor/login`, { email, password });
@@ -87,6 +93,55 @@ function App() {
     return () => clearInterval(interval);
   }, [isOtpSent, timer]);
 
+  const requestLocationPermission = () => {
+    if ("geolocation" in navigator) {
+      // Add auto-refresh listener if user changes permission in browser settings
+      if (navigator.permissions && navigator.permissions.query) {
+        navigator.permissions.query({ name: 'geolocation' }).then(result => {
+          result.onchange = () => {
+            if (result.state === 'granted') {
+              window.location.reload();
+            }
+          };
+        }).catch(console.error);
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setLocationGranted(true);
+          setLocationError('');
+        },
+        (error) => {
+          setLocationGranted(false);
+          let errorMessage = "Location permission is required to access the admin panel.";
+          switch (error.code) {
+            case error.PERMISSION_DENIED:
+              errorMessage = "You denied the request for Geolocation. Please enable it in your browser settings and try again.";
+              break;
+            case error.POSITION_UNAVAILABLE:
+              errorMessage = "Location information is unavailable.";
+              break;
+            case error.TIMEOUT:
+              errorMessage = "The request to get user location timed out.";
+              break;
+          }
+          setLocationError(errorMessage);
+        }
+      );
+    } else {
+      setLocationError("Geolocation is not supported by your browser.");
+    }
+  };
+
+  React.useEffect(() => {
+    if (state === 'Admin') {
+      requestLocationPermission();
+    } else {
+      // Location not strictly required for Doctor login based on prompt, but keeping it blocked just for Admin
+      setLocationGranted(true);
+    }
+  }, [state]);
+
   return (
     <div className="flex min-h-screen">
       {/* Left Section - Logo and Illustration */}
@@ -116,7 +171,32 @@ function App() {
             <p className="text-[#f8e7d3]">Access expert advice for your furry friends</p>
           </div>
 
-          {!isOtpSent ? (
+          {!locationGranted && state === 'Admin' ? (
+            <div className="mt-8 space-y-6 text-center bg-white/10 p-6 rounded-xl border border-white/20">
+              <h3 className="text-xl font-bold text-white mb-2">Location Required</h3>
+              <p className="text-white/80 text-sm mb-4">
+                {locationError || "To ensure the security of the admin panel, we require access to your location before allowing login."}
+              </p>
+              <button
+                onClick={() => {
+                  if (locationError.includes("denied")) {
+                    window.location.reload();
+                  } else {
+                    requestLocationPermission();
+                  }
+                }}
+                className="w-full py-3 px-4 bg-white text-[#97c7b7] rounded-lg font-semibold hover:bg-[#f8e7d3] transition duration-200"
+              >
+                {locationError.includes("denied") ? "Reload Page After Granting" : "Grant Location Permission"}
+              </button>
+              <div className="mt-4 text-center text-white text-sm">
+                Doctor Login?{' '}
+                <button type="button" onClick={() => setState('Doctor')} className="underline hover:text-[#f8e7d3]">
+                  Click here
+                </button>
+              </div>
+            </div>
+          ) : !isOtpSent ? (
             <form onSubmit={onSubmitHandler} className="mt-8 space-y-6">
               <div className="space-y-4">
                 <div className="relative">

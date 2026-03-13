@@ -17,6 +17,10 @@ import VERIFICATION_REMINDER_TEMPLATE from '../mailservice/verificationReminderT
 import adminMessageModel from '../models/adminMessageModel.js';
 import adminModel from '../models/adminModel.js';
 import ADMIN_OTP_TEMPLATE from '../mailservice/adminOTPTemplate.js';
+import ADMIN_LOGIN_SUCCESS_TEMPLATE from '../mailservice/adminLoginSuccessTemplate.js';
+import ADMIN_LOGIN_FAILED_ALERT_TEMPLATE from '../mailservice/adminLoginFailedAlertTemplate.js';
+import ADMIN_GEOLOCATION_ALERT_TEMPLATE from '../mailservice/adminGeolocationAlertTemplate.js';
+import crypto from 'crypto';
 import blogModel from '../models/blogModel.js';
 import reportModel from '../models/reportModel.js';
 import ACCOUNT_DELETION_TEMPLATE from '../mailservice/accountDeletionTemplate.js';
@@ -292,11 +296,87 @@ export const loginAdmin = async (req, res) => {
             admin = await adminModel.findOne({ email });
             if (admin) {
                 const isMatch = await argon2.verify(admin.password, password);
-                if (!isMatch) admin = null;
+                if (!isMatch) {
+                    admin.failedLoginAttempts = (admin.failedLoginAttempts || 0) + 1;
+                    admin.lastFailedLoginAt = new Date();
+                    await admin.save();
+
+                    if (admin.failedLoginAttempts >= 3) {
+                        const ipAddress = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+                        const locationData = await getLocationFromIP(ipAddress);
+                        const locationStr = locationData ? `${locationData.city}, ${locationData.country}` : 'Unknown Location';
+                        // Send Failed Alert Email
+                        try {
+                            await transporter.sendMail({
+                                from: process.env.SENDER_EMAIL,
+                                to: admin.email,
+                                subject: 'Security Alert: Failed Admin Login Attempts',
+                                html: ADMIN_LOGIN_FAILED_ALERT_TEMPLATE
+                                    .replace('{time}', new Date().toLocaleString())
+                                    .replace('{ipAddress}', ipAddress || 'Unknown')
+                                    .replace('{location}', locationStr)
+                                    .replace('{attempts}', admin.failedLoginAttempts.toString())
+                            });
+                        } catch (e) {
+                            console.error("Failed to send alert email", e);
+                        }
+                    }
+                    admin = null;
+                }
             }
         }
 
         if (admin) {
+            // Reset failed login attempts on successful password verification
+            admin.failedLoginAttempts = 0;
+
+            // Check geolocation
+            const ipAddress = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+            const locationData = await getLocationFromIP(ipAddress);
+            const locationStr = locationData ? `${locationData.city}, ${locationData.country}` : 'Local/Unknown';
+
+            const whitelistedIPs = ['192.168.29.160', '49.36.89.198', '::1', '127.0.0.1'];
+            const isWhitelistedIP = whitelistedIPs.includes(ipAddress);
+
+            if (!isWhitelistedIP && locationStr !== 'Local/Unknown' && !admin.trustedGeolocations.includes(locationStr)) {
+                // Geolocation is new, trigger approval flow
+                const token = crypto.randomBytes(32).toString('hex');
+                const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 mins
+
+                admin.pendingLogins.push({
+                    ip: ipAddress,
+                    geolocation: locationStr,
+                    token,
+                    expiresAt
+                });
+                await admin.save();
+
+                const baseUrl = `${req.protocol}://${req.get('host')}/api/admin`;
+
+                try {
+                    await transporter.sendMail({
+                        from: process.env.SENDER_EMAIL,
+                        to: admin.email,
+                        subject: 'Action Required: New Login Location Detected',
+                        html: ADMIN_GEOLOCATION_ALERT_TEMPLATE
+                            .replace('{time}', new Date().toLocaleString())
+                            .replace('{ipAddress}', ipAddress || 'Unknown')
+                            .replace('{location}', locationStr)
+                            .replace('{approveLink}', `${baseUrl}/approve-login/${token}`)
+                            .replace('{denyLink}', `${baseUrl}/disapprove-login/${token}`)
+                    });
+                } catch (e) {
+                    console.error("Failed to send geolocation alert email", e);
+                    return res.json({ success: false, message: "Failed to send security verification email." });
+                }
+
+                return res.json({
+                    success: false,
+                    message: "Login from a new location detected. An approval email has been sent to the Admin email address.",
+                    pendingApproval: true
+                });
+            }
+
             // Generate OTP
             const otp = Math.floor(100000 + Math.random() * 900000).toString();
             const otpExpires = new Date(Date.now() + 90 * 1000); // 90 seconds
@@ -366,6 +446,24 @@ export const verifyAdminOTP = async (req, res) => {
         admin.lastLogin = new Date();
         await admin.save();
 
+        const ipAddress = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+        const locationData = await getLocationFromIP(ipAddress);
+        const locationStr = locationData ? `${locationData.city}, ${locationData.country}` : 'Local/Unknown';
+
+        try {
+            await transporter.sendMail({
+                from: process.env.SENDER_EMAIL,
+                to: admin.email,
+                subject: 'Successful Admin Login Alert',
+                html: ADMIN_LOGIN_SUCCESS_TEMPLATE
+                    .replace('{time}', new Date().toLocaleString())
+                    .replace('{ipAddress}', ipAddress || 'Unknown')
+                    .replace('{location}', locationStr)
+            });
+        } catch (mailErr) {
+            console.error("Failed to send success email:", mailErr);
+        }
+
         const token = jwt.sign({ email: admin.email }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
         await logActivity(admin._id, 'admin', 'login', `Logged in via ${req.body.method || 'Email'} after 2FA`, req, { method: req.body.method || 'email' });
@@ -381,6 +479,62 @@ export const verifyAdminOTP = async (req, res) => {
     } catch (error) {
         console.error("Error verifying OTP:", error);
         res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+export const approveAdminLogin = async (req, res) => {
+    try {
+        const { token } = req.params;
+        const admin = await adminModel.findOne({ 'pendingLogins.token': token });
+        if (!admin) {
+            return res.status(400).send("<h1>Invalid or expired approval link.</h1>");
+        }
+
+        const pendingLoginIndex = admin.pendingLogins.findIndex(p => p.token === token);
+        if (pendingLoginIndex === -1) {
+            return res.status(400).send("<h1>Invalid or expired approval link.</h1>");
+        }
+
+        const loginRequest = admin.pendingLogins[pendingLoginIndex];
+
+        if (new Date() > loginRequest.expiresAt) {
+            admin.pendingLogins.splice(pendingLoginIndex, 1);
+            await admin.save();
+            return res.status(400).send("<h1>Approval link expired.</h1>");
+        }
+
+        if (!admin.trustedGeolocations.includes(loginRequest.geolocation) && loginRequest.geolocation !== 'Local/Unknown') {
+            admin.trustedGeolocations.push(loginRequest.geolocation);
+        }
+
+        admin.pendingLogins.splice(pendingLoginIndex, 1);
+        await admin.save();
+
+        res.send("<h1>Login Approved! The user from this location can now log in successfully.</h1><p>You can close this tab.</p>");
+    } catch (error) {
+        console.error("Error approving login:", error);
+        res.status(500).send("<h1>Server Error</h1>");
+    }
+};
+
+export const disapproveAdminLogin = async (req, res) => {
+    try {
+        const { token } = req.params;
+        const admin = await adminModel.findOne({ 'pendingLogins.token': token });
+        if (!admin) {
+            return res.status(400).send("<h1>Invalid or expired approval link.</h1>");
+        }
+
+        const pendingLoginIndex = admin.pendingLogins.findIndex(p => p.token === token);
+        if (pendingLoginIndex !== -1) {
+            admin.pendingLogins.splice(pendingLoginIndex, 1);
+            await admin.save();
+        }
+
+        res.send("<h1>Login Denied. The access request has been blocked.</h1><p>You can close this tab.</p>");
+    } catch (error) {
+        console.error("Error disapproving login:", error);
+        res.status(500).send("<h1>Server Error</h1>");
     }
 };
 

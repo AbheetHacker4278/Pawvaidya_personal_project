@@ -36,6 +36,7 @@ import deletionRequestModel from '../models/deletionRequestModel.js';
 import blacklistModel from '../models/blacklistModel.js';
 import adminCouponModel from '../models/adminCouponModel.js';
 import securityIncidentModel from '../models/securityIncidentModel.js';
+import bannedIpModel from '../models/bannedIpModel.js';
 import { Document, Packer, Paragraph, Table, TableRow, TableCell, WidthType, AlignmentType, HeadingLevel, TextRun, BorderStyle } from "docx";
 
 const execAsync = promisify(exec);
@@ -527,11 +528,28 @@ export const disapproveAdminLogin = async (req, res) => {
 
         const pendingLoginIndex = admin.pendingLogins.findIndex(p => p.token === token);
         if (pendingLoginIndex !== -1) {
+            const loginRequest = admin.pendingLogins[pendingLoginIndex];
+            const ipAddress = loginRequest.ip;
+
+            // Ban the IP address
+            await bannedIpModel.findOneAndUpdate(
+                { ipAddress },
+                {
+                    reason: "Unauthorized admin login attempt from unknown location (disapproved by admin)",
+                    bannedBy: admin._id,
+                    bannedAt: new Date(),
+                    isActive: true
+                },
+                { upsert: true, new: true }
+            );
+
+            await logActivity(admin._id, 'admin', 'ban_ip', `Banned IP ${ipAddress} after login disapproval`, req, { ipAddress, token });
+
             admin.pendingLogins.splice(pendingLoginIndex, 1);
             await admin.save();
         }
 
-        res.send("<h1>Login Denied. The access request has been blocked.</h1><p>You can close this tab.</p>");
+        res.send("<h1>Login Denied. The access request has been blocked and the IP address has been banned.</h1><p>You can close this tab.</p>");
     } catch (error) {
         console.error("Error disapproving login:", error);
         res.status(500).send("<h1>Server Error</h1>");

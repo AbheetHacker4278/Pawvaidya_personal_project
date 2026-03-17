@@ -1188,6 +1188,21 @@ export const cancelAppointment = async (req, res) => {
 
         await doctorModel.findByIdAndUpdate(docId, { slots_booked });
 
+        // Restore coupon usage if applied
+        if (appointmentData.discountApplied && appointmentData.discountApplied.code) {
+            await doctorModel.findOneAndUpdate(
+                { _id: docId, 'discounts.code': appointmentData.discountApplied.code },
+                { $inc: { 'discounts.$.usedCount': -1 } }
+            );
+        }
+
+        if (appointmentData.adminDiscountApplied && appointmentData.adminDiscountApplied.code) {
+            await adminCouponModel.findOneAndUpdate(
+                { code: appointmentData.adminDiscountApplied.code },
+                { $inc: { usedCount: -1 } }
+            );
+        }
+
         // Send cancellation email
         const mailOptions = {
             from: process.env.SENDER_EMAIL,

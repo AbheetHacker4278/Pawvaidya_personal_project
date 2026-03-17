@@ -139,7 +139,12 @@ const CommandPalette = () => {
                                             <div className="flex items-center gap-2">
                                                 <span className={`text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded ${result.type === 'Page' ? 'bg-amber-100 text-amber-700' :
                                                     result.type === 'Doctor' ? 'bg-emerald-100 text-emerald-700' :
-                                                        result.type === 'Patient' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-700'
+                                                        result.type === 'Patient' ? 'bg-blue-100 text-blue-700' :
+                                                            result.type === 'Poll' ? 'bg-purple-100 text-purple-700' :
+                                                                result.type === 'Coupon' ? 'bg-pink-100 text-pink-700' :
+                                                                    result.type === 'Message' ? 'bg-indigo-100 text-indigo-700' :
+                                                                        result.type === 'Log' ? 'bg-slate-100 text-slate-700' :
+                                                                            result.type === 'Security' ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-700'
                                                     }`}>
                                                     {result.type}
                                                 </span>
@@ -156,16 +161,21 @@ const CommandPalette = () => {
                             ) : (
                                 <div className="py-8 px-4">
                                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Quick Navigation</p>
-                                    <div className="grid grid-cols-2 gap-2">
+                                    <div className="grid grid-cols-3 gap-2">
                                         {[
-                                            { name: 'Dashboard', icon: '📊', link: '/' },
-                                            { name: 'Admin Logs', icon: '🛡️', link: '/admin-logs' },
+                                            { name: 'Dashboard', icon: '📊', link: '/admin-dashboard' },
                                             { name: 'Doctors', icon: '👨‍⚕️', link: '/doctor-list' },
-                                            { name: 'Users', icon: '👥', link: '/total-users' }
+                                            { name: 'Appointments', icon: '📅', link: '/all-appointments' },
+                                            { name: 'Users', icon: '👥', link: '/total-users' },
+                                            { name: 'Polls', icon: '🗳️', link: '/polls' },
+                                            { name: 'Coupons', icon: '🎫', link: '/manage-coupons' },
+                                            { name: 'Security', icon: '🛡️', link: '/security-monitoring' },
+                                            { name: 'Logs', icon: '📝', link: '/admin-logs' },
+                                            { name: 'Deployments', icon: '🚀', link: '/admin-deployments' }
                                         ].map((item, i) => (
                                             <div key={i} onClick={() => navigate(item.link)} className="flex items-center gap-2 p-2 rounded-lg border border-slate-100 hover:border-indigo-200 hover:bg-indigo-50/50 cursor-pointer transition-all">
-                                                <span>{item.icon}</span>
-                                                <span className="text-xs font-bold text-slate-600">{item.name}</span>
+                                                <span className="text-sm">{item.icon}</span>
+                                                <span className="text-[10px] font-bold text-slate-600 truncate">{item.name}</span>
                                             </div>
                                         ))}
                                     </div>

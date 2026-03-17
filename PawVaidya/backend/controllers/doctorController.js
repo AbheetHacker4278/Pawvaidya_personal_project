@@ -13,6 +13,7 @@ import activityLogModel from '../models/activityLogModel.js';
 import doctorScheduleModel from "../models/doctorScheduleModel.js";
 import systemConfigModel from '../models/systemConfigModel.js';
 import { getLocationFromIP, checkImpossibleTravel } from '../utils/fraudTracker.js';
+import adminCouponModel from '../models/adminCouponModel.js';
 
 const getDoctorWindow = async (docId) => {
     // Default window: 10:00 AM to 8:30 PM
@@ -572,6 +573,21 @@ export const appointmentCancel = async (req, res) => {
 
         await doctorModel.findByIdAndUpdate(docId, { slots_booked });
         await appointmentModel.findByIdAndUpdate(appointmentId, { cancelled: true });
+
+        // Restore coupon usage if applied
+        if (appointmentData.discountApplied && appointmentData.discountApplied.code) {
+            await doctorModel.findOneAndUpdate(
+                { _id: docId, 'discounts.code': appointmentData.discountApplied.code },
+                { $inc: { 'discounts.$.usedCount': -1 } }
+            );
+        }
+
+        if (appointmentData.adminDiscountApplied && appointmentData.adminDiscountApplied.code) {
+            await adminCouponModel.findOneAndUpdate(
+                { code: appointmentData.adminDiscountApplied.code },
+                { $inc: { usedCount: -1 } }
+            );
+        }
 
         // Send cancellation email
         const mailOptions = {

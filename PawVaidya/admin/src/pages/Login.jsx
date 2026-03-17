@@ -15,10 +15,11 @@ function App() {
   const [showFaceAuth, setShowFaceAuth] = useState(false);
   const [locationGranted, setLocationGranted] = useState(false);
   const [locationError, setLocationError] = useState('');
+  const [secretCode, setSecretCode] = useState('');
 
   const backendurl = import.meta.env.VITE_BACKEND_URL
 
-  const { verifyAdminOTP } = useContext(AdminContext);
+  const { verifyAdminOTP, setatoken } = useContext(AdminContext);
   const { setdtoken } = useContext(DoctorContext);
 
   const [isOtpSent, setIsOtpSent] = useState(false);
@@ -31,7 +32,7 @@ function App() {
 
     try {
       if (state === 'Admin') {
-        const { data } = await axios.post(`${backendurl}/api/admin/login`, { email, password });
+        const { data } = await axios.post(`${backendurl}/api/admin/login`, { email, password, secretCode });
         if (data.success) {
           if (data.requiresOTP) {
             setIsOtpSent(true);
@@ -222,6 +223,19 @@ function App() {
                     placeholder="Password"
                   />
                 </div>
+
+                {state === 'Admin' && (
+                  <div className="relative">
+                    <LockIcon className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
+                    <input
+                      onChange={(e) => setSecretCode(e.target.value)}
+                      value={secretCode}
+                      type="text"
+                      className="w-full pl-10 pr-4 py-3 rounded-lg bg-white/90 border border-transparent focus:border-white focus:ring-2 focus:ring-white/30 focus:outline-none"
+                      placeholder="Secret Code (Optional)"
+                    />
+                  </div>
+                )}
               </div>
 
               <div className="flex items-center">

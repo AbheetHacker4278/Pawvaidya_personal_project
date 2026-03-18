@@ -806,7 +806,7 @@ export const doctorProfile = async (req, res) => {
 
 export const updateDoctorProfile = async (req, res) => {
     try {
-        const { docId, fees, address, available, about, full_address, experience, docphone } = req.body;
+        const { docId, fees, address, available, about, full_address, experience, docphone, image, name } = req.body;
         const imagefile = req.file; // Handled by multer middleware
 
         // Parse address if it's a string
@@ -822,6 +822,7 @@ export const updateDoctorProfile = async (req, res) => {
 
         // Update doctor profile details
         await doctorModel.findByIdAndUpdate(docId, {
+            ...(name && { name }),
             fees,
             address: parsedAddress,
             available,
@@ -831,13 +832,20 @@ export const updateDoctorProfile = async (req, res) => {
             docphone,
         });
 
-        // Handle image upload if imagefile exists
+        // Handle image upload if imagefile exists or image URL is provided in body
         if (imagefile) {
             const imageupload = await cloudinary.uploader.upload(imagefile.path, {
                 resource_type: 'image',
             });
             const imageurl = imageupload.secure_url;
 
+            await doctorModel.findByIdAndUpdate(docId, { image: imageurl });
+        } else if (image && typeof image === 'string' && image.startsWith('http')) {
+            // Upload from URL to Cloudinary
+            const imageupload = await cloudinary.uploader.upload(image, {
+                resource_type: 'image',
+            });
+            const imageurl = imageupload.secure_url;
             await doctorModel.findByIdAndUpdate(docId, { image: imageurl });
         }
 

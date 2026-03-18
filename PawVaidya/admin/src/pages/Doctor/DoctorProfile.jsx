@@ -19,6 +19,7 @@ const DoctorProfile = () => {
     const [isClockedIn, setIsClockedIn] = useState(false);
     const [attendanceTime, setAttendanceTime] = useState(null);
     const [todaySchedule, setTodaySchedule] = useState(null);
+    const [imageUrl, setImageUrl] = useState('');
 
     const fetchTodaySchedule = async () => {
         try {
@@ -43,6 +44,7 @@ const DoctorProfile = () => {
         const file = e.target.files?.[0];
         if (file) {
             setSelectedImage(file);
+            setImageUrl(''); // Clear URL if file is selected
             const reader = new FileReader();
             reader.onload = (e) => {
                 setProfileData((prev) => ({
@@ -51,6 +53,17 @@ const DoctorProfile = () => {
                 }));
             };
             reader.readAsDataURL(file);
+        }
+    };
+
+    const handleImageUrlChange = (url) => {
+        setImageUrl(url);
+        if (url) {
+            setSelectedImage(null); // Clear file if URL is pasted
+            setProfileData((prev) => ({
+                ...prev,
+                tempImage: url,
+            }));
         }
     };
 
@@ -120,6 +133,7 @@ const DoctorProfile = () => {
             setLoading(true);
             const formData = new FormData();
             formData.append('docId', profileData._id);
+            formData.append('name', profileData.name);
             formData.append('fees', profileData.fees);
             formData.append('address', JSON.stringify(profileData.address));
             formData.append('available', profileData.available);
@@ -130,6 +144,8 @@ const DoctorProfile = () => {
 
             if (selectedImage) {
                 formData.append('image', selectedImage);
+            } else if (imageUrl) {
+                formData.append('image', imageUrl);
             }
 
             const { data } = await axios.post(
@@ -241,9 +257,33 @@ const DoctorProfile = () => {
                             />
                         </div>
 
+                        {/* Image URL Input */}
+                        {isEdit && (
+                            <div className="flex-1 max-w-xs">
+                                <label className="text-sm font-medium text-gray-700 mb-1 block">Or Paste Image URL</label>
+                                <input
+                                    type="text"
+                                    className="w-full p-2 text-sm rounded-lg border border-gray-200 focus:ring-2 focus:ring-green-500/50 focus:border-green-500"
+                                    placeholder="https://example.com/image.jpg"
+                                    value={imageUrl}
+                                    onChange={(e) => handleImageUrlChange(e.target.value)}
+                                />
+                            </div>
+                        )}
+
                         {/* Basic Info */}
                         <div className="flex-1">
-                            <h1 className="text-2xl font-bold text-gray-900">{profileData.name}</h1>
+                            {isEdit ? (
+                                <input
+                                    type="text"
+                                    className="text-2xl font-bold text-gray-900 border-b-2 border-green-400 focus:outline-none focus:border-green-600 bg-transparent w-full mb-1"
+                                    value={profileData.name}
+                                    onChange={(e) => setProfileData(prev => ({ ...prev, name: e.target.value }))}
+                                    placeholder="Doctor Name"
+                                />
+                            ) : (
+                                <h1 className="text-2xl font-bold text-gray-900">{profileData.name}</h1>
+                            )}
                             <p className="text-gray-500 mt-1">{profileData.degree} · {profileData.speciality}</p>
                             <div className="flex items-center gap-2 mt-2">
                                 <span className="px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">

@@ -252,8 +252,23 @@ export const checkAndLogViolations = async (req, bodyToScan) => {
 
     if (violations.length === 0) return false;
 
-    await logViolationsToDB(req, violations);
-    req.contentViolations = violations;
+    // --- Prevent Duplicate Logging ---
+    // If the global middleware already logged these violations (JSON requests), don't log them again.
+    // We check if the content and detected words match any existing violation in req.contentViolations.
+    const newViolations = req.contentViolations
+        ? violations.filter(v => !req.contentViolations.some(prev => prev.content === v.content && JSON.stringify(prev.detectedWords) === JSON.stringify(v.detectedWords)))
+        : violations;
+
+    if (newViolations.length > 0) {
+        await logViolationsToDB(req, newViolations);
+        // Merge or replace contentViolations
+        req.contentViolations = [...(req.contentViolations || []), ...newViolations];
+    } else {
+        // Even if we didn't log (because it's a duplicate), we still ensure req.contentViolations is set
+        // so controllers can block the request.
+        if (!req.contentViolations) req.contentViolations = violations;
+    }
+
     return true;
 };
 

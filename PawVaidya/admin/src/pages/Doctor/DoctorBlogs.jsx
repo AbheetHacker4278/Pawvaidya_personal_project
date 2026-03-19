@@ -337,8 +337,8 @@ const DoctorBlogs = () => {
               <button
                 onClick={() => setActiveTab('create')}
                 className={`w-full py-3 px-4 rounded-lg font-semibold transition-all mb-3 flex items-center justify-center gap-2 ${activeTab === 'create'
-                    ? 'bg-gradient-to-r from-[#5A4035] to-[#7a5a48] text-white shadow-lg'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-gradient-to-r from-[#5A4035] to-[#7a5a48] text-white shadow-lg'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
               >
                 <PlusIcon className="w-5 h-5" />
@@ -347,8 +347,8 @@ const DoctorBlogs = () => {
               <button
                 onClick={() => setActiveTab('my-blogs')}
                 className={`w-full py-3 px-4 rounded-lg font-semibold transition-all mb-3 flex items-center justify-center gap-2 ${activeTab === 'my-blogs'
-                    ? 'bg-gradient-to-r from-[#5A4035] to-[#7a5a48] text-white shadow-lg'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-gradient-to-r from-[#5A4035] to-[#7a5a48] text-white shadow-lg'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
               >
                 <EyeIcon className="w-5 h-5" />
@@ -357,8 +357,8 @@ const DoctorBlogs = () => {
               <button
                 onClick={() => setActiveTab('community')}
                 className={`w-full py-3 px-4 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 ${activeTab === 'community'
-                    ? 'bg-gradient-to-r from-[#5A4035] to-[#7a5a48] text-white shadow-lg'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-gradient-to-r from-[#5A4035] to-[#7a5a48] text-white shadow-lg'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
               >
                 <ChatBubbleLeftIcon className="w-5 h-5" />
@@ -680,8 +680,8 @@ const DoctorBlogs = () => {
                               <button
                                 onClick={() => handleLike(blog._id)}
                                 className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${isLiked
-                                    ? 'bg-red-50 text-red-600'
-                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                  ? 'bg-red-50 text-red-600'
+                                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                   }`}
                               >
                                 <HeartIcon className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`} />

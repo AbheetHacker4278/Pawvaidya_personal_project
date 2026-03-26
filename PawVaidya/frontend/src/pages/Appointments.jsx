@@ -7,7 +7,7 @@ import { AppContext } from '../context/AppContext';
 import { translateSpeciality } from '../utils/translateSpeciality';
 import { toast } from 'react-toastify';
 import axios from 'axios';
-import { Stethoscope, Calendar, CheckCircle, Clock, ArrowRight, X, Loader, MapPin, Award, IndianRupee, Info } from 'lucide-react';
+import { Stethoscope, Calendar, CheckCircle, Clock, ArrowRight, X, Loader, MapPin, Award, IndianRupee, Info, Shield } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Appointments = () => {
@@ -447,6 +447,11 @@ const Appointments = () => {
     if (!userdata.isAccountverified) {
       toast.warn('Please Verify Your Account');
       return navigate('/');
+    }
+
+    if (userdata && !userdata.isFaceRegistered) {
+      toast.warn('Mandatory Biometric Setup Required');
+      return navigate('/my-profile');
     }
 
     if (!validateBooking()) {
@@ -1391,15 +1396,15 @@ const Appointments = () => {
                   className="mt-8"
                 >
                   <motion.button
-                    whileHover={slotTime && docSlots[slotIndex]?.[0]?.datetime ? {
+                    whileHover={slotTime && docSlots[slotIndex]?.[0]?.datetime && (userdata && userdata.isFaceRegistered) ? {
                       scale: 1.05,
                       boxShadow: '0 20px 40px rgba(200,134,10,0.35)'
                     } : {}}
-                    whileTap={slotTime && docSlots[slotIndex]?.[0]?.datetime ? { scale: 0.98 } : {}}
+                    whileTap={slotTime && docSlots[slotIndex]?.[0]?.datetime && (userdata && userdata.isFaceRegistered) ? { scale: 0.98 } : {}}
                     onClick={bookappointment}
-                    disabled={!slotTime || !docSlots[slotIndex]?.[0]?.datetime}
+                    disabled={!slotTime || !docSlots[slotIndex]?.[0]?.datetime || (userdata && !userdata.isFaceRegistered)}
                     className="px-12 py-4 rounded-2xl font-bold text-lg flex items-center gap-3 transition-all duration-300"
-                    style={!slotTime || !docSlots[slotIndex]?.[0]?.datetime
+                    style={!slotTime || !docSlots[slotIndex]?.[0]?.datetime || (userdata && !userdata.isFaceRegistered)
                       ? { background: '#e8d5b0', color: '#a08060', cursor: 'not-allowed' }
                       : { background: 'linear-gradient(135deg, #c8860a, #e8a020)', color: '#fff', boxShadow: '0 8px 24px rgba(200,134,10,0.30)' }
                     }
@@ -1408,6 +1413,24 @@ const Appointments = () => {
                     Book Appointment
                     <ArrowRight className="w-6 h-6" />
                   </motion.button>
+
+                  <AnimatePresence>
+                    {userdata && !userdata.isFaceRegistered && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mt-4 p-4 rounded-xl bg-red-50 border border-red-200 flex items-center gap-3"
+                      >
+                        <div className="p-2 bg-red-100 rounded-lg text-red-600">
+                          <Shield className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <p className="text-red-900 font-bold text-sm">Action Required: Biometric Setup</p>
+                          <p className="text-red-700 text-xs">Face registration is mandatory for booking. <span className="underline cursor-pointer font-bold" onClick={() => navigate('/my-profile')}>Setup in Profile</span></p>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
 
                   <AnimatePresence>
                     {validationError && (

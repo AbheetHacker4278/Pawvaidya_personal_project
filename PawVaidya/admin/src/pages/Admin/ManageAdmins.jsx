@@ -1,10 +1,10 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { AdminContext } from '../../context/AdminContext';
-import { Plus, Edit, Trash2, X, Check, Mail } from 'lucide-react';
+import { Plus, Edit, Trash2, X, Check, Mail, History, ShieldAlert, ShieldCheck } from 'lucide-react';
 import { toast } from 'react-toastify';
 
 const ManageAdmins = () => {
-    const { atoken, getAllAdmins, addAdmin, updateAdmin, deleteAdmin, adminProfile, sendIndividualEmail } = useContext(AdminContext);
+    const { atoken, getAllAdmins, addAdmin, updateAdmin, deleteAdmin, adminProfile, sendIndividualEmail, getActivityLogs, backendurl } = useContext(AdminContext);
 
     // State
     const [admins, setAdmins] = useState([]);
@@ -31,6 +31,13 @@ const ManageAdmins = () => {
     const [emailMessage, setEmailMessage] = useState('');
     const [emailAttachments, setEmailAttachments] = useState([]);
     const [sendingEmail, setSendingEmail] = useState(false);
+
+    // Logs Modal State
+    const [showLogsModal, setShowLogsModal] = useState(false);
+    const [selectedAdminLogs, setSelectedAdminLogs] = useState([]);
+    const [selectedAdminInfo, setSelectedAdminInfo] = useState(null);
+    const [loadingLogs, setLoadingLogs] = useState(false);
+    const [logFilter, setLogFilter] = useState('all');
 
     const openEmailModal = (admin) => {
         setEmailTarget(admin);
@@ -66,6 +73,29 @@ const ManageAdmins = () => {
 
         if (success) {
             setShowEmailModal(false);
+        }
+    };
+
+    const openLogsModal = async (admin) => {
+        setLoadingLogs(true);
+        setSelectedAdminInfo(admin);
+        setShowLogsModal(true);
+        setSelectedAdminLogs([]);
+
+        try {
+            const data = await getActivityLogs(admin._id, 'admin');
+            if (data.success) {
+                setSelectedAdminLogs(data.logs);
+                // The backend now returns adminInfo as well
+                if (data.adminInfo) {
+                    setSelectedAdminInfo(data.adminInfo);
+                }
+            }
+        } catch (error) {
+            console.error("Error fetching admin logs:", error);
+            toast.error("Failed to load activity logs");
+        } finally {
+            setLoadingLogs(false);
         }
     };
 
@@ -230,6 +260,13 @@ const ManageAdmins = () => {
                                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                                 {admin.role !== 'master' && (
                                                     <>
+                                                        <button
+                                                            onClick={() => openLogsModal(admin)}
+                                                            className="text-gray-600 hover:text-gray-900 mr-4"
+                                                            title="View Activity Logs"
+                                                        >
+                                                            <History size={18} />
+                                                        </button>
                                                         <button
                                                             onClick={() => openEmailModal(admin)}
                                                             className="text-purple-600 hover:text-purple-900 mr-4"
@@ -502,6 +539,143 @@ const ManageAdmins = () => {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Logs Modal */}
+            {showLogsModal && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col animate-modalIn">
+                        <div className="p-6 border-b flex justify-between items-center bg-gray-50/50">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
+                                    <History size={24} />
+                                </div>
+                                <div>
+                                    <h2 className="text-xl font-bold text-gray-800">Activity Logs & Login Info</h2>
+                                    <p className="text-sm text-gray-500">{selectedAdminInfo?.name} • {selectedAdminInfo?.email}</p>
+                                </div>
+                            </div>
+                            <button onClick={() => setShowLogsModal(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
+                                <X size={24} />
+                            </button>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto p-6">
+                            {/* Login Stats Header */}
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                                <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
+                                    <p className="text-xs text-gray-500 uppercase font-semibold mb-1">Last Login</p>
+                                    <p className="text-sm font-medium text-gray-800">
+                                        {selectedAdminInfo?.lastLogin ? new Date(selectedAdminInfo.lastLogin).toLocaleString() : 'Never'}
+                                    </p>
+                                </div>
+                                <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
+                                    <p className="text-xs text-gray-500 uppercase font-semibold mb-1">Failed Attempts</p>
+                                    <p className={`text-sm font-medium ${selectedAdminInfo?.failedLoginAttempts > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                                        {selectedAdminInfo?.failedLoginAttempts || 0}
+                                    </p>
+                                </div>
+                                <div className="p-4 bg-gray-50 rounded-xl border border-gray-100 col-span-1 md:col-span-2">
+                                    <p className="text-xs text-gray-500 uppercase font-semibold mb-1">Last Failed At</p>
+                                    <p className="text-sm font-medium text-gray-800">
+                                        {selectedAdminInfo?.lastFailedLoginAt ? new Date(selectedAdminInfo.lastFailedLoginAt).toLocaleString() : 'N/A'}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Trusted Locations */}
+                            {selectedAdminInfo?.trustedGeolocations?.length > 0 && (
+                                <div className="mb-8">
+                                    <h3 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+                                        <ShieldCheck size={16} className="text-green-500" /> Trusted Locations
+                                    </h3>
+                                    <div className="flex flex-wrap gap-2">
+                                        {selectedAdminInfo.trustedGeolocations.map((loc, i) => (
+                                            <span key={i} className="px-3 py-1 bg-green-50 text-green-700 text-xs rounded-full border border-green-100">
+                                                {loc}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Logs Table */}
+                            <div className="relative">
+                                <div className="flex justify-between items-center mb-4">
+                                    <h3 className="text-sm font-bold text-gray-700">Recent Activity</h3>
+                                    <div className="flex gap-2">
+                                        {['all', 'login', 'action'].map(f => (
+                                            <button
+                                                key={f}
+                                                onClick={() => setLogFilter(f)}
+                                                className={`px-3 py-1 text-xs rounded-lg transition-all ${logFilter === f ? 'bg-blue-600 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                                            >
+                                                {f.charAt(0).toUpperCase() + f.slice(1)}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="border border-gray-200 rounded-xl overflow-hidden max-h-[450px] overflow-y-auto">
+                                    <table className="w-full text-sm text-left border-collapse">
+                                        <thead className="bg-gray-50 text-gray-600 uppercase text-[10px] font-bold sticky top-0 z-10 shadow-sm">
+                                            <tr>
+                                                <th className="px-4 py-3 bg-gray-50">Time</th>
+                                                <th className="px-4 py-3 bg-gray-50">Type</th>
+                                                <th className="px-4 py-3 bg-gray-50">Description</th>
+                                                <th className="px-4 py-3 bg-gray-50">IP Address</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-100">
+                                            {loadingLogs ? (
+                                                <tr><td colSpan="4" className="px-4 py-10 text-center text-gray-400">Loading activity logs...</td></tr>
+                                            ) : selectedAdminLogs.length === 0 ? (
+                                                <tr><td colSpan="4" className="px-4 py-10 text-center text-gray-400">No activity logs found</td></tr>
+                                            ) : (
+                                                selectedAdminLogs
+                                                    .filter(log => {
+                                                        if (logFilter === 'all') return true;
+                                                        if (logFilter === 'login') return log.activityType === 'login' || log.activityType === 'logout';
+                                                        return !['login', 'logout'].includes(log.activityType);
+                                                    })
+                                                    .map((log) => (
+                                                        <tr key={log.id} className="hover:bg-gray-50 transition-colors">
+                                                            <td className="px-4 py-3 whitespace-nowrap text-gray-500 text-xs">
+                                                                {new Date(log.timestamp).toLocaleString()}
+                                                            </td>
+                                                            <td className="px-4 py-3">
+                                                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${log.activityType === 'login' ? 'bg-blue-100 text-blue-700' :
+                                                                    log.activityType === 'error' ? 'bg-red-100 text-red-700' :
+                                                                        'bg-gray-100 text-gray-700'
+                                                                    }`}>
+                                                                    {log.activityType}
+                                                                </span>
+                                                            </td>
+                                                            <td className="px-4 py-3 text-gray-700 text-xs">
+                                                                {log.activityDescription}
+                                                            </td>
+                                                            <td className="px-4 py-3 text-gray-500 text-xs font-mono">
+                                                                {log.ipAddress || '—'}
+                                                            </td>
+                                                        </tr>
+                                                    ))
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="p-4 border-t bg-gray-50 flex justify-end">
+                            <button
+                                onClick={() => setShowLogsModal(false)}
+                                className="px-6 py-2 bg-gray-800 text-white rounded-xl hover:bg-gray-900 transition-all font-medium text-sm"
+                            >
+                                Close
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

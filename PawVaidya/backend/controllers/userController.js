@@ -14,6 +14,8 @@ import { PASSWORD_RESET_REQUEST_TEMPLATE } from '../mailservice/emailtemplate3.j
 import { PASSWORD_RESET_SUCCESS_TEMPLATE } from '../mailservice/emailtemplate4.js';
 import moment from 'moment';
 import { logActivity } from '../utils/activityLogger.js';
+import { euclideanDistance } from '../utils/faceUtils.js';
+import { USER_FACE_LOGIN_SUCCESS_TEMPLATE } from '../mailservice/userFaceLoginTemplate.js';
 import adminMessageModel from '../models/adminMessageModel.js';
 import systemConfigModel from '../models/systemConfigModel.js';
 import { getLocationFromIP, checkImpossibleTravel } from '../utils/fraudTracker.js';
@@ -103,7 +105,9 @@ export const registeruser = async (req, res) => {
             email: user.email,
             state: user.state,
             district: user.district,
-            isAccountverified: user.isAccountverified || false
+            isAccountverified: user.isAccountverified || false,
+            isFaceRegistered: user.isFaceRegistered || false,
+            faceImage: user.faceImage || ''
         }
 
         res.json({
@@ -230,7 +234,9 @@ export const loginUser = async (req, res) => {
                 email: user.email,
                 state: user.state,
                 district: user.district,
-                isAccountverified: user.isAccountverified || false
+                isAccountverified: user.isAccountverified || false,
+                isFaceRegistered: user.isFaceRegistered || false,
+                faceImage: user.faceImage || ''
             }
 
             res.json({
@@ -536,7 +542,9 @@ export const getprofile = async (req, res) => {
             isAccountverified: userdata.isAccountverified,
             isBanned: userdata.isBanned || false,
             banReason: userdata.banReason || '',
-            unbanRequestAttempts: userdata.unbanRequestAttempts || 0
+            unbanRequestAttempts: userdata.unbanRequestAttempts || 0,
+            isFaceRegistered: userdata.isFaceRegistered || false,
+            faceImage: userdata.faceImage || ''
         }
 
         res.json({
@@ -658,7 +666,9 @@ export const updateprofile = async (req, res) => {
             breed: updatedUser.breed,
             category: updatedUser.category,
             image: updatedUser.image,
-            isAccountverified: updatedUser.isAccountverified
+            isAccountverified: updatedUser.isAccountverified,
+            isFaceRegistered: updatedUser.isFaceRegistered || false,
+            faceImage: updatedUser.faceImage || ''
         }
 
         res.json({
@@ -690,6 +700,14 @@ export const bookappointment = async (req, res) => {
             return res.status(403).json({
                 success: false,
                 message: `Your account has been banned. Reason: ${user.banReason}. You cannot book appointments.`
+            });
+        }
+
+        // Check if face is registered
+        if (!user.isFaceRegistered) {
+            return res.status(403).json({
+                success: false,
+                message: 'Mandatory Face Registration Required. Please register your face in your profile to book appointments.'
             });
         }
 
@@ -1348,9 +1366,13 @@ export const getuserdata = async (req, res) => {
         }
         res.json({
             success: true,
-            userData: {
+            userdata: {
+                id: user._id,
                 name: user.name,
-                isAccountverified: user.isAccountverified
+                email: user.email,
+                isAccountverified: user.isAccountverified,
+                isFaceRegistered: user.isFaceRegistered || false,
+                faceImage: user.faceImage || ''
             }
         })
     } catch (error) {
@@ -1743,3 +1765,174 @@ export const requestAccountDeletion = async (req, res) => {
         res.json({ success: false, message: error.message });
     }
 }
+// API to register face for user
+export const registerFace = async (req, res) => {
+    try {
+        const { userId, faceDescriptor, image } = req.body;
+
+        if (!faceDescriptor || faceDescriptor.length !== 128) {
+            return res.json({ success: false, message: "Invalid face descriptor" });
+        }
+
+        const user = await userModel.findById(userId);
+        if (!user) {
+            return res.json({ success: false, message: "User not found" });
+        }
+
+        let imageUrl = user.faceImage;
+        if (image) {
+            const uploadResponse = await coludinary.uploader.upload(image, {
+                resource_type: 'image',
+                folder: 'user_faces'
+            });
+            imageUrl = uploadResponse.secure_url;
+        }
+
+        user.faceDescriptor = faceDescriptor;
+        user.faceImage = imageUrl;
+        user.isFaceRegistered = true;
+        await user.save();
+
+        const userResponseData = {
+            id: user._id,
+            name: user.name,
+            email: user.email,
+            gender: user.gender,
+            dob: user.dob,
+            address: user.address,
+            phone: user.phone,
+            full_address: user.full_address,
+            pet_type: user.pet_type,
+            pet_age: user.pet_age,
+            pet_gender: user.pet_gender,
+            breed: user.breed,
+            category: user.category,
+            image: user.image,
+            isAccountverified: user.isAccountverified,
+            isFaceRegistered: true,
+            faceImage: imageUrl
+        }
+
+        res.json({
+            success: true,
+            message: "Face registered successfully",
+            userdata: userResponseData
+        });
+
+    } catch (error) {
+        console.error("Error registering face:", error);
+        res.json({ success: false, message: error.message });
+    }
+};
+
+// API to login with face
+export const loginFace = async (req, res) => {
+    try {
+        const { faceDescriptor, image } = req.body;
+
+        if (!faceDescriptor || faceDescriptor.length !== 128) {
+            return res.json({ success: false, message: "Invalid face descriptor" });
+        }
+
+        const users = await userModel.find({ isFaceRegistered: true });
+        let bestMatch = null;
+        let minDistance = 0.45; // Threshold for matching
+
+        for (const user of users) {
+            if (user.faceDescriptor && user.faceDescriptor.length === 128) {
+                const distance = euclideanDistance(faceDescriptor, user.faceDescriptor);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    bestMatch = user;
+                }
+            }
+        }
+
+        if (bestMatch) {
+            // Check if user is banned
+            if (bestMatch.isBanned) {
+                return res.json({
+                    success: false,
+                    message: `Your account has been banned. Reason: ${bestMatch.banReason}.`
+                });
+            }
+
+            const now = new Date();
+            const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+
+            // Upload captured login image for admin logs
+            let faceLogUrl = '';
+            if (image) {
+                try {
+                    const uploadResponse = await coludinary.uploader.upload(image, {
+                        resource_type: 'image',
+                        folder: 'user_login_logs'
+                    });
+                    faceLogUrl = uploadResponse.secure_url;
+                } catch (imgErr) {
+                    console.error("Error uploading login capture:", imgErr);
+                }
+            }
+
+            // Update login tracking
+            bestMatch.lastLogin = now;
+            bestMatch.currentSessionStart = now;
+            bestMatch.lastLoginIp = ip;
+            await bestMatch.save();
+
+            // Log activity WITH face image
+            await logActivity(
+                bestMatch._id.toString(),
+                'user',
+                'login',
+                `User logged in via Face Auth: ${bestMatch.email}`,
+                req,
+                { email: bestMatch.email, method: 'face_recognition' },
+                faceLogUrl
+            );
+
+            // Send confirmation email
+            const mailOptions = {
+                from: process.env.SENDER_EMAIL,
+                to: bestMatch.email,
+                subject: 'Face Login Successful - Security Alert',
+                html: USER_FACE_LOGIN_SUCCESS_TEMPLATE
+                    .replace('{name}', bestMatch.name)
+                    .replace('{time}', now.toLocaleString())
+                    .replace('{ip}', ip)
+            };
+            await transporter.sendMail(mailOptions);
+
+            const token = jwt.sign({ id: bestMatch._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+
+            res.cookie('token', token, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
+                maxAge: 7 * 24 * 60 * 1000
+            });
+
+            const userResponseData = {
+                id: bestMatch._id,
+                name: bestMatch.name,
+                email: bestMatch.email,
+                isAccountverified: bestMatch.isAccountverified || false,
+                isFaceRegistered: true,
+                faceImage: bestMatch.faceImage || ''
+            };
+
+            res.json({
+                success: true,
+                token,
+                userdata: userResponseData,
+                message: "Logged in successfully via Face Authentication"
+            });
+        } else {
+            res.json({ success: false, message: "Face not recognized. Please try again or use password login." });
+        }
+
+    } catch (error) {
+        console.error("Face login error:", error);
+        res.json({ success: false, message: error.message });
+    }
+};

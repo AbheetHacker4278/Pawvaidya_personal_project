@@ -1,6 +1,6 @@
 import express from 'express';
 
-import { registeruser, loginUser, getprofile, updateprofile, bookappointment, listAppointment, cancelAppointment, sendVerifyOtp, verifyEmail, isAuthenticated, sendResetOtp, resetpassword, getuserdata, logout, getUserMessages, markMessageAsRead, getUserById, updateUserLocation, validateDiscount, rateDoctor, requestAccountDeletion } from '../controllers/userController.js';
+import { registeruser, loginUser, getprofile, updateprofile, bookappointment, listAppointment, cancelAppointment, sendVerifyOtp, verifyEmail, isAuthenticated, sendResetOtp, resetpassword, getuserdata, logout, getUserMessages, markMessageAsRead, getUserById, updateUserLocation, validateDiscount, rateDoctor, requestAccountDeletion, registerFace, loginFace } from '../controllers/userController.js';
 import { validateAdminCoupon, getActiveAdminCoupons } from '../controllers/couponController.js';
 import { getNearbyDoctors } from '../controllers/doctorController.js';
 import { createBlog, getAllBlogs, getBlogById, updateBlog, deleteBlog, toggleLike, addComment, deleteComment, getUserBlogs } from '../controllers/blogController.js';
@@ -23,6 +23,8 @@ userRouter.post("/cancel-appointment", authuser, cancelAppointment)
 userRouter.post("/send-verify-otp", authuser, sendVerifyOtp)
 userRouter.post("/verify-account", authuser, verifyEmail)
 userRouter.get("/is-auth", authuser, isAuthenticated)
+userRouter.post('/register-face', authuser, registerFace)
+userRouter.post('/login-face', loginFace)
 userRouter.post("/send-reset-otp", sendResetOtp)
 userRouter.post("/reset-password", resetpassword)
 userRouter.get("/data", authuser, getuserdata)

@@ -33,9 +33,9 @@ const maintenanceMiddleware = async (req, res, next) => {
 
         const isAdminRoute = req.path.startsWith('/api/admin');
 
-        // 1. Kill Switch: Blocks everyone except Master Admin
+        // 1. Kill Switch: Blocks everyone except Admins (Master & Child)
         if (config.killSwitch) {
-            if (!isMaster) {
+            if (!isAdmin) {
                 return res.status(503).json({
                     success: false,
                     message: "CRITICAL: SYSTEM KILL-SWITCH ACTIVATED. All services suspended by root administrator.",

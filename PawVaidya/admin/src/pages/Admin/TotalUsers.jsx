@@ -450,18 +450,41 @@ const TotalUsers = () => {
                                             style={{ transform: 'scale(1.3)' }}
                                         />
                                     </Box>
-                                    <Avatar
-                                        src={user.image || assets.people_icon}
-                                        alt={user.name}
-                                        sx={{
-                                            width: 70,
-                                            height: 70,
-                                            mr: 1.5,
-                                            border: '3px solid #10b981',
-                                            boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
-                                            flexShrink: 0
-                                        }}
-                                    />
+                                    <Box sx={{ position: 'relative', mr: 1.5 }}>
+                                        <Avatar
+                                            src={user.image || assets.people_icon}
+                                            alt={user.name}
+                                            sx={{
+                                                width: 70,
+                                                height: 70,
+                                                border: '3px solid #10b981',
+                                                boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
+                                                flexShrink: 0
+                                            }}
+                                        />
+                                        {user.isFaceRegistered && user.faceImage && (
+                                            <Avatar
+                                                src={user.faceImage}
+                                                sx={{
+                                                    width: 28,
+                                                    height: 28,
+                                                    position: 'absolute',
+                                                    bottom: -4,
+                                                    right: -4,
+                                                    border: '2px solid white',
+                                                    boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                                                    cursor: 'pointer',
+                                                    zIndex: 2,
+                                                    transition: 'transform 0.2s',
+                                                    '&:hover': { transform: 'scale(1.2)' }
+                                                }}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    window.open(user.faceImage, '_blank');
+                                                }}
+                                            />
+                                        )}
+                                    </Box>
                                     <Box flex={1} minWidth={0}>
                                         <Typography variant="h6" fontWeight="bold" color="#065f46" sx={{ fontSize: '1rem', mb: 0.5 }}>
                                             {user.name}
@@ -492,6 +515,19 @@ const TotalUsers = () => {
                                                     }}
                                                 />
                                             )}
+                                            <Chip
+                                                icon={user.isFaceRegistered ? <CheckCircleIcon sx={{ fontSize: '1rem' }} /> : <WarningIcon sx={{ fontSize: '1rem' }} />}
+                                                label={user.isFaceRegistered ? 'Face Registered' : 'No Face Auth'}
+                                                size="small"
+                                                sx={{
+                                                    bgcolor: user.isFaceRegistered ? '#dcfce7' : '#fee2e2',
+                                                    color: user.isFaceRegistered ? '#166534' : '#991b1b',
+                                                    fontWeight: 'bold',
+                                                    fontSize: '0.7rem',
+                                                    height: 22,
+                                                    border: `1px solid ${user.isFaceRegistered ? '#bbf7d0' : '#fecaca'}`
+                                                }}
+                                            />
                                         </Box>
                                     </Box>
                                 </Box>
@@ -1030,13 +1066,14 @@ const TotalUsers = () => {
                                             <CircularProgress />
                                         </Box>
                                     ) : activityLogs.length > 0 ? (
-                                        <TableContainer component={Paper}>
+                                        <TableContainer component={Paper} sx={{ maxHeight: 500, overflow: 'auto' }}>
                                             <Table>
                                                 <TableHead>
                                                     <TableRow>
                                                         <TableCell><strong>Timestamp</strong></TableCell>
                                                         <TableCell><strong>Activity Type</strong></TableCell>
                                                         <TableCell><strong>Description</strong></TableCell>
+                                                        <TableCell><strong>Face Preview</strong></TableCell>
                                                         <TableCell><strong>IP Address</strong></TableCell>
                                                     </TableRow>
                                                 </TableHead>
@@ -1058,6 +1095,18 @@ const TotalUsers = () => {
                                                                 />
                                                             </TableCell>
                                                             <TableCell>{log.activityDescription}</TableCell>
+                                                            <TableCell>
+                                                                {log.faceImage ? (
+                                                                    <Avatar
+                                                                        src={log.faceImage}
+                                                                        variant="rounded"
+                                                                        sx={{ width: 40, height: 40, cursor: 'pointer', border: '1px solid #ddd' }}
+                                                                        onClick={() => window.open(log.faceImage, '_blank')}
+                                                                    />
+                                                                ) : (
+                                                                    <Typography variant="caption" color="text.secondary">N/A</Typography>
+                                                                )}
+                                                            </TableCell>
                                                             <TableCell>{log.ipAddress || 'N/A'}</TableCell>
                                                         </TableRow>
                                                     ))}

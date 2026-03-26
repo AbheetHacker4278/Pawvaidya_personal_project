@@ -22,6 +22,7 @@ import {
   RefreshCw,
   Activity,
   Shield,
+  ShieldCheck,
   Clock,
   Trophy,
   Star,
@@ -29,6 +30,7 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import AnimalHealthChatbot from "../components/AnimalHealthChatbot";
+import FaceAuth from "../components/FaceAuth";
 
 // ─── Stable sub-components (must be at module scope so React doesn't recreate
 //     their identity on every parent render — that would unmount/remount inputs
@@ -336,6 +338,7 @@ const MyProfile = () => {
   const [showPetID, setShowPetID] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isSubmittingDeletion, setIsSubmittingDeletion] = useState(false);
+  const [showFaceAuth, setShowFaceAuth] = useState(false);
 
   // ✅ local editable copy
   const [editedData, setEditedData] = useState(null);
@@ -862,6 +865,63 @@ const MyProfile = () => {
                 <p className="text-lg font-bold text-gray-800">{profileCompleteness}%</p>
               </div>
             </motion.div>
+
+            {/* Biometric Status Alert */}
+            {userdata && (!userdata.isFaceRegistered ? (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="mt-6 p-4 rounded-2xl bg-emerald-50 border-2 border-emerald-100 flex flex-col sm:flex-row items-center justify-between gap-4"
+              >
+                <div className="flex items-center gap-3 text-center sm:text-left">
+                  <div className="p-2 bg-emerald-500 rounded-xl text-white">
+                    <Shield size={20} />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-emerald-900">Mandatory Biometric Setup</h4>
+                    <p className="text-xs text-emerald-700">Face authentication is required for enhanced account security.</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowFaceAuth(true)}
+                  className="px-6 py-2 bg-emerald-600 text-white rounded-xl font-bold text-sm hover:bg-emerald-500 transition-all shadow-lg"
+                >
+                  Setup Now
+                </button>
+              </motion.div>
+            ) : (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="mt-6 p-4 rounded-2xl bg-blue-50 border-2 border-blue-100 flex flex-col sm:flex-row items-center justify-between gap-4"
+              >
+                <div className="flex items-center gap-3 text-center sm:text-left">
+                  <div className="p-2 bg-blue-500 rounded-xl text-white">
+                    <ShieldCheck size={20} />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-blue-900">Face Registered</h4>
+                    <p className="text-xs text-blue-700">Your biometric ID is active and securing your account.</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowFaceAuth(true)}
+                  className="px-6 py-2 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-500 transition-all shadow-lg"
+                >
+                  Register Again
+                </button>
+              </motion.div>
+            ))}
+
+            <AnimatePresence>
+              {showFaceAuth && (
+                <FaceAuth
+                  mode="register"
+                  onCancel={() => setShowFaceAuth(false)}
+                  onAuthSuccess={() => setShowFaceAuth(false)}
+                />
+              )}
+            </AnimatePresence>
           </div>
 
           <div className="w-full md:w-1/3 mt-8 md:mt-0 md:ml-8 space-y-6">

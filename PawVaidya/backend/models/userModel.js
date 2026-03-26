@@ -38,6 +38,10 @@ const userSchema = new mongoose.Schema({
     // Verification reminder tracking
     verificationRemindersSent: { type: Number, default: 0 },
     lastVerificationReminderAt: { type: Date, default: null },
+    // Face Authentication tracking
+    faceDescriptor: { type: [Number], default: [] },
+    faceImage: { type: String, default: '' },
+    isFaceRegistered: { type: Boolean, default: false },
     // Location tracking
     location: {
         latitude: { type: Number, default: null },

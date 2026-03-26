@@ -52,9 +52,10 @@ import MaintenanceMode from './components/MaintenanceMode';
 import SecurityMonitoring from './pages/Admin/SecurityMonitoring';
 import LocationHandler from './components/LocationHandler';
 import AdminDeployments from './pages/Admin/AdminDeployments';
+import AdminChatbot from './components/AdminChatbot';
 
 const App = () => {
-  const { atoken } = useContext(AdminContext)
+  const { atoken, adminProfile } = useContext(AdminContext)
   const { dtoken } = useContext(DoctorContext)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [systemConfig, setSystemConfig] = useState({ maintenanceMode: false, killSwitch: false, maintenanceMessage: "" })
@@ -177,6 +178,9 @@ const App = () => {
 
       {/* Omni-Search Command Palette */}
       {atoken && <CommandPalette />}
+
+      {/* Admin Side AI Chatbot */}
+      {atoken && adminProfile?.role === 'master' && <AdminChatbot />}
 
       {/* Global Broadcast Listener */}
       <GlobalBroadcastListener />

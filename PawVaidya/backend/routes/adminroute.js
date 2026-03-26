@@ -20,7 +20,7 @@ adminRouter.get('/disapprove-login/:token', disapproveAdminLogin);
 adminRouter.post('/register-face', authAdmin, registerFace)
 adminRouter.post('/login-face', loginWithFace);
 adminRouter.post('/log-activity', authAdmin, logAdminActivity);
-adminRouter.get('/activity-logs', authAdmin, getAdminActivityLogs);
+adminRouter.get('/activity-logs', authAdmin, getActivityLogs);
 adminRouter.get('/doctor-attendance-logs', authAdmin, getDoctorAttendanceLogs);
 adminRouter.post('/all-doctors', authAdmin, allDoctors)
 adminRouter.post('/change-availablity', authAdmin, changeavailablity)

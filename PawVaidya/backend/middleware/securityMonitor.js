@@ -137,6 +137,11 @@ const securityMonitor = async (req, res, next) => {
         const bodyContent = JSON.stringify(req.body || {});
         const queryContent = JSON.stringify(req.query || {});
 
+        // Skip scanning for Chatbot Query (it's for authenticated admins and contains AI generated content/history)
+        if (req.originalUrl === '/api/admin/bot/query' || req.originalUrl === '/api/admin/bot/query/') {
+            return next();
+        }
+
         if (req._securityScannedBody === bodyContent && req._securityScannedQuery === queryContent) {
             return next();
         }

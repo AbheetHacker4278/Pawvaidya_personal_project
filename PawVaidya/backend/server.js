@@ -15,6 +15,7 @@ import doctorScheduleRouter from './routes/doctorScheduleRoute.js';
 import banRouter from './routes/banRoute.js';
 import petReportRouter from './routes/petReportRoute.js';
 import appIssueReportRouter from './routes/appIssueReportRoute.js';
+import adminBotRouter from './routes/adminBotRoute.js';
 import roomRouter from './routes/roomRoute.js';
 import renderRouter from './routes/renderRoute.js';
 
@@ -120,6 +121,11 @@ try {
   app.use('/api/admin/render', renderRouter);
 } catch (error) {
   console.error("Failed to use renderRouter:", error.message);
+}
+try {
+  app.use('/api/admin/bot', adminBotRouter);
+} catch (error) {
+  console.error("Failed to use adminBotRouter:", error.message);
 }
 
 // Pet report feature disabled

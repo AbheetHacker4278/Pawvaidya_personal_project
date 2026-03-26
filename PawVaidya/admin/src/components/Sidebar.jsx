@@ -186,7 +186,7 @@ const Sidebar = ({ isOpen }) => {
               )}
 
               <SectionHeader label="Communication" isOpen={isOpen} />
-              {hasPerm('doctors') && (
+              {adminProfile?.role === 'master' && hasPerm('doctors') && (
                 <SidebarItem to="/admin-live-streams" icon={Radio} label="Live Streams" subtext="Active Broadcasters" badge={1} isOpen={isOpen} />
               )}
               {hasPerm('messages') && (
@@ -204,15 +204,15 @@ const Sidebar = ({ isOpen }) => {
               {hasPerm('unban') && (
                 <SidebarItem to="/unban-requests" icon={Clock} label="Unban Requests" subtext="Appeals Portal" isOpen={isOpen} onClick={() => logNavigation('Unban Requests')} />
               )}
-              {hasPerm('users') && (
+              {adminProfile?.role === 'master' && hasPerm('users') && (
                 <SidebarItem to="/deletion-requests" icon={ShieldAlert} label="Deletion Requests" subtext="Account Removal" isOpen={isOpen} onClick={() => logNavigation('Deletion Requests')} />
               )}
-              {hasPerm('chat') && (
+              {adminProfile?.role === 'master' && hasPerm('chat') && (
                 <SidebarItem to="/doctor-chat" icon={MessageSquare} label="Doctor Chat" subtext="Internal Comms" isOpen={isOpen} onClick={() => logNavigation('Doctor Chat')} />
               )}
 
               <SectionHeader label="Settings" isOpen={isOpen} />
-              <SidebarItem to="/admin-logs" icon={History} label="Activity Logs" subtext="System Audit trail" isOpen={isOpen} onClick={() => logNavigation('Logs')} />
+              <SidebarItem to="/admin-logs" icon={History} label={adminProfile?.role === 'master' ? "Activity Logs" : "My Activities"} subtext="System Audit trail" isOpen={isOpen} onClick={() => logNavigation('Logs')} />
               <SidebarItem to="/admin-profile" icon={User} label="Admin Profile" subtext="Account Details" isOpen={isOpen} onClick={() => logNavigation('Profile')} />
               {hasPerm('trash') && (
                 <SidebarItem to="/trash" icon={Trash2} label="Trash" subtext="Archived Data" isOpen={isOpen} onClick={() => logNavigation('Trash')} />

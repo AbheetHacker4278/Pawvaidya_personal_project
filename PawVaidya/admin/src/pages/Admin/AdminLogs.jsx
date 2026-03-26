@@ -5,7 +5,7 @@ import { toast } from 'react-toastify';
 
 
 const AdminLogs = () => {
-    const { backendurl, atoken } = useContext(AdminContext);
+    const { backendurl, atoken, adminProfile, getActivityLogs } = useContext(AdminContext);
     const [isLoading, setIsLoading] = useState(true);
 
     const [backendLogs, setBackendLogs] = useState([]); // Store all logs
@@ -13,9 +13,10 @@ const AdminLogs = () => {
 
     const fetchLogs = async () => {
         try {
-            const { data } = await axios.get(backendurl + '/api/admin/activity-logs', {
-                headers: { atoken }
-            });
+            const data = await getActivityLogs(
+                adminProfile?.role === 'master' ? null : adminProfile?._id,
+                'admin'
+            );
             if (data.success) {
                 setBackendLogs(data.logs);
             } else {

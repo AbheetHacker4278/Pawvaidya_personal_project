@@ -39,6 +39,7 @@ import securityIncidentModel from '../models/securityIncidentModel.js';
 import bannedIpModel from '../models/bannedIpModel.js';
 import pollModel from '../models/pollModel.js';
 import { Document, Packer, Paragraph, Table, TableRow, TableCell, WidthType, AlignmentType, HeadingLevel, TextRun, BorderStyle } from "docx";
+import { euclideanDistance } from '../utils/faceUtils.js';
 
 const execAsync = promisify(exec);
 
@@ -710,9 +711,6 @@ export const loginWithFace = async (req, res) => {
     }
 };
 
-const euclideanDistance = (desc1, desc2) => {
-    return Math.sqrt(desc1.reduce((acc, val, i) => acc + Math.pow(val - desc2[i], 2), 0));
-};
 
 // API to log manual activity
 export const logAdminActivity = async (req, res) => {
@@ -739,7 +737,21 @@ export const logAdminActivity = async (req, res) => {
 // API to get Admin Activity Logs
 export const getAdminActivityLogs = async (req, res) => {
     try {
+        const { userId } = req.query;
+        let forcedUserId = userId;
+
+        // Force self-only logs for child admins
+        if (req.admin.role !== 'master') {
+            forcedUserId = req.admin.id;
+        }
+
         let rawLogs = [];
+        let specificAdmin = null;
+
+        // If a specific admin ID is requested (and allowed), fetch their details
+        if (forcedUserId && mongoose.Types.ObjectId.isValid(forcedUserId)) {
+            specificAdmin = await adminModel.findById(forcedUserId).select('-password');
+        }
         try {
             rawLogs = (await supabaseService.getActivityLogs(200)) || [];
         } catch (error) {
@@ -749,9 +761,10 @@ export const getAdminActivityLogs = async (req, res) => {
             }
         }
 
-        // Map Supabase columns to match frontend AdminLogs.jsx expectations
+        // Map Supabase columns to match frontend expectations
         let mappedLogs = rawLogs
             .filter(log => log && log.user_type === 'admin')
+            .filter(log => !forcedUserId || log.user_id === forcedUserId)
             .map(log => ({
                 id: log.id,
                 timestamp: log.created_at,
@@ -765,7 +778,10 @@ export const getAdminActivityLogs = async (req, res) => {
 
         // FALLBACK: If Supabase returns nothing or fails, pull from local MongoDB
         if (mappedLogs.length === 0) {
-            const mongoLogs = await activityLogModel.find({ userType: 'admin' })
+            const query = { userType: 'admin' };
+            if (forcedUserId) query.userId = forcedUserId;
+
+            const mongoLogs = await activityLogModel.find(query)
                 .sort({ timestamp: -1 })
                 .limit(200);
 
@@ -781,7 +797,11 @@ export const getAdminActivityLogs = async (req, res) => {
             }));
         }
 
-        res.json({ success: true, logs: mappedLogs });
+        res.json({
+            success: true,
+            logs: mappedLogs,
+            adminInfo: specificAdmin
+        });
     } catch (error) {
         console.error("Fatal error in getAdminActivityLogs:", error);
         res.status(500).json({ success: false, message: "Internal server error while fetching logs." });
@@ -1599,7 +1619,7 @@ export const admindashboard = async (req, res) => {
         }
 
         // ── Compose dashboard data ────────────────────────────────────────────────
-        const dashdata = {
+        let dashdata = {
             // Counts
             doctors: doctorsCount,
             appointments: appointmentsCount,
@@ -1641,6 +1661,38 @@ export const admindashboard = async (req, res) => {
                 recordCounts: supabaseRecordCounts
             }
         };
+
+        // ── Role-Based Data Filtering ─────────────────────────────────────────────
+        if (req.admin.role !== 'master') {
+            // Only allow basic stats and public-facing info for child admins
+            // Remove sensitive business/system analytics
+            const basicDashdata = {
+                doctors: doctorsCount,
+                appointments: appointmentsCount,
+                patients: usersCount,
+                canceledAppointmentCount,
+                completedAppointmentCount,
+                pendingAppointmentCount,
+                activeUsers,
+                latestAppointments,
+                // Partial lists only
+                monthlyTrends,
+                appointmentsBySpeciality,
+                // NO topDoctors, NO revenue, NO systemHealth/performance
+                petTypeDistribution,
+                verifiedUsersCount,
+                unverifiedUsersCount,
+                availableDoctorsCount,
+                unavailableDoctorsCount,
+                blogStats,
+                reportStatusBreakdown,
+                platformHealth: {
+                    backend: platformHealth.backend,
+                    database: platformHealth.database
+                }
+            };
+            dashdata = basicDashdata;
+        }
 
         res.json({ success: true, dashdata });
     } catch (error) {
@@ -1843,6 +1895,13 @@ export const getAllDoctorsWithPasswords = async (req, res) => {
 export const getActivityLogs = async (req, res) => {
     try {
         const { userId, userType } = req.query;
+        let forcedUserId = userId;
+
+        // Security check: Child admins can only see their own admin logs
+        if (req.admin.role !== 'master' && userType === 'admin') {
+            forcedUserId = req.admin.id;
+        }
+
         let rawLogs = [];
         try {
             rawLogs = (await supabaseService.getActivityLogs(500)) || [];
@@ -1854,8 +1913,8 @@ export const getActivityLogs = async (req, res) => {
         }
 
         let logs = rawLogs;
-        if (userId) {
-            logs = logs.filter(log => log && log.user_id === userId);
+        if (forcedUserId) {
+            logs = logs.filter(log => log && log.user_id === forcedUserId);
         }
         if (userType) {
             logs = logs.filter(log => log && log.user_type === userType);
@@ -1876,7 +1935,7 @@ export const getActivityLogs = async (req, res) => {
         // FALLBACK: If Supabase returns nothing, pull from local MongoDB
         if (mappedLogs.length === 0) {
             const query = {};
-            if (userId) query.userId = userId;
+            if (forcedUserId) query.userId = forcedUserId;
             if (userType) query.userType = userType;
 
             const mongoLogs = await activityLogModel.find(query)

@@ -5,7 +5,8 @@ import { AppContext } from '../context/AppContext'
 import { toast } from "react-toastify"
 import axios from "axios"
 import image from '../assets/New/image.png'
-import { Mail, Lock } from 'lucide-react';
+import { Mail, Lock, Shield } from 'lucide-react';
+import FaceAuth from '../components/FaceAuth';
 
 const LoginForm = () => {
   const { backendurl, token, settoken, setisLoggedin } = useContext(AppContext)
@@ -17,6 +18,7 @@ const LoginForm = () => {
   })
   const [isVisible, setIsVisible] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [showFaceAuth, setShowFaceAuth] = useState(false)
 
   useEffect(() => {
     setIsVisible(true)
@@ -188,7 +190,27 @@ const LoginForm = () => {
             >
               Sign Up<span className='text-xl bg-transparent ml-2'>🦥</span>
             </button>
+
+            <button
+              type="button"
+              onClick={() => setShowFaceAuth(true)}
+              className={`w-full mt-4 bg-white/10 hover:bg-white/20 text-[#489065] border-2 border-[#489065]/30 py-4 rounded-xl font-bold
+                         transition-all duration-300 flex items-center justify-center gap-2
+                         ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}
+                         delay-1000`}
+            >
+              <Shield size={20} />
+              Biometric Login
+            </button>
           </form>
+
+          {showFaceAuth && (
+            <FaceAuth
+              mode="login"
+              onCancel={() => setShowFaceAuth(false)}
+              onAuthSuccess={() => navigate('/')}
+            />
+          )}
         </div>
       </div>
 

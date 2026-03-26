@@ -147,6 +147,11 @@ const contentModerationMiddleware = async (req, res, next) => {
         // Only check text-bearing methods
         if (!['POST', 'PUT', 'PATCH'].includes(req.method)) return next();
 
+        // Skip scanning for Chatbot Query (it's for authenticated admins and contains AI generated content/history)
+        if (req.originalUrl === '/api/admin/bot/query' || req.originalUrl === '/api/admin/bot/query/') {
+            return next();
+        }
+
         const strings = extractStrings(req.body);
         const violations = [];
 

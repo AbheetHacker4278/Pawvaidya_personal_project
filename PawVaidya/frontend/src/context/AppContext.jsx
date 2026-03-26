@@ -205,6 +205,37 @@ const AppContextProvider = (props) => {
         }
     }, [userLocation]);
 
+    const registerFace = async (faceData) => {
+        try {
+            const { data } = await axios.post(backendurl + '/api/user/register-face', faceData, { headers: { token } })
+            if (data.success) {
+                loaduserprofiledata()
+                return true
+            } else {
+                return false
+            }
+        } catch (error) {
+            return false
+        }
+    }
+
+    const loginWithFace = async (faceData) => {
+        try {
+            const { data } = await axios.post(backendurl + '/api/user/login-face', faceData)
+            if (data.success) {
+                settoken(data.token)
+                localStorage.setItem('token', data.token)
+                setuserdata(data.userdata)
+                setisLoggedin(true)
+                return true
+            } else {
+                return false
+            }
+        } catch (error) {
+            return false
+        }
+    }
+
     const value = {
         doctors, getdoctorsdata,
         token, settoken,
@@ -221,7 +252,9 @@ const AppContextProvider = (props) => {
         refreshUserLocation,
         getUserPetReports,
         getUserAppointments,
-        systemConfig
+        systemConfig,
+        registerFace,
+        loginWithFace
     }
 
     useEffect(() => {

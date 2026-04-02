@@ -294,7 +294,7 @@ const CommunityBlogs = () => {
         <div className="flex-1 min-w-0 w-full">
 
           {/* ── View Toggle Bar ──────────────────────────────────────────────── */}
-          <div className="flex items-center gap-2 bg-white p-1.5 rounded-2xl mb-6 shadow-sm border inline-flex" style={{ borderColor: B.sand }}>
+          <div className="flex items-center gap-2 p-1.5 rounded-2xl mb-6 shadow-sm border inline-flex backdrop-blur-md" style={{ background: 'rgba(237, 228, 216, 0.85)', borderColor: B.sand }}>
             <button
               onClick={() => setViewMode('feed')}
               className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all ${viewMode === 'feed' ? 'bg-amber-50 text-amber-700 shadow-sm' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'}`}
@@ -326,7 +326,8 @@ const CommunityBlogs = () => {
                   onChange={(e) => { setSortBy(e.target.value); setPage(1); }}
                   className="px-4 py-2 rounded-xl text-sm font-semibold cursor-pointer focus:outline-none transition-all duration-200"
                   style={{
-                    background: '#fff',
+                    background: 'rgba(237, 228, 216, 0.85)',
+                    backdropFilter: 'blur(16px)',
                     border: `1.5px solid ${B.sand}`,
                     color: B.dark,
                     boxShadow: '0 2px 8px rgba(90,64,53,0.07)',
@@ -351,8 +352,8 @@ const CommunityBlogs = () => {
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="text-center py-20 rounded-3xl border"
-                  style={{ background: '#fff', borderColor: B.sand }}
+                  className="text-center py-20 rounded-3xl border backdrop-blur-md"
+                  style={{ background: 'rgba(237, 228, 216, 0.85)', borderColor: B.sand }}
                 >
                   <div className="text-5xl mb-4">📝</div>
                   <p className="text-lg font-bold mb-1" style={{ color: B.dark }}>{t('blogs.noBlogs')}</p>
@@ -377,8 +378,8 @@ const CommunityBlogs = () => {
                             exit={{ opacity: 0, y: -12 }}
                             transition={{ duration: 0.4, delay: index * 0.07 }}
                             whileHover={{ border: `1px solid #7a5a48` }}
-                            className="rounded-2xl overflow-hidden transition-colors duration-200 flex shadow-sm hover:shadow-md bg-white cursor-pointer"
-                            style={{ border: `1px solid ${B.sand}` }}
+                            className="rounded-2xl overflow-hidden transition-colors duration-200 flex shadow-sm hover:shadow-md backdrop-blur-md cursor-pointer"
+                            style={{ background: 'rgba(237, 228, 216, 0.85)', border: `1px solid ${B.sand}` }}
                             onClick={() => navigate(`/blog/${blog._id}`)}
                           >
                             {/* ── Left Vote Column ─────────────────────────────── */}
@@ -675,7 +676,8 @@ const CommunityBlogs = () => {
                         disabled={page === 1}
                         className="px-6 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
                         style={{
-                          background: page === 1 ? B.sand : '#fff',
+                          background: page === 1 ? B.sand : 'rgba(237, 228, 216, 0.85)',
+                          backdropFilter: 'blur(16px)',
                           color: B.mid,
                           border: `1.5px solid ${B.sand}`,
                           boxShadow: '0 2px 8px rgba(90,64,53,0.07)',
@@ -695,7 +697,8 @@ const CommunityBlogs = () => {
                         disabled={page === totalPages}
                         className="px-6 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
                         style={{
-                          background: page === totalPages ? B.sand : '#fff',
+                          background: page === totalPages ? B.sand : 'rgba(237, 228, 216, 0.85)',
+                          backdropFilter: 'blur(16px)',
                           color: B.mid,
                           border: `1.5px solid ${B.sand}`,
                           boxShadow: '0 2px 8px rgba(90,64,53,0.07)',
@@ -714,7 +717,7 @@ const CommunityBlogs = () => {
         {/* ── Right Sidebar (Community Info) ─────────────────────────────── */}
         <div className="hidden lg:block w-[320px] flex-shrink-0">
           <div className="sticky top-24 space-y-6">
-            <div className="rounded-2xl overflow-hidden shadow-sm" style={{ background: '#fff', border: `1px solid ${B.sand}` }}>
+            <div className="rounded-2xl overflow-hidden shadow-sm backdrop-blur-md" style={{ background: 'rgba(237, 228, 216, 0.85)', border: `1px solid ${B.sand}` }}>
               <div className="h-12" style={{ background: `linear-gradient(135deg, ${B.mid}, ${B.amber})` }} />
               <div className="p-5 relative">
                 <div className="absolute -top-6 left-5 w-14 h-14 rounded-full border-4 border-white flex items-center justify-center text-2xl shadow-sm" style={{ background: B.cream }}>
@@ -738,7 +741,7 @@ const CommunityBlogs = () => {
             </div>
 
             {/* Rules card */}
-            <div className="rounded-2xl p-5 shadow-sm" style={{ background: '#fff', border: `1px solid ${B.sand}` }}>
+            <div className="rounded-2xl p-5 shadow-sm backdrop-blur-md" style={{ background: 'rgba(237, 228, 216, 0.85)', border: `1px solid ${B.sand}` }}>
               <h3 className="font-bold mb-4 flex items-center gap-2" style={{ color: B.dark }}>
                 <span className="text-lg">📜</span> Community Rules
               </h3>

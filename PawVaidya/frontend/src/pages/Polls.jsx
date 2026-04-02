@@ -36,7 +36,7 @@ const Polls = () => {
     }, [token]);
 
     return (
-        <div className="min-h-screen bg-[#fdf8f0] pt-24 pb-12 px-4 sm:px-[10%]">
+        <div className="min-h-screen pt-24 pb-12 px-4 sm:px-[10%]">
             {/* Header section */}
             <motion.div
                 initial={{ opacity: 0, y: -20 }}

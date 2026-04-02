@@ -94,7 +94,8 @@ const ReleatedDoctors = ({ speciality, docId, location, State }) => {
                 onClick={() => { navigate(`/appointment/${item._id}`); scrollTo(0, 0); }}
                 className="group relative rounded-2xl overflow-hidden cursor-pointer border transition-all duration-300"
                 style={{
-                  background: '#fff',
+                  background: 'rgba(237, 228, 216, 0.85)',
+                  backdropFilter: 'blur(16px)',
                   borderColor: hoveredCard === index ? B.mid : B.sand,
                   boxShadow: hoveredCard === index
                     ? `0 16px 40px rgba(90,64,53,0.18)`
@@ -139,7 +140,7 @@ const ReleatedDoctors = ({ speciality, docId, location, State }) => {
                 </div>
 
                 {/* Content */}
-                <div className="p-4" style={{ background: `linear-gradient(to bottom, #fff, ${B.pale})` }}>
+                <div className="p-4" style={{ background: `linear-gradient(to bottom, transparent, rgba(237,228,216,0.3))` }}>
                   <p className="font-bold text-base mb-2 transition-colors duration-300"
                     style={{ color: hoveredCard === index ? B.mid : B.dark }}>
                     {item.name}

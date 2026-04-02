@@ -599,23 +599,21 @@ const Appointments = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
-      className="pb-16"
+      className="pb-20"
       style={{ background: '#f2e4c7', minHeight: '100vh' }}
     >
       {/* Doctor Info Section */}
-      <div className="flex flex-col sm:flex-row gap-6 max-w-7xl mx-auto px-4 pt-8">
-        {/* Doctor Image */}
+      <div className="flex flex-col sm:flex-row gap-6 max-w-7xl mx-auto px-4 pt-10">
+        {/* Doctor Image + quick stats */}
         <motion.div
           initial={{ opacity: 0, x: -50 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="relative group"
+          className="relative group flex flex-col gap-4"
         >
+          {/* Image card */}
           <div className="relative overflow-hidden rounded-3xl shadow-2xl w-full sm:max-w-sm">
-            {/* Gradient overlay */}
             <div className="absolute inset-0 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{ background: 'linear-gradient(135deg, rgba(90,64,53,0.20), transparent, rgba(200,134,10,0.12))' }} />
-
-            {/* Image */}
             <motion.img
               whileHover={{ scale: 1.05 }}
               transition={{ duration: 0.5 }}
@@ -623,832 +621,974 @@ const Appointments = () => {
               src={docInfo.image}
               alt={docInfo.name}
             />
-
-            {/* Decorative corner */}
+            {/* Availability ribbon */}
+            <div
+              className="absolute top-4 left-4 flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold shadow-lg z-20"
+              style={{
+                background: docInfo.available
+                  ? 'linear-gradient(135deg,#16a34a,#22c55e)'
+                  : 'linear-gradient(135deg,#6b7280,#9ca3af)',
+                color: '#fff',
+                boxShadow: docInfo.available ? '0 4px 12px rgba(34,197,94,0.4)' : 'none'
+              }}
+            >
+              <span className="w-2 h-2 rounded-full bg-white animate-ping absolute" style={{ left: 12 }} />
+              <span className="w-2 h-2 rounded-full bg-white relative" />
+              {docInfo.available ? 'Available Today' : 'Unavailable'}
+            </div>
             <div className="absolute bottom-0 right-0 w-32 h-32 bg-gradient-to-tl from-white/20 to-transparent rounded-tl-full" />
           </div>
+
+          {/* Quick stats bar */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.55 }}
+            className="grid grid-cols-3 gap-3 w-full sm:max-w-sm"
+          >
+            {[
+              { label: 'Experience', value: docInfo.experience, icon: '🏅' },
+              { label: 'Fee', value: `₹${docInfo.fees}`, icon: '💰' },
+              { label: 'Speciality', value: docInfo.speciality?.split(' ')[0], icon: '🩺' },
+            ].map(({ label, value, icon }) => (
+              <div
+                key={label}
+                className="flex flex-col items-center justify-center py-3 px-2 rounded-2xl text-center"
+                style={{
+                  background: 'rgba(255,255,255,0.72)',
+                  backdropFilter: 'blur(12px)',
+                  border: '1px solid rgba(232,213,176,0.7)',
+                  boxShadow: '0 2px 12px rgba(61,43,31,0.07)'
+                }}
+              >
+                <span className="text-xl mb-1">{icon}</span>
+                <p className="text-[11px] font-bold truncate w-full" style={{ color: '#5A4035' }}>{value}</p>
+                <p className="text-[10px]" style={{ color: '#a08060' }}>{label}</p>
+              </div>
+            ))}
+          </motion.div>
         </motion.div>
 
-        {/* Doctor Details Card */}
+        {/* Doctor Details Card — modern glassmorphism */}
         <motion.div
           initial={{ opacity: 0, x: 50 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6, delay: 0.3 }}
           className="flex-1 relative"
         >
-          <div className="bg-gradient-to-br from-[#5A4035] via-[#6b4d3f] to-[#5A4035] rounded-3xl p-8 shadow-2xl border border-white/10 backdrop-blur-sm">
-            {/* Decorative elements */}
-            <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-bl from-white/10 to-transparent rounded-bl-full" />
-            <div className="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-amber-400/10 to-transparent rounded-tr-full" />
+          <div
+            className="relative overflow-hidden rounded-3xl shadow-2xl h-full"
+            style={{
+              background: 'rgba(255,255,255,0.88)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              border: '1px solid rgba(232,213,176,0.7)',
+              boxShadow: '0 20px 60px rgba(61,43,31,0.14), 0 4px 16px rgba(61,43,31,0.07)'
+            }}
+          >
+            {/* ── Animated top accent bar ── */}
+            <motion.div
+              className="h-1.5 w-full"
+              style={{ background: 'linear-gradient(90deg, #5A4035, #c8860a, #e8a020, #5A4035)', backgroundSize: '300% 100%' }}
+              animate={{ backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'] }}
+              transition={{ duration: 5, repeat: Infinity, ease: 'linear' }}
+            />
 
-            <div className="relative z-10">
-              {/* Doctor Name & Verification */}
+            {/* ── Decorative orbs ── */}
+            <div className="absolute top-6 right-6 w-28 h-28 rounded-full pointer-events-none"
+              style={{ background: 'radial-gradient(circle, rgba(200,134,10,0.10) 0%, transparent 70%)' }}
+            />
+            <div className="absolute bottom-10 left-0 w-36 h-36 rounded-full pointer-events-none"
+              style={{ background: 'radial-gradient(circle, rgba(90,64,53,0.07) 0%, transparent 70%)' }}
+            />
+
+            <div className="relative z-10 p-8 flex flex-col gap-5">
+
+              {/* ── Name + verified ── */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
-                className="flex items-start gap-3 mb-4"
               >
-                <div className="flex-1">
-                  <h1 className="text-3xl md:text-4xl font-bold text-white mb-2 flex items-center gap-3">
-                    {docInfo.name}
-                    <motion.img
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1, rotate: 360 }}
-                      transition={{ delay: 0.6, type: "spring", stiffness: 200 }}
-                      className="w-7 h-7"
-                      src={assets.verified_icon}
-                      alt="Verified"
-                    />
-                  </h1>
-                </div>
+                <h1 className="text-3xl md:text-4xl font-extrabold leading-tight flex items-center gap-3 flex-wrap"
+                  style={{ color: '#3d2b1f' }}
+                >
+                  {docInfo.name}
+                  <motion.img
+                    initial={{ scale: 0, rotate: -90 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    transition={{ delay: 0.7, type: 'spring', stiffness: 260, damping: 14 }}
+                    className="w-7 h-7"
+                    src={assets.verified_icon}
+                    alt="Verified"
+                  />
+                </h1>
               </motion.div>
 
-              {/* Degree & Speciality */}
+              {/* ── Degree + Experience ── */}
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 14 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5 }}
-                className="flex items-center gap-3 mb-6"
+                className="flex items-center gap-3 flex-wrap"
               >
-                <div className="flex items-center gap-2 text-slate-100">
-                  <Award className="w-5 h-5" style={{ color: '#c8860a' }} />
-                  <span className="text-base md:text-lg font-medium">{docInfo.degree} - {translateSpeciality(docInfo.speciality, t)}</span>
-                </div>
-                <motion.span
-                  whileHover={{ scale: 1.1 }}
-                  className="px-4 py-1.5 text-sm font-semibold rounded-full text-white shadow-lg"
-                  style={{ background: 'linear-gradient(135deg, #c8860a, #e8a020)' }}
+                <div
+                  className="flex items-center gap-2 px-4 py-2 rounded-full"
+                  style={{ background: '#f5ede8', border: '1px solid #e8d5b0' }}
                 >
+                  <Award className="w-4 h-4 flex-shrink-0" style={{ color: '#c8860a' }} />
+                  <span className="text-sm font-semibold" style={{ color: '#5A4035' }}>
+                    {docInfo.degree} · {translateSpeciality(docInfo.speciality, t)}
+                  </span>
+                </div>
+                <motion.div
+                  whileHover={{ scale: 1.08, y: -2 }}
+                  className="flex items-center gap-2 px-4 py-2 rounded-full text-white text-sm font-bold shadow-md"
+                  style={{ background: 'linear-gradient(135deg, #c8860a, #e8a020)', boxShadow: '0 4px 14px rgba(200,134,10,0.35)' }}
+                >
+                  <motion.span
+                    animate={{ scale: [1, 1.25, 1] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  >
+                    🏅
+                  </motion.span>
                   {docInfo.experience}
-                </motion.span>
+                </motion.div>
               </motion.div>
 
-              {/* About Section */}
+              {/* ── Divider ── */}
+              <div className="h-px rounded-full" style={{ background: 'linear-gradient(to right, #e8d5b0, transparent)' }} />
+
+              {/* ── About ── */}
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 14 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.6 }}
-                className="mb-6"
               >
-                <div className="flex items-center gap-2 mb-3">
-                  <Info className="w-5 h-5" style={{ color: '#c8860a' }} />
-                  <h3 className="text-lg font-semibold text-white">About</h3>
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
+                    style={{ background: '#fff8e6', border: '1px solid #f0d080' }}>
+                    <Info className="w-3.5 h-3.5" style={{ color: '#c8860a' }} />
+                  </div>
+                  <h3 className="text-sm font-bold uppercase tracking-wider" style={{ color: '#5A4035' }}>About</h3>
                 </div>
-                <p className="text-slate-200 leading-relaxed">{docInfo.about}</p>
+                <p className="text-[14px] leading-relaxed" style={{ color: '#6b5040' }}>{docInfo.about}</p>
               </motion.div>
 
-              {/* Treatment Fee */}
+              {/* ── Fee row ── */}
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 14 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.7 }}
-                className="mb-6"
+                whileHover={{ y: -2, boxShadow: '0 8px 24px rgba(200,134,10,0.18)' }}
+                className="flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300"
+                style={{ background: 'linear-gradient(135deg, #fffdf7, #fff8e6)', border: '1.5px solid #f0d080' }}
               >
-                <div className="flex items-center gap-3 px-5 py-3 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20">
-                  <IndianRupee className="w-6 h-6" style={{ color: '#c8860a' }} />
-                  <div>
-                    <p className="text-sm text-slate-300">Approx Treatment Fee</p>
-                    <p className="text-2xl font-bold text-white">₹{docInfo.fees || 'N/A'}</p>
-                  </div>
+                <div
+                  className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{ background: 'linear-gradient(135deg, #c8860a, #e8a020)', boxShadow: '0 4px 12px rgba(200,134,10,0.3)' }}
+                >
+                  <IndianRupee className="w-5 h-5 text-white" />
                 </div>
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: '#a08060' }}>Approx. Treatment Fee</p>
+                  <p className="text-2xl font-black leading-tight" style={{ color: '#3d2b1f' }}>₹{docInfo.fees || 'N/A'}</p>
+                </div>
+                <motion.div
+                  className="ml-auto text-xs font-bold px-3 py-1 rounded-full"
+                  style={{ background: '#dcfce7', color: '#16a34a' }}
+                  animate={{ opacity: [0.7, 1, 0.7] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                >
+                  Est.
+                </motion.div>
               </motion.div>
 
-              {/* Location Tags */}
+              {/* ── Location tags ── */}
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 14 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.8 }}
-                className="flex flex-wrap gap-3 mb-6"
+                className="flex flex-wrap gap-2"
               >
                 {docInfo.address?.Location && (
                   <motion.div
-                    whileHover={{ scale: 1.05, y: -2 }}
-                    className="flex items-center gap-2 px-4 py-2 backdrop-blur-md rounded-full text-white font-medium shadow-lg"
-                    style={{ background: 'rgba(200,134,10,0.20)', border: '1px solid rgba(200,134,10,0.35)' }}
+                    whileHover={{ y: -3, scale: 1.04, boxShadow: '0 6px 18px rgba(200,134,10,0.20)' }}
+                    className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold cursor-default transition-all"
+                    style={{ background: '#fff8e6', color: '#7a5a48', border: '1.5px solid #f0d080' }}
                   >
-                    <MapPin className="w-4 h-4" style={{ color: '#c8860a' }} />
+                    <MapPin className="w-3.5 h-3.5" style={{ color: '#c8860a' }} />
                     {docInfo.address.Location}
                   </motion.div>
                 )}
                 {docInfo.address?.line && (
                   <motion.div
-                    whileHover={{ scale: 1.05, y: -2 }}
-                    className="flex items-center gap-2 px-4 py-2 backdrop-blur-md rounded-full text-white font-medium shadow-lg"
-                    style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.20)' }}
+                    whileHover={{ y: -3, scale: 1.04, boxShadow: '0 6px 18px rgba(90,64,53,0.12)' }}
+                    className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold cursor-default transition-all"
+                    style={{ background: '#f5ede8', color: '#5A4035', border: '1.5px solid #e8d5b0' }}
                   >
+                    <MapPin className="w-3.5 h-3.5" style={{ color: '#5A4035' }} />
                     {docInfo.address.line}
                   </motion.div>
                 )}
               </motion.div>
 
-              {/* Full Address */}
+              {/* ── Full address ── */}
               {docInfo.full_address && (
                 <motion.div
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 14 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.9 }}
-                  whileHover={{ scale: 1.02 }}
-                  className="px-5 py-4 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20"
+                  whileHover={{ y: -2 }}
+                  className="flex items-start gap-3 px-4 py-3 rounded-2xl transition-all"
+                  style={{ background: '#fdf8f0', border: '1px dashed #e8d5b0' }}
                 >
-                  <div className="flex items-start gap-3">
-                    <MapPin className="w-5 h-5 mt-1 flex-shrink-0" style={{ color: '#c8860a' }} />
-                    <p className="text-slate-100 leading-relaxed">{docInfo.full_address}</p>
-                  </div>
+                  <MapPin className="w-4 h-4 mt-1 flex-shrink-0" style={{ color: '#c8860a' }} />
+                  <p className="text-[13px] leading-relaxed" style={{ color: '#6b5040' }}>{docInfo.full_address}</p>
                 </motion.div>
               )}
+
             </div>
           </div>
         </motion.div>
       </div>
+
 
       {/* Booking Slots Section */}
       <motion.div
         initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.5 }}
-        className="max-w-7xl mx-auto px-4 mt-12"
+        className="max-w-7xl mx-auto px-4 mt-10"
       >
-        <div className="rounded-3xl shadow-2xl p-8" style={{ background: '#fff', border: '1px solid #e8d5b0' }}>
-          <motion.h2
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.6 }}
-            className="text-3xl font-bold bg-gradient-to-r from-[#5A4035] to-[#7a5a48] bg-clip-text text-transparent mb-6 flex items-center gap-3"
+        <div
+          className="rounded-3xl shadow-2xl overflow-hidden"
+          style={{ background: '#fff', border: '1px solid #e8d5b0' }}
+        >
+          {/* Premium section header */}
+          <div
+            className="px-8 py-6 flex items-center gap-4"
+            style={{ background: 'linear-gradient(135deg, #5A4035 0%, #7a5a48 60%, #5A4035 100%)' }}
           >
-            <Calendar className="w-8 h-8 text-[#5A4035]" />
-            Booking Slots
-          </motion.h2>
-
-          {loadingActiveAppointment ? (
-            <ActiveAppointmentLoadingState />
-          ) : hasActiveAppointment ? (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5 }}
-              className="mt-4 p-6 bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-300 rounded-2xl shadow-lg"
+            <div
+              className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
+              style={{ background: 'rgba(200,134,10,0.22)', border: '1px solid rgba(200,134,10,0.35)' }}
             >
-              <div className="flex items-center mb-4">
-                <motion.div
-                  animate={{ rotate: [0, 10, -10, 0] }}
-                  transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 2 }}
-                >
-                  <Calendar className="w-7 h-7 text-yellow-600 mr-3" />
-                </motion.div>
-                <p className="text-yellow-900 font-bold text-xl">Active Appointment</p>
-              </div>
-              <p className="text-yellow-700 mb-4">You already have an active appointment. Please complete or cancel it before booking a new one.</p>
+              <Calendar className="w-6 h-6" style={{ color: '#f0c060' }} />
+            </div>
+            <div>
+              <h2 className="text-2xl font-extrabold text-white leading-tight">Book Your Appointment</h2>
+              <p className="text-sm mt-0.5" style={{ color: 'rgba(255,255,255,0.65)' }}>
+                Select a date &amp; time that works for you
+              </p>
+            </div>
+            {/* Decorative circles */}
+            <div className="ml-auto flex gap-2 opacity-20">
+              <div className="w-12 h-12 rounded-full border-2 border-white" />
+              <div className="w-8 h-8 rounded-full border-2 border-white self-end" />
+            </div>
+          </div>
+          <div className="p-8">
 
-              {activeAppointmentInfo && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
-                  className="bg-white p-5 rounded-xl shadow-md mb-4"
-                >
-                  <p className="font-bold text-gray-800 mb-3 flex items-center gap-2">
-                    <CheckCircle className="w-5 h-5 text-green-500" />
-                    Appointment Details
-                  </p>
-                  <div className="space-y-3">
-                    <motion.div
-                      whileHover={{ x: 5 }}
-                      className="flex items-center gap-3 text-gray-700"
-                    >
-                      <Stethoscope className="w-5 h-5 text-[#5A4035]" />
-                      <span><strong>Doctor:</strong> {activeAppointmentInfo.docData.name}</span>
-                    </motion.div>
-                    <motion.div
-                      whileHover={{ x: 5 }}
-                      className="flex items-center gap-3 text-gray-700"
-                    >
-                      <Calendar className="w-5 h-5 text-[#5A4035]" />
-                      <span><strong>Date:</strong> {activeAppointmentInfo.slotDate?.split('_').join(' / ')}</span>
-                    </motion.div>
-                    <motion.div
-                      whileHover={{ x: 5 }}
-                      className="flex items-center gap-3 text-gray-700"
-                    >
-                      <Clock className="w-5 h-5 text-[#5A4035]" />
-                      <span><strong>Time:</strong> {activeAppointmentInfo.slotTime}</span>
-                    </motion.div>
-                  </div>
-                </motion.div>
-              )}
-
-              <div className="flex flex-col sm:flex-row gap-3">
-                <motion.button
-                  whileHover={{ scale: 1.05, boxShadow: '0 10px 30px rgba(90,64,53,0.25)' }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => navigate('/my-appointments')}
-                  className="flex-1 text-white px-6 py-3 rounded-xl font-semibold shadow-lg flex items-center justify-center gap-2 group"
-                  style={{ background: 'linear-gradient(135deg, #5A4035, #7a5a48)' }}
-                >
-                  <Calendar className="w-5 h-5 group-hover:rotate-12 transition-transform" />
-                  View My Appointments
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.05, boxShadow: "0 10px 30px rgba(239, 68, 68, 0.3)" }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={cancelAppointment}
-                  className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg flex items-center justify-center gap-2 group"
-                >
-                  <X className="w-5 h-5 group-hover:rotate-90 transition-transform" />
-                  Cancel Appointment
-                </motion.button>
-              </div>
-            </motion.div>
-          ) : (
-            <AnimatePresence mode="wait">
+            {loadingActiveAppointment ? (
+              <ActiveAppointmentLoadingState />
+            ) : hasActiveAppointment ? (
               <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="relative"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5 }}
+                className="mt-4 p-6 bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-300 rounded-2xl shadow-lg"
               >
-                {/* Ban Overlay */}
-                {isBanned && (
-                  <div className="absolute inset-0 z-50 bg-red-900/90 backdrop-blur-sm rounded-2xl flex items-center justify-center p-4">
-                    <motion.div
-                      initial={{ scale: 0.8, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      className="text-center p-6 max-w-lg w-full"
-                    >
-                      <motion.div
-                        animate={{ rotate: [0, 10, -10, 0] }}
-                        transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 1 }}
-                        className="mb-4"
-                      >
-                        <X className="w-16 h-16 text-white mx-auto" />
-                      </motion.div>
-                      <h3 className="text-2xl font-bold text-white mb-3">
-                        Account Banned
-                      </h3>
-                      <p className="text-lg text-red-100 mb-2 font-semibold">
-                        You have been banned for false report of {docInfo.name}
-                      </p>
-                      <p className="text-base text-red-200 mb-4">
-                        Reason: {banReason || 'Policy Violation'}
-                      </p>
-                      <div className="bg-white/10 backdrop-blur-md rounded-lg p-3 border border-white/20 mb-4">
-                        <p className="text-white text-xs leading-relaxed">
-                          You cannot book appointments while your account is banned.
-                        </p>
-                      </div>
+                <div className="flex items-center mb-4">
+                  <motion.div
+                    animate={{ rotate: [0, 10, -10, 0] }}
+                    transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 2 }}
+                  >
+                    <Calendar className="w-7 h-7 text-yellow-600 mr-3" />
+                  </motion.div>
+                  <p className="text-yellow-900 font-bold text-xl">Active Appointment</p>
+                </div>
+                <p className="text-yellow-700 mb-4">You already have an active appointment. Please complete or cancel it before booking a new one.</p>
 
-                      {/* Unban Request Button */}
-                      {unbanAttempts >= 3 ? (
-                        <div className="w-full px-4 py-3 bg-red-500/20 border border-red-400 text-red-100 font-semibold rounded-lg text-center">
-                          <p className="text-sm">Maximum attempts reached (3/3)</p>
-                          <p className="text-xs mt-1">Please contact support directly</p>
-                        </div>
-                      ) : hasUnbanRequest && unbanRequestStatus === 'pending' ? (
-                        <div className="space-y-2">
-                          <div className="w-full px-4 py-3 bg-yellow-500/20 border border-yellow-400 text-yellow-100 font-semibold rounded-lg flex items-center justify-center gap-2">
-                            <Clock className="w-5 h-5" />
-                            Request Pending
-                          </div>
-                          <p className="text-xs text-white/70 text-center">
-                            Attempts used: {unbanAttempts}/3 ({3 - unbanAttempts} remaining)
+                {activeAppointmentInfo && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 }}
+                    className="bg-white p-5 rounded-xl shadow-md mb-4"
+                  >
+                    <p className="font-bold text-gray-800 mb-3 flex items-center gap-2">
+                      <CheckCircle className="w-5 h-5 text-green-500" />
+                      Appointment Details
+                    </p>
+                    <div className="space-y-3">
+                      <motion.div
+                        whileHover={{ x: 5 }}
+                        className="flex items-center gap-3 text-gray-700"
+                      >
+                        <Stethoscope className="w-5 h-5 text-[#5A4035]" />
+                        <span><strong>Doctor:</strong> {activeAppointmentInfo.docData.name}</span>
+                      </motion.div>
+                      <motion.div
+                        whileHover={{ x: 5 }}
+                        className="flex items-center gap-3 text-gray-700"
+                      >
+                        <Calendar className="w-5 h-5 text-[#5A4035]" />
+                        <span><strong>Date:</strong> {activeAppointmentInfo.slotDate?.split('_').join(' / ')}</span>
+                      </motion.div>
+                      <motion.div
+                        whileHover={{ x: 5 }}
+                        className="flex items-center gap-3 text-gray-700"
+                      >
+                        <Clock className="w-5 h-5 text-[#5A4035]" />
+                        <span><strong>Time:</strong> {activeAppointmentInfo.slotTime}</span>
+                      </motion.div>
+                    </div>
+                  </motion.div>
+                )}
+
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <motion.button
+                    whileHover={{ scale: 1.05, boxShadow: '0 10px 30px rgba(90,64,53,0.25)' }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => navigate('/my-appointments')}
+                    className="flex-1 text-white px-6 py-3 rounded-xl font-semibold shadow-lg flex items-center justify-center gap-2 group"
+                    style={{ background: 'linear-gradient(135deg, #5A4035, #7a5a48)' }}
+                  >
+                    <Calendar className="w-5 h-5 group-hover:rotate-12 transition-transform" />
+                    View My Appointments
+                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.05, boxShadow: "0 10px 30px rgba(239, 68, 68, 0.3)" }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={cancelAppointment}
+                    className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg flex items-center justify-center gap-2 group"
+                  >
+                    <X className="w-5 h-5 group-hover:rotate-90 transition-transform" />
+                    Cancel Appointment
+                  </motion.button>
+                </div>
+              </motion.div>
+            ) : (
+              <AnimatePresence mode="wait">
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="relative"
+                >
+                  {/* Ban Overlay */}
+                  {isBanned && (
+                    <div className="absolute inset-0 z-50 bg-red-900/90 backdrop-blur-sm rounded-2xl flex items-center justify-center p-4">
+                      <motion.div
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        className="text-center p-6 max-w-lg w-full"
+                      >
+                        <motion.div
+                          animate={{ rotate: [0, 10, -10, 0] }}
+                          transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 1 }}
+                          className="mb-4"
+                        >
+                          <X className="w-16 h-16 text-white mx-auto" />
+                        </motion.div>
+                        <h3 className="text-2xl font-bold text-white mb-3">
+                          Account Banned
+                        </h3>
+                        <p className="text-lg text-red-100 mb-2 font-semibold">
+                          You have been banned for false report of {docInfo.name}
+                        </p>
+                        <p className="text-base text-red-200 mb-4">
+                          Reason: {banReason || 'Policy Violation'}
+                        </p>
+                        <div className="bg-white/10 backdrop-blur-md rounded-lg p-3 border border-white/20 mb-4">
+                          <p className="text-white text-xs leading-relaxed">
+                            You cannot book appointments while your account is banned.
                           </p>
                         </div>
-                      ) : hasUnbanRequest && unbanRequestStatus === 'approved' ? (
-                        <div className="space-y-2">
-                          <div className="w-full px-4 py-3 bg-green-500/20 border border-green-400 text-green-100 font-semibold rounded-lg flex items-center justify-center gap-2">
-                            <CheckCircle className="w-5 h-5" />
-                            Request Approved
+
+                        {/* Unban Request Button */}
+                        {unbanAttempts >= 3 ? (
+                          <div className="w-full px-4 py-3 bg-red-500/20 border border-red-400 text-red-100 font-semibold rounded-lg text-center">
+                            <p className="text-sm">Maximum attempts reached (3/3)</p>
+                            <p className="text-xs mt-1">Please contact support directly</p>
                           </div>
-                          <p className="text-xs text-white/70 text-center mb-4">
-                            Your account will be unbanned shortly.
-                          </p>
-                          <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={checkActiveAppointments}
-                            className="w-full px-4 py-2 bg-white/20 hover:bg-white/30 text-white font-semibold rounded-lg border border-white/30 transition flex items-center justify-center gap-2"
-                          >
-                            <Loader className="w-4 h-4 animate-spin" />
-                            Refresh Status
-                          </motion.button>
-                        </div>
-                      ) : (
-                        <div className="space-y-2">
-                          {hasUnbanRequest && unbanRequestStatus === 'denied' && (
-                            <div className="w-full px-4 py-3 bg-red-500/20 border border-red-400 text-red-100 font-semibold rounded-lg flex items-center justify-center gap-2 mb-2">
+                        ) : hasUnbanRequest && unbanRequestStatus === 'pending' ? (
+                          <div className="space-y-2">
+                            <div className="w-full px-4 py-3 bg-yellow-500/20 border border-yellow-400 text-yellow-100 font-semibold rounded-lg flex items-center justify-center gap-2">
                               <Clock className="w-5 h-5" />
-                              Previous Request Denied
+                              Request Pending
                             </div>
-                          )}
-                          <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => setShowUnbanRequestModal(true)}
-                            className="w-full px-4 py-3 text-white font-semibold rounded-lg hover:shadow-lg transition flex items-center justify-center gap-2"
+                            <p className="text-xs text-white/70 text-center">
+                              Attempts used: {unbanAttempts}/3 ({3 - unbanAttempts} remaining)
+                            </p>
+                          </div>
+                        ) : hasUnbanRequest && unbanRequestStatus === 'approved' ? (
+                          <div className="space-y-2">
+                            <div className="w-full px-4 py-3 bg-green-500/20 border border-green-400 text-green-100 font-semibold rounded-lg flex items-center justify-center gap-2">
+                              <CheckCircle className="w-5 h-5" />
+                              Request Approved
+                            </div>
+                            <p className="text-xs text-white/70 text-center mb-4">
+                              Your account will be unbanned shortly.
+                            </p>
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={checkActiveAppointments}
+                              className="w-full px-4 py-2 bg-white/20 hover:bg-white/30 text-white font-semibold rounded-lg border border-white/30 transition flex items-center justify-center gap-2"
+                            >
+                              <Loader className="w-4 h-4 animate-spin" />
+                              Refresh Status
+                            </motion.button>
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            {hasUnbanRequest && unbanRequestStatus === 'denied' && (
+                              <div className="w-full px-4 py-3 bg-red-500/20 border border-red-400 text-red-100 font-semibold rounded-lg flex items-center justify-center gap-2 mb-2">
+                                <Clock className="w-5 h-5" />
+                                Previous Request Denied
+                              </div>
+                            )}
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => setShowUnbanRequestModal(true)}
+                              className="w-full px-4 py-3 text-white font-semibold rounded-lg hover:shadow-lg transition flex items-center justify-center gap-2"
+                              style={{ background: 'linear-gradient(135deg, #c8860a, #e8a020)' }}
+                            >
+                              <CheckCircle className="w-5 h-5" />
+                              {hasUnbanRequest && unbanRequestStatus === 'denied' ? 'Request Again' : 'Request Unban'}
+                            </motion.button>
+                            <p className="text-xs text-white/70 text-center">
+                              Attempts used: {unbanAttempts}/3 ({3 - unbanAttempts} remaining)
+                            </p>
+                          </div>
+                        )}
+                      </motion.div>
+                    </div>
+                  )}
+
+                  {/* Unban Request Modal */}
+                  {showUnbanRequestModal && (
+                    <div className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+                      <motion.div
+                        initial={{ scale: 0.9, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl"
+                      >
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 className="text-2xl font-bold text-gray-800">Request Unban</h3>
+                          <button
+                            onClick={() => setShowUnbanRequestModal(false)}
+                            className="p-2 hover:bg-gray-100 rounded-full transition"
+                          >
+                            <X className="w-6 h-6 text-gray-600" />
+                          </button>
+                        </div>
+
+                        <p className="text-gray-600 mb-4">
+                          Please explain why you believe your ban should be lifted. Admin will review your request.
+                        </p>
+
+                        <textarea
+                          value={unbanRequestMessage}
+                          onChange={(e) => setUnbanRequestMessage(e.target.value)}
+                          placeholder="Enter your reason here..."
+                          className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 resize-none" style={{ borderColor: '#e8d5b0', outlineColor: '#5A4035' }}
+                          rows="5"
+                        />
+
+                        <div className="flex gap-3 mt-4">
+                          <button
+                            onClick={() => setShowUnbanRequestModal(false)}
+                            className="flex-1 px-4 py-3 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={submitUnbanRequest}
+                            className="flex-1 px-4 py-3 text-white font-semibold rounded-lg hover:shadow-lg transition"
                             style={{ background: 'linear-gradient(135deg, #c8860a, #e8a020)' }}
                           >
-                            <CheckCircle className="w-5 h-5" />
-                            {hasUnbanRequest && unbanRequestStatus === 'denied' ? 'Request Again' : 'Request Unban'}
-                          </motion.button>
-                          <p className="text-xs text-white/70 text-center">
-                            Attempts used: {unbanAttempts}/3 ({3 - unbanAttempts} remaining)
+                            Submit Request
+                          </button>
+                        </div>
+                      </motion.div>
+                    </div>
+                  )}
+
+                  {/* Date Selection */}
+                  <div className="mb-8">
+                    <motion.p
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.7 }}
+                      className="text-lg font-semibold mb-4"
+                      style={{ color: '#3d2b1f' }}
+                    >
+                      Select Date
+                    </motion.p>
+                    <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide">
+                      {docSlots.map((item, index) => {
+                        const dt = item[0]?.datetime;
+                        const isSelected = slotIndex === index;
+                        const monthStr = dt ? dt.toLocaleString('default', { month: 'short' }).toUpperCase() : 'N/A';
+                        const dayNum = dt ? dt.getDate() : 'N/A';
+                        const dayName = dt ? daysofWeek[dt.getDay()] : 'N/A';
+                        return (
+                          <motion.div
+                            key={index}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.07 * index, type: 'spring', stiffness: 120 }}
+                            whileHover={{ y: -6, scale: 1.06 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => setSlotIndex(index)}
+                            className="min-w-[80px] text-center py-5 px-3 rounded-2xl cursor-pointer flex flex-col items-center gap-1"
+                            style={isSelected
+                              ? {
+                                background: 'linear-gradient(145deg, #5A4035, #7a5a48)',
+                                color: '#fff',
+                                boxShadow: '0 10px 28px rgba(90,64,53,0.38)',
+                                border: '2px solid transparent'
+                              }
+                              : {
+                                background: 'rgba(255,255,255,0.85)',
+                                border: '2px solid #e8d5b0',
+                                color: '#3d2b1f',
+                                backdropFilter: 'blur(8px)'
+                              }
+                            }
+                          >
+                            {/* Month */}
+                            <span
+                              className="text-[10px] font-bold tracking-widest px-2 py-0.5 rounded-full"
+                              style={isSelected
+                                ? { background: 'rgba(200,134,10,0.35)', color: '#f0c060' }
+                                : { background: '#f5ede8', color: '#c8860a' }
+                              }
+                            >
+                              {monthStr}
+                            </span>
+                            {/* Date number */}
+                            <span className={`text-3xl font-black leading-none ${isSelected ? 'text-white' : 'text-[#3d2b1f]'}`}>
+                              {dayNum}
+                            </span>
+                            {/* Day name */}
+                            <span className={`text-[11px] font-semibold ${isSelected ? 'text-white/80' : 'text-[#7a5a48]'}`}>
+                              {dayName}
+                            </span>
+                          </motion.div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Time Selection */}
+                  <div className="mb-8">
+                    <motion.p
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.8 }}
+                      className="text-lg font-semibold mb-4"
+                      style={{ color: '#3d2b1f' }}
+                    >
+                      Select Time Slot
+                    </motion.p>
+                    <div className="flex flex-wrap gap-3">
+                      <AnimatePresence>
+                        {docSlots.length &&
+                          docSlots[slotIndex]
+                            ?.filter((item) => item)
+                            .map((item, index) => (
+                              <motion.div
+                                key={index}
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.8 }}
+                                transition={{ delay: 0.05 * index }}
+                                whileHover={{ scale: 1.1, y: -5 }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() => setSlotTime(item.time)}
+                                className={`px-6 py-3 rounded-xl cursor-pointer font-semibold transition-all duration-300 ${item.time === slotTime
+                                  ? 'bg-gradient-to-r from-[#5A4035] to-[#7a5a48] text-white shadow-xl scale-105'
+                                  : 'bg-white border-2 border-[#5A4035] text-[#5A4035] hover:bg-[#5A4035] hover:text-white hover:shadow-lg'
+                                  }`}
+                              >
+                                <div className="flex items-center gap-2">
+                                  <Clock className="w-4 h-4" />
+                                  {item.time.toLowerCase()}
+                                </div>
+                              </motion.div>
+                            ))}
+                      </AnimatePresence>
+                    </div>
+                  </div>
+
+                  {/* Discount Code Section */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.85 }}
+                    className="mt-7"
+                  >
+                    {/* Card wrapper with coupon-ticket style */}
+                    <div
+                      className="rounded-2xl overflow-hidden"
+                      style={{
+                        border: '2px dashed #d4a76a',
+                        background: 'linear-gradient(135deg, #fffdf8 0%, #fef9ed 100%)',
+                        boxShadow: '0 4px 20px rgba(200,134,10,0.08)'
+                      }}
+                    >
+                      {/* Header strip */}
+                      <div
+                        className="px-5 py-3 flex items-center gap-2.5"
+                        style={{ background: 'linear-gradient(135deg, #7a5a48, #5A4035)' }}
+                      >
+                        <motion.span
+                          animate={{ rotate: [0, -10, 10, -10, 0] }}
+                          transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+                          className="text-lg"
+                        >
+                          🏷️
+                        </motion.span>
+                        <p className="text-white font-bold text-sm tracking-wide">
+                          HAVE A DISCOUNT CODE?
+                        </p>
+                      </div>
+
+                      {/* Admin Coupons showcase */}
+                      {adminCoupons.length > 0 && (
+                        <div className="px-5 pb-1 pt-2">
+                          <p className="text-xs font-semibold mb-2 flex items-center gap-1.5" style={{ color: '#10b981' }}>
+                            ✨ Platform Special Offers — subsidized by Admin:
                           </p>
+                          <div className="flex flex-wrap gap-2">
+                            {adminCoupons.map((coupon, i) => (
+                              <motion.button
+                                key={`admin-${i}`}
+                                initial={{ opacity: 0, scale: 0.85 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                transition={{ delay: i * 0.07 }}
+                                whileHover={{ scale: 1.06, y: -2, boxShadow: '0 6px 18px rgba(16,185,129,0.22)' }}
+                                whileTap={{ scale: 0.97 }}
+                                onClick={() => applyDiscount(coupon.code)}
+                                className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all"
+                                style={{
+                                  background: appliedAdminCoupon?.code === coupon.code
+                                    ? 'linear-gradient(135deg,#10b981,#059669)'
+                                    : 'linear-gradient(135deg,#f0fdf4,#dcfce7)',
+                                  border: `1.5px dashed #10b981`,
+                                  color: appliedAdminCoupon?.code === coupon.code ? '#fff' : '#047857'
+                                }}
+                              >
+                                <span className="font-mono tracking-wider">{coupon.code}</span>
+                                <span
+                                  className="px-1.5 py-0.5 rounded-md text-xs"
+                                  style={{
+                                    background: appliedAdminCoupon?.code === coupon.code ? 'rgba(255,255,255,0.2)' : '#10b981',
+                                    color: '#fff'
+                                  }}
+                                >
+                                  {coupon.discountType === 'percentage'
+                                    ? `${coupon.discountValue}% OFF`
+                                    : `₹${coupon.discountValue} OFF`}
+                                </span>
+                                <span className="text-emerald-400 font-normal" style={{ fontSize: '10px' }}>
+                                  global
+                                </span>
+                              </motion.button>
+                            ))}
+                          </div>
+                          <div className="my-3 border-t" style={{ borderColor: '#dcfce7' }} />
                         </div>
                       )}
-                    </motion.div>
-                  </div>
-                )}
 
-                {/* Unban Request Modal */}
-                {showUnbanRequestModal && (
-                  <div className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-                    <motion.div
-                      initial={{ scale: 0.9, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl"
-                    >
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-2xl font-bold text-gray-800">Request Unban</h3>
-                        <button
-                          onClick={() => setShowUnbanRequestModal(false)}
-                          className="p-2 hover:bg-gray-100 rounded-full transition"
-                        >
-                          <X className="w-6 h-6 text-gray-600" />
-                        </button>
-                      </div>
-
-                      <p className="text-gray-600 mb-4">
-                        Please explain why you believe your ban should be lifted. Admin will review your request.
-                      </p>
-
-                      <textarea
-                        value={unbanRequestMessage}
-                        onChange={(e) => setUnbanRequestMessage(e.target.value)}
-                        placeholder="Enter your reason here..."
-                        className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 resize-none" style={{ borderColor: '#e8d5b0', outlineColor: '#5A4035' }}
-                        rows="5"
-                      />
-
-                      <div className="flex gap-3 mt-4">
-                        <button
-                          onClick={() => setShowUnbanRequestModal(false)}
-                          className="flex-1 px-4 py-3 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          onClick={submitUnbanRequest}
-                          className="flex-1 px-4 py-3 text-white font-semibold rounded-lg hover:shadow-lg transition"
-                          style={{ background: 'linear-gradient(135deg, #c8860a, #e8a020)' }}
-                        >
-                          Submit Request
-                        </button>
-                      </div>
-                    </motion.div>
-                  </div>
-                )}
-
-                {/* Date Selection */}
-                <div className="mb-8">
-                  <motion.p
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.7 }}
-                    className="text-lg font-semibold mb-4"
-                    style={{ color: '#3d2b1f' }}
-                  >
-                    Select Date
-                  </motion.p>
-                  <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide">
-                    {docSlots.map((item, index) => (
-                      <motion.div
-                        key={index}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.1 * index }}
-                        whileHover={{ y: -8, scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => setSlotIndex(index)}
-                        className={`min-w-[90px] text-center py-6 px-4 rounded-2xl cursor-pointer transition-all duration-300`}
-                        style={slotIndex === index
-                          ? { background: 'linear-gradient(135deg, #5A4035, #7a5a48)', color: '#fff', boxShadow: '0 8px 24px rgba(90,64,53,0.35)', transform: 'scale(1.05)' }
-                          : { background: '#fdf8f0', border: '2px solid #e8d5b0', color: '#3d2b1f' }
-                        }
-                      >
-                        <motion.p
-                          className="text-sm font-medium mb-1"
-                          animate={slotIndex === index ? { scale: [1, 1.1, 1] } : {}}
-                          transition={{ duration: 0.3 }}
-                        >
-                          {item[0]?.datetime ? daysofWeek[item[0].datetime.getDay()] : 'N/A'}
-                        </motion.p>
-                        <motion.p
-                          className="text-2xl font-bold"
-                          animate={slotIndex === index ? { scale: [1, 1.2, 1] } : {}}
-                          transition={{ duration: 0.3, delay: 0.1 }}
-                        >
-                          {item[0]?.datetime ? item[0].datetime.getDate() : 'N/A'}
-                        </motion.p>
-                      </motion.div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Time Selection */}
-                <div className="mb-8">
-                  <motion.p
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.8 }}
-                    className="text-lg font-semibold mb-4"
-                    style={{ color: '#3d2b1f' }}
-                  >
-                    Select Time Slot
-                  </motion.p>
-                  <div className="flex flex-wrap gap-3">
-                    <AnimatePresence>
-                      {docSlots.length &&
-                        docSlots[slotIndex]
-                          ?.filter((item) => item)
-                          .map((item, index) => (
-                            <motion.div
-                              key={index}
-                              initial={{ opacity: 0, scale: 0.8 }}
-                              animate={{ opacity: 1, scale: 1 }}
-                              exit={{ opacity: 0, scale: 0.8 }}
-                              transition={{ delay: 0.05 * index }}
-                              whileHover={{ scale: 1.1, y: -5 }}
-                              whileTap={{ scale: 0.95 }}
-                              onClick={() => setSlotTime(item.time)}
-                              className={`px-6 py-3 rounded-xl cursor-pointer font-semibold transition-all duration-300 ${item.time === slotTime
-                                ? 'bg-gradient-to-r from-[#5A4035] to-[#7a5a48] text-white shadow-xl scale-105'
-                                : 'bg-white border-2 border-[#5A4035] text-[#5A4035] hover:bg-[#5A4035] hover:text-white hover:shadow-lg'
-                                }`}
-                            >
-                              <div className="flex items-center gap-2">
-                                <Clock className="w-4 h-4" />
-                                {item.time.toLowerCase()}
-                              </div>
-                            </motion.div>
-                          ))}
-                    </AnimatePresence>
-                  </div>
-                </div>
-
-                {/* Discount Code Section */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.85 }}
-                  className="mt-7"
-                >
-                  {/* Card wrapper with coupon-ticket style */}
-                  <div
-                    className="rounded-2xl overflow-hidden"
-                    style={{
-                      border: '2px dashed #d4a76a',
-                      background: 'linear-gradient(135deg, #fffdf8 0%, #fef9ed 100%)',
-                      boxShadow: '0 4px 20px rgba(200,134,10,0.08)'
-                    }}
-                  >
-                    {/* Header strip */}
-                    <div
-                      className="px-5 py-3 flex items-center gap-2.5"
-                      style={{ background: 'linear-gradient(135deg, #7a5a48, #5A4035)' }}
-                    >
-                      <motion.span
-                        animate={{ rotate: [0, -10, 10, -10, 0] }}
-                        transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
-                        className="text-lg"
-                      >
-                        🏷️
-                      </motion.span>
-                      <p className="text-white font-bold text-sm tracking-wide">
-                        HAVE A DISCOUNT CODE?
-                      </p>
-                    </div>
-
-                    {/* Admin Coupons showcase */}
-                    {adminCoupons.length > 0 && (
-                      <div className="px-5 pb-1 pt-2">
-                        <p className="text-xs font-semibold mb-2 flex items-center gap-1.5" style={{ color: '#10b981' }}>
-                          ✨ Platform Special Offers — subsidized by Admin:
-                        </p>
-                        <div className="flex flex-wrap gap-2">
-                          {adminCoupons.map((coupon, i) => (
-                            <motion.button
-                              key={`admin-${i}`}
-                              initial={{ opacity: 0, scale: 0.85 }}
-                              animate={{ opacity: 1, scale: 1 }}
-                              transition={{ delay: i * 0.07 }}
-                              whileHover={{ scale: 1.06, y: -2, boxShadow: '0 6px 18px rgba(16,185,129,0.22)' }}
-                              whileTap={{ scale: 0.97 }}
-                              onClick={() => applyDiscount(coupon.code)}
-                              className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all"
-                              style={{
-                                background: appliedAdminCoupon?.code === coupon.code
-                                  ? 'linear-gradient(135deg,#10b981,#059669)'
-                                  : 'linear-gradient(135deg,#f0fdf4,#dcfce7)',
-                                border: `1.5px dashed #10b981`,
-                                color: appliedAdminCoupon?.code === coupon.code ? '#fff' : '#047857'
-                              }}
-                            >
-                              <span className="font-mono tracking-wider">{coupon.code}</span>
-                              <span
-                                className="px-1.5 py-0.5 rounded-md text-xs"
+                      {/* Active Coupons Showcase */}
+                      {activeCoupons.length > 0 && (
+                        <div className="px-5 pb-1 pt-2">
+                          <p className="text-xs font-semibold mb-2" style={{ color: '#7a5a48' }}>🎁 Available Offers — click to apply:</p>
+                          <div className="flex flex-wrap gap-2">
+                            {activeCoupons.map((coupon, i) => (
+                              <motion.button
+                                key={i}
+                                initial={{ opacity: 0, scale: 0.85 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                transition={{ delay: i * 0.07 }}
+                                whileHover={{ scale: 1.06, y: -2, boxShadow: '0 6px 18px rgba(200,134,10,0.22)' }}
+                                whileTap={{ scale: 0.97 }}
+                                onClick={() => applyDiscount(coupon.code)}
+                                className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all"
                                 style={{
-                                  background: appliedAdminCoupon?.code === coupon.code ? 'rgba(255,255,255,0.2)' : '#10b981',
-                                  color: '#fff'
+                                  background: appliedDoctorCoupon?.code === coupon.code
+                                    ? 'linear-gradient(135deg,#10b981,#059669)'
+                                    : 'linear-gradient(135deg,#fff8ed,#fef3c7)',
+                                  border: `1.5px dashed ${appliedDoctorCoupon?.code === coupon.code ? '#10b981' : '#d4a76a'}`,
+                                  color: appliedDoctorCoupon?.code === coupon.code ? '#fff' : '#7a5a48'
                                 }}
                               >
-                                {coupon.discountType === 'percentage'
-                                  ? `${coupon.discountValue}% OFF`
-                                  : `₹${coupon.discountValue} OFF`}
-                              </span>
-                              <span className="text-emerald-400 font-normal" style={{ fontSize: '10px' }}>
-                                global
-                              </span>
-                            </motion.button>
-                          ))}
-                        </div>
-                        <div className="my-3 border-t" style={{ borderColor: '#dcfce7' }} />
-                      </div>
-                    )}
-
-                    {/* Active Coupons Showcase */}
-                    {activeCoupons.length > 0 && (
-                      <div className="px-5 pb-1 pt-2">
-                        <p className="text-xs font-semibold mb-2" style={{ color: '#7a5a48' }}>🎁 Available Offers — click to apply:</p>
-                        <div className="flex flex-wrap gap-2">
-                          {activeCoupons.map((coupon, i) => (
-                            <motion.button
-                              key={i}
-                              initial={{ opacity: 0, scale: 0.85 }}
-                              animate={{ opacity: 1, scale: 1 }}
-                              transition={{ delay: i * 0.07 }}
-                              whileHover={{ scale: 1.06, y: -2, boxShadow: '0 6px 18px rgba(200,134,10,0.22)' }}
-                              whileTap={{ scale: 0.97 }}
-                              onClick={() => applyDiscount(coupon.code)}
-                              className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all"
-                              style={{
-                                background: appliedDoctorCoupon?.code === coupon.code
-                                  ? 'linear-gradient(135deg,#10b981,#059669)'
-                                  : 'linear-gradient(135deg,#fff8ed,#fef3c7)',
-                                border: `1.5px dashed ${appliedDoctorCoupon?.code === coupon.code ? '#10b981' : '#d4a76a'}`,
-                                color: appliedDoctorCoupon?.code === coupon.code ? '#fff' : '#7a5a48'
-                              }}
-                            >
-                              <span className="font-mono tracking-wider">{coupon.code}</span>
-                              <span
-                                className="px-1.5 py-0.5 rounded-md text-xs"
-                                style={{
-                                  background: appliedDoctorCoupon?.code === coupon.code ? 'rgba(255,255,255,0.2)' : '#7a5a48',
-                                  color: '#fff'
-                                }}
-                              >
-                                {coupon.discountType === 'percentage'
-                                  ? `${coupon.discountValue}% OFF`
-                                  : `₹${coupon.discountValue} OFF`}
-                              </span>
-                              {coupon.expiresAt && (
-                                <span className="text-gray-400 font-normal" style={{ fontSize: '10px' }}>
-                                  till {new Date(coupon.expiresAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                                <span className="font-mono tracking-wider">{coupon.code}</span>
+                                <span
+                                  className="px-1.5 py-0.5 rounded-md text-xs"
+                                  style={{
+                                    background: appliedDoctorCoupon?.code === coupon.code ? 'rgba(255,255,255,0.2)' : '#7a5a48',
+                                    color: '#fff'
+                                  }}
+                                >
+                                  {coupon.discountType === 'percentage'
+                                    ? `${coupon.discountValue}% OFF`
+                                    : `₹${coupon.discountValue} OFF`}
                                 </span>
-                              )}
-                            </motion.button>
-                          ))}
+                                {coupon.expiresAt && (
+                                  <span className="text-gray-400 font-normal" style={{ fontSize: '10px' }}>
+                                    till {new Date(coupon.expiresAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                                  </span>
+                                )}
+                              </motion.button>
+                            ))}
+                          </div>
+                          <div className="my-3 border-t" style={{ borderColor: '#e8d5b0' }} />
                         </div>
-                        <div className="my-3 border-t" style={{ borderColor: '#e8d5b0' }} />
-                      </div>
-                    )}
+                      )}
 
-                    {/* Input area */}
-                    <div className="px-5 py-4">
-                      <div className="flex gap-3 mb-4">
-                        {/* Code input */}
-                        <div className="relative flex-1">
-                          <input
-                            type="text"
-                            value={discountCode}
-                            onChange={(e) => {
-                              setDiscountCode(e.target.value.toUpperCase());
-                              setDiscountError('');
-                            }}
-                            onKeyDown={(e) => e.key === 'Enter' && applyDiscount()}
-                            placeholder="e.g. SAVE20, PAWCARE"
-                            disabled={appliedAdminCoupon && appliedDoctorCoupon}
-                            className="w-full pl-4 pr-10 py-3 rounded-xl font-mono font-bold text-base uppercase focus:outline-none transition-all duration-300"
-                            style={{
-                              border: `2px solid ${(appliedAdminCoupon && appliedDoctorCoupon) ? '#10b981' : discountError ? '#ef4444' : '#d4a76a'}`,
-                              background: (appliedAdminCoupon && appliedDoctorCoupon) ? '#f0fdf4' : '#fff',
-                              color: '#3d2b1f',
-                              letterSpacing: '0.1em'
-                            }}
-                          />
-                          {/* Clear button */}
-                          {discountCode && (
-                            <button
-                              onClick={() => { setDiscountCode(''); setDiscountError(''); }}
-                              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
-                          )}
-                          {(appliedAdminCoupon && appliedDoctorCoupon) && (
-                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-500">
-                              <CheckCircle className="w-5 h-5" />
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Apply button */}
-                        <motion.button
-                          whileHover={!discountLoading && !(appliedAdminCoupon && appliedDoctorCoupon) ? { scale: 1.05, boxShadow: '0 8px 20px rgba(200,134,10,0.35)' } : {}}
-                          whileTap={!discountLoading && !(appliedAdminCoupon && appliedDoctorCoupon) ? { scale: 0.97 } : {}}
-                          onClick={() => applyDiscount()}
-                          disabled={discountLoading || !discountCode.trim() || (appliedAdminCoupon && appliedDoctorCoupon)}
-                          className="px-6 py-3 rounded-xl font-bold text-white text-sm transition-all flex items-center gap-2 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
-                          style={{ background: 'linear-gradient(135deg, #c8860a, #e8a020)' }}
-                        >
-                          {discountLoading ? (
-                            <>
-                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                              Checking...
-                            </>
-                          ) : (
-                            <>
-                              <CheckCircle className="w-4 h-4" />
-                              Apply
-                            </>
-                          )}
-                        </motion.button>
-                      </div>
-
-                      {/* Error state */}
-                      <AnimatePresence>
-                        {discountError && (
-                          <motion.div
-                            initial={{ opacity: 0, x: -8, height: 0 }}
-                            animate={{ opacity: 1, x: 0, height: 'auto' }}
-                            exit={{ opacity: 0, height: 0 }}
-                            transition={{ type: 'spring', stiffness: 400 }}
-                            className="mt-3 flex items-center gap-2 px-4 py-2.5 rounded-xl mb-4"
-                            style={{ background: '#fef2f2', border: '1.5px solid #fca5a5' }}
-                          >
-                            <span className="text-red-500 flex-shrink-0">
-                              <X className="w-4 h-4" />
-                            </span>
-                            <p className="text-red-600 text-sm font-medium">{discountError}</p>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-
-                      {/* Success states (Render each applied coupon) */}
-                      <div className="flex flex-col gap-3">
-                        <AnimatePresence>
-                          {[appliedAdminCoupon, appliedDoctorCoupon].filter(Boolean).map((coupon, index) => (
-                            <motion.div
-                              key={coupon.code}
-                              initial={{ opacity: 0, scale: 0.95, height: 0 }}
-                              animate={{ opacity: 1, scale: 1, height: 'auto' }}
-                              exit={{ opacity: 0, scale: 0.95, height: 0 }}
-                              transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                              className="rounded-xl overflow-hidden shadow-sm relative group"
-                              style={{ border: '1.5px solid #10b981' }}
-                            >
-                              {/* Remove button explicitly for this coupon */}
+                      {/* Input area */}
+                      <div className="px-5 py-4">
+                        <div className="flex gap-3 mb-4">
+                          {/* Code input */}
+                          <div className="relative flex-1">
+                            <input
+                              type="text"
+                              value={discountCode}
+                              onChange={(e) => {
+                                setDiscountCode(e.target.value.toUpperCase());
+                                setDiscountError('');
+                              }}
+                              onKeyDown={(e) => e.key === 'Enter' && applyDiscount()}
+                              placeholder="e.g. SAVE20, PAWCARE"
+                              disabled={appliedAdminCoupon && appliedDoctorCoupon}
+                              className="w-full pl-4 pr-10 py-3 rounded-xl font-mono font-bold text-base uppercase focus:outline-none transition-all duration-300"
+                              style={{
+                                border: `2px solid ${(appliedAdminCoupon && appliedDoctorCoupon) ? '#10b981' : discountError ? '#ef4444' : '#d4a76a'}`,
+                                background: (appliedAdminCoupon && appliedDoctorCoupon) ? '#f0fdf4' : '#fff',
+                                color: '#3d2b1f',
+                                letterSpacing: '0.1em'
+                              }}
+                            />
+                            {/* Clear button */}
+                            {discountCode && (
                               <button
-                                onClick={() => {
-                                  if (coupon.type === 'admin') setAppliedAdminCoupon(null);
-                                  else setAppliedDoctorCoupon(null);
-                                }}
-                                className="absolute top-2 right-2 bg-red-100 text-red-600 hover:bg-red-500 hover:text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 z-10"
-                                title="Remove Coupon"
+                                onClick={() => { setDiscountCode(''); setDiscountError(''); }}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                               >
                                 <X className="w-4 h-4" />
                               </button>
+                            )}
+                            {(appliedAdminCoupon && appliedDoctorCoupon) && (
+                              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-500">
+                                <CheckCircle className="w-5 h-5" />
+                              </span>
+                            )}
+                          </div>
 
-                              {/* Success header */}
-                              <div
-                                className="px-4 py-2 flex items-center justify-between"
-                                style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}
-                              >
-                                <div className="flex items-center gap-2">
-                                  <motion.span
-                                    initial={{ scale: 0, rotate: -180 }}
-                                    animate={{ scale: 1, rotate: 0 }}
-                                    transition={{ type: 'spring', stiffness: 400, delay: 0.1 }}
-                                  >
-                                    ✅
-                                  </motion.span>
-                                  <p className="text-white font-bold text-sm">
-                                    {coupon.type === 'admin' ? 'Platform Coupon Applied!' : 'Doctor Discount Applied!'}
-                                  </p>
-                                </div>
-                              </div>
+                          {/* Apply button */}
+                          <motion.button
+                            whileHover={!discountLoading && !(appliedAdminCoupon && appliedDoctorCoupon) ? { scale: 1.05, boxShadow: '0 8px 20px rgba(200,134,10,0.35)' } : {}}
+                            whileTap={!discountLoading && !(appliedAdminCoupon && appliedDoctorCoupon) ? { scale: 0.97 } : {}}
+                            onClick={() => applyDiscount()}
+                            disabled={discountLoading || !discountCode.trim() || (appliedAdminCoupon && appliedDoctorCoupon)}
+                            className="px-6 py-3 rounded-xl font-bold text-white text-sm transition-all flex items-center gap-2 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+                            style={{ background: 'linear-gradient(135deg, #c8860a, #e8a020)' }}
+                          >
+                            {discountLoading ? (
+                              <>
+                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                Checking...
+                              </>
+                            ) : (
+                              <>
+                                <CheckCircle className="w-4 h-4" />
+                                Apply
+                              </>
+                            )}
+                          </motion.button>
+                        </div>
 
-                              {/* Price breakdown */}
-                              <div className="px-4 py-3" style={{ background: '#f0fdf4' }}>
-                                <div className="flex items-center justify-between">
-                                  <div>
-                                    <p className="text-emerald-800 font-bold text-base">
-                                      {coupon.discountType === 'percentage'
-                                        ? `${coupon.discountValue}% OFF`
-                                        : `₹${coupon.discountValue} OFF`}
-                                    </p>
-                                    <p className="text-emerald-600 text-xs mt-0.5 flex flex-col gap-0.5">
-                                      <span>Code: <span className="font-mono font-bold tracking-wider">{coupon.code}</span></span>
-                                    </p>
-                                  </div>
-                                  <div className="text-right">
-                                    <motion.p
-                                      initial={{ scale: 0.5 }}
-                                      animate={{ scale: 1 }}
-                                      transition={{ type: 'spring', stiffness: 400, delay: 0.2 }}
-                                      className="text-emerald-700 font-black text-xl"
-                                    >
-                                      -{coupon.type === 'admin' ? `₹${coupon.amount || coupon.discountAmount}` : (coupon.discountType === 'percentage' ? `${coupon.discountValue}%` : `₹${coupon.discountValue}`)}
-                                    </motion.p>
-                                  </div>
-                                </div>
-                              </div>
+                        {/* Error state */}
+                        <AnimatePresence>
+                          {discountError && (
+                            <motion.div
+                              initial={{ opacity: 0, x: -8, height: 0 }}
+                              animate={{ opacity: 1, x: 0, height: 'auto' }}
+                              exit={{ opacity: 0, height: 0 }}
+                              transition={{ type: 'spring', stiffness: 400 }}
+                              className="mt-3 flex items-center gap-2 px-4 py-2.5 rounded-xl mb-4"
+                              style={{ background: '#fef2f2', border: '1.5px solid #fca5a5' }}
+                            >
+                              <span className="text-red-500 flex-shrink-0">
+                                <X className="w-4 h-4" />
+                              </span>
+                              <p className="text-red-600 text-sm font-medium">{discountError}</p>
                             </motion.div>
-                          ))}
+                          )}
                         </AnimatePresence>
+
+                        {/* Success states (Render each applied coupon) */}
+                        <div className="flex flex-col gap-3">
+                          <AnimatePresence>
+                            {[appliedAdminCoupon, appliedDoctorCoupon].filter(Boolean).map((coupon, index) => (
+                              <motion.div
+                                key={coupon.code}
+                                initial={{ opacity: 0, scale: 0.95, height: 0 }}
+                                animate={{ opacity: 1, scale: 1, height: 'auto' }}
+                                exit={{ opacity: 0, scale: 0.95, height: 0 }}
+                                transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                                className="rounded-xl overflow-hidden shadow-sm relative group"
+                                style={{ border: '1.5px solid #10b981' }}
+                              >
+                                {/* Remove button explicitly for this coupon */}
+                                <button
+                                  onClick={() => {
+                                    if (coupon.type === 'admin') setAppliedAdminCoupon(null);
+                                    else setAppliedDoctorCoupon(null);
+                                  }}
+                                  className="absolute top-2 right-2 bg-red-100 text-red-600 hover:bg-red-500 hover:text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 z-10"
+                                  title="Remove Coupon"
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
+
+                                {/* Success header */}
+                                <div
+                                  className="px-4 py-2 flex items-center justify-between"
+                                  style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <motion.span
+                                      initial={{ scale: 0, rotate: -180 }}
+                                      animate={{ scale: 1, rotate: 0 }}
+                                      transition={{ type: 'spring', stiffness: 400, delay: 0.1 }}
+                                    >
+                                      ✅
+                                    </motion.span>
+                                    <p className="text-white font-bold text-sm">
+                                      {coupon.type === 'admin' ? 'Platform Coupon Applied!' : 'Doctor Discount Applied!'}
+                                    </p>
+                                  </div>
+                                </div>
+
+                                {/* Price breakdown */}
+                                <div className="px-4 py-3" style={{ background: '#f0fdf4' }}>
+                                  <div className="flex items-center justify-between">
+                                    <div>
+                                      <p className="text-emerald-800 font-bold text-base">
+                                        {coupon.discountType === 'percentage'
+                                          ? `${coupon.discountValue}% OFF`
+                                          : `₹${coupon.discountValue} OFF`}
+                                      </p>
+                                      <p className="text-emerald-600 text-xs mt-0.5 flex flex-col gap-0.5">
+                                        <span>Code: <span className="font-mono font-bold tracking-wider">{coupon.code}</span></span>
+                                      </p>
+                                    </div>
+                                    <div className="text-right">
+                                      <motion.p
+                                        initial={{ scale: 0.5 }}
+                                        animate={{ scale: 1 }}
+                                        transition={{ type: 'spring', stiffness: 400, delay: 0.2 }}
+                                        className="text-emerald-700 font-black text-xl"
+                                      >
+                                        -{coupon.type === 'admin' ? `₹${coupon.amount || coupon.discountAmount}` : (coupon.discountType === 'percentage' ? `${coupon.discountValue}%` : `₹${coupon.discountValue}`)}
+                                      </motion.p>
+                                    </div>
+                                  </div>
+                                </div>
+                              </motion.div>
+                            ))}
+                          </AnimatePresence>
+                        </div>
+
+                        {/* Helper text */}
+                        {!(appliedAdminCoupon && appliedDoctorCoupon) && !discountError && (
+                          <p className="text-xs mt-3 flex items-center gap-1.5" style={{ color: '#a08060' }}>
+                            💡 <span className="font-medium bg-amber-50 px-1.5 py-0.5 rounded border border-amber-100">Pro Tip:</span> You can apply up to TWO coupons (1 Platform + 1 Doctor)
+                          </p>
+                        )}
                       </div>
-
-                      {/* Helper text */}
-                      {!(appliedAdminCoupon && appliedDoctorCoupon) && !discountError && (
-                        <p className="text-xs mt-3 flex items-center gap-1.5" style={{ color: '#a08060' }}>
-                          💡 <span className="font-medium bg-amber-50 px-1.5 py-0.5 rounded border border-amber-100">Pro Tip:</span> You can apply up to TWO coupons (1 Platform + 1 Doctor)
-                        </p>
-                      )}
                     </div>
-                  </div>
-                </motion.div>
+                  </motion.div>
 
-                {/* Book Button */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.9 }}
-                  className="mt-8"
-                >
-                  <motion.button
-                    whileHover={slotTime && docSlots[slotIndex]?.[0]?.datetime && (userdata && userdata.isFaceRegistered) ? {
-                      scale: 1.05,
-                      boxShadow: '0 20px 40px rgba(200,134,10,0.35)'
-                    } : {}}
-                    whileTap={slotTime && docSlots[slotIndex]?.[0]?.datetime && (userdata && userdata.isFaceRegistered) ? { scale: 0.98 } : {}}
-                    onClick={bookappointment}
-                    disabled={!slotTime || !docSlots[slotIndex]?.[0]?.datetime || (userdata && !userdata.isFaceRegistered)}
-                    className="px-12 py-4 rounded-2xl font-bold text-lg flex items-center gap-3 transition-all duration-300"
-                    style={!slotTime || !docSlots[slotIndex]?.[0]?.datetime || (userdata && !userdata.isFaceRegistered)
-                      ? { background: '#e8d5b0', color: '#a08060', cursor: 'not-allowed' }
-                      : { background: 'linear-gradient(135deg, #c8860a, #e8a020)', color: '#fff', boxShadow: '0 8px 24px rgba(200,134,10,0.30)' }
-                    }
+                  {/* Book Button */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.9 }}
+                    className="mt-8"
                   >
-                    <CheckCircle className="w-6 h-6" />
-                    Book Appointment
-                    <ArrowRight className="w-6 h-6" />
-                  </motion.button>
+                    <motion.button
+                      whileHover={slotTime && docSlots[slotIndex]?.[0]?.datetime && (userdata && userdata.isFaceRegistered) ? {
+                        boxShadow: '0 24px 48px rgba(200,134,10,0.45)'
+                      } : {}}
+                      whileTap={slotTime && docSlots[slotIndex]?.[0]?.datetime && (userdata && userdata.isFaceRegistered) ? { scale: 0.98 } : {}}
+                      onClick={bookappointment}
+                      disabled={!slotTime || !docSlots[slotIndex]?.[0]?.datetime || (userdata && !userdata.isFaceRegistered)}
+                      className="relative w-full py-5 rounded-2xl font-extrabold text-lg flex items-center justify-center gap-3 overflow-hidden transition-all duration-300"
+                      style={!slotTime || !docSlots[slotIndex]?.[0]?.datetime || (userdata && !userdata.isFaceRegistered)
+                        ? { background: '#e8d5b0', color: '#a08060', cursor: 'not-allowed' }
+                        : { background: 'linear-gradient(135deg, #c8860a, #e8a020, #c8860a)', backgroundSize: '200%', color: '#fff', boxShadow: '0 10px 28px rgba(200,134,10,0.32)' }
+                      }
+                    >
+                      {/* Shimmer sweep */}
+                      {slotTime && docSlots[slotIndex]?.[0]?.datetime && (
+                        <motion.div
+                          className="absolute inset-0 pointer-events-none"
+                          style={{ background: 'linear-gradient(110deg, transparent 30%, rgba(255,255,255,0.22) 50%, transparent 70%)' }}
+                          animate={{ x: ['-100%', '200%'] }}
+                          transition={{ duration: 2.2, repeat: Infinity, ease: 'linear', repeatDelay: 1.5 }}
+                        />
+                      )}
+                      <CheckCircle className="w-6 h-6 relative z-10" />
+                      <span className="relative z-10 tracking-wide">Book Appointment</span>
+                      <ArrowRight className="w-6 h-6 relative z-10" />
+                    </motion.button>
 
-                  <AnimatePresence>
-                    {userdata && !userdata.isFaceRegistered && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="mt-4 p-4 rounded-xl bg-red-50 border border-red-200 flex items-center gap-3"
-                      >
-                        <div className="p-2 bg-red-100 rounded-lg text-red-600">
-                          <Shield className="w-5 h-5" />
-                        </div>
-                        <div>
-                          <p className="text-red-900 font-bold text-sm">Action Required: Biometric Setup</p>
-                          <p className="text-red-700 text-xs">Face registration is mandatory for booking. <span className="underline cursor-pointer font-bold" onClick={() => navigate('/my-profile')}>Setup in Profile</span></p>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                    <AnimatePresence>
+                      {userdata && !userdata.isFaceRegistered && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="mt-4 p-4 rounded-xl bg-red-50 border border-red-200 flex items-center gap-3"
+                        >
+                          <div className="p-2 bg-red-100 rounded-lg text-red-600">
+                            <Shield className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <p className="text-red-900 font-bold text-sm">Action Required: Biometric Setup</p>
+                            <p className="text-red-700 text-xs">Face registration is mandatory for booking. <span className="underline cursor-pointer font-bold" onClick={() => navigate('/my-profile')}>Setup in Profile</span></p>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
 
-                  <AnimatePresence>
-                    {validationError && (
-                      <motion.p
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -20 }}
-                        className="text-red-500 font-medium mt-3 flex items-center gap-2"
-                      >
-                        <X className="w-5 h-5" />
-                        {validationError}
-                      </motion.p>
-                    )}
-                  </AnimatePresence>
+                    <AnimatePresence>
+                      {validationError && (
+                        <motion.p
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: -20 }}
+                          className="text-red-500 font-medium mt-3 flex items-center gap-2"
+                        >
+                          <X className="w-5 h-5" />
+                          {validationError}
+                        </motion.p>
+                      )}
+                    </AnimatePresence>
+                  </motion.div>
                 </motion.div>
-              </motion.div>
-            </AnimatePresence>
-          )}
+              </AnimatePresence>
+            )}
+          </div>{/* /p-8 */}
         </div>
       </motion.div>
 

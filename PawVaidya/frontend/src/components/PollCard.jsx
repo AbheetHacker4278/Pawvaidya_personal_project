@@ -66,10 +66,11 @@ const PollCard = ({ poll: initialPoll, onVoteSuccess }) => {
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-3xl p-6 shadow-xl shadow-emerald-900/5 border border-emerald-50 relative overflow-hidden group h-full flex flex-col"
+                className="rounded-3xl p-6 shadow-lg shadow-[#3d2b1f]/5 border border-[rgba(122,90,72,0.12)] relative overflow-hidden group h-full flex flex-col"
+                style={{ background: 'rgba(237, 228, 216, 0.85)', backdropFilter: 'blur(16px)' }}
             >
-                <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                    <HelpCircle className="w-16 h-16" />
+                <div className="absolute top-0 right-0 p-4 opacity-[0.03] group-hover:opacity-10 transition-opacity">
+                    <HelpCircle className="w-16 h-16 text-[#5A4035]" />
                 </div>
 
                 <div className="flex items-center gap-2 mb-4">

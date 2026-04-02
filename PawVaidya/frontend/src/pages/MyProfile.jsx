@@ -630,7 +630,7 @@ const MyProfile = () => {
 
   if (!editedData) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#F2E4C6] via-[#f8f3f1] to-[#F2E4C6]">
+      <div className="min-h-screen flex items-center justify-center bg-[#f2e4c7]">
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
@@ -644,7 +644,7 @@ const MyProfile = () => {
   const normalized = normalizeAddress(editedData.address);
 
   return (
-    <div className="max-w-6xl mx-auto p-4 min-h-screen bg-gradient-to-br from-[#F2E4C6] via-[#f8f3f1] to-[#F2E4C6]">
+    <div className="max-w-6xl mx-auto p-4 min-h-screen bg-[#f2e4c7]">
       <LoadingOverlay isSaving={isSaving} />
 
       {/* Header */}
@@ -652,7 +652,9 @@ const MyProfile = () => {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="bg-white/80 backdrop-blur-md shadow-xl rounded-2xl mb-6 overflow-hidden border border-white/20">
+        className="backdrop-blur-md shadow-xl rounded-2xl mb-6 overflow-hidden border border-[rgba(122,90,72,0.12)]"
+        style={{ background: 'rgba(122, 90, 72, 0.08)' }}
+      >
         <div className="p-6 flex flex-col md:flex-row items-center md:items-start">
           <motion.div
             className="mb-6 md:mb-0 md:mr-8 flex-shrink-0"
@@ -823,46 +825,46 @@ const MyProfile = () => {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.15 }}
-              className="mt-8 grid grid-cols-2 lg:grid-cols-4 gap-4"
+              className="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-3 lg:gap-4"
             >
-              <div className="bg-white/60 backdrop-blur-md p-4 rounded-2xl border border-white/50 shadow-sm hover:shadow-md transition-all">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="p-2 rounded-xl bg-blue-100 text-blue-600">
-                    <Activity size={20} />
+              <div className="bg-white/60 backdrop-blur-md p-3 sm:p-4 rounded-2xl border border-white/50 shadow-sm hover:shadow-md transition-all flex flex-col justify-between overflow-hidden">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="p-1.5 sm:p-2 rounded-xl bg-blue-100 text-blue-600 shrink-0">
+                    <Activity size={18} />
                   </div>
-                  <span className="text-xs font-bold text-gray-500 uppercase">Status</span>
+                  <span className="text-[10px] sm:text-[11px] font-bold text-gray-500 uppercase tracking-tight truncate">Status</span>
                 </div>
-                <p className="text-lg font-bold text-gray-800">{editedData.isBanned ? "Restricted" : "Verified"}</p>
+                <p className="text-base sm:text-lg font-bold text-gray-800 truncate">{editedData.isBanned ? "Restricted" : "Verified"}</p>
               </div>
 
-              <div className="bg-white/60 backdrop-blur-md p-4 rounded-2xl border border-white/50 shadow-sm hover:shadow-md transition-all">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="p-2 rounded-xl bg-green-100 text-green-600">
-                    <Shield size={20} />
+              <div className="bg-white/60 backdrop-blur-md p-3 sm:p-4 rounded-2xl border border-white/50 shadow-sm hover:shadow-md transition-all flex flex-col justify-between overflow-hidden">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="p-1.5 sm:p-2 rounded-xl bg-green-100 text-green-600 shrink-0">
+                    <Shield size={18} />
                   </div>
-                  <span className="text-xs font-bold text-gray-500 uppercase">Pet Type</span>
+                  <span className="text-[10px] sm:text-[11px] font-bold text-gray-500 uppercase tracking-tight truncate">Pet Type</span>
                 </div>
-                <p className="text-lg font-bold text-gray-800">{editedData.pet_type || "N/A"}</p>
+                <p className="text-base sm:text-lg font-bold text-gray-800 truncate">{editedData.pet_type || "N/A"}</p>
               </div>
 
-              <div className="bg-white/60 backdrop-blur-md p-4 rounded-2xl border border-white/50 shadow-sm hover:shadow-md transition-all">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="p-2 rounded-xl bg-purple-100 text-purple-600">
-                    <Clock size={20} />
+              <div className="bg-white/60 backdrop-blur-md p-3 sm:p-4 rounded-2xl border border-white/50 shadow-sm hover:shadow-md transition-all flex flex-col justify-between overflow-hidden">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="p-1.5 sm:p-2 rounded-xl bg-purple-100 text-purple-600 shrink-0">
+                    <Clock size={18} />
                   </div>
-                  <span className="text-xs font-bold text-gray-500 uppercase">Experience</span>
+                  <span className="text-[10px] sm:text-[11px] font-bold text-gray-500 uppercase tracking-tight truncate">Exp.</span>
                 </div>
-                <p className="text-lg font-bold text-gray-800">{editedData.pet_age ? `${editedData.pet_age} yrs` : "New"}</p>
+                <p className="text-base sm:text-lg font-bold text-gray-800 truncate">{editedData.pet_age ? `${editedData.pet_age} yrs` : "New"}</p>
               </div>
 
-              <div className="bg-white/60 backdrop-blur-md p-4 rounded-2xl border border-white/50 shadow-sm hover:shadow-md transition-all">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="p-2 rounded-xl bg-orange-100 text-orange-600">
-                    <Zap size={20} />
+              <div className="bg-white/60 backdrop-blur-md p-3 sm:p-4 rounded-2xl border border-white/50 shadow-sm hover:shadow-md transition-all flex flex-col justify-between overflow-hidden">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="p-1.5 sm:p-2 rounded-xl bg-orange-100 text-orange-600 shrink-0">
+                    <Zap size={18} />
                   </div>
-                  <span className="text-xs font-bold text-gray-500 uppercase">Health Score</span>
+                  <span className="text-[10px] sm:text-[11px] font-bold text-gray-500 uppercase tracking-tight truncate">Health</span>
                 </div>
-                <p className="text-lg font-bold text-gray-800">{profileCompleteness}%</p>
+                <p className="text-base sm:text-lg font-bold text-gray-800 truncate">{profileCompleteness}%</p>
               </div>
             </motion.div>
 

@@ -97,14 +97,6 @@ const Navbar = () => {
     }
   };
 
-  // ─── Scrolled vs top background ───────────────────────────────────────────
-  const navBg = isScrolled
-    ? 'rgba(253,248,240,0.88)'
-    : B.cream;
-  const navBorder = isScrolled
-    ? B.sand
-    : 'transparent';
-
   return (
     <>
       <motion.nav
@@ -114,12 +106,14 @@ const Navbar = () => {
         className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 lg:px-8 xl:px-[10%]"
         style={{
           height: 'var(--navbar-height, 72px)',
-          background: navBg,
-          borderBottom: `1px solid ${navBorder}`,
-          backdropFilter: isScrolled ? 'blur(16px) saturate(180%)' : 'none',
-          WebkitBackdropFilter: isScrolled ? 'blur(16px) saturate(180%)' : 'none',
-          boxShadow: isScrolled ? `0 4px 24px rgba(61,43,31,0.10)` : 'none',
-          transition: 'background 0.4s, border-color 0.4s, box-shadow 0.4s',
+          background: isScrolled ? 'rgba(250,244,234,0.94)' : 'rgba(242,228,199,0.96)',
+          borderBottom: `1px solid ${isScrolled ? B.sand : 'rgba(232,213,176,0.5)'}`,
+          backdropFilter: 'blur(18px) saturate(160%)',
+          WebkitBackdropFilter: 'blur(18px) saturate(160%)',
+          boxShadow: isScrolled
+            ? '0 4px 28px rgba(61,43,31,0.13), 0 1px 0 rgba(255,255,255,0.6) inset'
+            : '0 2px 12px rgba(61,43,31,0.06)',
+          transition: 'background 0.35s, border-color 0.35s, box-shadow 0.35s',
         }}
       >
         {/* ── Logo ─────────────────────────────────────────────────────────── */}
@@ -145,64 +139,88 @@ const Navbar = () => {
         </div>
 
         {/* ── Desktop Nav Links ─────────────────────────────────────────────── */}
-        <ul className="hidden md:flex items-center gap-1 lg:gap-2 font-medium text-sm">
-          {NAV_LINKS.map(({ to, labelKey, label, live }) => (
-            <NavLink key={to} to={to} className="relative group">
-              {({ isActive }) => (
-                <div className="relative px-2.5 md:px-2 lg:px-4 py-2 rounded-full cursor-pointer select-none transition-colors duration-300 flex items-center justify-center">
-                  {/* Active Background Pill */}
-                  {isActive && (
-                    <motion.div
-                      layoutId="nav-active-bg"
-                      className="absolute inset-0 rounded-full"
-                      style={{ background: '#e8dbce', zIndex: -1, boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.02)' }}
-                      transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                    />
-                  )}
-                  {/* Hover background for inactive state */}
-                  {!isActive && (
-                    <div className="absolute inset-0 rounded-full bg-[#f5ede8] opacity-0 group-hover:opacity-60 transition-opacity duration-300" style={{ zIndex: -1 }} />
-                  )}
-
-                  <motion.span
-                    whileHover={{ scale: 1.05 }}
-                    style={{
-                      color: isActive ? B.dark : B.mid,
-                      fontWeight: isActive ? 800 : 600,
-                      letterSpacing: '0.01em'
-                    }}
-                    className="relative z-10 flex items-center text-[13px] lg:text-sm tracking-tight"
-                  >
-                    {live ? (
-                      <span className="flex items-center gap-1.5">
-                        {label}
-                        <span className="relative flex h-2 w-2">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
-                          <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
-                        </span>
-                      </span>
-                    ) : (
-                      labelKey ? t(labelKey) : label
+        <div
+          className="hidden md:flex items-center gap-0.5 lg:gap-1 px-2 py-1.5 rounded-2xl"
+          style={{
+            background: 'rgba(122, 90, 72, 0.08)', // Light brown shade
+            border: '1px solid rgba(122, 90, 72, 0.12)',
+            backdropFilter: 'blur(8px)',
+            boxShadow: '0 2px 8px rgba(61,43,31,0.04), 0 1px 0 rgba(255,255,255,0.3) inset'
+          }}
+        >
+          <ul className="flex items-center gap-0.5 lg:gap-1 font-medium text-sm">
+            {NAV_LINKS.map(({ to, labelKey, label, live }) => (
+              <NavLink key={to} to={to} className="relative group">
+                {({ isActive }) => (
+                  <div className="relative px-2.5 md:px-2 lg:px-3.5 py-1.5 rounded-xl cursor-pointer select-none flex items-center justify-center">
+                    {/* Active chip */}
+                    {isActive && (
+                      <motion.div
+                        layoutId="nav-active-bg"
+                        className="absolute inset-0 rounded-xl"
+                        style={{
+                          background: 'rgba(255,255,255,0.92)',
+                          zIndex: -1,
+                          boxShadow: '0 2px 8px rgba(61,43,31,0.10), 0 1px 0 rgba(255,255,255,0.8) inset'
+                        }}
+                        transition={{ type: 'spring', stiffness: 340, damping: 32 }}
+                      />
                     )}
-                  </motion.span>
-                </div>
-              )}
-            </NavLink>
-          ))}
+                    {/* Hover bg */}
+                    {!isActive && (
+                      <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                        style={{ background: 'rgba(255,255,255,0.55)', zIndex: -1 }} />
+                    )}
+
+                    <motion.span
+                      whileHover={{ scale: 1.04 }}
+                      style={{
+                        color: isActive ? B.dark : B.mid,
+                        fontWeight: isActive ? 700 : 500,
+                      }}
+                      className="relative z-10 flex items-center gap-1.5 text-[12.5px] lg:text-[13.5px]"
+                    >
+                      {live ? (
+                        <span className="flex items-center gap-1.5">
+                          {label}
+                          <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
+                          </span>
+                        </span>
+                      ) : (
+                        labelKey ? t(labelKey) : label
+                      )}
+                    </motion.span>
+
+                    {/* Active underline dot */}
+                    {isActive && (
+                      <motion.div
+                        layoutId="nav-active-dot"
+                        className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full"
+                        style={{ background: B.amber }}
+                        transition={{ type: 'spring', stiffness: 340, damping: 32 }}
+                      />
+                    )}
+                  </div>
+                )}
+              </NavLink>
+            ))}
+          </ul>
 
           {/* Verify email pill */}
           {userdata && !userdata.isAccountverified && (
             <motion.li
-              whileHover={{ scale: 1.05, boxShadow: "0 4px 12px rgba(192,57,43,0.15)" }}
+              whileHover={{ scale: 1.05, boxShadow: '0 4px 12px rgba(192,57,43,0.15)' }}
               whileTap={{ scale: 0.95 }}
               onClick={sendVerificationOtp}
-              className="px-4 py-2 rounded-full text-xs font-bold cursor-pointer transition-all duration-300 ml-2"
-              style={{ color: '#fff', background: 'linear-gradient(135deg, #e74c3c, #c0392b)', boxShadow: "0 2px 8px rgba(192,57,43,0.2)" }}
+              className="list-none px-3 py-1.5 rounded-xl text-xs font-bold cursor-pointer ml-1 transition-all"
+              style={{ color: '#fff', background: 'linear-gradient(135deg, #e74c3c, #c0392b)', boxShadow: '0 2px 8px rgba(192,57,43,0.2)' }}
             >
               {t('navbar.verifyEmail')}
             </motion.li>
           )}
-        </ul>
+        </div>
 
         {/* ── Right side ───────────────────────────────────────────────────── */}
         <div className="flex items-center gap-2 sm:gap-3 lg:gap-4 shrink-0">
@@ -211,17 +229,22 @@ const Navbar = () => {
           {/* Bell icon (desktop) */}
           {token && userdata && (
             <motion.button
-              whileHover={{ scale: 1.1, background: '#f0e4db' }}
+              whileHover={{ scale: 1.08, boxShadow: '0 6px 18px rgba(90,64,53,0.18)' }}
               whileTap={{ scale: 0.93 }}
               onClick={() => navigate('/messages')}
-              className="relative p-2 lg:p-2.5 rounded-xl transition-colors duration-300 shrink-0"
-              style={{ color: B.mid, background: '#f5ede8' }}
+              className="relative p-2 lg:p-2.5 rounded-xl transition-all duration-300 shrink-0"
+              style={{
+                color: B.mid,
+                background: 'rgba(255,255,255,0.75)',
+                border: '1px solid rgba(232,213,176,0.7)',
+                boxShadow: '0 2px 8px rgba(61,43,31,0.06)'
+              }}
             >
-              <Bell className="w-4.5 h-4.5 lg:w-5 lg:h-5" />
+              <Bell className="w-5 h-5" />
               {unreadMessages > 0 && (
                 <motion.span
                   initial={{ scale: 0 }} animate={{ scale: 1 }}
-                  className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] lg:text-[10.5px] rounded-full w-4 h-4 lg:w-4.5 lg:h-4.5 flex items-center justify-center font-bold shadow-md ring-2 ring-white"
+                  className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] rounded-full w-4.5 h-4.5 flex items-center justify-center font-bold shadow-md ring-2 ring-white"
                 >
                   {unreadMessages > 9 ? '9+' : unreadMessages}
                 </motion.span>
@@ -233,28 +256,33 @@ const Navbar = () => {
           {token && userdata ? (
             <div className="relative hidden md:block" ref={dropdownRef}>
               <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+                whileHover={{ scale: 1.02, boxShadow: '0 6px 20px rgba(61,43,31,0.14)' }}
+                whileTap={{ scale: 0.97 }}
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="flex items-center gap-1.5 lg:gap-2.5 px-2 py-1.5 lg:px-3 lg:py-1.5 rounded-full border transition-all duration-300 hover:shadow-sm shrink-0"
+                className="flex items-center gap-2 px-2.5 py-1.5 rounded-2xl border transition-all duration-300 shrink-0"
                 style={{
-                  background: isDropdownOpen ? '#e8dbce' : 'rgba(255,255,255,0.7)',
-                  borderColor: isDropdownOpen ? B.sand : 'rgba(232,213,176,0.6)',
-                  backdropFilter: 'blur(10px)',
-                  boxShadow: isDropdownOpen ? 'inset 0 1px 3px rgba(0,0,0,0.02)' : 'none'
+                  background: isDropdownOpen ? '#ede4d8' : 'rgba(255,255,255,0.80)',
+                  borderColor: isDropdownOpen ? B.amber : 'rgba(232,213,176,0.75)',
+                  backdropFilter: 'blur(12px)',
+                  boxShadow: isDropdownOpen
+                    ? `0 0 0 2px rgba(200,134,10,0.18), 0 4px 12px rgba(61,43,31,0.10)`
+                    : '0 2px 8px rgba(61,43,31,0.07)'
                 }}
               >
-                <img
-                  className="w-7 h-7 lg:w-8 lg:h-8 rounded-full object-cover transition-transform duration-300 shrink-0"
-                  style={{ border: `2px solid ${B.sand}` }}
-                  src={userdata.image}
-                  alt="Profile"
-                />
-                <span className="hidden sm:block text-sm font-semibold tracking-tight" style={{ color: B.dark }}>
+                <div className="relative shrink-0">
+                  <img
+                    className="w-7 h-7 lg:w-8 lg:h-8 rounded-full object-cover"
+                    style={{ border: `2px solid ${B.amber}` }}
+                    src={userdata.image}
+                    alt="Profile"
+                  />
+                  <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-green-400 ring-2 ring-white" />
+                </div>
+                <span className="hidden sm:block text-[13px] font-semibold tracking-tight" style={{ color: B.dark }}>
                   {userdata.name}
                 </span>
-                <motion.div animate={{ rotate: isDropdownOpen ? 180 : 0 }} transition={{ type: "spring", stiffness: 200, damping: 20 }}>
-                  <ChevronDown className="w-4 h-4 opacity-75" style={{ color: B.dark }} />
+                <motion.div animate={{ rotate: isDropdownOpen ? 180 : 0 }} transition={{ type: 'spring', stiffness: 200, damping: 20 }}>
+                  <ChevronDown className="w-3.5 h-3.5 opacity-60" style={{ color: B.dark }} />
                 </motion.div>
               </motion.button>
 
@@ -268,7 +296,7 @@ const Navbar = () => {
                     transition={{ type: 'spring', damping: 25, stiffness: 300 }}
                     className="absolute right-0 top-[calc(100%+12px)] w-64 rounded-2xl overflow-hidden z-50"
                     style={{
-                      background: 'rgba(255, 255, 255, 0.98)',
+                      background: 'rgba(237, 228, 216, 0.98)', /* Light brown shade */
                       backdropFilter: 'blur(16px)',
                       border: `1px solid ${B.sand}`,
                       boxShadow: `0 20px 40px -10px rgba(61,43,31,0.15)`,
@@ -276,12 +304,12 @@ const Navbar = () => {
                   >
                     {/* Arrow */}
                     <div className="absolute -top-1.5 right-6 w-3 h-3 rotate-45 rounded-sm"
-                      style={{ background: '#fff', borderTop: `1px solid ${B.sand}`, borderLeft: `1px solid ${B.sand}` }} />
+                      style={{ background: '#ede4d8', borderTop: `1px solid ${B.sand}`, borderLeft: `1px solid ${B.sand}` }} />
 
                     {/* User header */}
-                    <div className="px-5 py-4 border-b relative overflow-hidden" style={{ background: 'linear-gradient(to bottom, #fcfaf8, #f5ede8)', borderColor: B.sand }}>
+                    <div className="px-5 py-4 border-b relative overflow-hidden" style={{ background: 'linear-gradient(to bottom, #f5ede8, #ede4d8)', borderColor: B.sand }}>
                       <div className="flex items-center gap-3 relative z-10">
-                        <img className="w-11 h-11 rounded-full object-cover shadow-sm" style={{ border: `2px solid #fff` }}
+                        <img className="w-11 h-11 rounded-full object-cover shadow-sm" style={{ border: `2px solid #ede4d8` }}
                           src={userdata.image} alt="Profile" />
                         <div className="flex flex-col justify-center">
                           <p className="font-bold text-[15px] leading-tight" style={{ color: B.dark }}>{userdata.name}</p>
@@ -291,7 +319,7 @@ const Navbar = () => {
                     </div>
 
                     {/* Menu items */}
-                    <div className="py-2.5 px-1.5">
+                    <div className="py-2.5 px-1.5 bg-transparent">
                       {[
                         { icon: <User className="w-[18px] h-[18px]" />, label: t('navbar.myProfile'), action: () => { navigate('/my-profile'); setIsDropdownOpen(false); } },
                         { icon: <Calendar className="w-[18px] h-[18px]" />, label: t('navbar.myAppointments'), action: () => { navigate('/my-appointments'); setIsDropdownOpen(false); } },
@@ -300,7 +328,7 @@ const Navbar = () => {
                       ].map(({ icon, label, badge, action }) => (
                         <motion.button
                           key={label}
-                          whileHover={{ x: 4, backgroundColor: '#fdf8f5' }}
+                          whileHover={{ x: 4, backgroundColor: 'rgba(242, 228, 199, 0.6)' }}
                           whileTap={{ scale: 0.98 }}
                           onClick={action}
                           className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-left transition-colors duration-200"
@@ -320,7 +348,7 @@ const Navbar = () => {
                     </div>
 
                     {/* Location section */}
-                    <div className="border-t px-5 py-3.5 bg-[#fcfaf8]" style={{ borderColor: B.sand }}>
+                    <div className="border-t px-5 py-3.5 bg-transparent" style={{ borderColor: B.sand }}>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <MapPin className="w-4 h-4 opacity-80" style={{ color: B.amber }} />
@@ -336,9 +364,9 @@ const Navbar = () => {
                     </div>
 
                     {/* Logout */}
-                    <div className="border-t p-1.5 bg-[#fff]" style={{ borderColor: B.sand }}>
+                    <div className="border-t p-1.5 bg-transparent" style={{ borderColor: B.sand }}>
                       <motion.button
-                        whileHover={{ background: '#fff5f5', color: '#e74c3c' }}
+                        whileHover={{ background: 'rgba(231, 76, 60, 0.1)', color: '#e74c3c' }}
                         whileTap={{ scale: 0.98 }}
                         onClick={() => { Logout(); setIsDropdownOpen(false); }}
                         className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-left transition-colors duration-200"

@@ -96,7 +96,7 @@ const Contact = () => {
         className="relative z-10 max-w-5xl mx-auto px-4 mb-8"
       >
         <div className="rounded-2xl overflow-hidden border"
-          style={{ background: '#fff', borderColor: B.sand, boxShadow: '0 4px 24px rgba(90,64,53,0.10)' }}>
+          style={{ background: 'rgba(237, 228, 216, 0.85)', backdropFilter: 'blur(16px)', borderColor: B.sand, boxShadow: '0 4px 24px rgba(90,64,53,0.10)' }}>
           <div className="h-1 w-full" style={{ background: `linear-gradient(to right, ${B.dark}, ${B.mid}, ${B.amber})` }} />
           <div className="flex flex-col md:flex-row gap-6 p-6 md:p-8">
             {/* Image */}
@@ -204,7 +204,8 @@ const Contact = () => {
               whileHover={{ y: -5, transition: { duration: 0.2 } }}
               className="group rounded-2xl p-5 border transition-all duration-300"
               style={{
-                background: '#fff',
+                background: 'rgba(237, 228, 216, 0.85)',
+                backdropFilter: 'blur(16px)',
                 borderColor: B.sand,
                 boxShadow: '0 2px 10px rgba(90,64,53,0.07)',
               }}

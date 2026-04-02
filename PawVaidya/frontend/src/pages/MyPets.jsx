@@ -46,7 +46,7 @@ const MyPets = () => {
     );
 
     return (
-        <div className="min-h-screen pt-24 pb-12 px-4 sm:px-[10%]" style={{ background: COLORS.bg }}>
+        <div className="min-h-screen pt-24 pb-12 px-4 sm:px-[10%] bg-transparent">
             <div className="max-w-6xl mx-auto">
                 {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
@@ -87,8 +87,8 @@ const MyPets = () => {
                                     key={report._id}
                                     whileHover={{ y: -4, shadow: '0 10px 25px -5px rgba(0,0,0,0.1)' }}
                                     onClick={() => setSelectedReport(report)}
-                                    className={`cursor-pointer p-5 rounded-3xl border-2 transition-all duration-300 ${selectedReport?._id === report._id ? 'bg-white shadow-lg' : 'bg-white/50'}`}
-                                    style={{ borderColor: selectedReport?._id === report._id ? COLORS.accent : 'transparent' }}
+                                    className={`cursor-pointer p-5 rounded-3xl border transition-all duration-300 backdrop-blur-md shadow-sm ${selectedReport?._id === report._id ? 'shadow-lg border-[#c8860a]' : 'border-[rgba(122,90,72,0.12)] hover:shadow-md'}`}
+                                    style={{ background: selectedReport?._id === report._id ? 'rgba(237, 228, 216, 0.95)' : 'rgba(237, 228, 216, 0.6)' }}
                                 >
                                     <div className="flex items-center gap-4">
                                         <div className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0"
@@ -119,7 +119,8 @@ const MyPets = () => {
                                 <motion.div
                                     initial={{ opacity: 0, x: 20 }}
                                     animate={{ opacity: 1, x: 0 }}
-                                    className="bg-white rounded-[2rem] shadow-2xl overflow-hidden border border-white"
+                                    className="rounded-[2rem] shadow-2xl overflow-hidden border border-[rgba(122,90,72,0.12)]"
+                                    style={{ background: 'rgba(237, 228, 216, 0.85)', backdropFilter: 'blur(16px)' }}
                                 >
                                     {/* Detail Header */}
                                     <div className="p-8 pb-0 flex items-center justify-between">

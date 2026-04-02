@@ -22,7 +22,7 @@ const PRIORITY_CONFIG = {
     urgent: { icon: '🚨', label: 'URGENT', border: '#c0392b', bg: '#fff5f5', badge: { bg: '#c0392b', color: '#fff' } },
     high: { icon: '⚠️', label: 'HIGH', border: '#e67e22', bg: '#fffbf0', badge: { bg: '#e67e22', color: '#fff' } },
     normal: { icon: '📋', label: 'NORMAL', border: B.amber, bg: B.pale, badge: { bg: B.amber, color: '#fff' } },
-    low: { icon: '📌', label: 'LOW', border: B.sand, bg: '#fff', badge: { bg: B.light, color: '#fff' } },
+    low: { icon: '📌', label: 'LOW', border: B.sand, bg: 'rgba(237, 228, 216, 0.6)', badge: { bg: B.light, color: '#fff' } },
 };
 
 const getPriorityCfg = (p) => PRIORITY_CONFIG[p] || PRIORITY_CONFIG.low;
@@ -164,8 +164,8 @@ const UserMessages = () => {
                     <motion.div
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="text-center py-20 rounded-3xl border"
-                        style={{ background: '#fff', borderColor: B.sand }}
+                        className="text-center py-20 rounded-3xl border backdrop-blur-md"
+                        style={{ background: 'rgba(237, 228, 216, 0.85)', borderColor: B.sand }}
                     >
                         <div className="text-6xl mb-4">📭</div>
                         <p className="text-lg font-bold mb-1" style={{ color: B.dark }}>No notifications yet</p>
@@ -189,9 +189,9 @@ const UserMessages = () => {
                                         transition={{ duration: 0.35, delay: index * 0.06 }}
                                         whileHover={{ y: -3, boxShadow: `0 12px 32px rgba(61,43,31,0.12)` }}
                                         onClick={() => markAsRead(msg._id, isRead)}
-                                        className="relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-300"
+                                        className="relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 backdrop-blur-md"
                                         style={{
-                                            background: isRead ? '#fff' : cfg.bg,
+                                            background: isRead ? 'rgba(237, 228, 216, 0.85)' : cfg.bg,
                                             borderLeft: `4px solid ${cfg.border}`,
                                             border: `1px solid ${B.sand}`,
                                             borderLeftWidth: '4px',

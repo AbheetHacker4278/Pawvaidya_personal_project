@@ -3,278 +3,334 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, useMotionValue, useTransform } from 'framer-motion';
 import { translateSpeciality } from '../utils/translateSpeciality';
+import { MapPin, GraduationCap, ArrowRight } from 'lucide-react';
 
+// ─── Brand palette ────────────────────────────────────────────────────────────
+const B = {
+  dark: '#3d2b1f',
+  mid: '#5A4035',
+  light: '#7a5a48',
+  cream: '#f2e4c7',
+  sand: '#e8d5b0',
+  amber: '#c8860a',
+  pale: '#fdf8f0',
+};
+
+// ─── Individual tilt card ─────────────────────────────────────────────────────
+const DoctorCard = ({ item, index, onClick, t }) => {
+
+  const [hovered, setHovered] = useState(false);
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+  const rotateX = useTransform(y, [-80, 80], [8, -8]);
+  const rotateY = useTransform(x, [-80, 80], [-8, 8]);
+
+  const handleMouseMove = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    x.set(e.clientX - rect.left - rect.width / 2);
+    y.set(e.clientY - rect.top - rect.height / 2);
+  };
+  const handleMouseLeave = () => {
+    x.set(0);
+    y.set(0);
+    setHovered(false);
+  };
+
+  return (
+    <motion.div
+      key={index}
+      variants={{
+        hidden: { opacity: 0, y: 60, scale: 0.88 },
+        visible: {
+          opacity: 1, y: 0, scale: 1,
+          transition: { type: 'spring', damping: 18, stiffness: 90, delay: index * 0.07 }
+        }
+      }}
+      style={{
+        rotateX, rotateY, transformStyle: 'preserve-3d', perspective: 1000,
+        background: 'rgba(237, 228, 216, 0.85)',
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
+        border: '1px solid rgba(232,213,176,0.6)',
+        boxShadow: hovered
+          ? '0 24px 48px rgba(61,43,31,0.18), 0 8px 16px rgba(61,43,31,0.10)'
+          : '0 8px 24px rgba(61,43,31,0.10), 0 2px 8px rgba(61,43,31,0.07)',
+        transition: 'box-shadow 0.4s ease',
+      }}
+      className="relative cursor-pointer rounded-[24px] overflow-hidden w-full max-w-[260px] mx-auto"
+      onMouseMove={handleMouseMove}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={handleMouseLeave}
+      whileTap={{ scale: 0.97 }}
+      onClick={onClick}
+    >
+      {/* ── Ambient glow behind card ── */}
+      <motion.div
+        className="absolute -inset-px rounded-[24px] z-0 pointer-events-none"
+        animate={{
+          opacity: hovered ? 1 : 0,
+          background: `radial-gradient(ellipse at 60% 0%, rgba(200,134,10,0.18) 0%, transparent 70%)`
+        }}
+        transition={{ duration: 0.4 }}
+      />
+
+      {/* ── Image section ── */}
+      <div
+        className="relative overflow-hidden"
+        style={{
+          height: 200,
+          background: `linear-gradient(145deg, ${B.sand}80, ${B.pale})`,
+        }}
+      >
+        <motion.img
+          src={item.image}
+          alt={item.name}
+          className="w-full h-full object-cover"
+          animate={{ scale: hovered ? 1.1 : 1 }}
+          transition={{ duration: 0.6, ease: 'easeOut' }}
+        />
+
+        {/* Frosted bottom gradient over image */}
+        <div
+          className="absolute bottom-0 left-0 right-0 h-20 pointer-events-none"
+          style={{ background: 'linear-gradient(to top, rgba(255,255,255,0.9) 0%, transparent 100%)' }}
+        />
+
+        {/* ── Availability badge ── */}
+        <motion.div
+          className="absolute top-3 left-3 flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold shadow-md"
+          style={{
+            background: item.available
+              ? 'linear-gradient(135deg, #16a34a, #22c55e)'
+              : 'linear-gradient(135deg, #6b7280, #9ca3af)',
+            color: '#fff',
+            boxShadow: item.available ? '0 4px 12px rgba(34,197,94,0.4)' : 'none',
+          }}
+          initial={{ x: -40, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ delay: index * 0.07 + 0.3, type: 'spring', stiffness: 200 }}
+        >
+          {/* Pulsing dot */}
+          {item.available && (
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-white" />
+            </span>
+          )}
+          <span>{item.available ? 'Available' : 'Unavailable'}</span>
+        </motion.div>
+
+        {/* ── Shimmer sweep ── */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <motion.div
+            className="absolute top-0 -left-full h-full w-1/2 skew-x-12"
+            style={{
+              background: 'linear-gradient(to right, transparent, rgba(255,255,255,0.35), transparent)'
+            }}
+            animate={hovered ? { left: '200%' } : { left: '-100%' }}
+            transition={{ duration: 0.7, ease: 'easeInOut' }}
+          />
+        </div>
+      </div>
+
+      {/* ── Content ── */}
+      <div className="relative z-10 px-5 pt-4 pb-5 flex flex-col gap-3">
+        {/* Name */}
+        <motion.h3
+          className="text-[17px] font-extrabold leading-tight line-clamp-1"
+          style={{ color: B.dark }}
+          animate={{ color: hovered ? B.amber : B.dark }}
+          transition={{ duration: 0.3 }}
+        >
+          {item.name}
+        </motion.h3>
+
+        {/* Speciality */}
+        <div className="flex items-center gap-2">
+          <GraduationCap size={14} style={{ color: B.amber }} strokeWidth={2.2} />
+          <span className="text-[13px] font-semibold" style={{ color: B.light }}>
+            {translateSpeciality(item.speciality, t)}
+          </span>
+        </div>
+
+        {/* Location badges */}
+        <div className="flex flex-wrap gap-1.5">
+          <span
+            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold"
+            style={{ background: '#f5ede8', color: B.mid, border: `1px solid ${B.sand}` }}
+          >
+            <MapPin size={10} strokeWidth={2.5} />
+            {item.address?.Location}
+          </span>
+          <span
+            className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold"
+            style={{ background: '#fff8e6', color: B.amber, border: '1px solid #f0d080' }}
+          >
+            {item.address?.line}
+          </span>
+        </div>
+
+        {/* ── Divider line (animates in on hover) ── */}
+        <motion.div
+          className="h-px w-full rounded-full"
+          style={{ background: `linear-gradient(to right, ${B.sand}, transparent)` }}
+          animate={{ opacity: hovered ? 1 : 0.4 }}
+          transition={{ duration: 0.3 }}
+        />
+
+        {/* ── CTA Row ── */}
+        <div className="flex items-center justify-between">
+          <motion.span
+            className="text-[12px] font-bold tracking-wide"
+            style={{ color: B.mid }}
+            animate={{ opacity: hovered ? 1 : 0, x: hovered ? 0 : -8 }}
+            transition={{ duration: 0.3 }}
+          >
+            Book Appointment
+          </motion.span>
+
+          {/* Arrow button */}
+          <motion.div
+            className="flex items-center justify-center w-8 h-8 rounded-full"
+            style={{ background: `linear-gradient(135deg, ${B.mid}, ${B.amber})` }}
+            animate={{
+              scale: hovered ? 1.15 : 1,
+              boxShadow: hovered
+                ? '0 6px 16px rgba(200,134,10,0.45)'
+                : '0 2px 6px rgba(200,134,10,0.2)',
+            }}
+            transition={{ duration: 0.3 }}
+          >
+            <motion.div
+              animate={{ x: hovered ? 2 : 0 }}
+              transition={{ duration: 0.25 }}
+            >
+              <ArrowRight size={14} color="#fff" strokeWidth={2.5} />
+            </motion.div>
+          </motion.div>
+        </div>
+      </div>
+
+      {/* ── Bottom accent bar ── */}
+      <motion.div
+        className="absolute bottom-0 left-0 right-0 h-[3px] rounded-b-[24px]"
+        style={{ background: `linear-gradient(to right, ${B.mid}, ${B.amber}, ${B.mid})` }}
+        animate={{ scaleX: hovered ? 1 : 0, opacity: hovered ? 1 : 0 }}
+        initial={{ scaleX: 0, opacity: 0 }}
+        transition={{ duration: 0.4 }}
+      />
+    </motion.div>
+  );
+};
+
+// ─── Main section ─────────────────────────────────────────────────────────────
 const TopDoctors = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { doctors } = useContext(AppContext);
-  const [hoveredCard, setHoveredCard] = useState(null);
-
-  // Animation variants for staggered children
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.2
-      }
-    }
-  };
-
-  const cardVariants = {
-    hidden: {
-      opacity: 0,
-      y: 50,
-      scale: 0.9
-    },
-    visible: {
-      opacity: 1,
-      y: 0,
-      scale: 1,
-      transition: {
-        type: "spring",
-        damping: 15,
-        stiffness: 100
-      }
-    }
-  };
 
   return (
-    <div className='flex flex-col gap-8 my-20 text-gray-900 md:mx-10 px-4 overflow-hidden'>
-      {/* Enhanced Title with gradient */}
+    <div className="flex flex-col gap-10 my-20 md:mx-10 px-4 overflow-hidden">
+      {/* ── Section heading ── */}
       <motion.div
         initial={{ opacity: 0, y: -30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className='text-center'
+        className="text-center flex flex-col items-center gap-3"
       >
-        <motion.h1
-          className='text-4xl md:text-5xl font-bold bg-gradient-to-r from-[#5A4035] via-[#7a5a48] to-[#5A4035] bg-clip-text text-transparent mb-3'
-          animate={{ backgroundPosition: ['0%', '100%', '0%'] }}
-          transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
-        >
-          {t('home.topDoctors')}
-        </motion.h1>
+        {/* Label pill */}
         <motion.div
-          className='w-24 h-1 mx-auto rounded-full'
-          style={{ background: 'linear-gradient(to right, #5A4035, #c8860a)' }}
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.1 }}
+          className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest border"
+          style={{ background: B.pale, borderColor: B.sand, color: B.mid }}
+        >
+          <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: B.amber }} />
+          {t('home.topDoctors') || 'Our Top Vets'}
+        </motion.div>
+
+        <motion.h2
+          className="text-3xl sm:text-4xl md:text-5xl font-extrabold"
+          style={{ color: B.dark }}
+        >
+          Trusted <span style={{ color: B.amber }}>Veterinary</span> Experts
+        </motion.h2>
+
+        <motion.div
+          className="h-1 rounded-full"
+          style={{ background: `linear-gradient(to right, ${B.mid}, ${B.amber})` }}
           initial={{ width: 0 }}
-          animate={{ width: 96 }}
+          animate={{ width: 80 }}
           transition={{ duration: 0.8, delay: 0.3 }}
         />
+
+        <motion.p
+          className="text-sm max-w-xs sm:max-w-md text-center"
+          style={{ color: B.light }}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+        >
+          {t('home.trustedDoctors') || 'Browse through our extensive list of trusted doctors and schedule your appointment hassle-free.'}
+        </motion.p>
       </motion.div>
 
-      {/* Doctor Cards Grid */}
-      <div className='w-full flex justify-center'>
+      {/* ── Cards grid ── */}
+      <div className="w-full flex justify-center">
         <motion.div
-          variants={containerVariants}
+          variants={{
+            hidden: { opacity: 0 },
+            visible: { opacity: 1, transition: { staggerChildren: 0.07 } }
+          }}
           initial="hidden"
           animate="visible"
-          className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8 pt-8 px-3 sm:px-0 max-w-[1600px]'
+          className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 pt-4 max-w-[1600px] w-full"
         >
-          <AnimatePresence>
-            {doctors.slice(0, 10).map((item, index) => (
-              <motion.div
-                key={index}
-                variants={cardVariants}
-                whileHover={{
-                  y: -12,
-                  rotateY: 5,
-                  transition: { duration: 0.3 }
-                }}
-                whileTap={{ scale: 0.97 }}
-                onHoverStart={() => setHoveredCard(index)}
-                onHoverEnd={() => setHoveredCard(null)}
-                onClick={() => { navigate(`/appointment/${item._id}`); scrollTo(0, 0); }}
-                className='group relative bg-white shadow-xl rounded-3xl overflow-hidden cursor-pointer w-full max-w-[280px] mx-auto transform perspective-1000'
-                style={{ transformStyle: 'preserve-3d' }}
-              >
-                {/* Gradient overlay on hover */}
-                <motion.div
-                  className='absolute inset-0 z-10 transition-opacity duration-500'
-                  style={{ background: 'linear-gradient(135deg, rgba(90,64,53,0.15), transparent, rgba(200,134,10,0.10))' }}
-                  initial={false}
-                  animate={{ opacity: hoveredCard === index ? 1 : 0 }}
-                />
-
-                {/* Shimmer effect */}
-                <div className='absolute inset-0 z-20 pointer-events-none overflow-hidden'>
-                  <motion.div
-                    className='absolute top-0 -left-full w-1/2 h-full bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-12'
-                    animate={hoveredCard === index ? { left: '200%' } : { left: '-100%' }}
-                    transition={{ duration: 0.8, ease: "easeInOut" }}
-                  />
-                </div>
-
-                {/* Image Container with enhanced effects */}
-                <div className='relative h-[220px] overflow-hidden' style={{ background: 'linear-gradient(135deg, #f5ede8, #fdf8f0)' }}>
-                  <motion.img
-                    className='w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700'
-                    src={item.image}
-                    alt={item.name}
-                    initial={{ scale: 1.1 }}
-                    animate={{ scale: hoveredCard === index ? 1.15 : 1 }}
-                    transition={{ duration: 0.5 }}
-                  />
-
-                  {/* Availability badge with glow */}
-                  <motion.div
-                    className={`absolute top-4 right-4 px-3 py-1.5 rounded-full backdrop-blur-md flex items-center gap-2 shadow-lg ${item.available
-                        ? 'bg-green-500/90 text-white'
-                        : 'bg-gray-500/90 text-white'
-                      }`}
-                    initial={{ x: 50, opacity: 0 }}
-                    animate={{ x: 0, opacity: 1 }}
-                    transition={{ delay: index * 0.1 + 0.3 }}
-                    whileHover={{ scale: 1.1 }}
-                  >
-                    <motion.div
-                      className={`w-2.5 h-2.5 rounded-full ${item.available ? 'bg-white' : 'bg-gray-300'
-                        }`}
-                      animate={item.available ? {
-                        scale: [1, 1.3, 1],
-                        boxShadow: [
-                          '0 0 0 0 rgba(255,255,255,0.7)',
-                          '0 0 0 6px rgba(255,255,255,0)',
-                          '0 0 0 0 rgba(255,255,255,0)'
-                        ]
-                      } : {}}
-                      transition={{ duration: 2, repeat: Infinity }}
-                    />
-                    <span className='text-xs font-semibold'>
-                      {item.available ? t('common.available') : t('common.notAvailable')}
-                    </span>
-                  </motion.div>
-
-                  {/* Decorative corner accent */}
-                  <div className='absolute bottom-0 right-0 w-20 h-20 bg-gradient-to-tl from-white/30 to-transparent rounded-tl-full' />
-                </div>
-
-                {/* Content Section */}
-                <div className='p-6 flex flex-col gap-3 bg-gradient-to-b from-white to-gray-50/50'>
-                  {/* Doctor Name */}
-                  <motion.h3
-                    className='text-xl font-bold text-gray-900 group-hover:text-[#5A4035] transition-colors duration-300 line-clamp-1'
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: index * 0.1 + 0.4 }}
-                  >
-                    {item.name}
-                  </motion.h3>
-
-                  {/* Speciality with icon */}
-                  <motion.div
-                    className='flex items-center gap-2 text-sm text-gray-600'
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.1 + 0.5 }}
-                  >
-                    <svg className='w-4 h-4' style={{ color: '#c8860a' }} fill='currentColor' viewBox='0 0 20 20'>
-                      <path d='M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z' />
-                    </svg>
-                    <span className='font-medium'>{translateSpeciality(item.speciality, t)}</span>
-                  </motion.div>
-
-                  {/* Location badges */}
-                  <motion.div
-                    className='flex flex-wrap gap-2'
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 + 0.6 }}
-                  >
-                    <span className='inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold shadow-sm' style={{ background: '#f5ede8', color: '#5A4035', border: '1px solid #e8d5b0' }}>
-                      <svg className='w-3 h-3' fill='currentColor' viewBox='0 0 20 20'>
-                        <path fillRule='evenodd' d='M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z' clipRule='evenodd' />
-                      </svg>
-                      {item.address.Location}
-                    </span>
-                    <span className='inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold shadow-sm' style={{ background: '#fff8e6', color: '#c8860a', border: '1px solid #f0d080' }}>
-                      {item.address.line}
-                    </span>
-                  </motion.div>
-
-                  {/* View Details Button - appears on hover */}
-                  <motion.div
-                    className='mt-2 pt-3 border-t border-gray-200'
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: hoveredCard === index ? 1 : 0 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <div className='flex items-center justify-center gap-2 text-[#5A4035] font-semibold text-sm'>
-                      <span>View Profile</span>
-                      <motion.svg
-                        className='w-4 h-4'
-                        fill='none'
-                        stroke='currentColor'
-                        viewBox='0 0 24 24'
-                        animate={{ x: hoveredCard === index ? 5 : 0 }}
-                        transition={{ duration: 0.3 }}
-                      >
-                        <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 5l7 7-7 7' />
-                      </motion.svg>
-                    </div>
-                  </motion.div>
-                </div>
-
-                {/* Bottom glow effect */}
-                <motion.div
-                  className='absolute bottom-0 left-0 right-0 h-1'
-                  style={{ background: 'linear-gradient(to right, #5A4035, #c8860a, #5A4035)' }}
-                  initial={{ scaleX: 0 }}
-                  animate={{ scaleX: hoveredCard === index ? 1 : 0 }}
-                  transition={{ duration: 0.4 }}
-                />
-              </motion.div>
-            ))}
-          </AnimatePresence>
+          {doctors.slice(0, 10).map((item, index) => (
+            <DoctorCard
+              key={item._id || index}
+              item={item}
+              index={index}
+              t={t}
+              onClick={() => { navigate(`/appointment/${item._id}`); scrollTo(0, 0); }}
+            />
+          ))}
         </motion.div>
       </div>
 
-      {/* Enhanced Explore Button */}
+      {/* ── Explore button ── */}
       <motion.div
-        className='flex justify-center w-full mt-12'
+        className="flex justify-center w-full mt-4"
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.8 }}
       >
         <motion.button
-          whileHover={{
-            scale: 1.05,
-            boxShadow: "0 20px 40px rgba(90, 64, 53, 0.3)"
-          }}
-          whileTap={{ scale: 0.98 }}
+          whileHover={{ scale: 1.05, boxShadow: '0 20px 40px rgba(90,64,53,0.35)' }}
+          whileTap={{ scale: 0.97 }}
           onClick={() => { navigate('/doctors'); scrollTo(0, 0); }}
-          className='group relative px-12 py-4 bg-gradient-to-r from-[#5A4035] to-[#7a5a48] text-white rounded-full text-lg font-bold shadow-xl overflow-hidden'
+          className="relative px-12 py-4 rounded-full text-white text-[15px] font-bold overflow-hidden shadow-xl"
+          style={{ background: `linear-gradient(135deg, ${B.mid}, ${B.amber})` }}
         >
-          {/* Animated background */}
+          {/* Shimmer sweep */}
           <motion.div
-            className='absolute inset-0 bg-gradient-to-r from-[#7a5a48] to-[#5A4035]'
-            initial={{ x: '-100%' }}
-            whileHover={{ x: '100%' }}
-            transition={{ duration: 0.6 }}
+            className="absolute inset-0"
+            style={{ background: 'linear-gradient(110deg, transparent 30%, rgba(255,255,255,0.2) 50%, transparent 70%)' }}
+            animate={{ x: ['-100%', '200%'] }}
+            transition={{ duration: 2.5, repeat: Infinity, ease: 'linear', repeatDelay: 1 }}
           />
-
-          <span className='relative z-10 flex items-center gap-3'>
-            {t('home.exploreBtn')}
-            <motion.svg
-              className='w-5 h-5'
-              fill='none'
-              stroke='currentColor'
-              viewBox='0 0 24 24'
-              animate={{ x: [0, 5, 0] }}
-              transition={{ duration: 1.5, repeat: Infinity }}
+          <span className="relative z-10 flex items-center gap-3">
+            {t('home.exploreBtn') || 'Explore All Doctors'}
+            <motion.div
+              animate={{ x: [0, 6, 0] }}
+              transition={{ duration: 1.4, repeat: Infinity }}
             >
-              <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M13 7l5 5m0 0l-5 5m5-5H6' />
-            </motion.svg>
+              <ArrowRight size={18} strokeWidth={2.5} />
+            </motion.div>
           </span>
-
-          {/* Glow effect */}
-          <div className='absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500'>
-            <div className='absolute inset-0 bg-white/20 blur-xl' />
-          </div>
         </motion.button>
       </motion.div>
     </div>

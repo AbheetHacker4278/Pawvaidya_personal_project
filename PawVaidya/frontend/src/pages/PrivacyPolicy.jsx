@@ -76,8 +76,8 @@ const PrivacyPolicy = () => {
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="rounded-2xl overflow-hidden border"
-          style={{ background: '#fff', borderColor: B.sand, boxShadow: '0 4px 24px rgba(90,64,53,0.10)' }}
+          className="rounded-2xl overflow-hidden border backdrop-blur-md"
+          style={{ background: 'rgba(237, 228, 216, 0.85)', borderColor: B.sand, boxShadow: '0 4px 24px rgba(90,64,53,0.10)' }}
         >
           {/* Top accent bar */}
           <div className="h-1 w-full" style={{ background: `linear-gradient(to right, ${B.dark}, ${B.mid}, ${B.amber})` }} />

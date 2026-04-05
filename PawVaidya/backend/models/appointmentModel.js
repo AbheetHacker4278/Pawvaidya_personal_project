@@ -12,6 +12,8 @@ const appointmentSchema = new mongoose.Schema({
     date: { type: Number, required: true },
     cancelled: { type: Boolean, default: false },
     payment: { type: Boolean, default: false },
+    paymentMethod: { type: String, default: "Cash" },
+    walletDeduction: { type: Number, default: 0 },
     isCompleted: { type: Boolean, default: false },
     discountApplied: {
         type: {

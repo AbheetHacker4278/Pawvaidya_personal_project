@@ -30,6 +30,8 @@ const Appointments = () => {
   const [isBanned, setIsBanned] = useState(false);
   const [banReason, setBanReason] = useState('');
   const [showUnbanRequestModal, setShowUnbanRequestModal] = useState(false);
+  const [unbanReason, setUnbanReason] = useState('');
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [unbanRequestMessage, setUnbanRequestMessage] = useState('');
   const [hasUnbanRequest, setHasUnbanRequest] = useState(false);
   const [unbanRequestStatus, setUnbanRequestStatus] = useState('');
@@ -42,6 +44,7 @@ const Appointments = () => {
   const [discountError, setDiscountError] = useState('');
   const [activeCoupons, setActiveCoupons] = useState([]);
   const [adminCoupons, setAdminCoupons] = useState([]);
+  const [useWallet, setUseWallet] = useState(false);
 
   const loadingMessages = [
     "Checking Available Slots...",
@@ -439,7 +442,7 @@ const Appointments = () => {
   };
 
 
-  const bookappointment = async () => {
+  const triggerBooking = () => {
     if (!token) {
       toast.warn('Login to Book Appointment');
       return navigate('/login');
@@ -458,6 +461,11 @@ const Appointments = () => {
       return;
     }
 
+    setShowPaymentModal(true);
+  }
+
+  const bookappointment = async (paymentMethod, forceUseWallet = useWallet) => {
+    setShowPaymentModal(false);
     setIsLoading(true);
     try {
       const date = docSlots[slotIndex][0].datetime;
@@ -477,7 +485,9 @@ const Appointments = () => {
       const bookingPayload = {
         docId,
         slotDate,
-        slotTime
+        slotTime,
+        paymentMethod,
+        useWallet: forceUseWallet
       };
 
       if (appliedDoctorCoupon) {
@@ -497,9 +507,69 @@ const Appointments = () => {
       await new Promise(resolve => setTimeout(resolve, 1000));
 
       if (data.success) {
-        toast.success(data.message);
-        getdoctorsdata();
-        navigate('/my-appointments');
+        if (paymentMethod === 'Razorpay' && data.order) {
+          const options = {
+            key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+            amount: data.order.amount,
+            currency: data.order.currency,
+            name: "PawVaidya",
+            description: "Appointment Booking",
+            order_id: data.order.id,
+            theme: { color: "#c8860a" },
+            handler: async (response) => {
+              try {
+                const verifyRes = await axios.post(
+                  backendurl + '/api/user/verify-razorpay',
+                  {
+                    razorpay_order_id: response.razorpay_order_id,
+                    razorpay_payment_id: response.razorpay_payment_id,
+                    razorpay_signature: response.razorpay_signature,
+                    appointmentId: data.appointmentData._id
+                  },
+                  { headers: { token } }
+                );
+                if (verifyRes.data.success) {
+                  toast.success("Payment successful! Booking confirmed.");
+                  getdoctorsdata();
+                  navigate('/my-appointments');
+                } else {
+                  toast.error("Payment verification failed. Cancelling appointment...");
+                  await axios.post(
+                    backendurl + '/api/user/cancel-appointment',
+                    { appointmentId: data.appointmentData._id, isPaymentAbort: true },
+                    { headers: { token } }
+                  );
+                  getdoctorsdata();
+                  navigate('/my-appointments');
+                }
+              } catch (err) {
+                toast.error(err.message || "Failed verifying payment");
+              }
+            },
+            modal: {
+              ondismiss: async function () {
+                toast.error("Payment aborted! Cancelling the appointment...");
+                try {
+                  await axios.post(
+                    backendurl + '/api/user/cancel-appointment',
+                    { appointmentId: data.appointmentData._id, isPaymentAbort: true },
+                    { headers: { token } }
+                  );
+                } catch (err) {
+                  console.error("Cancellation error:", err);
+                }
+                getdoctorsdata();
+                navigate('/my-appointments');
+              }
+            }
+          };
+          const rzp = new window.Razorpay(options);
+          rzp.open();
+        } else {
+          toast.success(data.message);
+          getdoctorsdata();
+          navigate('/my-appointments');
+        }
       } else {
         toast.error(data.message);
       }
@@ -575,6 +645,16 @@ const Appointments = () => {
       fetchDoctorSchedule();
     }
   }, [doctors, docId, token]);
+
+  useEffect(() => {
+    if (!document.getElementById('razorpay-js')) {
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.id = 'razorpay-js';
+      script.async = true;
+      document.body.appendChild(script);
+    }
+  }, []);
 
   useEffect(() => {
     if (docInfo) {
@@ -1531,7 +1611,7 @@ const Appointments = () => {
                         boxShadow: '0 24px 48px rgba(200,134,10,0.45)'
                       } : {}}
                       whileTap={slotTime && docSlots[slotIndex]?.[0]?.datetime && (userdata && userdata.isFaceRegistered) ? { scale: 0.98 } : {}}
-                      onClick={bookappointment}
+                      onClick={triggerBooking}
                       disabled={!slotTime || !docSlots[slotIndex]?.[0]?.datetime || (userdata && !userdata.isFaceRegistered)}
                       className="relative w-full py-5 rounded-2xl font-extrabold text-lg flex items-center justify-center gap-3 overflow-hidden transition-all duration-300"
                       style={!slotTime || !docSlots[slotIndex]?.[0]?.datetime || (userdata && !userdata.isFaceRegistered)
@@ -1591,6 +1671,102 @@ const Appointments = () => {
           </div>{/* /p-8 */}
         </div>
       </motion.div>
+
+      {/* Payment Selection Modal */}
+      <AnimatePresence>
+        {showPaymentModal && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center px-4" style={{ backgroundColor: 'rgba(90,64,53,0.35)', backdropFilter: 'blur(6px)' }}>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="rounded-[30px] shadow-2xl p-6 sm:p-8 max-w-sm w-full"
+              style={{ background: 'rgba(237, 228, 216, 0.95)', border: '2px solid rgba(255,255,255,0.4)' }}
+            >
+              <div className="text-center mb-6">
+                <h3 className="text-2xl font-black tracking-tight" style={{ color: '#3d2b1f' }}>Confirm Payment</h3>
+                <p className="text-sm mt-1 font-medium" style={{ color: '#7a5a48' }}>How would you like to pay?</p>
+              </div>
+              <div className="flex flex-col gap-4">
+                {/* Wallet Toggle */}
+                {userdata && userdata.pawWallet > 0 && (
+                  <div
+                    className="p-4 rounded-2xl border-2 transition-all cursor-pointer"
+                    style={{
+                      borderColor: useWallet ? '#c8860a' : '#e8d5b0',
+                      background: useWallet ? 'rgba(200,134,10,0.05)' : 'white'
+                    }}
+                    onClick={() => setUseWallet(!useWallet)}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <motion.div
+                          animate={useWallet ? { rotate: [0, 15, 0] } : {}}
+                          className="p-1.5 rounded-lg bg-amber-100 text-amber-600"
+                        >
+                          <Shield className="w-4 h-4" />
+                        </motion.div>
+                        <span className="font-bold text-sm" style={{ color: '#3d2b1f' }}>Paw Wallet</span>
+                      </div>
+                      <div className={`w-10 h-5 rounded-full relative transition-colors duration-300 ${useWallet ? 'bg-[#c8860a]' : 'bg-gray-200'}`}>
+                        <motion.div
+                          animate={{ x: useWallet ? 20 : 2 }}
+                          className="absolute top-1 w-3 h-3 bg-white rounded-full shadow-sm"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-end">
+                      <p className="text-xs font-medium text-gray-500">Available: ₹{userdata.pawWallet}</p>
+                      {useWallet && (
+                        <p className="text-xs font-bold text-amber-600">
+                          -{userdata.pawWallet >= (appliedAdminCoupon || appliedDoctorCoupon ? (appliedAdminCoupon ? (appliedDoctorCoupon ? (docInfo.fees - appliedDoctorCoupon.discountAmount - appliedAdminCoupon.amount) : (docInfo.fees - appliedAdminCoupon.amount)) : (docInfo.fees - appliedDoctorCoupon.discountAmount)) : docInfo.fees) ? 'Full amount covered' : `₹${userdata.pawWallet} deducted`}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Main Action Buttons */}
+                {useWallet && userdata.pawWallet >= (appliedAdminCoupon || appliedDoctorCoupon ? (appliedAdminCoupon ? (appliedDoctorCoupon ? (docInfo.fees - appliedDoctorCoupon.discountAmount - appliedAdminCoupon.amount) : (docInfo.fees - appliedAdminCoupon.amount)) : (docInfo.fees - appliedDoctorCoupon.discountAmount)) : docInfo.fees) ? (
+                  <button
+                    onClick={() => bookappointment("Wallet", true)}
+                    className="w-full flex justify-center items-center gap-2 py-4 rounded-xl font-extrabold text-white transition-all shadow-lg active:scale-95"
+                    style={{ background: 'linear-gradient(135deg, #c8860a, #e8a020)' }}
+                  >
+                    Pay FULL Amount via Wallet
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => bookappointment("Razorpay")}
+                      className="w-full flex justify-center items-center gap-2 py-4 rounded-xl font-bold text-white transition-all hover:scale-[1.03]"
+                      style={{ background: 'linear-gradient(135deg, #10b981, #059669)', boxShadow: '0 8px 24px rgba(16,185,129,0.3)' }}
+                    >
+                      <Shield className="w-5 h-5" />
+                      {useWallet ? `Pay Remaining ₹${Math.max(0, (appliedAdminCoupon || appliedDoctorCoupon ? (appliedAdminCoupon ? (appliedDoctorCoupon ? (docInfo.fees - appliedDoctorCoupon.discountAmount - appliedAdminCoupon.amount) : (docInfo.fees - appliedAdminCoupon.amount)) : (docInfo.fees - appliedDoctorCoupon.discountAmount)) : docInfo.fees) - userdata.pawWallet)} Online` : "Pay Online Now"}
+                    </button>
+                    <button
+                      onClick={() => bookappointment("Cash")}
+                      className="w-full flex justify-center items-center gap-2 py-4 rounded-xl font-bold transition-all hover:scale-[1.03]"
+                      style={{ border: '2px solid #d4a76a', color: '#c8860a', background: 'rgba(255,255,255,0.7)' }}
+                    >
+                      <CheckCircle className="w-5 h-5" />
+                      {useWallet ? `Pay Remaining ₹${Math.max(0, (appliedAdminCoupon || appliedDoctorCoupon ? (appliedAdminCoupon ? (appliedDoctorCoupon ? (docInfo.fees - appliedDoctorCoupon.discountAmount - appliedAdminCoupon.amount) : (docInfo.fees - appliedAdminCoupon.amount)) : (docInfo.fees - appliedAdminCoupon.amount)) : docInfo.fees) - userdata.pawWallet)} at Clinic` : "Pay Cash at Clinic"}
+                    </button>
+                  </>
+                )}
+              </div>
+              <button
+                onClick={() => setShowPaymentModal(false)}
+                className="mt-6 w-full font-medium text-sm underline opacity-80 hover:opacity-100 transition-opacity"
+                style={{ color: '#7a5a48' }}
+              >
+                Cancel
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Related Doctors */}
       <motion.div

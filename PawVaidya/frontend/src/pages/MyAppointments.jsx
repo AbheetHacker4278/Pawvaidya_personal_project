@@ -389,11 +389,25 @@ const MyAppointments = () => {
                       {/* Action Buttons */}
                       {isUpcoming && (
                         <div className="flex flex-wrap gap-2">
-                          <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-                            className="inline-flex items-center gap-1.5 px-4 py-2 text-white text-xs font-semibold rounded-xl shadow-sm transition"
-                            style={{ background: BRAND.mid }}>
-                            <CheckCircle className="w-3.5 h-3.5" /> {t('appointments.payOnline')}
-                          </motion.button>
+                          {!item.payment && item.paymentMethod !== 'Cash' && (
+                            <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+                              onClick={() => toast.info('Order recovery for late payment is currently being integrated by Admin.')}
+                              className="inline-flex items-center gap-1.5 px-4 py-2 text-white text-xs font-semibold rounded-xl shadow-sm transition"
+                              style={{ background: BRAND.mid }}>
+                              <CheckCircle className="w-3.5 h-3.5" /> {t('appointments.payOnline')}
+                            </motion.button>
+                          )}
+
+                          {item.walletDeduction > 0 && (
+                            <div className="mt-2 p-2 rounded-lg bg-amber-50 border border-amber-200">
+                              <p className="text-[10px] font-bold text-amber-800 flex items-center gap-1">
+                                <Shield className="w-3 h-3" /> Wallet Payment: ₹{item.walletDeduction}
+                              </p>
+                              <p className="text-[10px] font-medium text-amber-600">
+                                Remaining {item.paymentMethod === 'Cash' ? 'to pay at clinic' : 'paid online'}: ₹{item.amount}
+                              </p>
+                            </div>
+                          )}
 
                           <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
                             onClick={() => setSelectedChat(item)}
@@ -463,20 +477,24 @@ const MyAppointments = () => {
       </AnimatePresence>
 
       {/* Report Modal */}
-      {reportAppointment && (
-        <ReportModal appointment={reportAppointment} onClose={() => setReportAppointment(null)} />
-      )}
+      {
+        reportAppointment && (
+          <ReportModal appointment={reportAppointment} onClose={() => setReportAppointment(null)} />
+        )
+      }
 
       {/* Rating Modal */}
-      {ratingAppointment && (
-        <RatingModal
-          appointment={ratingAppointment}
-          onClose={() => setRatingAppointment(null)}
-          onSuccess={getUserAppointments}
-          backendurl={backendurl}
-          token={token}
-        />
-      )}
+      {
+        ratingAppointment && (
+          <RatingModal
+            appointment={ratingAppointment}
+            onClose={() => setRatingAppointment(null)}
+            onSuccess={getUserAppointments}
+            backendurl={backendurl}
+            token={token}
+          />
+        )
+      }
 
       {/* Scroll Buttons */}
       <div className="fixed bottom-6 left-6 flex flex-col gap-3 z-50">
@@ -501,7 +519,7 @@ const MyAppointments = () => {
           <ChevronDown className="w-6 h-6" />
         </motion.button>
       </div>
-    </div>
+    </div >
   )
 }
 

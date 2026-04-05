@@ -1,6 +1,6 @@
 import express from 'express';
 
-import { registeruser, loginUser, getprofile, updateprofile, bookappointment, listAppointment, cancelAppointment, sendVerifyOtp, verifyEmail, isAuthenticated, sendResetOtp, resetpassword, getuserdata, logout, getUserMessages, markMessageAsRead, getUserById, updateUserLocation, validateDiscount, rateDoctor, requestAccountDeletion, registerFace, loginFace } from '../controllers/userController.js';
+import { registeruser, loginUser, getprofile, updateprofile, bookappointment, verifyRazorpay, listAppointment, cancelAppointment, sendVerifyOtp, verifyEmail, isAuthenticated, sendResetOtp, resetpassword, getuserdata, logout, getUserMessages, markMessageAsRead, getUserById, updateUserLocation, validateDiscount, rateDoctor, requestAccountDeletion, registerFace, loginFace } from '../controllers/userController.js';
 import { validateAdminCoupon, getActiveAdminCoupons } from '../controllers/couponController.js';
 import { getNearbyDoctors } from '../controllers/doctorController.js';
 import { createBlog, getAllBlogs, getBlogById, updateBlog, deleteBlog, toggleLike, addComment, deleteComment, getUserBlogs } from '../controllers/blogController.js';
@@ -18,6 +18,7 @@ userRouter.post('/logout', logout)
 userRouter.get('/get-profile', authuser, getprofile)
 userRouter.post('/update-profile', upload.single('image'), authuser, securityMonitor, updateprofile)
 userRouter.post('/book-appointment', authuser, bookappointment)
+userRouter.post('/verify-razorpay', authuser, verifyRazorpay)
 userRouter.get("/appointments", authuser, listAppointment)
 userRouter.post("/cancel-appointment", authuser, cancelAppointment)
 userRouter.post("/send-verify-otp", authuser, sendVerifyOtp)

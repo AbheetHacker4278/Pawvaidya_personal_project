@@ -574,6 +574,15 @@ export const appointmentCancel = async (req, res) => {
         await doctorModel.findByIdAndUpdate(docId, { slots_booked });
         await appointmentModel.findByIdAndUpdate(appointmentId, { cancelled: true });
 
+        // Refund to Paw Wallet if paid
+        let refundMessage = '';
+        if (appointmentData.payment) {
+            await userModel.findByIdAndUpdate(appointmentData.userId, {
+                $inc: { pawWallet: appointmentData.amount }
+            });
+            refundMessage = `<p><strong>Refund Notice:</strong> An amount of ₹${appointmentData.amount} has been refunded to your Paw Wallet.</p>`;
+        }
+
         // Restore coupon usage if applied
         if (appointmentData.discountApplied && appointmentData.discountApplied.code) {
             await doctorModel.findOneAndUpdate(
@@ -682,6 +691,7 @@ export const appointmentCancel = async (req, res) => {
         <div class="apology-note">
             <p>We sincerely apologize for any inconvenience this may cause. Dr. ${doctorData.name} had to make this difficult decision to ensure the quality of care for all patients.</p>
         </div>
+        ${refundMessage}
 
         <div class="rebook-info">
             <p><strong>Next Steps:</strong></p>

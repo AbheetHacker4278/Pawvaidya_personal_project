@@ -7,7 +7,7 @@ import { toast } from 'react-toastify';
 import axios from 'axios';
 import LanguageSwitcher from './LanguageSwitcher';
 import LocationRefreshButton from './LocationRefreshButton';
-import { MapPin, Bell, User, Calendar, LogOut, ChevronDown, X, Menu, AlertCircle, AlertTriangle } from 'lucide-react';
+import { MapPin, Bell, User, Calendar, LogOut, ChevronDown, X, Menu, AlertCircle, AlertTriangle, Wallet } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // ─── Brand palette ────────────────────────────────────────────────────────────
@@ -323,6 +323,7 @@ const Navbar = () => {
                       {[
                         { icon: <User className="w-[18px] h-[18px]" />, label: t('navbar.myProfile'), action: () => { navigate('/my-profile'); setIsDropdownOpen(false); } },
                         { icon: <Calendar className="w-[18px] h-[18px]" />, label: t('navbar.myAppointments'), action: () => { navigate('/my-appointments'); setIsDropdownOpen(false); } },
+                        { icon: <Wallet className="w-[18px] h-[18px]" />, label: 'Paw Wallet', action: () => { navigate('/paw-wallet'); setIsDropdownOpen(false); } },
                         { icon: <Bell className="w-[18px] h-[18px]" />, label: t('navbar.notifications'), badge: unreadMessages, action: () => { navigate('/messages'); setIsDropdownOpen(false); } },
                         { icon: <AlertCircle className="w-[18px] h-[18px]" />, label: t('navbar.reportIssue'), action: () => { navigate('/report-issue'); setIsDropdownOpen(false); } },
                       ].map(({ icon, label, badge, action }) => (
@@ -519,6 +520,22 @@ const Navbar = () => {
                             {unreadMessages > 9 ? '9+' : unreadMessages}
                           </span>
                         )}
+                      </div>
+                    </NavLink>
+                  </motion.div>
+                )}
+
+                {/* Paw Wallet link */}
+                {token && userdata && (
+                  <motion.div
+                    initial={{ opacity: 0, x: 30 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: (NAV_LINKS.length + 1) * 0.08 + 0.1, type: "spring", stiffness: 200, damping: 20 }}
+                  >
+                    <NavLink onClick={() => setShowMenu(false)} to="/paw-wallet" className="w-full block">
+                      <div className="px-5 py-3.5 rounded-2xl font-medium text-[15px] flex items-center justify-between transition-all duration-300"
+                        style={{ color: B.dark, borderLeft: '4px solid transparent' }}>
+                        <span>Paw Wallet</span>
                       </div>
                     </NavLink>
                   </motion.div>

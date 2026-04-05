@@ -1155,6 +1155,13 @@ export const Appointmentcancel = async (req, res) => {
 
         await appointmentModel.findByIdAndUpdate(appointmentId, { cancelled: true })
 
+        // Refund to Paw Wallet if paid
+        if (appointmentData.payment) {
+            await userModel.findByIdAndUpdate(appointmentData.userId, {
+                $inc: { pawWallet: appointmentData.amount }
+            });
+        }
+
         // releasing doctor slot 
         const { docId, slotDate, slotTime } = appointmentData
 

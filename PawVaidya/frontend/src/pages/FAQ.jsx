@@ -105,7 +105,8 @@ const FAQ = () => {
             onChange={e => setSearchQuery(e.target.value)}
             className="w-full pl-12 pr-4 py-3.5 rounded-2xl text-sm outline-none transition-all"
             style={{
-              background: '#fff',
+              background: 'rgba(237, 228, 216, 0.85)',
+              backdropFilter: 'blur(16px)',
               border: `2px solid ${B.sand}`,
               color: B.dark,
               boxShadow: '0 2px 12px rgba(90,64,53,0.08)',
@@ -130,7 +131,7 @@ const FAQ = () => {
               className="px-5 py-2.5 rounded-full font-semibold text-sm transition-all shadow-sm"
               style={activeCategory === cat.id
                 ? { background: `linear-gradient(135deg, ${B.mid}, ${B.light})`, color: '#fff', boxShadow: `0 4px 14px ${B.mid}55` }
-                : { background: '#fff', color: B.mid, border: `1.5px solid ${B.sand}` }
+                : { background: 'rgba(237, 228, 216, 0.85)', backdropFilter: 'blur(16px)', color: B.mid, border: `1.5px solid ${B.sand}` }
               }
             >
               <span className="mr-1.5">{cat.icon}</span>
@@ -151,7 +152,8 @@ const FAQ = () => {
                 transition={{ delay: 0.5 + index * 0.04 }}
                 className="rounded-2xl overflow-hidden border transition-shadow"
                 style={{
-                  background: '#fff',
+                  background: 'rgba(237, 228, 216, 0.85)',
+                  backdropFilter: 'blur(16px)',
                   borderColor: openFAQ === index ? B.mid : B.sand,
                   boxShadow: openFAQ === index
                     ? `0 4px 20px rgba(90,64,53,0.12)`

@@ -22,6 +22,7 @@ const userSchema = new mongoose.Schema({
     verifyOtpVerified: { type: Number, default: false },
     resetOtp: { type: Number, default: '' },
     resetOtpExpireAt: { type: Number, default: 0 },
+    pawWallet: { type: Number, default: 0 },
     // Login/Logout tracking
     lastLogin: { type: Date, default: null },
     lastLogout: { type: Date, default: null },

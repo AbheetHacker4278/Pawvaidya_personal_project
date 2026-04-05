@@ -34,6 +34,7 @@ import MaintenanceMode from './components/MaintenanceMode'
 import LocationHandler from './components/LocationHandler'
 import { AppContext } from './context/AppContext'
 import { useContext } from 'react'
+import PawWallet from './pages/PawWallet'
 
 const App = () => {
   const location = useLocation();
@@ -90,6 +91,7 @@ const App = () => {
         <Route path='/my-pets' element={<MyPets />} />
         <Route path='/report-issue' element={<ReportIssue />} />
         <Route path='/polls' element={<Polls />} />
+        <Route path='/paw-wallet' element={<PawWallet />} />
       </Routes>
 
       {location.pathname != "/login-form" && location.pathname != "/login" && <Footer />}

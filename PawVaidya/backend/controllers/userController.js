@@ -1,6 +1,12 @@
 import validator from 'validator';
 import argon2 from 'argon2';
 import userModel from '../models/userModel.js';
+import Razorpay from 'razorpay';
+
+const razorpayInstance = new Razorpay({
+    key_id: process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET,
+});
 import doctorModel from '../models/doctorModel.js';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto'
@@ -236,7 +242,8 @@ export const loginUser = async (req, res) => {
                 district: user.district,
                 isAccountverified: user.isAccountverified || false,
                 isFaceRegistered: user.isFaceRegistered || false,
-                faceImage: user.faceImage || ''
+                faceImage: user.faceImage || '',
+                pawWallet: user.pawWallet || 0
             }
 
             res.json({
@@ -544,7 +551,8 @@ export const getprofile = async (req, res) => {
             banReason: userdata.banReason || '',
             unbanRequestAttempts: userdata.unbanRequestAttempts || 0,
             isFaceRegistered: userdata.isFaceRegistered || false,
-            faceImage: userdata.faceImage || ''
+            faceImage: userdata.faceImage || '',
+            pawWallet: userdata.pawWallet || 0
         }
 
         res.json({
@@ -668,7 +676,8 @@ export const updateprofile = async (req, res) => {
             image: updatedUser.image,
             isAccountverified: updatedUser.isAccountverified,
             isFaceRegistered: updatedUser.isFaceRegistered || false,
-            faceImage: updatedUser.faceImage || ''
+            faceImage: updatedUser.faceImage || '',
+            pawWallet: updatedUser.pawWallet || 0
         }
 
         res.json({
@@ -686,7 +695,7 @@ export const updateprofile = async (req, res) => {
 
 export const bookappointment = async (req, res) => {
     try {
-        const { userId, docId, slotDate, slotTime, discountCode, adminCouponCode } = req.body;
+        const { userId, docId, slotDate, slotTime, discountCode, adminCouponCode, paymentMethod, useWallet } = req.body;
         const meetLink = "https://meet.google.com/qfv-rcwa-sec";
 
 
@@ -854,6 +863,34 @@ export const bookappointment = async (req, res) => {
         }
         // ──────────────────────────────────────────────────────────────────
 
+        let walletDeduction = 0;
+        let finalPaymentMethod = paymentMethod || 'Cash';
+        let payment = false;
+
+        // Wallet Deduction Logic
+        if (useWallet && userData.pawWallet > 0) {
+            if (userData.pawWallet >= finalFee) {
+                // Wallet covers full final fee
+                walletDeduction = finalFee;
+                finalFee = 0;
+                finalPaymentMethod = 'Wallet';
+                payment = true; // Fully paid
+
+                await userModel.findByIdAndUpdate(userId, {
+                    $inc: { pawWallet: -walletDeduction }
+                });
+            } else {
+                // Wallet partially covers fee
+                walletDeduction = userData.pawWallet;
+                finalFee -= walletDeduction;
+                // paymentMethod remains whatever user selected (Razorpay/Cash) for remaining
+
+                await userModel.findByIdAndUpdate(userId, {
+                    pawWallet: 0
+                });
+            }
+        }
+
         // Prepare appointment data
         const appointmentData = {
             userId,
@@ -866,9 +903,11 @@ export const bookappointment = async (req, res) => {
             meetLink, // Add the meet link to the appointment data
             date: new Date(),
             ...(appliedDiscount && { discountApplied: appliedDiscount }),
-            ...(adminDiscountData && { adminDiscountApplied: adminDiscountData })
+            ...(adminDiscountData && { adminDiscountData: adminDiscountData }),
+            paymentMethod: finalPaymentMethod,
+            walletDeduction,
+            payment
         };
-
 
         // Save appointment
         const newAppointment = new appointmentModel(appointmentData);
@@ -1115,38 +1154,6 @@ export const bookappointment = async (req, res) => {
 </body>
 </html>`;
 
-        // Send emails with robust error handling
-        try {
-            const userMailOptions = {
-                from: process.env.SENDER_EMAIL,
-                to: userData.email,
-                subject: 'Appointment Confirmation',
-                html: appointmentConfirmationHTML
-            };
-            await transporter.sendMail(userMailOptions);
-            console.log('User confirmation email sent successfully');
-        } catch (emailError) {
-            console.warn('Failed to send user confirmation email:', emailError.message);
-            // Non-fatal - continue with booking success
-        }
-
-        try {
-            const doctorMailOptions = {
-                from: process.env.SENDER_EMAIL,
-                to: docData.email,
-                subject: 'New Appointment Booked',
-                html: doctorNotificationHTML
-            };
-            await transporter.sendMail(doctorMailOptions);
-            console.log('Doctor notification email sent successfully');
-        } catch (emailError) {
-            console.warn('Failed to send doctor notification email:', emailError.message);
-            // Non-fatal - continue with booking success
-        }
-
-        // Update doctor's booked slots
-        await doctorModel.findByIdAndUpdate(docId, { slots_booked });
-
         // Cache invalidation - only if function exists
         try {
             if (typeof invalidatePrefix === 'function') {
@@ -1154,18 +1161,98 @@ export const bookappointment = async (req, res) => {
             }
         } catch (cacheError) {
             console.warn('Cache invalidation failed:', cacheError.message);
-            // Non-fatal error - continue with success response
+            // Non-fatal error
         }
 
-        res.status(200).json({
-            success: true,
-            message: 'Appointment booked successfully',
-            appointmentData: newAppointment
-        });
+        // Update doctor's booked slots (reserve slot tentatively)
+        await doctorModel.findByIdAndUpdate(docId, { slots_booked });
+
+        if (finalPaymentMethod === 'Wallet') {
+            // Already handled deduction and marked payment=true
+            try {
+                const userMailOptions = { from: process.env.SENDER_EMAIL, to: userData.email, subject: 'Appointment Confirmation', html: appointmentConfirmationHTML };
+                await transporter.sendMail(userMailOptions);
+            } catch (e) { console.warn(e.message); }
+
+            try {
+                const doctorMailOptions = { from: process.env.SENDER_EMAIL, to: docData.email, subject: 'New Appointment Booked', html: doctorNotificationHTML };
+                await transporter.sendMail(doctorMailOptions);
+            } catch (e) { console.warn(e.message); }
+
+            return res.status(200).json({
+                success: true,
+                message: 'Appointment booked via Wallet successfully',
+                appointmentData: newAppointment
+            });
+        }
+
+        if (finalPaymentMethod === 'Razorpay' && finalFee > 0) {
+            // Do not send emails yet, generate Razorpay order
+            const options = {
+                amount: finalFee * 100, // in paisa
+                currency: "INR",
+                receipt: newAppointment._id.toString()
+            };
+            try {
+                const order = await razorpayInstance.orders.create(options);
+                return res.status(200).json({
+                    success: true,
+                    message: 'Proceed to payment',
+                    order,
+                    appointmentData: newAppointment
+                });
+            } catch (rzpErr) {
+                console.error("Razorpay order creation error:", rzpErr);
+                return res.status(500).json({ success: false, message: 'Failed to create payment order' });
+            }
+        } else {
+            // Cash or finalFee == 0
+            try {
+                const userMailOptions = { from: process.env.SENDER_EMAIL, to: userData.email, subject: 'Appointment Confirmation', html: appointmentConfirmationHTML };
+                await transporter.sendMail(userMailOptions);
+            } catch (e) { console.warn(e.message); }
+
+            try {
+                const doctorMailOptions = { from: process.env.SENDER_EMAIL, to: docData.email, subject: 'New Appointment Booked', html: doctorNotificationHTML };
+                await transporter.sendMail(doctorMailOptions);
+            } catch (e) { console.warn(e.message); }
+
+            return res.status(200).json({
+                success: true,
+                message: 'Appointment booked successfully',
+                appointmentData: newAppointment
+            });
+        }
 
     } catch (error) {
         console.error(error);
         res.status(500).json({ success: false, message: 'Internal server error', error: error.message });
+    }
+};
+
+export const verifyRazorpay = async (req, res) => {
+    try {
+        const { razorpay_order_id, razorpay_payment_id, razorpay_signature, appointmentId } = req.body;
+
+        const sign = razorpay_order_id + "|" + razorpay_payment_id;
+        const expectedSign = crypto.createHmac("sha256", process.env.RAZORPAY_KEY_SECRET || '0WmHsukHu6ycRC6U0zKh3tIy')
+            .update(sign.toString())
+            .digest("hex");
+
+        if (razorpay_signature === expectedSign) {
+            const appointment = await appointmentModel.findById(appointmentId);
+            if (!appointment) return res.status(404).json({ success: false, message: 'Appointment not found' });
+
+            appointment.payment = true;
+            await appointment.save();
+
+            res.json({ success: true, message: 'Payment successful, appointment confirmed' });
+        } else {
+            res.status(400).json({ success: false, message: 'Invalid signature' });
+        }
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: error.message });
     }
 };
 
@@ -1184,7 +1271,7 @@ export const listAppointment = async (req, res) => {
 
 export const cancelAppointment = async (req, res) => {
     try {
-        const { userId, appointmentId } = req.body;
+        const { userId, appointmentId, isPaymentAbort } = req.body;
         const appointmentData = await appointmentModel.findById(appointmentId);
 
         // Verify appointment user 
@@ -1193,6 +1280,13 @@ export const cancelAppointment = async (req, res) => {
         }
 
         await appointmentModel.findByIdAndUpdate(appointmentId, { cancelled: true });
+
+        // Handle wallet refund for payment abort
+        if (isPaymentAbort && appointmentData.walletDeduction > 0) {
+            await userModel.findByIdAndUpdate(userId, {
+                $inc: { pawWallet: appointmentData.walletDeduction }
+            });
+        }
 
         // Releasing doctor slot 
         const { docId, slotDate, slotTime } = appointmentData;
@@ -1372,7 +1466,8 @@ export const getuserdata = async (req, res) => {
                 email: user.email,
                 isAccountverified: user.isAccountverified,
                 isFaceRegistered: user.isFaceRegistered || false,
-                faceImage: user.faceImage || ''
+                faceImage: user.faceImage || '',
+                pawWallet: user.pawWallet || 0
             }
         })
     } catch (error) {

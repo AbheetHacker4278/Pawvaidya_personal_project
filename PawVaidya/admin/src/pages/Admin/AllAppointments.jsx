@@ -101,11 +101,10 @@ const AllAppointments = () => {
           {Object.entries(regionCounts).map(([region, count]) => (
             <div
               key={region}
-              className={`p-3 rounded-lg text-center transition-colors ${
-                selectedRegion === region
-                  ? 'bg-green-100 border-2 border-green-400'
-                  : 'bg-gray-50 border border-gray-200 hover:bg-gray-100'
-              }`}
+              className={`p-3 rounded-lg text-center transition-colors ${selectedRegion === region
+                ? 'bg-green-100 border-2 border-green-400'
+                : 'bg-gray-50 border border-gray-200 hover:bg-gray-100'
+                }`}
             >
               <p className="text-xs font-medium text-gray-600 truncate">{region}</p>
               <p className="text-lg font-bold text-gray-800">{count}</p>
@@ -122,115 +121,125 @@ const AllAppointments = () => {
               key={index}
               className="bg-white border border-gray-200 rounded-xl p-4 md:p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:border-green-300"
             >
-            {/* Pet Owner Info */}
-            <div className="flex items-center gap-3 mb-4">
-              <img
-                src={item.userData.image}
-                alt={item.userData.name}
-                className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-gray-100 object-cover border-2 border-white shadow-sm"
-                onError={(e) => {
-                  e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHZpZXdCb3g9IjAgMCA0OCA0OCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4IiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0yNCA0QzI5LjUyMjggNCAzNCA4LjQ3NzE1IDM0IDE0QzM0IDE5LjUyMjggMjkuNTIyOCAyNCAyNCAyNEMxOC40NzcyIDI0IDE0IDE5LjUyMjggMTQgMTRDMTQgOC40NzcxNSAxOC40NzcyIDQgMjQgNFoiIGZpbGw9IiM4ODhDNjFBIi8+CjxwYXRoIGQ9Ik0xMC45MDkyIDM0LjkwNThDMTEuNjU2MiAzNC4zOTY3IDEyLjU1MjIgMzQuMTMzMyAxMy40NzE3IDM0LjEzMzNIMzQuNTI4M0M1NS40NDc4IDM0LjEzMzMgMzYuMzQzOCAzNC4zOTY3IDM3LjA5MDggMzQuOTA1OEMzOS4yNzUgMzYuMzMzMyAzNi42NjY3IDQ0IDI0IDQ0QzExLjMzMzMgNDQgOC43MjUgMzYuMzMzMyAxMC45MDkyIDM0LjkwNThaIiBmaWxsPSIjODg4QzYxQSIvPgo8L3N2Zz4K';
-                }}
-              />
-              <div className="flex-1 min-w-0">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
-                  <h3 className="text-base font-semibold text-gray-800 truncate">{item.userData.name}</h3>
-                  <span className="text-xs px-2 py-1 bg-green-100 text-green-800 rounded-full font-medium whitespace-nowrap">
-                    Pet Owner
-                  </span>
-                </div>
-                <p className="text-sm text-gray-600 mt-1">{item.userData.pet_type}</p>
-              </div>
-            </div>
-
-            {/* Appointment Details Grid */}
-            <div className="grid grid-cols-2 gap-3 mb-4">
-              <div className="bg-gray-50 rounded-lg p-2">
-                <p className="text-xs text-gray-500 font-medium">Category</p>
-                <p className="text-sm font-medium text-gray-800">{item.userData.category || 'N/A'}</p>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-2">
-                <p className="text-xs text-gray-500 font-medium">Breed</p>
-                <p className="text-sm font-medium text-gray-800">{item.userData.breed || 'N/A'}</p>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-2">
-                <p className="text-xs text-gray-500 font-medium">Age</p>
-                <p className="text-sm font-medium text-gray-800">{item.userData.pet_age || 'N/A'}</p>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-2">
-                <p className="text-xs text-gray-500 font-medium">Time</p>
-                <p className="text-sm font-medium text-gray-800">{item.slotTime}</p>
-              </div>
-            </div>
-
-            {/* Booking Date */}
-            <div className="bg-blue-50 rounded-lg p-3 mb-4">
-              <p className="text-xs text-blue-600 font-medium">Appointment Date</p>
-              <p className="text-sm font-semibold text-blue-800">{slotDateFormat(item.slotDate)}</p>
-            </div>
-
-            {/* Doctor Info */}
-            <div className="border-t border-gray-100 pt-4 mb-4">
-              <p className="text-xs font-medium text-gray-500 mb-3">DOCTOR INFORMATION</p>
-              <div className="flex items-center gap-3">
+              {/* Pet Owner Info */}
+              <div className="flex items-center gap-3 mb-4">
                 <img
-                  src={item.docData.image}
-                  alt={item.docData.name}
-                  className="w-10 h-10 rounded-full bg-gray-100 object-cover border-2 border-white"
+                  src={item.userData.image}
+                  alt={item.userData.name}
+                  className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-gray-100 object-cover border-2 border-white shadow-sm"
                   onError={(e) => {
-                    e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0yMCAxMEMyNC40MTgzIDEwIDI4IDEzLjU4MTcgMjggMThDMjggMjIuNDE4MyAyNC40MTgzIDI2IDIwIDI2QzE1LjU4MTcgMjYgMTIgMjIuNDE4MyAxMiAxOEMxMiAxMy41ODE3IDE1LjU4MTcgMTAgMjAgMTBaIiBmaWxsPSIjODg4QzYxQSIvPgo8cGF0aCBkPSJNOS4wOTEgMjkuMDg4QzkuNzEzMyAyOC42NjM5IDEwLjQ2IDI4LjQ0NDQgMTEuMjI5NyAyOC40NDQ0SDI4Ljc3MDNDMjkuNTQgMjguNDQ0NCAzMC4yODY3IDI4LjY2MzkgMzAuOTA5IDI5LjA4OEMzMi43MjkgMzAuMjc3OCAzMC41NTU2IDM2LjY2NjcgMjAgMzYuNjY2N0M5LjQ0NDQgMzYuNjY2NyA3LjI3MSAzMC4yNzc4IDkuMDkxIDI5LjA4OFoiIGZpbGw9IiM4ODhDNjFBIi8+Cjwvc3ZnPgo=';
+                    e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHZpZXdCb3g9IjAgMCA0OCA0OCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4IiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0yNCA0QzI5LjUyMjggNCAzNCA4LjQ3NzE1IDM0IDE0QzM0IDE5LjUyMjggMjkuNTIyOCAyNCAyNCAyNEMxOC40NzcyIDI0IDE0IDE5LjUyMjggMTQgMTRDMTQgOC40NzcxNSAxOC40NzcyIDQgMjQgNFoiIGZpbGw9IiM4ODhDNjFBIi8+CjxwYXRoIGQ9Ik0xMC45MDkyIDM0LjkwNThDMTEuNjU2MiAzNC4zOTY3IDEyLjU1MjIgMzQuMTMzMyAxMy40NzE3IDM0LjEzMzNIMzQuNTI4M0M1NS40NDc4IDM0LjEzMzMgMzYuMzQzOCAzNC4zOTY3IDM3LjA5MDggMzQuOTA1OEMzOS4yNzUgMzYuMzMzMyAzNi42NjY3IDQ0IDI0IDQ0QzExLjMzMzMgNDQgOC43MjUgMzYuMzMzMyAxMC45MDkyIDM0LjkwNThaIiBmaWxsPSIjODg4QzYxQSIvPgo8L3N2Zz4K';
                   }}
                 />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-800 truncate">{item.docData.name}</p>
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    <span className="text-xs px-2 py-1 bg-green-100 text-green-800 rounded-full">
-                      {item.docData.address?.Location || 'Unknown'}
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
+                    <h3 className="text-base font-semibold text-gray-800 truncate">{item.userData.name}</h3>
+                    <span className="text-xs px-2 py-1 bg-green-100 text-green-800 rounded-full font-medium whitespace-nowrap">
+                      Pet Owner
                     </span>
-                    <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded-full">
-                      {item.docData.address?.line || 'N/A'}
-                    </span>
+                  </div>
+                  <p className="text-sm text-gray-600 mt-1">{item.userData.pet_type}</p>
+                </div>
+              </div>
+
+              {/* Appointment Details Grid */}
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                <div className="bg-gray-50 rounded-lg p-2">
+                  <p className="text-xs text-gray-500 font-medium">Category</p>
+                  <p className="text-sm font-medium text-gray-800">{item.userData.category || 'N/A'}</p>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-2">
+                  <p className="text-xs text-gray-500 font-medium">Breed</p>
+                  <p className="text-sm font-medium text-gray-800">{item.userData.breed || 'N/A'}</p>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-2">
+                  <p className="text-xs text-gray-500 font-medium">Age</p>
+                  <p className="text-sm font-medium text-gray-800">{item.userData.pet_age || 'N/A'}</p>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-2">
+                  <p className="text-xs text-gray-500 font-medium">Time</p>
+                  <p className="text-sm font-medium text-gray-800">{item.slotTime}</p>
+                </div>
+              </div>
+
+              {/* Booking Date */}
+              <div className="bg-blue-50 rounded-lg p-3 mb-4">
+                <p className="text-xs text-blue-600 font-medium">Appointment Date</p>
+                <p className="text-sm font-semibold text-blue-800">{slotDateFormat(item.slotDate)}</p>
+              </div>
+
+              {/* Doctor Info */}
+              <div className="border-t border-gray-100 pt-4 mb-4">
+                <p className="text-xs font-medium text-gray-500 mb-3">DOCTOR INFORMATION</p>
+                <div className="flex items-center gap-3">
+                  <img
+                    src={item.docData.image}
+                    alt={item.docData.name}
+                    className="w-10 h-10 rounded-full bg-gray-100 object-cover border-2 border-white"
+                    onError={(e) => {
+                      e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0yMCAxMEMyNC40MTgzIDEwIDI4IDEzLjU4MTcgMjggMThDMjggMjIuNDE4MyAyNC40MTgzIDI2IDIwIDI2QzE1LjU4MTcgMjYgMTIgMjIuNDE4MyAxMiAxOEMxMiAxMy41ODE3IDE1LjU4MTcgMTAgMjAgMTBaIiBmaWxsPSIjODg4QzYxQSIvPgo8cGF0aCBkPSJNOS4wOTEgMjkuMDg4QzkuNzEzMyAyOC42NjM5IDEwLjQ2IDI4LjQ0NDQgMTEuMjI5NyAyOC40NDQ0SDI4Ljc3MDNDMjkuNTQgMjguNDQ0NCAzMC4yODY3IDI4LjY2MzkgMzAuOTA5IDI5LjA4OEMzMi43MjkgMzAuMjc3OCAzMC41NTU2IDM2LjY2NjcgMjAgMzYuNjY2N0M5LjQ0NDQgMzYuNjY2NyA3LjI3MSAzMC4yNzc4IDkuMDkxIDI5LjA4OFoiIGZpbGw9IiM4ODhDNjFBIi8+Cjwvc3ZnPgo=';
+                    }}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-800 truncate">{item.docData.name}</p>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      <span className="text-xs px-2 py-1 bg-green-100 text-green-800 rounded-full">
+                        {item.docData.address?.Location || 'Unknown'}
+                      </span>
+                      <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded-full">
+                        {item.docData.address?.line || 'N/A'}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* Fee and Status */}
-            <div className="flex items-center justify-between">
-              <div className="flex flex-col">
-                <p className="text-xs text-gray-500">Consultation Fee</p>
-                <p className="text-lg font-bold text-gray-800">₹{item.amount}</p>
-              </div>
-              
-              <div className="flex flex-col items-end">
-                {item.cancelled ? (
-                  <span className="px-3 py-1 bg-red-100 text-red-800 text-xs font-medium rounded-full">
-                    Cancelled
+              {/* Fee and Status */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <div>
+                    <p className="text-xs text-gray-500">Consultation Fee</p>
+                    <p className="text-lg font-bold text-gray-800">₹{item.amount}</p>
+                  </div>
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${item.payment ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : (item.paymentMethod === 'Razorpay' ? 'bg-orange-50 text-orange-700 border-orange-200' : (item.paymentMethod === 'Wallet' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-blue-50 text-blue-700 border-blue-200'))}`}>
+                    {item.payment ? 'Paid Online' : (item.paymentMethod === 'Razorpay' ? 'Unpaid Online' : (item.paymentMethod === 'Wallet' ? 'Paid via Wallet' : 'Cash'))}
                   </span>
-                ) : item.isCompleted ? (
-                  <span className="px-3 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
-                    Completed
-                  </span>
-                ) : (
-                  <button
-                    onClick={() => cancelappointment(item._id)}
-                    className="px-3 py-2 bg-red-500 hover:bg-red-600 text-white text-xs font-medium rounded-lg transition-colors duration-200 flex items-center gap-1"
-                  >
-                    <span>❌</span>
-                    Cancel
-                  </button>
-                )}
-                <p className="text-xs text-gray-400 mt-1">ID: {item._id?.slice(-6)}</p>
+                  {item.walletDeduction > 0 && (
+                    <p className="text-[10px] font-black text-amber-600 mt-1 uppercase tracking-tighter">
+                      Wallet: -₹{item.walletDeduction} | Rem: ₹{item.amount}
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex flex-col items-end">
+                  {item.cancelled ? (
+                    <span className="px-3 py-1 bg-red-100 text-red-800 text-xs font-medium rounded-full">
+                      Cancelled
+                    </span>
+                  ) : item.isCompleted ? (
+                    <span className="px-3 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
+                      Completed
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => cancelappointment(item._id)}
+                      className="px-3 py-2 bg-red-500 hover:bg-red-600 text-white text-xs font-medium rounded-lg transition-colors duration-200 flex items-center gap-1"
+                    >
+                      <span>❌</span>
+                      Cancel
+                    </button>
+                  )}
+                  <p className="text-xs text-gray-400 mt-1">ID: {item._id?.slice(-6)}</p>
+                </div>
               </div>
             </div>
-          </div>
-        ))
+          ))
         ) : (
           <div className="col-span-full text-center py-12">
             <div className="text-6xl mb-4">📋</div>
             <h3 className="text-xl font-semibold text-gray-700 mb-2">No appointments found</h3>
             <p className="text-gray-500">
-              {searchText || selectedRegion 
+              {searchText || selectedRegion
                 ? 'Try adjusting your search criteria'
                 : 'No appointments have been scheduled yet'
               }
@@ -238,7 +247,7 @@ const AllAppointments = () => {
           </div>
         )}
       </div>
-    </div>
+    </div >
   );
 };
 

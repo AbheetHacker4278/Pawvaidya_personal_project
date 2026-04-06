@@ -1199,6 +1199,7 @@ export const bookappointment = async (req, res) => {
                     success: true,
                     message: 'Proceed to payment',
                     order,
+                    razorpayKeyId: process.env.RAZORPAY_KEY_ID,
                     appointmentData: newAppointment
                 });
             } catch (rzpErr) {

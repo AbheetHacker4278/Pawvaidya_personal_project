@@ -509,7 +509,7 @@ const Appointments = () => {
       if (data.success) {
         if (paymentMethod === 'Razorpay' && data.order) {
           const options = {
-            key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+            key: data.razorpayKeyId || import.meta.env.VITE_RAZORPAY_KEY_ID,
             amount: data.order.amount,
             currency: data.order.currency,
             name: "PawVaidya",

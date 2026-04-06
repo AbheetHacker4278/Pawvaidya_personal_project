@@ -200,7 +200,7 @@ const AnimalHealthChatbot = () => {
   };
 
   return (
-    <div className="fixed bottom-5 right-5 z-[9999] flex flex-col items-end gap-3">
+    <div className="fixed bottom-28 md:bottom-5 right-5 z-[9999] flex flex-col items-end gap-3">
 
       {/* ── Popup teaser ──────────────────────────────────────────────────── */}
       <AnimatePresence>

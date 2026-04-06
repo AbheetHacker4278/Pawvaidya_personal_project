@@ -9,6 +9,7 @@ import MyProfile from './pages/MyProfile'
 import MyAppointments from './pages/MyAppointments'
 import Appointments from './pages/Appointments'
 import Navbar from './components/Navbar'
+import MobileBottomNavbar from './components/MobileBottomNavbar'
 import Footer from './components/Footer'
 import QuickChat from './pages/QuickChat'
 import FAQ from './pages/FAQ'
@@ -50,6 +51,7 @@ const App = () => {
       )}
       <LocationHandler />
       {location.pathname != "/login-form" && location.pathname != "/login" && <Navbar />}
+      {location.pathname != "/login-form" && location.pathname != "/login" && <MobileBottomNavbar />}
       <ToastContainer
         position="top-right"
         autoClose={3500}

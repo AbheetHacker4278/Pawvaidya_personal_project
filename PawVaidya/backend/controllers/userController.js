@@ -1247,6 +1247,22 @@ export const verifyRazorpay = async (req, res) => {
             appointment.payment = true;
             await appointment.save();
 
+            // Send Confirmation Emails now that payment is successful
+            const { userData, docData, slotDate, slotTime, amount, meetLink } = appointment;
+
+            // User Email Template
+            const appointmentConfirmationHTML = `<!DOCTYPE html><html><head><style>body{font-family:Arial,sans-serif;line-height:1.6;color:#333;max-width:600px;margin:20px auto;padding:20px;background-color:#f9fff9;border-radius:10px;position:relative}.header{background-color:#4CAF50;color:white;padding:20px;border-radius:10px 10px 0 0;text-align:center;margin:-20px -20px 20px -20px}.content{padding:20px;background:white;border-radius:10px;box-shadow:0 0 10px rgba(0,0,0,0.1)}ul{list-style:none;padding-left:0}li{margin:10px 0;padding:10px;background-color:#f0f8f0;border-radius:5px}.meet-link{background-color:#e1f5fe;padding:15px;border-radius:5px;margin:15px 0;border-left:4px solid #039be5;text-align:center}.meet-link a{color:#0277bd;font-weight:bold;text-decoration:none}.meet-link a:hover{text-decoration:underline}.signature{margin-top:20px;text-align:center;color:#4CAF50}</style></head><body><div class="header"><h2>Appointment Confirmation</h2></div><div class="content"><p>Dear ${userData.name},</p><p>Your appointment with <strong>Dr. ${docData.name}</strong> has been successfully booked.</p><p><strong>Appointment Details:</strong></p><ul><li><strong>Doctor:</strong> Dr. ${docData.name}</li><li><strong>Date:</strong> ${slotDate}</li><li><strong>Time:</strong> ${slotTime}</li><li><strong>Fee:</strong> ₹${amount}</li><li><strong>Full Address:</strong> ${docData.full_address}</li></ul><div class="meet-link"><p><strong>Virtual Consultation:</strong></p><p>Join your appointment through this Google Meet link:</p><p><a href="${meetLink}" target="_blank">${meetLink}</a></p><p>Please click the link at your scheduled time.</p></div><p>Thank you for choosing our service.</p><div class="signature"><p>Best regards,<br/><strong>Pawvaidya Team</strong> 🐾</p></div></div></body></html>`;
+
+            // Doctor Email Template
+            const doctorNotificationHTML = `<!DOCTYPE html><html><head><style>body{font-family:Arial,sans-serif;line-height:1.6;color:#333;max-width:600px;margin:20px auto;padding:20px;background-color:#f9fff9;border-radius:10px;position:relative}.header{background-color:#4CAF50;color:white;padding:20px;border-radius:10px 10px 0 0;text-align:center;margin:-20px -20px 20px -20px}.content{padding:20px;background:white;border-radius:10px;box-shadow:0 0 10px rgba(0,0,0,0.1)}ul{list-style:none;padding-left:0}li{margin:10px 0;padding:10px;background-color:#f0f8f0;border-radius:5px}.meet-link{background-color:#e1f5fe;padding:15px;border-radius:5px;margin:15px 0;border-left:4px solid #039be5;text-align:center}.meet-link a{color:#0277bd;font-weight:bold;text-decoration:none}.meet-link a:hover{text-decoration:underline}.patient-info{margin-top:15px;padding:10px;background-color:#f5f5f5;border-radius:5px;border-left:4px solid #9e9e9e}.signature{margin-top:20px;text-align:center;color:#4CAF50}</style></head><body><div class="header"><h2>New Appointment Booked</h2></div><div class="content"><p>Dear Dr. ${docData.name},</p><p>A new appointment has been booked for your services.</p><p><strong>Appointment Details:</strong></p><ul><li><strong>Date:</strong> ${slotDate}</li><li><strong>Time:</strong> ${slotTime}</li><li><strong>Fee:</strong> ₹${amount}</li></ul><div class="patient-info"><p><strong>Patient Information:</strong></p><ul><li><strong>Name:</strong> ${userData.name}</li><li><strong>Contact:</strong> ${userData.phone || 'Not provided'}</li><li><strong>Pet Type:</strong> ${userData.pet_type || 'Not provided'}</li></ul></div><div class="meet-link"><p><strong>Virtual Consultation:</strong></p><p><a href="${meetLink}" target="_blank">${meetLink}</a></p></div><div class="signature"><p>Best regards,<br/><strong>Pawvaidya Team</strong> 🐾</p></div></div></body></html>`;
+
+            try {
+                await transporter.sendMail({ from: process.env.SENDER_EMAIL, to: userData.email, subject: 'Appointment Confirmation', html: appointmentConfirmationHTML });
+                await transporter.sendMail({ from: process.env.SENDER_EMAIL, to: docData.email, subject: 'New Appointment Booked', html: doctorNotificationHTML });
+            } catch (mailErr) {
+                console.warn("Failed to send confirmation emails:", mailErr.message);
+            }
+
             res.json({ success: true, message: 'Payment successful, appointment confirmed' });
         } else {
             res.status(400).json({ success: false, message: 'Invalid signature' });
@@ -1260,7 +1276,14 @@ export const verifyRazorpay = async (req, res) => {
 export const listAppointment = async (req, res) => {
     try {
         const { userId } = req.body
-        const appointments = await appointmentModel.find({ userId })
+        // Filter out unpaid Razorpay appointments
+        const appointments = await appointmentModel.find({
+            userId,
+            $or: [
+                { payment: true },
+                { paymentMethod: { $ne: 'Razorpay' } }
+            ]
+        })
 
         res.json({ success: true, appointments })
 

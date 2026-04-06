@@ -387,7 +387,14 @@ export const appointmentsDoctor = async (req, res) => {
     try {
 
         const { docId } = req.body
-        const appointments = await appointmentModel.find({ docId })
+        // Filter out unpaid Razorpay appointments
+        const appointments = await appointmentModel.find({
+            docId,
+            $or: [
+                { payment: true },
+                { paymentMethod: { $ne: 'Razorpay' } }
+            ]
+        })
 
         res.json({ success: true, appointments })
 
@@ -732,8 +739,14 @@ export const doctorDashboard = async (req, res) => {
             return res.json({ success: false, message: "Doctor ID is required." });
         }
 
-        // Fetch all appointments for the given doctor ID
-        const appointments = await appointmentModel.find({ docId });
+        // Fetch only paid or Cash appointments for the given doctor ID
+        const appointments = await appointmentModel.find({
+            docId,
+            $or: [
+                { payment: true },
+                { paymentMethod: { $ne: 'Razorpay' } }
+            ]
+        });
 
         // Initialize counters and arrays for tracking appointments
         let earnings = 0;

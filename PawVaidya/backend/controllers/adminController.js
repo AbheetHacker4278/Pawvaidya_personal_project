@@ -1134,7 +1134,13 @@ export const editUser = async (req, res) => {
 // API to get dashboard data for admin panel
 export const appointmenetsAdmin = async (req, res) => {
     try {
-        const appointments = await appointmentModel.find({})
+        // Filter out unpaid Razorpay appointments
+        const appointments = await appointmentModel.find({
+            $or: [
+                { payment: true },
+                { paymentMethod: { $ne: 'Razorpay' } }
+            ]
+        })
         res.json({
             success: true,
             appointments

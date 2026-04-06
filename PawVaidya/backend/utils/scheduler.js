@@ -6,6 +6,8 @@ import { performHeartbeatCheck } from './heartbeatUtility.js';
 import { observeJob } from './jobObserver.js';
 import { transporter } from '../config/nodemailer.js';
 import VERIFICATION_REMINDER_TEMPLATE from '../mailservice/verificationReminderTemplate.js';
+import appointmentModel from '../models/appointmentModel.js';
+import { PAYMENT_FAILED_TEMPLATE } from '../mailservice/paymentFailedTemplate.js';
 
 const initScheduler = () => {
     // Run every minute to check for expired incentives
@@ -120,6 +122,58 @@ const initScheduler = () => {
     });
 
     console.log('Incentive, Heartbeat, and Verification schedulers initialized.');
+
+    // Prune Stale Razorpay Appointments every 5 minutes
+    cron.schedule('*/5 * * * *', () => observeJob('Prune Stale Razorpay Appointments', async () => {
+        const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
+
+        const staleAppointments = await appointmentModel.find({
+            paymentMethod: 'Razorpay',
+            payment: false,
+            cancelled: false,
+            date: { $lt: fifteenMinutesAgo.getTime() } // Assuming 'date' is stored as milliseconds
+        });
+
+        if (staleAppointments.length > 0) {
+            console.log(`Found ${staleAppointments.length} stale Razorpay appointments. Processing cancellation...`);
+
+            for (const appointment of staleAppointments) {
+                try {
+                    // Update appointment status
+                    appointment.cancelled = true;
+                    await appointment.save();
+
+                    // Release doctor's slot
+                    const doctor = await doctorModel.findById(appointment.docId);
+                    if (doctor) {
+                        let slots_booked = doctor.slots_booked || {};
+                        if (slots_booked[appointment.slotDate]) {
+                            slots_booked[appointment.slotDate] = slots_booked[appointment.slotDate].filter(
+                                slot => slot !== appointment.slotTime
+                            );
+                            await doctorModel.findByIdAndUpdate(appointment.docId, { slots_booked });
+                        }
+                    }
+
+                    // Send notification email
+                    const mailOptions = {
+                        from: process.env.SENDER_EMAIL,
+                        to: appointment.userData.email,
+                        subject: 'Appointment Payment Timed Out',
+                        html: PAYMENT_FAILED_TEMPLATE
+                            .replace('{name}', appointment.userData.name)
+                            .replace('{docName}', appointment.docData.name)
+                            .replace('{slotDate}', appointment.slotDate.replace(/_/g, '/'))
+                            .replace('{slotTime}', appointment.slotTime)
+                    };
+                    await transporter.sendMail(mailOptions);
+
+                } catch (err) {
+                    console.error(`Failed to cancel stale appointment ${appointment._id}:`, err.message);
+                }
+            }
+        }
+    }));
 };
 
 export default initScheduler;

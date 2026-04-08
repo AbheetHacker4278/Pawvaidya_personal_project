@@ -8,6 +8,16 @@ const appointmentSchema = new mongoose.Schema({
     slotTime: { type: String, required: true },
     userData: { type: Object, required: true },
     docData: { type: Object, required: true },
+    petId: { type: mongoose.Schema.Types.ObjectId, ref: 'pet', default: null },
+    isStray: { type: Boolean, default: false },
+    strayDetails: {
+        type: {
+            petType: String,
+            location: String,
+            notes: String
+        },
+        default: null
+    },
     amount: { type: Number, required: true },
     date: { type: Number, required: true },
     cancelled: { type: Boolean, default: false },

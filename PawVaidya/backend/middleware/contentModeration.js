@@ -41,7 +41,11 @@ const CUSTOM_BAD_WORDS = [
  */
 const detectWithCustomList = (text) => {
     const lowerText = text.toLowerCase();
-    return CUSTOM_BAD_WORDS.filter(word => lowerText.includes(word));
+    return CUSTOM_BAD_WORDS.filter(word => {
+        // Use regex for word boundaries to avoid matching substrings like "hello"/"assist"
+        const regex = new RegExp(`\\b${word.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}\\b`, 'i');
+        return regex.test(lowerText);
+    });
 };
 import contentViolationModel from '../models/contentViolationModel.js';
 import userModel from '../models/userModel.js';
@@ -127,7 +131,8 @@ const detectBadWords = (text) => {
                     const wordList = wash.words(locale);
                     if (Array.isArray(wordList)) {
                         for (const word of wordList) {
-                            if (lowerText.includes(word.toLowerCase())) detected.add(word);
+                            const wordRegex = new RegExp(`\\b${word.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}\\b`, 'i');
+                            if (wordRegex.test(lowerText)) detected.add(word);
                         }
                     }
                 }
@@ -147,10 +152,13 @@ const contentModerationMiddleware = async (req, res, next) => {
         // Only check text-bearing methods
         if (!['POST', 'PUT', 'PATCH'].includes(req.method)) return next();
 
-        // Skip scanning for Chatbot Queries (Admin and Frontend)
+        // Skip scanning for Chatbot Queries (Admin, Frontend, and Doctor)
         const chatbotEndpoints = [
             '/api/admin/bot/query',
-            '/api/bot/query-frontend'
+            '/api/bot/query-frontend',
+            '/api/bot/query-doctor',
+            '/api/chat/send',
+            '/api/chat/direct/send'
         ];
 
         if (chatbotEndpoints.some(endpoint => req.originalUrl.startsWith(endpoint))) {

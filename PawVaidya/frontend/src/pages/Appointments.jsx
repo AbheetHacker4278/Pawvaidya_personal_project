@@ -13,7 +13,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 const Appointments = () => {
   const { t } = useTranslation();
   const { docId } = useParams();
-  const { doctors, backendurl, token, getdoctorsdata, userdata } = useContext(AppContext);
+  const { doctors, backendurl, token, getdoctorsdata, userdata, userPets, fetchUserPets } = useContext(AppContext);
   const daysofWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const navigate = useNavigate();
 
@@ -45,6 +45,10 @@ const Appointments = () => {
   const [activeCoupons, setActiveCoupons] = useState([]);
   const [adminCoupons, setAdminCoupons] = useState([]);
   const [useWallet, setUseWallet] = useState(false);
+  const [selectedPetId, setSelectedPetId] = useState('');
+  const [isStray, setIsStray] = useState(false);
+  const [strayType, setStrayType] = useState('Unknown');
+  const [showStrayInput, setShowStrayInput] = useState(false);
 
   const loadingMessages = [
     "Checking Available Slots...",
@@ -65,7 +69,7 @@ const Appointments = () => {
 
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="p-8 rounded-2xl max-w-md w-full mx-4 shadow-2xl" style={{ background: '#fdf8f0', border: '1px solid #e8d5b0' }}>
+        <div className="p-8 rounded-2xl max-w-md w-full mx-4 shadow-2xl" style={{ background: '#e8d5b0', border: '1px solid #e8d5b0' }}>
           <div className="flex flex-col items-center">
             <div className="mb-4">
               {icons[step]}
@@ -385,6 +389,17 @@ const Appointments = () => {
       toast.warn('Please select an appointment time');
       return false;
     }
+
+    if (!isStray && !selectedPetId) {
+      setValidationError('Please select a pet or choose the stray animal option');
+      toast.warn('Please select a pet or choose the stray animal option');
+      return false;
+    }
+
+    if (isStray && !strayType.trim()) {
+      setValidationError('Please enter the pet type for the stray animal');
+      return false;
+    }
     setValidationError('');
     return true;
   };
@@ -487,7 +502,10 @@ const Appointments = () => {
         slotDate,
         slotTime,
         paymentMethod,
-        useWallet: forceUseWallet
+        useWallet: forceUseWallet,
+        petId: isStray ? null : selectedPetId,
+        isStray,
+        strayDetails: isStray ? { petType: strayType || 'Unknown' } : null
       };
 
       if (appliedDoctorCoupon) {
@@ -644,6 +662,9 @@ const Appointments = () => {
     if (docId) {
       fetchDoctorSchedule();
     }
+    if (token) {
+      fetchUserPets();
+    }
   }, [doctors, docId, token]);
 
   useEffect(() => {
@@ -680,7 +701,7 @@ const Appointments = () => {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
       className="pb-20"
-      style={{ background: '#f2e4c7', minHeight: '100vh' }}
+      style={{ background: '#F2E4C6', minHeight: '100vh' }}
     >
       {/* Doctor Info Section */}
       <div className="flex flex-col sm:flex-row gap-6 max-w-7xl mx-auto px-4 pt-10">
@@ -759,7 +780,7 @@ const Appointments = () => {
           <div
             className="relative overflow-hidden rounded-3xl shadow-2xl h-full"
             style={{
-              background: 'rgba(255,255,255,0.88)',
+              background: 'rgba(243, 235, 214, 0.9)',
               backdropFilter: 'blur(20px)',
               WebkitBackdropFilter: 'blur(20px)',
               border: '1px solid rgba(232,213,176,0.7)',
@@ -943,7 +964,7 @@ const Appointments = () => {
       >
         <div
           className="rounded-3xl shadow-2xl overflow-hidden"
-          style={{ background: '#fff', border: '1px solid #e8d5b0' }}
+          style={{ background: '#f3ebd6', border: '1px solid #e8d5b0' }}
         >
           {/* Premium section header */}
           <div
@@ -995,7 +1016,8 @@ const Appointments = () => {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
-                    className="bg-white p-5 rounded-xl shadow-md mb-4"
+                    className="p-5 rounded-xl shadow-md mb-4"
+                    style={{ background: '#fefcf0', border: '1px solid #e8d5b0' }}
                   >
                     <p className="font-bold text-gray-800 mb-3 flex items-center gap-2">
                       <CheckCircle className="w-5 h-5 text-green-500" />
@@ -1199,6 +1221,120 @@ const Appointments = () => {
                     </div>
                   )}
 
+                  {/* Pet Selection Section */}
+                  <div className="mb-8">
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.6 }}
+                      className="p-6 rounded-3xl"
+                      style={{
+                        background: 'rgba(232, 213, 176, 0.45)',
+                        backdropFilter: 'blur(10px)',
+                        border: '1.5px solid #e8d5b0',
+                        boxShadow: '0 8px 32px rgba(90,64,53,0.05)'
+                      }}
+                    >
+                      <p className="text-xl font-bold mb-6 flex items-center gap-3" style={{ color: '#3d2b1f' }}>
+                        <span className="p-2 rounded-xl bg-[#5A4035] text-white">🐾</span>
+                        Who is this appointment for?
+                      </p>
+
+                      <div className="flex flex-col gap-6">
+                        {/* Toggle between My Pets and Stray */}
+                        <div className="flex p-1.5 rounded-2xl bg-gray-100/50 self-start">
+                          <button
+                            onClick={() => { setIsStray(false); setShowStrayInput(false); }}
+                            className={`px-6 py-2.5 rounded-xl font-bold transition-all duration-300 ${!isStray ? 'bg-[#5A4035] text-white shadow-lg' : 'text-gray-500 hover:text-[#5A4035]'}`}
+                          >
+                            My Pets
+                          </button>
+                          <button
+                            onClick={() => { setIsStray(true); setShowStrayInput(true); }}
+                            className={`px-6 py-2.5 rounded-xl font-bold transition-all duration-300 ${isStray ? 'bg-[#c8860a] text-white shadow-lg' : 'text-gray-500 hover:text-[#c8860a]'}`}
+                          >
+                            Stray Animal
+                          </button>
+                        </div>
+
+                        {!isStray ? (
+                          <div className="space-y-4">
+                            {userPets && userPets.length > 0 ? (
+                              <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+                                {userPets.map((pet) => (
+                                  <motion.div
+                                    key={pet._id}
+                                    whileHover={{ y: -5 }}
+                                    onClick={() => setSelectedPetId(pet._id)}
+                                    className={`relative min-w-[120px] p-4 rounded-2xl cursor-pointer border-2 transition-all flex flex-col items-center gap-3 ${selectedPetId === pet._id ? 'border-[#5A4035] bg-[#5A4035]/5 shadow-md' : 'border-transparent bg-white/50 hover:bg-white'}`}
+                                  >
+                                    <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-[#e8d5b0]">
+                                      <img src={pet.image} alt={pet.name} className="w-full h-full object-cover" />
+                                    </div>
+                                    <span className={`font-bold text-sm ${selectedPetId === pet._id ? 'text-[#5A4035]' : 'text-gray-600'}`}>{pet.name}</span>
+                                    {selectedPetId === pet._id && (
+                                      <div className="absolute top-2 right-2 w-5 h-5 bg-[#5A4035] rounded-full flex items-center justify-center">
+                                        <CheckCircle className="w-3.5 h-3.5 text-white" />
+                                      </div>
+                                    )}
+                                  </motion.div>
+                                ))}
+                                <motion.div
+                                  whileHover={{ y: -5 }}
+                                  onClick={() => navigate('/my-pets')}
+                                  className="min-w-[120px] p-4 rounded-2xl cursor-pointer border-2 border-dashed border-[#e8d5b0] bg-white/30 flex flex-col items-center justify-center gap-2 hover:bg-white/50 transition-all"
+                                >
+                                  <div className="w-10 h-10 rounded-full bg-[#5A4035]/10 flex items-center justify-center text-[#5A4035] font-bold text-xl">+</div>
+                                  <span className="text-gray-500 font-semibold text-xs text-center">Add New Pet</span>
+                                </motion.div>
+                              </div>
+                            ) : (
+                              <div className="text-center py-8 px-4 rounded-2xl bg-white/50 border border-dashed border-[#e8d5b0]">
+                                <p className="text-gray-500 mb-4 font-medium italic">No pets found in your profile.</p>
+                                <button
+                                  onClick={() => navigate('/my-pets')}
+                                  className="px-6 py-2 rounded-xl bg-[#5A4035] text-white font-bold text-sm shadow-md"
+                                >
+                                  Register Your Pet
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            className="bg-white/80 p-6 rounded-2xl border-2 border-[#c8860a]/30"
+                          >
+                            <p className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+                              <Info className="w-4 h-4 text-[#c8860a]" />
+                              Stray Medical Request
+                            </p>
+                            <p className="text-xs text-gray-500 mb-4 leading-relaxed">
+                              Booking for a stray animal helps our clinic track community health cases. Please specify the animal type if known.
+                            </p>
+                            <div className="space-y-4">
+                              <div>
+                                <label className="block text-xs font-bold text-[#5A4035] mb-2 uppercase tracking-wider">Animal Species / Type</label>
+                                <input
+                                  type="text"
+                                  placeholder="e.g. Dog, Cat, Bird, Unknown"
+                                  value={strayType}
+                                  onChange={(e) => setStrayType(e.target.value)}
+                                  className="w-full px-4 py-3 rounded-xl border-2 border-[#e8d5b0] focus:border-[#c8860a] outline-none transition-all font-medium text-gray-700"
+                                />
+                              </div>
+                              <div className="flex items-center gap-2 px-3 py-2 bg-[#fdf3e7] rounded-lg border border-[#f5e1c8]">
+                                <Shield className="w-4 h-4 text-[#c8860a]" />
+                                <span className="text-[10px] text-[#8e6b4e] font-semibold">Priority consultation available for critical street rescues.</span>
+                              </div>
+                            </div>
+                          </motion.div>
+                        )}
+                      </div>
+                    </motion.div>
+                  </div>
+
                   {/* Date Selection */}
                   <div className="mb-8">
                     <motion.p
@@ -1235,7 +1371,7 @@ const Appointments = () => {
                                 border: '2px solid transparent'
                               }
                               : {
-                                background: 'rgba(255,255,255,0.85)',
+                                background: 'rgba(232, 213, 176, 0.55)',
                                 border: '2px solid #e8d5b0',
                                 color: '#3d2b1f',
                                 backdropFilter: 'blur(8px)'
@@ -1294,7 +1430,7 @@ const Appointments = () => {
                                 onClick={() => setSlotTime(item.time)}
                                 className={`px-6 py-3 rounded-xl cursor-pointer font-semibold transition-all duration-300 ${item.time === slotTime
                                   ? 'bg-gradient-to-r from-[#5A4035] to-[#7a5a48] text-white shadow-xl scale-105'
-                                  : 'bg-white border-2 border-[#5A4035] text-[#5A4035] hover:bg-[#5A4035] hover:text-white hover:shadow-lg'
+                                  : 'bg-[#fefcf0]/80 border-2 border-[#5A4035]/60 text-[#5A4035] hover:bg-[#5A4035] hover:text-white hover:shadow-lg'
                                   }`}
                               >
                                 <div className="flex items-center gap-2">
@@ -1319,7 +1455,7 @@ const Appointments = () => {
                       className="rounded-2xl overflow-hidden"
                       style={{
                         border: '2px dashed #d4a76a',
-                        background: 'linear-gradient(135deg, #fffdf8 0%, #fef9ed 100%)',
+                        background: 'linear-gradient(135deg, #fefcf0 0%, #fdf8eb 100%)',
                         boxShadow: '0 4px 20px rgba(200,134,10,0.08)'
                       }}
                     >

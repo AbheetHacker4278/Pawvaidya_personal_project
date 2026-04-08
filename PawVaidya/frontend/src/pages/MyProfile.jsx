@@ -5,6 +5,7 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import {
   PawPrint,
   User,
@@ -27,14 +28,15 @@ import {
   Trophy,
   Star,
   Zap,
+  CreditCard,
+  X,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import AnimalHealthChatbot from "../components/AnimalHealthChatbot";
 import FaceAuth from "../components/FaceAuth";
+import PetIDCard from "../components/PetIDCard";
 
-// ─── Stable sub-components (must be at module scope so React doesn't recreate
-//     their identity on every parent render — that would unmount/remount inputs
-//     and kill focus after every keystroke) ────────────────────────────────────
+// ─── Stable sub-components ──────────────────────────────────────────────────
 
 const InfoItem = ({ icon, label, value, editComponent, isEdit }) => {
   const Icon = icon;
@@ -109,90 +111,6 @@ const SaveButton = ({ isEdit, isSaving, onSave, onEdit }) => {
   );
 };
 
-const PetIDCard = ({ data, onClose }) => {
-  const { t } = useTranslation();
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-[100] p-4"
-      onClick={onClose}
-    >
-      <motion.div
-        initial={{ scale: 0.8, rotateY: 90 }}
-        animate={{ scale: 1, rotateY: 0 }}
-        exit={{ scale: 0.8, rotateY: -90 }}
-        transition={{ type: "spring", damping: 15 }}
-        className="relative w-full max-w-md aspect-[1.6/1] bg-gradient-to-br from-[#9a6458] via-[#7b483d] to-[#5A4035] rounded-[2rem] shadow-2xl p-8 overflow-hidden border border-white/20 select-none cursor-default"
-        onClick={e => e.stopPropagation()}
-      >
-        {/* Background patterns */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32 blur-3xl"></div>
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-black/10 rounded-full -ml-24 -mb-24 blur-2xl"></div>
-        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
-
-        <div className="relative z-10 h-full flex flex-col">
-          <div className="flex justify-between items-start mb-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-white/20 rounded-xl backdrop-blur-md">
-                <PawPrint className="text-white" size={24} />
-              </div>
-              <div>
-                <h3 className="text-white font-black text-xl tracking-tighter uppercase italic">PawVaidya</h3>
-                <p className="text-white/60 text-[10px] uppercase tracking-widest font-bold">{t('profile.officialPetID')}</p>
-              </div>
-            </div>
-            <div className="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full border border-white/30">
-              <span className="text-white text-[10px] font-black uppercase tracking-wider">{t('profile.verifiedPet')}</span>
-            </div>
-          </div>
-
-          <div className="flex gap-6 items-center flex-1">
-            <div className="w-24 h-24 rounded-2xl overflow-hidden border-4 border-white/20 shadow-xl bg-white/10 shrink-0">
-              <img src={data.image} alt="Pet" className="w-full h-full object-cover" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h4 className="text-white text-2xl font-black truncate drop-shadow-lg mb-1">{data.name}</h4>
-              <div className="grid grid-cols-2 gap-y-2">
-                <div>
-                  <p className="text-white/50 text-[10px] uppercase font-black">{t('profile.species')}</p>
-                  <p className="text-white text-xs font-bold">{data.pet_type || 'N/A'}</p>
-                </div>
-                <div>
-                  <p className="text-white/50 text-[10px] uppercase font-black">{t('profile.breed')}</p>
-                  <p className="text-white text-xs font-bold truncate">{data.breed || 'N/A'}</p>
-                </div>
-                <div>
-                  <p className="text-white/50 text-[10px] uppercase font-black">{t('profile.owner')}</p>
-                  <p className="text-white text-xs font-bold truncate">{data.name}</p>
-                </div>
-                <div>
-                  <p className="text-white/50 text-[10px] uppercase font-black">{t('profile.idNo')}</p>
-                  <p className="text-white text-xs font-mono font-bold">#PV{data.phone?.slice(-4) || '9999'}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-auto pt-4 flex justify-between items-end border-t border-white/10">
-            <div className="flex gap-1">
-              {[1, 2, 3].map(i => <Star key={i} size={10} className="text-yellow-400 fill-current" />)}
-            </div>
-            <p className="text-[10px] text-white/40 font-bold tracking-widest uppercase">{t('profile.premiumMembership')}</p>
-          </div>
-        </div>
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-white/50 hover:text-white transition-colors p-2"
-        >
-          <AlertCircle size={20} className="rotate-45" />
-        </button>
-      </motion.div>
-    </motion.div>
-  );
-};
-
 const LoadingOverlay = ({ isSaving }) => {
   const { t } = useTranslation();
   if (!isSaving) return null;
@@ -248,9 +166,7 @@ const DeletionRequestModal = ({ onClose, onSubmit, isSubmitting }) => {
           className="bg-white rounded-[2rem] shadow-2xl p-8 max-w-md w-full border border-red-100 overflow-hidden relative"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Decorative background */}
           <div className="absolute top-0 right-0 w-32 h-32 bg-red-50 rounded-full -mr-16 -mt-16 opacity-50"></div>
-
           <div className="relative z-10">
             <div className="flex items-center gap-3 mb-6">
               <div className="p-3 bg-red-100 rounded-2xl text-red-600">
@@ -261,11 +177,9 @@ const DeletionRequestModal = ({ onClose, onSubmit, isSubmitting }) => {
                 <p className="text-xs text-red-500 font-bold uppercase tracking-widest">{t('profile.permanentAction')}</p>
               </div>
             </div>
-
             <p className="text-gray-600 text-sm mb-6 leading-relaxed">
               {t('profile.deleteWarning')}
             </p>
-
             <textarea
               className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl p-4 text-sm focus:ring-4 focus:ring-red-100 focus:border-red-200 outline-none transition-all mb-6 resize-none min-h-[120px]"
               placeholder={t('profile.deleteReasonPlaceholder')}
@@ -273,7 +187,6 @@ const DeletionRequestModal = ({ onClose, onSubmit, isSubmitting }) => {
               onChange={(e) => setReason(e.target.value)}
               disabled={isSubmitting}
             />
-
             <div className="flex gap-3">
               <motion.button
                 whileHover={{ scale: 1.02 }}
@@ -310,6 +223,7 @@ const DeletionRequestModal = ({ onClose, onSubmit, isSubmitting }) => {
 
 const MyProfile = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   // Initialize Gemini
   const apikey2 = import.meta.env.VITE_API_KEY_GEMINI_2;
   const genAI = new GoogleGenerativeAI(apikey2);
@@ -326,6 +240,7 @@ const MyProfile = () => {
     backendurl,
     loaduserprofiledata,
     getUserAppointments,
+    userPets,
   } = useContext(AppContext);
 
   const [isEdit, setIsEdit] = useState(false);
@@ -335,14 +250,16 @@ const MyProfile = () => {
   const [isRefreshingTip, setIsRefreshingTip] = useState(false);
   const [nextAppointment, setNextAppointment] = useState(null);
   const [profileCompleteness, setProfileCompleteness] = useState(0);
-  const [showPetID, setShowPetID] = useState(false);
+  const [selectedPetForID, setSelectedPetForID] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isSubmittingDeletion, setIsSubmittingDeletion] = useState(false);
   const [showFaceAuth, setShowFaceAuth] = useState(false);
 
-  // ✅ local editable copy
+  // local editable copy
   const [editedData, setEditedData] = useState(null);
   const originalDataRef = useRef(null);
+
+  const toggleEdit = () => setIsEdit(!isEdit);
 
   const handleSubmitDeletion = async (reason) => {
     try {
@@ -366,22 +283,24 @@ const MyProfile = () => {
     }
   };
 
-  // Calculate Profile Completeness
   useEffect(() => {
     if (userdata) {
-      const fields = [
-        'name', 'email', 'phone', 'gender', 'dob', 'image',
-        'full_address', 'pet_type', 'pet_age', 'pet_gender', 'breed'
+      const basicFields = [
+        'name', 'email', 'phone', 'gender', 'dob', 'image', 'full_address'
       ];
-      const completed = fields.filter(field => {
+
+      const basicCompleted = basicFields.filter(field => {
         if (field === 'full_address') return userdata.full_address && userdata.full_address.length > 5;
         return !!userdata[field];
       }).length;
-      setProfileCompleteness(Math.round((completed / fields.length) * 100));
-    }
-  }, [userdata]);
 
-  // Fetch Next Appointment
+      const totalFields = basicFields.length + 1;
+      const totalCompleted = basicCompleted + (userPets && userPets.length > 0 ? 1 : 0);
+
+      setProfileCompleteness(Math.round((totalCompleted / totalFields) * 100));
+    }
+  }, [userdata, userPets]);
+
   useEffect(() => {
     if (token && getUserAppointments) {
       getUserAppointments().then(appts => {
@@ -401,8 +320,7 @@ const MyProfile = () => {
     }
   }, [token, getUserAppointments]);
 
-  // Constants for tip refresh
-  const TIP_REFRESH_INTERVAL = 10 * 60 * 60 * 1000; // 10 hours in milliseconds
+  const TIP_REFRESH_INTERVAL = 10 * 60 * 60 * 1000;
   const TIP_STORAGE_KEY = 'petHealthTip';
   const TIP_TIMESTAMP_KEY = 'petHealthTipTimestamp';
 
@@ -431,7 +349,6 @@ const MyProfile = () => {
 
   const validateFields = useCallback((data) => {
     if (!data) return ["User data not loaded"];
-
     const fields = {
       Name: data?.name?.trim(),
       Email: data?.email?.trim(),
@@ -439,11 +356,6 @@ const MyProfile = () => {
       "Date of Birth": data?.dob,
       Phone: data?.phone?.trim(),
       "Full Address": data?.full_address?.trim(),
-      "Pet Type": data?.pet_type?.trim(),
-      "Pet Age": data?.pet_age?.trim(),
-      "Pet Gender": data?.pet_gender?.trim(),
-      Breed: data?.breed?.trim(),
-      Category: data?.category?.trim(),
     };
 
     return Object.entries(fields)
@@ -494,7 +406,6 @@ const MyProfile = () => {
     try {
       setIsSaving(true);
       const userToSave = editedData;
-
       const missingFields = validateFields(userToSave);
       if (missingFields.length > 0) {
         toast.error(`Please fill in: ${missingFields.join(", ")}`);
@@ -545,11 +456,7 @@ const MyProfile = () => {
         toast.error(data.message || "Failed to update profile");
       }
     } catch (error) {
-      toast.error(
-        error.response?.data?.message ||
-        error.message ||
-        "Error updating profile"
-      );
+      toast.error(error.response?.data?.message || "Error updating profile");
     } finally {
       setIsSaving(false);
     }
@@ -557,49 +464,33 @@ const MyProfile = () => {
 
   const setupDailyContentGeneration = useCallback(async (isManualRefresh = false) => {
     try {
-      if (isManualRefresh) {
-        setIsRefreshingTip(true);
-      }
+      if (isManualRefresh) setIsRefreshingTip(true);
+      if (!apikey2) { setDailyQuote("Daily tip unavailable"); return; }
 
-      if (!apikey2) {
-        setDailyQuote("Daily tip unavailable");
-        return;
-      }
-
-      // Check if we have a cached tip and if it's still valid (less than 10 hours old)
       const cachedTip = localStorage.getItem(TIP_STORAGE_KEY);
       const cachedTimestamp = localStorage.getItem(TIP_TIMESTAMP_KEY);
       const currentTime = Date.now();
 
       if (!isManualRefresh && cachedTip && cachedTimestamp) {
         const timeSinceLastUpdate = currentTime - parseInt(cachedTimestamp);
-
         if (timeSinceLastUpdate < TIP_REFRESH_INTERVAL) {
-          // Use cached tip if it's still fresh
           setDailyQuote(cachedTip);
           return;
         }
       }
 
-      // Fetch new tip from Gemini
       const result = await model.generateContent(prompt);
       const newTip = result.response.text() || "No content available.";
-
-      // Save to localStorage with timestamp
       localStorage.setItem(TIP_STORAGE_KEY, newTip);
       localStorage.setItem(TIP_TIMESTAMP_KEY, currentTime.toString());
-
       setDailyQuote(newTip);
     } catch (error) {
       console.error("Error generating tip:", error);
-      // Fallback tip for API failures (503 handling)
       setDailyQuote("Regular check-ups and a balanced diet keep your pet healthy and happy!");
     } finally {
-      if (isManualRefresh) {
-        setTimeout(() => setIsRefreshingTip(false), 500);
-      }
+      if (isManualRefresh) setTimeout(() => setIsRefreshingTip(false), 500);
     }
-  }, [apikey2, model, prompt, TIP_REFRESH_INTERVAL, TIP_STORAGE_KEY, TIP_TIMESTAMP_KEY]);
+  }, [apikey2, model, prompt, TIP_REFRESH_INTERVAL]);
 
   useEffect(() => {
     setupDailyContentGeneration();
@@ -609,20 +500,12 @@ const MyProfile = () => {
     if (!dateString) return "";
     try {
       const date = new Date(dateString);
-      return date.toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      });
-    } catch {
-      return dateString;
-    }
+      return date.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+    } catch { return dateString; }
   };
 
   const handleCancelEdit = () => {
-    if (originalDataRef.current) {
-      setEditedData(originalDataRef.current);
-    }
+    if (originalDataRef.current) setEditedData(originalDataRef.current);
     setIsEdit(false);
     setImage(null);
     originalDataRef.current = null;
@@ -631,10 +514,7 @@ const MyProfile = () => {
   if (!editedData) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f2e4c7]">
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-        >
+        <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}>
           <Loader2 size={48} className="text-[#9a6458]" />
         </motion.div>
       </div>
@@ -647,246 +527,210 @@ const MyProfile = () => {
     <div className="max-w-6xl mx-auto p-4 min-h-screen bg-[#f2e4c7]">
       <LoadingOverlay isSaving={isSaving} />
 
-      {/* Header */}
+      {/* Header & Stats Container */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="backdrop-blur-md shadow-xl rounded-2xl mb-6 overflow-hidden border border-[rgba(122,90,72,0.12)]"
-        style={{ background: 'rgba(122, 90, 72, 0.08)' }}
+        className="backdrop-blur-md shadow-xl rounded-[2.5rem] mb-8 overflow-hidden border border-[rgba(122,90,72,0.12)] bg-[rgba(122, 90, 72, 0.08)]"
       >
-        <div className="p-6 flex flex-col md:flex-row items-center md:items-start">
-          <motion.div
-            className="mb-6 md:mb-0 md:mr-8 flex-shrink-0"
-            whileHover={{ scale: 1.05 }}
-            transition={{ type: "spring", stiffness: 300 }}
-          >
-            {isEdit ? (
-              <label htmlFor="image" className="cursor-pointer block">
-                <motion.div
-                  className="relative w-40 h-40 rounded-3xl overflow-hidden border-4 border-white shadow-2xl"
-                  whileHover={{ scale: 1.02 }}
-                >
-                  <img
-                    className="w-full h-full object-cover"
-                    src={
-                      image
-                        ? URL.createObjectURL(image)
-                        : editedData.image
-                    }
-                    alt="Profile"
-                    onError={(e) =>
-                    (e.target.src =
-                      assets.profile_pic)
-                    }
-                  />
+        <div className="p-8">
+          <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
+            {/* Avatar Section */}
+            <motion.div
+              className="flex-shrink-0"
+              whileHover={{ scale: 1.05 }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
+              {isEdit ? (
+                <label htmlFor="image" className="cursor-pointer block">
                   <motion.div
-                    className="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-sm"
-                    whileHover={{ backgroundColor: "rgba(0, 0, 0, 0.5)" }}
+                    className="relative w-40 h-40 rounded-[2.5rem] overflow-hidden border-4 border-white shadow-2xl"
+                    whileHover={{ scale: 1.02 }}
                   >
-                    <Upload className="w-10 h-10 text-white" />
+                    <img
+                      className="w-full h-full object-cover"
+                      src={image ? URL.createObjectURL(image) : editedData.image}
+                      alt="Profile"
+                      onError={(e) => (e.target.src = assets.profile_pic)}
+                    />
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-sm opacity-0 hover:opacity-100 transition-opacity">
+                      <Upload className="w-10 h-10 text-white" />
+                    </div>
                   </motion.div>
-                </motion.div>
-                <input
-                  onChange={handleImageChange}
-                  type="file"
-                  id="image"
-                  accept="image/*"
-                  hidden
-                />
-              </label>
-            ) : (
-              <motion.div
-                className="relative group"
-                whileHover={{ y: -5 }}
-              >
-                <div className="absolute -inset-1 bg-gradient-to-r from-[#9a6458] to-[#7b483d] rounded-3xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
-                <div className="relative w-40 h-40 rounded-3xl overflow-hidden border-4 border-white shadow-2xl">
-                  <img
-                    src={editedData.image}
-                    alt="Profile"
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                    onError={(e) =>
-                    (e.target.src =
-                      assets.profile_pic)
-                    }
-                  />
-                </div>
-                {profileCompleteness === 100 && (
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="absolute -top-3 -right-3 bg-yellow-400 p-2 rounded-full shadow-lg border-2 border-white"
-                  >
-                    <Trophy size={20} className="text-white" />
-                  </motion.div>
-                )}
-              </motion.div>
-            )}
-
-            {/* Profile Completeness Bar (Mobile) */}
-            <div className="mt-4 md:hidden w-full">
-              <div className="flex justify-between items-center mb-1">
-                <span className="text-xs font-bold text-[#9a6458]">{t('profile.profileStrength')}</span>
-                <span className="text-xs font-bold text-[#9a6458]">{profileCompleteness}%</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${profileCompleteness}%` }}
-                  className="bg-gradient-to-r from-[#9a6458] to-[#7b483d] h-full"
-                />
-              </div>
-            </div>
-          </motion.div>
-
-          <div className="text-center md:text-left flex-1 min-w-0">
-            {isEdit ? (
-              <input
-                type="text"
-                className="text-2xl font-bold border border-gray-300 rounded-lg p-2 mb-2 w-full md:max-w-md"
-                value={editedData.name || ""}
-                onChange={(e) =>
-                  handleInputChange("name", e.target.value)
-                }
-                placeholder="Enter your name"
-              />
-            ) : (
-              <h1 className="text-2xl font-bold mb-2 break-words">
-                {editedData.name}
-              </h1>
-            )}
-
-            <div className="hidden md:block mb-4">
-              <div className="flex justify-between items-center mb-1.5">
-                <span className="text-xs font-bold text-[#9a6458] uppercase tracking-wider">{t('profile.profileCompleteness')}</span>
-                <span className="text-xs font-bold text-[#9a6458]">{profileCompleteness}%</span>
-              </div>
-              <div className="w-full bg-gray-200/50 rounded-full h-2 overflow-hidden backdrop-blur-sm">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${profileCompleteness}%` }}
-                  transition={{ duration: 1, ease: "easeOut" }}
-                  className="bg-gradient-to-r from-[#9a6458] to-[#7b483d] h-full shadow-[0_0_10px_rgba(154,100,88,0.3)]"
-                />
-              </div>
-            </div>
-
-            <div className="flex flex-wrap justify-center md:justify-start items-center gap-3 mb-6">
-              <span className="bg-white/60 backdrop-blur-sm text-[#9a6458] px-4 py-1.5 rounded-xl border border-white/50 shadow-sm flex items-center text-sm font-medium">
-                <Mail className="w-4 h-4 mr-2" /> {editedData.email}
-              </span>
-              <motion.button
-                whileHover={{ scale: 1.05, y: -2 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setShowPetID(true)}
-                className="bg-gradient-to-r from-yellow-400 to-amber-500 text-white px-4 py-1.5 rounded-xl shadow-md flex items-center text-sm font-bold border border-yellow-300"
-              >
-                <Star className="w-4 h-4 mr-2 fill-current" /> {t('profile.premiumPetID')}
-              </motion.button>
-            </div>
-
-            <AnimatePresence>
-              {showPetID && <PetIDCard data={editedData} onClose={() => setShowPetID(false)} />}
-            </AnimatePresence>
-
-            <div className="flex gap-4 justify-center md:justify-start">
-              {!editedData.isBanned ? (
-                <>
-                  <SaveButton
-                    isEdit={isEdit}
-                    isSaving={isSaving}
-                    onSave={updateUserProfileData}
-                    onEdit={() => setIsEdit(true)}
-                  />
-                  {isEdit && (
-                    <motion.button
-                      whileHover={{ scale: 1.05, borderColor: "#7b483d" }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={handleCancelEdit}
-                      className="border-2 border-[#9a6458] text-[#9a6458] px-6 py-2.5 rounded-xl hover:bg-[#f8f3f1]/50 backdrop-blur-sm transition-all duration-300 font-bold shadow-md"
-                      disabled={isSaving}
-                      type="button"
-                    >
-                      Cancel
-                    </motion.button>
-                  )}
-                </>
+                  <input onChange={handleImageChange} type="file" id="image" accept="image/*" hidden />
+                </label>
               ) : (
-                <div className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-red-50 text-red-600 font-bold border border-red-200 shadow-sm">
-                  <AlertCircle size={18} />
-                  Profile Locked
+                <div className="relative group">
+                  <div className="absolute -inset-1 bg-gradient-to-r from-[#9a6458] to-[#7b483d] rounded-[2.5rem] blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
+                  <div className="relative w-40 h-40 rounded-[2.5rem] overflow-hidden border-4 border-white shadow-2xl bg-white">
+                    <img
+                      src={editedData.image}
+                      alt="Profile"
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      onError={(e) => (e.target.src = assets.profile_pic)}
+                    />
+                  </div>
+                  {profileCompleteness === 100 && (
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="absolute -top-3 -right-3 bg-yellow-400 p-2 rounded-full shadow-lg border-2 border-white"
+                    >
+                      <Trophy size={20} className="text-white" />
+                    </motion.div>
+                  )}
                 </div>
               )}
-            </div>
 
-            {/* Quick Stats Section */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.15 }}
-              className="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-3 lg:gap-4"
-            >
-              <div className="bg-white/60 backdrop-blur-md p-3 sm:p-4 rounded-2xl border border-white/50 shadow-sm hover:shadow-md transition-all flex flex-col justify-between overflow-hidden">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="p-1.5 sm:p-2 rounded-xl bg-blue-100 text-blue-600 shrink-0">
-                    <Activity size={18} />
-                  </div>
-                  <span className="text-[10px] sm:text-[11px] font-bold text-gray-500 uppercase tracking-tight truncate">Status</span>
+              {/* Mobile Completeness */}
+              <div className="mt-4 md:hidden w-full">
+                <div className="flex justify-between items-center mb-1">
+                  <span className="text-[10px] font-black text-[#5A4035]/60 uppercase tracking-widest">{t('profile.profileCompleteness')}</span>
+                  <span className="text-xs font-black text-[#5A4035]">{profileCompleteness}%</span>
                 </div>
-                <p className="text-base sm:text-lg font-bold text-gray-800 truncate">{editedData.isBanned ? "Restricted" : "Verified"}</p>
-              </div>
-
-              <div className="bg-white/60 backdrop-blur-md p-3 sm:p-4 rounded-2xl border border-white/50 shadow-sm hover:shadow-md transition-all flex flex-col justify-between overflow-hidden">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="p-1.5 sm:p-2 rounded-xl bg-green-100 text-green-600 shrink-0">
-                    <Shield size={18} />
-                  </div>
-                  <span className="text-[10px] sm:text-[11px] font-bold text-gray-500 uppercase tracking-tight truncate">Pet Type</span>
+                <div className="w-full bg-white/50 rounded-full h-1.5 overflow-hidden">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${profileCompleteness}%` }}
+                    className="bg-gradient-to-r from-[#9a6458] to-[#7b483d] h-full"
+                  />
                 </div>
-                <p className="text-base sm:text-lg font-bold text-gray-800 truncate">{editedData.pet_type || "N/A"}</p>
-              </div>
-
-              <div className="bg-white/60 backdrop-blur-md p-3 sm:p-4 rounded-2xl border border-white/50 shadow-sm hover:shadow-md transition-all flex flex-col justify-between overflow-hidden">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="p-1.5 sm:p-2 rounded-xl bg-purple-100 text-purple-600 shrink-0">
-                    <Clock size={18} />
-                  </div>
-                  <span className="text-[10px] sm:text-[11px] font-bold text-gray-500 uppercase tracking-tight truncate">Exp.</span>
-                </div>
-                <p className="text-base sm:text-lg font-bold text-gray-800 truncate">{editedData.pet_age ? `${editedData.pet_age} yrs` : "New"}</p>
-              </div>
-
-              <div className="bg-white/60 backdrop-blur-md p-3 sm:p-4 rounded-2xl border border-white/50 shadow-sm hover:shadow-md transition-all flex flex-col justify-between overflow-hidden">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="p-1.5 sm:p-2 rounded-xl bg-orange-100 text-orange-600 shrink-0">
-                    <Zap size={18} />
-                  </div>
-                  <span className="text-[10px] sm:text-[11px] font-bold text-gray-500 uppercase tracking-tight truncate">Health</span>
-                </div>
-                <p className="text-base sm:text-lg font-bold text-gray-800 truncate">{profileCompleteness}%</p>
               </div>
             </motion.div>
 
-            {/* Biometric Status Alert */}
-            {userdata && (!userdata.isFaceRegistered ? (
+            {/* Header Content Area */}
+            <div className="flex-1 space-y-4 w-full text-center md:text-left">
+              <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                <div className="space-y-2">
+                  <h1 className="text-4xl md:text-5xl font-black text-[#5A4035] tracking-tight">
+                    {isEdit ? (
+                      <input
+                        type="text"
+                        className="bg-white/80 border-2 border-[#5A4035]/20 rounded-2xl p-2 px-4 focus:ring-4 focus:ring-[#5A4035]/10 outline-none w-full md:max-w-md text-3xl font-black"
+                        value={editedData.name || ""}
+                        onChange={(e) => handleInputChange("name", e.target.value)}
+                        placeholder="Enter your name"
+                      />
+                    ) : (
+                      userdata.name
+                    )}
+                  </h1>
+                  <div className="hidden md:block">
+                    <div className="flex items-center gap-4 mb-2">
+                      <span className="text-[10px] font-black text-amber-700/40 uppercase tracking-[0.2em]">{t('profile.profileCompleteness')}</span>
+                      <span className="px-2 py-0.5 bg-amber-100 text-amber-700 text-[10px] font-black rounded-lg">{profileCompleteness}%</span>
+                    </div>
+                    <div className="w-64 h-2.5 bg-white/50 rounded-full overflow-hidden border border-white/20 shadow-inner">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${profileCompleteness}%` }}
+                        transition={{ duration: 1.2, ease: "circOut" }}
+                        className="h-full bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-600 relative"
+                      >
+                        <div className="absolute inset-0 bg-[linear-gradient(45deg,rgba(255,255,255,0.2)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.2)_50%,rgba(255,255,255,0.2)_75%,transparent_75%,transparent)] bg-[length:20px_20px] animate-[scroll_2s_linear_infinite]"></div>
+                      </motion.div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-3 justify-center md:justify-end items-center">
+                  <div className="flex items-center bg-white/80 border border-white px-4 py-2.5 rounded-2xl shadow-sm">
+                    <Mail size={16} className="text-amber-600 mr-2" />
+                    <span className="text-sm font-bold text-gray-600">{userdata.email}</span>
+                  </div>
+                  {userPets && userPets.length > 0 && (
+                    <motion.button
+                      whileHover={{ scale: 1.05, y: -2 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => setSelectedPetForID(userPets[0])}
+                      className="bg-gradient-to-r from-yellow-400 to-amber-500 text-white px-5 py-2.5 rounded-2xl shadow-lg flex items-center text-xs font-black uppercase tracking-wider border border-yellow-300"
+                    >
+                      <Star className="w-4 h-4 mr-2 fill-current" /> {t('profile.premiumPetID')}
+                    </motion.button>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-4 justify-center md:justify-start pt-2">
+                {!editedData.isBanned ? (
+                  <>
+                    <SaveButton isEdit={isEdit} isSaving={isSaving} onSave={updateUserProfileData} onEdit={() => setIsEdit(true)} />
+                    {isEdit && (
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={handleCancelEdit}
+                        className="border-2 border-[#9a6458] text-[#9a6458] px-6 py-2.5 rounded-xl hover:bg-white/50 backdrop-blur-sm transition-all font-bold shadow-md"
+                        disabled={isSaving}
+                        type="button"
+                      >
+                        Cancel
+                      </motion.button>
+                    )}
+                  </>
+                ) : (
+                  <div className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-red-50 text-red-600 font-bold border border-red-200 shadow-sm">
+                    <AlertCircle size={18} />
+                    Profile Locked
+                  </div>
+                )}
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={toggleEdit}
+                  className="px-6 py-2.5 bg-[#5A4035] text-white rounded-2xl text-sm font-black flex items-center shadow-xl hover:bg-[#48332a] transition-all border border-white/10 md:hidden"
+                >
+                  <Edit size={16} className="mr-2" /> {isEdit ? t('profile.cancel') : t('profile.editProfile')}
+                </motion.button>
+              </div>
+            </div>
+          </div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.15 }}
+            className="mt-10 grid grid-cols-2 md:grid-cols-4 gap-4"
+          >
+            {[
+              { icon: Activity, label: "Status", value: editedData.isBanned ? "Restricted" : "Verified", color: "blue" },
+              { icon: PawPrint, label: "Total Pets", value: `${userPets?.length || 0} Pets`, color: "green" },
+              { icon: Zap, label: "Paw Wallet", value: `₹${userdata.pawWallet || 0}`, color: "purple" },
+              { icon: Heart, label: "Health Index", value: `${profileCompleteness}%`, color: "orange" }
+            ].map((stat, i) => (
+              <div key={i} className="bg-white/60 backdrop-blur-md p-4 rounded-[2rem] border border-white/50 shadow-sm hover:shadow-md transition-all">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className={`p-2 rounded-xl bg-${stat.color}-100 text-${stat.color}-600`}>
+                    <stat.icon size={18} />
+                  </div>
+                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{stat.label}</span>
+                </div>
+                <p className="text-lg font-black text-gray-800">{stat.value}</p>
+              </div>
+            ))}
+          </motion.div>
+
+          {/* Biometric Integration */}
+          <AnimatePresence>
+            {!userdata.isFaceRegistered ? (
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="mt-6 p-4 rounded-2xl bg-emerald-50 border-2 border-emerald-100 flex flex-col sm:flex-row items-center justify-between gap-4"
+                className="mt-8 p-6 rounded-[2rem] bg-emerald-50 border-2 border-emerald-100 flex flex-col md:flex-row items-center justify-between gap-4"
               >
-                <div className="flex items-center gap-3 text-center sm:text-left">
-                  <div className="p-2 bg-emerald-500 rounded-xl text-white">
-                    <Shield size={20} />
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-emerald-500 rounded-2xl text-white shadow-lg shadow-emerald-200">
+                    <Shield size={24} />
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-emerald-900">Mandatory Biometric Setup</h4>
-                    <p className="text-xs text-emerald-700">Face authentication is required for enhanced account security.</p>
+                    <h4 className="text-base font-black text-emerald-900 leading-tight">Biometric Security Required</h4>
+                    <p className="text-xs text-emerald-700/80 mt-1">Setup face authentication to protect your account and pet data.</p>
                   </div>
                 </div>
                 <button
                   onClick={() => setShowFaceAuth(true)}
-                  className="px-6 py-2 bg-emerald-600 text-white rounded-xl font-bold text-sm hover:bg-emerald-500 transition-all shadow-lg"
+                  className="w-full md:w-auto px-8 py-3 bg-emerald-600 text-white rounded-2xl font-black text-sm hover:bg-emerald-500 transition-all shadow-xl"
                 >
                   Setup Now
                 </button>
@@ -895,459 +739,190 @@ const MyProfile = () => {
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="mt-6 p-4 rounded-2xl bg-blue-50 border-2 border-blue-100 flex flex-col sm:flex-row items-center justify-between gap-4"
+                className="mt-8 p-6 rounded-[2rem] bg-blue-50 border-2 border-blue-100 flex flex-col md:flex-row items-center justify-between gap-4"
               >
-                <div className="flex items-center gap-3 text-center sm:text-left">
-                  <div className="p-2 bg-blue-500 rounded-xl text-white">
-                    <ShieldCheck size={20} />
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-blue-500 rounded-2xl text-white shadow-lg shadow-blue-200">
+                    <ShieldCheck size={24} />
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-blue-900">Face Registered</h4>
-                    <p className="text-xs text-blue-700">Your biometric ID is active and securing your account.</p>
+                    <h4 className="text-base font-black text-blue-900 leading-tight">Biometric Shield Active</h4>
+                    <p className="text-xs text-blue-700/80 mt-1">Your identity is verified via biometric authentication.</p>
                   </div>
                 </div>
                 <button
                   onClick={() => setShowFaceAuth(true)}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-500 transition-all shadow-lg"
+                  className="w-full md:w-auto px-8 py-3 bg-blue-600 text-white rounded-2xl font-black text-sm hover:bg-blue-500 transition-all shadow-xl"
                 >
-                  Register Again
+                  Update Scan
                 </button>
               </motion.div>
-            ))}
-
-            <AnimatePresence>
-              {showFaceAuth && (
-                <FaceAuth
-                  mode="register"
-                  onCancel={() => setShowFaceAuth(false)}
-                  onAuthSuccess={() => setShowFaceAuth(false)}
-                />
-              )}
-            </AnimatePresence>
-          </div>
-
-          <div className="w-full md:w-1/3 mt-8 md:mt-0 md:ml-8 space-y-6">
-            {/* Upcoming Appointment Widget */}
-            {nextAppointment && (
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="bg-gradient-to-br from-[#9a6458] to-[#7b483d] p-5 rounded-3xl shadow-xl text-white relative overflow-hidden"
-              >
-                <div className="absolute top-0 right-0 p-4 opacity-10">
-                  <Calendar size={80} />
-                </div>
-                <div className="relative z-10">
-                  <div className="flex items-center gap-2 mb-4">
-                    <div className="p-1.5 bg-white/20 rounded-lg">
-                      <Clock size={16} />
-                    </div>
-                    <span className="text-xs font-bold uppercase tracking-widest">Next Appointment</span>
-                  </div>
-                  <h4 className="text-xl font-bold mb-1">Dr. {nextAppointment.docData.name}</h4>
-                  <p className="text-white/80 text-sm mb-4">{nextAppointment.slotDate.replace(/_/g, ' ')} • {nextAppointment.slotTime}</p>
-                  <motion.button
-                    whileHover={{ scale: 1.05, backgroundColor: 'white', color: '#9a6458' }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => navigate('/my-appointments')}
-                    className="w-full py-2.5 bg-white/10 backdrop-blur-md border border-white/20 rounded-xl text-sm font-bold transition-all"
-                  >
-                    View Details
-                  </motion.button>
-                </div>
-              </motion.div>
             )}
-            {/* Daily Pet Health Tip */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="relative bg-gradient-to-br from-[#f8f3f1] via-white to-[#f8f3f1] p-5 rounded-2xl border-2 border-[#9a6458]/20 shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden"
-            >
-              {/* Decorative background elements */}
-              <div className="absolute top-0 right-0 w-32 h-32 bg-[#9a6458]/5 rounded-full -mr-16 -mt-16"></div>
-              <div className="absolute bottom-0 left-0 w-24 h-24 bg-[#9a6458]/5 rounded-full -ml-12 -mb-12"></div>
+          </AnimatePresence>
+        </div>
+      </motion.div>
 
-              <div className="relative z-10">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center">
-                    <motion.div
-                      animate={{
-                        scale: [1, 1.2, 1],
-                        rotate: [0, 10, -10, 0]
-                      }}
-                      transition={{
-                        duration: 2,
-                        repeat: Infinity,
-                        repeatDelay: 3
-                      }}
-                    >
-                      <Heart className="text-[#9a6458] mr-2" size={20} fill="#9a6458" />
-                    </motion.div>
-                    <h3 className="font-bold text-[#9a6458] text-lg flex items-center">
-                      Daily Pet Health Tip
-                      <Sparkles className="ml-2 w-4 h-4 text-yellow-500" />
-                    </h3>
-                  </div>
-                  <motion.button
-                    whileHover={{ scale: 1.1, rotate: 180 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => setupDailyContentGeneration(true)}
-                    disabled={isRefreshingTip}
-                    className="p-2 rounded-full bg-[#9a6458]/10 hover:bg-[#9a6458]/20 transition-colors disabled:opacity-50"
-                    title="Get new tip"
-                  >
-                    <RefreshCw
-                      className={`w-4 h-4 text-[#9a6458] ${isRefreshingTip ? 'animate-spin' : ''}`}
-                    />
-                  </motion.button>
-                </div>
+      <AnimatePresence>
+        {selectedPetForID && (
+          <PetIDCard pet={selectedPetForID} ownerName={userdata.name} phone={userdata.phone} onClose={() => setSelectedPetForID(null)} />
+        )}
+        {showFaceAuth && (
+          <FaceAuth mode="register" onCancel={() => setShowFaceAuth(false)} onAuthSuccess={() => setShowFaceAuth(false)} />
+        )}
+      </AnimatePresence>
 
-                <AnimatePresence mode="wait">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <div className="lg:col-span-8 space-y-8">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white/40 backdrop-blur-xl shadow-2xl rounded-[3rem] overflow-hidden border border-white/60 p-2"
+          >
+            <div className="p-6 bg-gradient-to-r from-[#9a6458] to-[#7b483d] text-white flex items-center justify-between rounded-[2.5rem] shadow-lg mb-4">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-md text-white"> <User size={24} /> </div>
+                <h2 className="text-xl font-black uppercase tracking-tighter">Account Information</h2>
+              </div>
+              <Sparkles className="text-yellow-400" size={20} />
+            </div>
+
+            <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <InfoItem icon={Phone} label="Contact" value={editedData.phone} isEdit={isEdit} editComponent={<input type="text" className="bg-white/80 border-2 border-white rounded-2xl p-3 w-full outline-none" value={editedData.phone || ""} onChange={(e) => handlePhoneChange(e.target.value)} />} />
+              <InfoItem icon={Mail} label="Email" value={editedData.email} isEdit={isEdit} editComponent={<p className="font-bold px-3 py-3 bg-gray-50/50 rounded-2xl border border-dashed border-gray-300">{editedData.email}</p>} />
+              <InfoItem icon={User} label="Gender" value={editedData.gender} isEdit={isEdit} editComponent={<select className="bg-white/80 border-2 border-white rounded-2xl p-3 w-full outline-none" value={editedData.gender || ""} onChange={(e) => handleInputChange("gender", e.target.value)}><option value="">Select Gender</option><option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other</option></select>} />
+              <InfoItem icon={Calendar} label="Birthday" value={formatDate(editedData.dob)} isEdit={isEdit} editComponent={<input type="date" className="bg-white/80 border-2 border-white rounded-2xl p-3 w-full outline-none" value={editedData.dob || ""} onChange={(e) => handleInputChange("dob", e.target.value)} />} />
+              <div className="md:col-span-2">
+                <InfoItem icon={MapPin} label="Address" value={`${normalized.LOCATION}, ${normalized.LINE}`} isEdit={isEdit} editComponent={<div className="grid grid-cols-2 gap-3"><input type="text" className="bg-white/80 border-2 border-white rounded-2xl p-3 outline-none" value={normalized.LOCATION} placeholder="State" onChange={(e) => handleAddressChange("LOCATION", e.target.value)} /><input type="text" className="bg-white/80 border-2 border-white rounded-2xl p-3 outline-none" value={normalized.LINE} placeholder="District" onChange={(e) => handleAddressChange("LINE", e.target.value)} /></div>} />
+              </div>
+            </div>
+          </motion.div>
+
+          <div className="space-y-6">
+            <h3 className="text-2xl font-black text-[#5A4035] uppercase tracking-tighter flex items-center gap-3 px-6">
+              <PawPrint size={28} className="text-[#9a6458]" /> {t('profile.myPetFamily')}
+              <span className="bg-[#9a6458]/10 text-[#9a6458] text-xs px-2 py-1 rounded-lg ml-2">{userPets?.length || 0}</span>
+            </h3>
+
+            {userPets && userPets.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {userPets.map((pet, index) => (
                   <motion.div
-                    key={dailyQuote}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.3 }}
+                    key={pet._id || index}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.1 * index }}
+                    className="bg-white/60 backdrop-blur-xl shadow-xl rounded-[2.5rem] border border-white/80 p-6 relative group overflow-hidden"
                   >
-                    <p className="text-gray-800 italic text-sm leading-relaxed bg-white/50 p-3 rounded-lg backdrop-blur-sm">
-                      {dailyQuote}
-                    </p>
+                    <div className="flex items-center gap-5 mb-6">
+                      <div className="w-16 h-16 rounded-3xl overflow-hidden border-2 border-[#9a6458]/20 shadow-lg bg-white shrink-0">
+                        <img src={pet.image || assets.upload_area} alt={pet.name} className="w-full h-full object-cover" />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="text-xl font-black text-[#5A4035] truncate">{pet.name}</h4>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="px-2 py-0.5 bg-amber-100 text-amber-700 text-[9px] font-black rounded uppercase tracking-wider">{pet.type}</span>
+                          {pet.isVerified && <ShieldCheck size={14} className="text-blue-500" />}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 mb-6">
+                      <div className="bg-white/40 p-3 rounded-2xl border border-white/50">
+                        <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Breed</p>
+                        <p className="text-xs font-bold text-gray-800 truncate">{pet.breed || "N/A"}</p>
+                      </div>
+                      <div className="bg-white/40 p-3 rounded-2xl border border-white/50">
+                        <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Age / Sex</p>
+                        <p className="text-xs font-bold text-gray-800">{pet.age}Y • {pet.gender}</p>
+                      </div>
+                    </div>
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => setSelectedPetForID(pet)}
+                      className="w-full py-3 bg-gradient-to-r from-amber-400 to-yellow-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg hover:shadow-amber-200 transition-all border border-amber-300"
+                    >
+                      <CreditCard size={14} /> {t('profile.officialPetID')}
+                    </motion.button>
                   </motion.div>
-                </AnimatePresence>
+                ))}
+              </div>
+            ) : (
+              <div className="bg-white/40 backdrop-blur-md rounded-[2.5rem] border-2 border-dashed border-[#9a6458]/20 p-12 text-center">
+                <PawPrint size={48} className="text-[#9a6458]/20 mx-auto mb-4" />
+                <p className="text-[#5A4035]/60 font-bold">No pets registered yet.</p>
+              </div>
+            )}
+          </div>
+        </div>
 
-                <div className="mt-3 space-y-2">
-                  <div className="flex items-center text-xs text-[#9a6458]/70">
-                    <div className="flex-1 h-px bg-gradient-to-r from-transparent via-[#9a6458]/30 to-transparent"></div>
-                    <span className="px-2">Powered by Gemini AI</span>
-                    <div className="flex-1 h-px bg-gradient-to-r from-transparent via-[#9a6458]/30 to-transparent"></div>
-                  </div>
-                  <p className="text-xs text-gray-500 text-center italic">
-                    💡 Tips refresh every 10 hours automatically
-                  </p>
+        <div className="lg:col-span-4 space-y-8">
+          {nextAppointment && (
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="bg-gradient-to-br from-[#9a6458] to-[#7b483d] p-6 rounded-[3rem] shadow-2xl text-white relative overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 p-8 opacity-10 rotate-12"> <Calendar size={120} /> </div>
+              <div className="relative z-10">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="p-2 bg-white/20 rounded-xl backdrop-blur-md text-white"> <Clock size={20} /> </div>
+                  <span className="text-xs font-black uppercase tracking-[0.2em]">{t('profile.nextAppointment')}</span>
                 </div>
+                <h4 className="text-2xl font-black mb-1">Dr. {nextAppointment.docData.name}</h4>
+                <p className="text-white/70 text-sm mb-6 flex items-center gap-2"> <Calendar size={14} /> {nextAppointment.slotDate.replace(/_/g, ' ')} • {nextAppointment.slotTime} </p>
+                <motion.button onClick={() => navigate('/my-appointments')} className="w-full py-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl text-sm font-black transition-all"> Manage Bookings </motion.button>
               </div>
             </motion.div>
+          )}
 
-            {/* Unban Request Attempts */}
-            {editedData.isBanned && (
-              <div className="bg-red-50 p-4 rounded-lg border-l-4 border-red-500">
-                <div className="flex items-center mb-2">
-                  <AlertCircle className="text-red-600 mr-2" size={18} />
-                  <h3 className="font-semibold text-red-600">
-                    Account Status
-                  </h3>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white/60 backdrop-blur-xl p-8 rounded-[3rem] border border-white shadow-xl relative overflow-hidden"
+          >
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-amber-100 rounded-xl text-amber-600"> <Heart size={20} fill="#d97706" /> </div>
+                <h3 className="font-black text-[#5A4035] uppercase tracking-tighter">Health Tip</h3>
+              </div>
+              <motion.button onClick={() => setupDailyContentGeneration(true)} disabled={isRefreshingTip} className="p-2 bg-gray-100 rounded-xl text-gray-400 hover:text-[#9a6458] transition-colors">
+                <RefreshCw size={16} className={isRefreshingTip ? "animate-spin" : ""} />
+              </motion.button>
+            </div>
+            <AnimatePresence mode="wait">
+              <motion.div key={dailyQuote} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="bg-white/50 p-5 rounded-2xl border border-white/50 italic text-[#5A4035] text-sm leading-relaxed"> "{dailyQuote}" </motion.div>
+            </AnimatePresence>
+            <p className="text-center text-[9px] font-black text-[#5A4035]/30 uppercase tracking-[0.2em] mt-6">Powered by Gemini AI</p>
+          </motion.div>
+
+          {editedData.isBanned && (
+            <div className="bg-red-50/50 backdrop-blur-sm p-6 rounded-[3rem] border border-red-100 shadow-sm">
+              <h4 className="text-xs font-black text-red-600 uppercase tracking-widest mb-4 flex items-center gap-2"> <AlertCircle size={14} /> Account Restricted </h4>
+              <div className="bg-white p-4 rounded-2xl border border-red-100 mb-4">
+                <div className="flex justify-between items-center mb-1">
+                  <span className="text-[10px] font-black text-gray-400">Unban Attempts</span>
+                  <span className="text-xs font-black text-red-600">{userdata.unbanAttempts || 0}/3</span>
                 </div>
-                <div className="space-y-2">
-                  <p className="text-sm text-red-700 font-medium">
-                    Account Banned
-                  </p>
-                  <div className="bg-white p-3 rounded border border-red-200">
-                    <p className="text-xs text-gray-600 mb-1">Unban Requests</p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-lg font-bold text-red-600">
-                        {editedData.unbanRequestAttempts || 0} / 3
-                      </span>
-                      <span className="text-xs text-gray-500">
-                        {3 - (editedData.unbanRequestAttempts || 0)} left
-                      </span>
-                    </div>
-                    <div className="mt-2 bg-gray-200 rounded-full h-2 overflow-hidden">
-                      <div
-                        className="bg-red-500 h-full transition-all duration-300"
-                        style={{ width: `${((editedData.unbanRequestAttempts || 0) / 3) * 100}%` }}
-                      />
-                    </div>
-                  </div>
-                  {(editedData.unbanRequestAttempts || 0) >= 3 && (
-                    <p className="text-xs text-red-600 italic">
-                      Maximum attempts reached. Please contact support.
-                    </p>
-                  )}
+                <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
+                  <div className="bg-red-500 h-full" style={{ width: `${((userdata.unbanAttempts || 0) / 3) * 100}%` }} />
                 </div>
               </div>
-            )}
+              <button onClick={() => setShowDeleteModal(true)} disabled={userdata.unbanAttempts >= 3} className="w-full py-3 bg-red-600 text-white rounded-2xl font-black text-xs shadow-lg disabled:opacity-50"> Request Appeal </button>
+            </div>
+          )}
+
+          <div className="bg-red-50/50 backdrop-blur-sm p-6 rounded-[3rem] border border-red-100 shadow-sm">
+            <h4 className="text-xs font-black text-red-600 uppercase tracking-widest mb-4 flex items-center gap-2"> <AlertCircle size={14} /> Danger Zone </h4>
+            <p className="text-[10px] text-gray-500 mb-4 px-2">Permanently delete your account and all associated data.</p>
+            <button onClick={() => setShowDeleteModal(true)} className="w-full py-3 bg-white text-red-600 font-black text-xs rounded-2xl border border-red-100 hover:bg-red-600 hover:text-white transition-all shadow-sm"> Request Account Deletion </button>
           </div>
         </div>
-      </motion.div>
-
-      {/* Main Content */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Owner Info */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-          className="bg-white/40 backdrop-blur-xl shadow-2xl rounded-[2.5rem] overflow-hidden border border-white/60 p-2"
-        >
-          <div className="p-6 bg-gradient-to-r from-[#9a6458] to-[#7b483d] text-white flex items-center justify-between rounded-[2rem] shadow-lg mb-2">
-            <div className="flex items-center">
-              <div className="p-2 bg-white/20 rounded-xl mr-3">
-                <User size={24} />
-              </div>
-              <h2 className="text-xl font-black uppercase tracking-tighter">Owner Profile</h2>
-            </div>
-            <Sparkles className="text-yellow-400 opacity-50" size={20} />
-          </div>
-          <div className="p-4 space-y-2">
-            <InfoItem
-              icon={Phone}
-              label="Contact"
-              value={editedData.phone}
-              isEdit={isEdit}
-              editComponent={
-                <input
-                  type="text"
-                  className="bg-white/80 border-2 border-white rounded-2xl p-3 w-full focus:ring-4 focus:ring-[#9a6458]/20 transition-all outline-none"
-                  value={editedData.phone || ""}
-                  onChange={(e) => handlePhoneChange(e.target.value)}
-                  placeholder="Enter phone number"
-                />
-              }
-            />
-
-            <InfoItem
-              icon={Mail}
-              label="Email"
-              value={editedData.email}
-              isEdit={isEdit}
-              editComponent={<p className="font-bold px-3">{editedData.email}</p>}
-            />
-
-            <InfoItem
-              icon={User}
-              label="Gender"
-              value={editedData.gender}
-              isEdit={isEdit}
-              editComponent={
-                <select
-                  className="bg-white/80 border-2 border-white rounded-2xl p-3 w-full focus:ring-4 focus:ring-[#9a6458]/20 transition-all outline-none"
-                  value={editedData.gender || ""}
-                  onChange={(e) =>
-                    handleInputChange("gender", e.target.value)
-                  }
-                >
-                  <option value="">Select Gender</option>
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                  <option value="Other">Other</option>
-                </select>
-              }
-            />
-
-            <InfoItem
-              icon={Calendar}
-              label="Birthday"
-              value={formatDate(editedData.dob)}
-              isEdit={isEdit}
-              editComponent={
-                <input
-                  type="date"
-                  className="bg-white/80 border-2 border-white rounded-2xl p-3 w-full focus:ring-4 focus:ring-[#9a6458]/20 transition-all outline-none"
-                  value={editedData.dob || ""}
-                  onChange={(e) =>
-                    handleInputChange("dob", e.target.value)
-                  }
-                  max={new Date().toISOString().split("T")[0]}
-                />
-              }
-            />
-
-            <InfoItem
-              icon={MapPin}
-              label="Location"
-              value={`${normalized.LOCATION || "N/A"}, ${normalized.LINE || "N/A"
-                }`}
-              isEdit={isEdit}
-              editComponent={
-                <div className="space-y-3">
-                  <input
-                    type="text"
-                    className="bg-white/80 border-2 border-white rounded-2xl p-3 w-full focus:ring-4 focus:ring-[#9a6458]/20 transition-all outline-none"
-                    value={normalized.LOCATION}
-                    placeholder="State (e.g., GUJARAT)"
-                    onChange={(e) =>
-                      handleAddressChange("LOCATION", e.target.value)
-                    }
-                  />
-                  <input
-                    type="text"
-                    className="bg-white/80 border-2 border-white rounded-2xl p-3 w-full focus:ring-4 focus:ring-[#9a6458]/20 transition-all outline-none"
-                    value={normalized.LINE}
-                    placeholder="District"
-                    onChange={(e) =>
-                      handleAddressChange("LINE", e.target.value)
-                    }
-                  />
-                </div>
-              }
-            />
-          </div>
-        </motion.div>
-
-        {/* Pet Info */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-          className="bg-white/40 backdrop-blur-xl shadow-2xl rounded-[2.5rem] overflow-hidden border border-white/60 p-2"
-        >
-          <div className="p-6 bg-gradient-to-r from-[#9a6458] to-[#7b483d] text-white flex items-center justify-between rounded-[2rem] shadow-lg mb-2">
-            <div className="flex items-center">
-              <div className="p-2 bg-white/20 rounded-xl mr-3">
-                <PawPrint size={24} />
-              </div>
-              <h2 className="text-xl font-black uppercase tracking-tighter">Pet Details</h2>
-            </div>
-            <Heart className="text-red-400 animate-pulse" fill="#f87171" size={20} />
-          </div>
-          <div className="p-4 space-y-2">
-            <InfoItem
-              icon={PawPrint}
-              label="Species"
-              value={editedData.pet_type}
-              isEdit={isEdit}
-              editComponent={
-                <input
-                  type="text"
-                  className="bg-white/80 border-2 border-white rounded-2xl p-3 w-full focus:ring-4 focus:ring-[#9a6458]/20 transition-all outline-none"
-                  value={editedData.pet_type || ""}
-                  onChange={(e) =>
-                    handleInputChange("pet_type", e.target.value)
-                  }
-                  placeholder="Enter pet type"
-                />
-              }
-            />
-
-            <InfoItem
-              icon={Clock}
-              label="Age"
-              value={editedData.pet_age ? `${editedData.pet_age} Years` : null}
-              isEdit={isEdit}
-              editComponent={
-                <input
-                  type="number"
-                  min="0"
-                  className="bg-white/80 border-2 border-white rounded-2xl p-3 w-full focus:ring-4 focus:ring-[#9a6458]/20 transition-all outline-none"
-                  value={editedData.pet_age || ""}
-                  onChange={(e) =>
-                    handleInputChange("pet_age", e.target.value)
-                  }
-                  placeholder="Enter pet age"
-                />
-              }
-            />
-
-            <InfoItem
-              icon={User}
-              label="Sex"
-              value={editedData.pet_gender}
-              isEdit={isEdit}
-              editComponent={
-                <select
-                  className="bg-white/80 border-2 border-white rounded-2xl p-3 w-full focus:ring-4 focus:ring-[#9a6458]/20 transition-all outline-none"
-                  value={editedData.pet_gender || ""}
-                  onChange={(e) =>
-                    handleInputChange("pet_gender", e.target.value)
-                  }
-                >
-                  <option value="">Select Pet Gender</option>
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                </select>
-              }
-            />
-
-            <InfoItem
-              icon={AlertCircle}
-              label="Breed"
-              value={editedData.breed}
-              isEdit={isEdit}
-              editComponent={
-                <input
-                  type="text"
-                  className="bg-white/80 border-2 border-white rounded-2xl p-3 w-full focus:ring-4 focus:ring-[#9a6458]/20 transition-all outline-none"
-                  value={editedData.breed || ""}
-                  onChange={(e) =>
-                    handleInputChange("breed", e.target.value)
-                  }
-                  placeholder="Enter breed"
-                />
-              }
-            />
-
-            <InfoItem
-              icon={Heart}
-              label="Category"
-              value={editedData.category}
-              isEdit={isEdit}
-              editComponent={
-                <input
-                  type="text"
-                  className="bg-white/80 border-2 border-white rounded-2xl p-3 w-full focus:ring-4 focus:ring-[#9a6458]/20 transition-all outline-none"
-                  value={editedData.category || ""}
-                  onChange={(e) =>
-                    handleInputChange("category", e.target.value)
-                  }
-                  placeholder="Enter category"
-                />
-              }
-            />
-          </div>
-        </motion.div>
       </div>
 
-      {/* Danger Zone */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.6 }}
-        className="mt-8 bg-red-50/50 backdrop-blur-sm shadow-xl rounded-[2.5rem] overflow-hidden border border-red-100 p-2"
-      >
-        <div className="p-6 bg-gradient-to-r from-red-500 to-red-600 text-white flex items-center justify-between rounded-[2rem] shadow-lg mb-4">
-          <div className="flex items-center">
-            <div className="p-2 bg-white/20 rounded-xl mr-3">
-              <AlertCircle size={24} />
-            </div>
-            <h2 className="text-xl font-black uppercase tracking-tighter">Danger Zone</h2>
-          </div>
-          <Shield className="text-red-200 opacity-50" size={20} />
-        </div>
-        <div className="p-6 flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="text-center md:text-left">
-            <h3 className="text-lg font-bold text-gray-900 mb-1">Delete Account</h3>
-            <p className="text-sm text-gray-500">Permanently remove your account and all associated pet data. This action is not reversible.</p>
-          </div>
-          <motion.button
-            whileHover={{ scale: 1.05, boxShadow: "0 10px 20px rgba(239, 68, 68, 0.2)" }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setShowDeleteModal(true)}
-            className="whitespace-nowrap px-8 py-3 bg-white text-red-600 font-bold rounded-2xl border-2 border-red-100 hover:bg-red-50 transition-all shadow-md"
-          >
-            Request Deletion
-          </motion.button>
-        </div>
-      </motion.div>
+      <AnimalHealthChatbot />
 
-      {/* Chatbot Section */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.7 }}
-        className="mt-8"
-      >
-        <AnimalHealthChatbot />
-      </motion.div>
-
-      {/* Account Deletion Modal */}
       {showDeleteModal && (
-        <DeletionRequestModal
-          onClose={() => setShowDeleteModal(false)}
-          onSubmit={handleSubmitDeletion}
-          isSubmitting={isSubmittingDeletion}
-        />
+        <DeletionRequestModal onClose={() => setShowDeleteModal(false)} onSubmit={handleSubmitDeletion} isSubmitting={isSubmittingDeletion} />
       )}
     </div>
   );

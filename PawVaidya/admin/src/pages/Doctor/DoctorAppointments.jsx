@@ -8,7 +8,7 @@ import PetReportModal from '../../components/PetReportModal';
 import {
   MessageCircle, Flag, CheckCircle, XCircle, Search, Calendar,
   Clock, Phone, User, Filter, ChevronDown, Tag, IndianRupee,
-  PawPrint, AlertCircle, TrendingUp, Users, Activity, FileText
+  PawPrint, AlertCircle, TrendingUp, Users, Activity, FileText, MapPin
 } from 'lucide-react';
 
 const THEME = {
@@ -279,11 +279,48 @@ const DoctorAppointments = () => {
                       <span className="text-xs flex items-center gap-1" style={{ color: THEME.muted }}>
                         <Phone className="w-3 h-3" /> {item.userData.phone}
                       </span>
-                      <span className="text-xs flex items-center gap-1" style={{ color: THEME.muted }}>
-                        <PawPrint className="w-3 h-3" /> {item.userData.category} · {item.userData.pet_age}
-                      </span>
                     </div>
                   </div>
+                </div>
+
+                {/* ── Pet Details ── */}
+                <div className="flex-1 min-w-[200px] lg:border-x px-0 lg:px-6 py-2 lg:py-0" style={{ borderColor: THEME.border }}>
+                  <p className="text-[10px] font-bold uppercase tracking-wider mb-2 flex items-center gap-1.5" style={{ color: THEME.muted }}>
+                    <PawPrint className="w-3 h-3" /> Selected Pet
+                  </p>
+                  {item.isStray ? (
+                    <div className="flex items-center gap-2">
+                      <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#5A4035] to-[#3d2b1f] flex items-center justify-center text-white text-xs shadow-sm">
+                        🐾
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold capitalize" style={{ color: THEME.primary }}>{item.strayDetails?.petType || 'Unknown'} (Stray)</p>
+                        <p className="text-[10px] italic truncate max-w-[150px]" style={{ color: THEME.muted }}>
+                          <MapPin className="w-2.5 h-2.5 inline mr-1" /> {item.strayDetails?.location || 'No location'}
+                        </p>
+                      </div>
+                    </div>
+                  ) : item.petId ? (
+                    <div className="flex items-center gap-2">
+                      <div className="relative">
+                        <img src={item.petId.image} alt={item.petId.name} className="w-9 h-9 rounded-xl object-cover border shadow-sm" style={{ borderColor: THEME.border }} />
+                        <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 border border-white flex items-center justify-center shadow-sm">
+                          <CheckCircle className="w-2 h-2 text-white" />
+                        </div>
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold truncate" style={{ color: THEME.primary }}>{item.petId.name}</p>
+                        <p className="text-[10px] font-medium tracking-tight" style={{ color: THEME.muted }}>
+                          {item.petId.breed} · {item.petId.age}y · <span className="font-bold text-[#c8860a]">{item.petId.petId}</span>
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1.5 py-1 px-2 rounded-lg bg-gray-50 border border-dashed border-gray-200">
+                      <AlertCircle className="w-3 h-3 text-gray-400" />
+                      <span className="text-[10px] text-gray-400 italic">No pet data selection</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* ── Date / Time ── */}

@@ -12,6 +12,7 @@ const AppContextProvider = (props) => {
     const [doctors, setdoctors] = useState([])
     const [token, settoken] = useState(localStorage.getItem('token') ? localStorage.getItem('token') : null)
     const [userdata, setuserdata] = useState(false)
+    const [userPets, setUserPets] = useState([])
     const [unreadMessages, setUnreadMessages] = useState(0)
     const [userLocation, setUserLocation] = useState(null)
     const [systemConfig, setSystemConfig] = useState({ maintenanceMode: false, killSwitch: false, maintenanceMessage: "" })
@@ -236,6 +237,68 @@ const AppContextProvider = (props) => {
         }
     }
 
+    const fetchUserPets = async () => {
+        if (!token) return;
+        try {
+            const { data } = await axios.post(backendurl + '/api/user/list-pets', {}, { headers: { token } });
+            if (data.success) {
+                setUserPets(data.pets);
+                return data.pets;
+            }
+        } catch (error) {
+            console.error('Error fetching pets:', error.message);
+        }
+        return [];
+    };
+
+    const addPet = async (petData) => {
+        try {
+            const { data } = await axios.post(backendurl + '/api/user/add-pet', petData, { headers: { token } });
+            if (data.success) {
+                toast.success(data.message);
+                await fetchUserPets();
+                return true;
+            }
+            toast.error(data.message);
+            return false;
+        } catch (error) {
+            toast.error(error.message);
+            return false;
+        }
+    };
+
+    const updatePet = async (petData) => {
+        try {
+            const { data } = await axios.post(backendurl + '/api/user/update-pet', petData, { headers: { token } });
+            if (data.success) {
+                toast.success(data.message);
+                await fetchUserPets();
+                return true;
+            }
+            toast.error(data.message);
+            return false;
+        } catch (error) {
+            toast.error(error.message);
+            return false;
+        }
+    };
+
+    const deletePet = async (petId) => {
+        try {
+            const { data } = await axios.post(backendurl + '/api/user/delete-pet', { petId }, { headers: { token } });
+            if (data.success) {
+                toast.success(data.message);
+                await fetchUserPets();
+                return true;
+            }
+            toast.error(data.message);
+            return false;
+        } catch (error) {
+            toast.error(error.message);
+            return false;
+        }
+    };
+
     const value = {
         doctors, getdoctorsdata,
         token, settoken,
@@ -254,7 +317,9 @@ const AppContextProvider = (props) => {
         getUserAppointments,
         systemConfig,
         registerFace,
-        loginWithFace
+        loginWithFace,
+        userPets, setUserPets,
+        fetchUserPets, addPet, updatePet, deletePet
     }
 
     useEffect(() => {
@@ -269,8 +334,10 @@ const AppContextProvider = (props) => {
     useEffect(() => {
         if (token) {
             loaduserprofiledata()
+            fetchUserPets()
         } else {
             setuserdata(false)
+            setUserPets([])
         }
     }, [token])
 

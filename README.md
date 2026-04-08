@@ -35,9 +35,12 @@ graph TD
 - **AI-Powered Diagnostics**: Integrated **Gemini AI** chatbot (PawBot) for instant pet health guidance and symptom checking.
 - **Smart Appointment Booking**: Easy scheduling with specialized vets (Small Animal, Avian, Exotic, etc.) featuring real-time slot availability.
 - **Video Consultations**: Crystal-clear video calls powered by **ZegoCloud** for remote diagnosis.
+- **🆕 Multi-Pet Management**: Create and manage multiple pet profiles per user with specialized data fields (breed, gender, official age).
+- **🆕 Official Pet ID Cards**: Automated generation of premium, high-fidelity identity documents for every pet profile.
+- **🆕 Stray Animal Support**: Integrated workflow for booking appointments for stray animals with location-based tracking.
+- **Refined UI & Navigation**: Premium "Deep Obsidian & Gold" theme with warm beige/tan accents across profile and appointment views.
 - **Multilingual Support**: Support for English, Hindi, Tamil, and Telugu using **i18next** and AI-powered translations.
-- **Unified Coupon System**: Stacked support allowing users to apply both doctor-specific discounts and platform-wide admin coupons simultaneously.
-- **Refined UI & Navigation**: Premium, responsive, and animated user interfaces with intelligent space management.
+- **Unified Coupon System**: Stacked support allowing users to apply both doctor-specific discounts and platform-wide admin coupons.
 - **Community Hub**: Share experiences and learn from expert blogs.
 
 ### 🏥 For Veterinarians
@@ -56,7 +59,13 @@ graph TD
 - **Thermal & Hardware Monitoring**: Animated SVG thermometer with core-level temperature tracking and fan RPM simulation.
 - **Security Incident Suite**: 24/7 automated threat detection for **SQLi and XSS** with deep offender fingerprinting (IP, Device, Geolocation).
 - **Service Health dashboard**: Live connectivity pings for MongoDB, Cloudinary, SMTP, Supabase, and Gemini AI.
-- **User Moderation Suite**: Instant visual identification of "Blacklisted" or banned users directly within the user management views.
+- **🆕 User Pet Intelligence**:
+  - **Pet Family Graphs**: Horizontal scrollable view of all user pets directly in administrative user cards.
+  - **Detailed Profiles**: Dedicated "Pet Family" tab in User Insights for individual pet profile verification.
+  - **Auto-Highlighting**: Adaptive interface that highlights active pet profiles when accessed via specific appointment links.
+- **🆕 Advanced Appointment Visibility**:
+  - **Clinical Context**: Doctors can now see the specific pet (breed, image, age) booked for the appointment directly in their dashboard.
+  - **User Badges**: Appointment cards now feature distinct pet identity markers for effortless tracking.
 - **Advanced Login Security**: 
   - Tracks failed login attempts and triggers threshold email alerts.
   - Implements an intelligent auto-approval loop for whitelisted IP addresses.

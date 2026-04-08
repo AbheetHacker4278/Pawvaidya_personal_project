@@ -238,7 +238,8 @@
     "deleteWarning": "We're sorry to see you go. Please let us know why you want to delete your account. This request will be reviewed by our team.",
     "tipUnavailable": "Daily tip unavailable",
     "tipError": "Failed to load daily content.",
-    "profileCompleteness": "Profile Completeness"
+    "profileCompleteness": "Profile Completeness",
+    "myPetFamily": "My Pet Family"
   },
   "appointments": {
     "myAppointments": "My Appointments",

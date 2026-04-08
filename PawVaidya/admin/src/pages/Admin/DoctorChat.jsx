@@ -79,9 +79,8 @@ const DoctorChat = () => {
         }
     };
 
-    // ─── Gemini Integration ──────────────────────────────────────────────────────
-    const [genAI, setGenAI] = useState(null);
-    const [model, setModel] = useState(null);
+    // ─── NVIDIA NIM Integration ──────────────────────────────────────────────────
+    // isGeminiEnabled state name kept to avoid UI changes, now using NVIDIA NIM (Gemma 3) via Backend
     // Initialize from localStorage or default to false
     const [isGeminiEnabled, setIsGeminiEnabled] = useState(() => {
         const saved = localStorage.getItem('isGeminiEnabled');
@@ -99,18 +98,7 @@ const DoctorChat = () => {
     }, [isGeminiEnabled]);
 
     useEffect(() => {
-        const initGemini = async () => {
-            try {
-                const { GoogleGenerativeAI } = await import('@google/generative-ai');
-                const API_KEY = import.meta.env.VITE_API_KEY_GEMINI_2;
-                const genAIInstance = new GoogleGenerativeAI(API_KEY);
-                setGenAI(genAIInstance);
-                setModel(genAIInstance.getGenerativeModel({ model: 'gemini-3-flash-preview' }));
-            } catch (error) {
-                console.error("Failed to initialize Gemini:", error);
-            }
-        };
-        initGemini();
+        console.log("NVIDIA NIM AI (Gemma 3) ready for Doctor Chat auto-replies.");
     }, []);
 
     const SYSTEM_PROMPT = `You are the AI Assistant for the **PawVaidya Admin**. You are talking to a **Veterinary Doctor** on the platform.
@@ -130,33 +118,34 @@ const DoctorChat = () => {
     If the doctor asks for sensitive actions (like unbanning, payment release), say you will "forward this request to the main admin team" or "look into it shortly".`;
 
     const generateGeminiResponse = async (userMessage) => {
-        // Use ref here as well to be safe, though not strictly necessary if called from closure-safe place
-        if (!geminiEnabledRef.current || !model) {
-            console.log("Gemini skipped: Enabled=", geminiEnabledRef.current, "Model=", !!model);
+        if (!geminiEnabledRef.current) {
+            console.log("AI skipped: isGeminiEnabled =", geminiEnabledRef.current);
             return;
         }
 
         setIsGeminiTyping(true);
-        // Emit typing start
         socket?.emit('direct-typing-start', { receiverId: selectedDoctor._id, senderId: adminId });
 
         try {
             // Build conversation history (last 5 messages for context)
-            const history = messages.slice(-5).map(m =>
-                `${m.senderModel === 'Admin' ? 'Admin' : 'Doctor'}: ${m.message || '[Attachment]'}`
-            ).join('\n');
+            const chatHistory = messages.slice(-5).map(m => ({
+                role: m.senderModel === 'Admin' ? 'assistant' : 'user',
+                content: m.message || '[Attachment]'
+            }));
 
-            const prompt = `${SYSTEM_PROMPT}\n\nRecent Conversation:\n${history}\n\nDoctor: ${userMessage}\nAdmin (You):`;
+            const { data } = await axios.post(`${backendurl}/api/bot/query-doctor`, {
+                message: userMessage,
+                history: chatHistory,
+                systemPrompt: SYSTEM_PROMPT
+            }, {
+                headers: { atoken }
+            });
 
-            const result = await model.generateContent(prompt);
-            const response = result.response.text();
-
-            if (response) {
-                await sendAdminMessage(response);
+            if (data.success && data.response) {
+                await sendAdminMessage(data.response);
             }
         } catch (error) {
-            console.error("Gemini Error:", error);
-            // Fallback: Try with 'gemini-pro' if flash fails? Or just log.
+            console.error("AI Error:", error);
         } finally {
             setIsGeminiTyping(false);
             // Emit typing stop

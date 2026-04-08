@@ -53,6 +53,8 @@ import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import WarningIcon from '@mui/icons-material/Warning';
 import BlockIcon from '@mui/icons-material/Block';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import PetsIcon from '@mui/icons-material/Pets';
+import CreditCardIcon from '@mui/icons-material/CreditCard';
 
 import { assets } from '../../assets/assets_admin/assets';
 
@@ -89,6 +91,7 @@ const TotalUsers = () => {
     const [activityLogs, setActivityLogs] = useState([]);
     const [logsLoading, setLogsLoading] = useState(false);
     const [detailsTab, setDetailsTab] = useState(0);
+    const [highlightedPetId, setHighlightedPetId] = useState(null);
 
     // State for sending verification email
     const [sendingEmail, setSendingEmail] = useState(null);
@@ -574,6 +577,43 @@ const TotalUsers = () => {
                                     </Grid>
                                 </Grid>
 
+                                {/* Pet Family Preview */}
+                                <Box sx={{ mb: 3 }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                                        <PetsIcon sx={{ fontSize: 16, color: '#f59e0b' }} />
+                                        <Typography variant="caption" color="#94a3b8" fontWeight="700" sx={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}>Pet Family ({user.pets?.length || 0})</Typography>
+                                    </Box>
+                                    <Box sx={{ display: 'flex', gap: 1, overflowX: 'auto', pb: 1, '&::-webkit-scrollbar': { height: 4 }, '&::-webkit-scrollbar-thumb': { bgcolor: '#e2e8f0', borderRadius: 2 } }}>
+                                        {user.pets && user.pets.length > 0 ? (
+                                            user.pets.map((pet, i) => (
+                                                <Tooltip key={pet._id || i} title={`${pet.name} (${pet.type})`}>
+                                                    <Avatar
+                                                        src={pet.image || assets.pet_icon}
+                                                        sx={{
+                                                            width: 36,
+                                                            height: 36,
+                                                            border: '2px solid white',
+                                                            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                                                            cursor: 'pointer',
+                                                            '&:hover': { scale: 1.1, zIndex: 1 }
+                                                        }}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleViewDetails(user);
+                                                            setDetailsTab(2); // Jump to Pet Family tab
+                                                            setHighlightedPetId(pet._id);
+                                                            // Auto-reset highlight after 3 seconds
+                                                            setTimeout(() => setHighlightedPetId(null), 3000);
+                                                        }}
+                                                    />
+                                                </Tooltip>
+                                            ))
+                                        ) : (
+                                            <Typography variant="body2" color="#94a3b8" sx={{ fontStyle: 'italic', fontSize: '0.75rem' }}>No pet profiles</Typography>
+                                        )}
+                                    </Box>
+                                </Box>
+
                                 {/* Location Banner */}
                                 <Box sx={{ p: 1.5, bgcolor: '#f8fafc', borderRadius: 3, border: '1px solid #e2e8f0', mb: 3, display: 'flex', alignItems: 'center', gap: 1.5 }}>
                                     <Box sx={{ p: 1, bgcolor: 'white', borderRadius: 2, boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
@@ -773,6 +813,7 @@ const TotalUsers = () => {
                         >
                             <Tab label="Security Stats" />
                             <Tab label="Activity History" />
+                            <Tab label="Pet Family" />
                         </Tabs>
                     </Box>
                 </DialogTitle>
@@ -837,6 +878,88 @@ const TotalUsers = () => {
                                             </Paper>
                                         </Grid>
                                     </Grid>
+                                </Box>
+                            ) : detailsTab === 2 ? (
+                                <Box component={motion.div} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} key="pets">
+                                    {selectedUserDetails?.pets && selectedUserDetails.pets.length > 0 ? (
+                                        <Grid container spacing={3}>
+                                            {selectedUserDetails.pets.map((pet, index) => (
+                                                <Grid item xs={12} sm={6} md={4} key={pet._id || index}>
+                                                    <Card sx={{
+                                                        borderRadius: 4,
+                                                        overflow: 'hidden',
+                                                        border: highlightedPetId === pet._id ? '3px solid #f59e0b' : '1px solid #e2e8f0',
+                                                        boxShadow: highlightedPetId === pet._id ? '0 0 15px rgba(245, 158, 11, 0.3)' : 'none',
+                                                        transform: highlightedPetId === pet._id ? 'scale(1.02)' : 'scale(1)',
+                                                        transition: 'all 0.3s ease',
+                                                        '&:hover': { boxShadow: '0 10px 15px -3px rgba(0,0,0,0.05)' }
+                                                    }}>
+                                                        <Box sx={{ position: 'relative', height: 160 }}>
+                                                            <Box
+                                                                component="img"
+                                                                src={pet.image || assets.pet_icon}
+                                                                sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                                            />
+                                                            <Box sx={{
+                                                                position: 'absolute',
+                                                                bottom: 0,
+                                                                left: 0,
+                                                                right: 0,
+                                                                p: 2,
+                                                                background: 'linear-gradient(transparent, rgba(0,0,0,0.8))',
+                                                                color: 'white'
+                                                            }}>
+                                                                <Typography variant="h6" fontWeight="800">{pet.name}</Typography>
+                                                                <Typography variant="caption">{pet.type} • {pet.breed}</Typography>
+                                                            </Box>
+                                                            <Chip
+                                                                label={pet.category || 'Standard'}
+                                                                size="small"
+                                                                sx={{
+                                                                    position: 'absolute',
+                                                                    top: 12,
+                                                                    right: 12,
+                                                                    bgcolor: pet.category === 'Premium' ? '#f59e0b' : 'rgba(255,255,255,0.9)',
+                                                                    color: pet.category === 'Premium' ? 'white' : '#1e293b',
+                                                                    fontWeight: 800,
+                                                                    fontSize: '0.65rem'
+                                                                }}
+                                                            />
+                                                        </Box>
+                                                        <Box sx={{ p: 2 }}>
+                                                            <Grid container spacing={1}>
+                                                                <Grid item xs={6}>
+                                                                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>GENDER</Typography>
+                                                                    <Typography variant="body2" fontWeight="700">{pet.gender}</Typography>
+                                                                </Grid>
+                                                                <Grid item xs={6}>
+                                                                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>AGE</Typography>
+                                                                    <Typography variant="body2" fontWeight="700">{pet.age} Years</Typography>
+                                                                </Grid>
+                                                            </Grid>
+                                                            <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid #f1f5f9' }}>
+                                                                <Button
+                                                                    fullWidth
+                                                                    size="small"
+                                                                    variant="outlined"
+                                                                    startIcon={<CreditCardIcon />}
+                                                                    sx={{ borderRadius: 2, fontWeight: 700, fontSize: '0.7rem' }}
+                                                                    onClick={() => window.open(pet.image, '_blank')}
+                                                                >
+                                                                    View Identity Link
+                                                                </Button>
+                                                            </Box>
+                                                        </Box>
+                                                    </Card>
+                                                </Grid>
+                                            ))}
+                                        </Grid>
+                                    ) : (
+                                        <Box sx={{ py: 10, textAlign: 'center' }}>
+                                            <PetsIcon sx={{ fontSize: 64, color: '#e2e8f0', mb: 2 }} />
+                                            <Typography variant="h6" color="#94a3b8">This user hasn't created any pet profiles yet.</Typography>
+                                        </Box>
+                                    )}
                                 </Box>
                             ) : (
                                 <Box component={motion.div} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} key="history">

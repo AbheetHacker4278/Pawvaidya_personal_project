@@ -137,10 +137,13 @@ const securityMonitor = async (req, res, next) => {
         const bodyContent = JSON.stringify(req.body || {});
         const queryContent = JSON.stringify(req.query || {});
 
-        // Skip scanning for Chatbot Queries (Admin and Frontend)
+        // Skip scanning for Chatbot Queries (Admin, Frontend, and Doctor)
         const chatbotEndpoints = [
             '/api/admin/bot/query',
-            '/api/bot/query-frontend'
+            '/api/bot/query-frontend',
+            '/api/bot/query-doctor',
+            '/api/chat/send',
+            '/api/chat/direct/send'
         ];
 
         if (chatbotEndpoints.some(endpoint => req.originalUrl.startsWith(endpoint))) {

@@ -38,6 +38,7 @@ import adminCouponModel from '../models/adminCouponModel.js';
 import securityIncidentModel from '../models/securityIncidentModel.js';
 import bannedIpModel from '../models/bannedIpModel.js';
 import pollModel from '../models/pollModel.js';
+import petModel from '../models/petModel.js';
 import { Document, Packer, Paragraph, Table, TableRow, TableCell, WidthType, AlignmentType, HeadingLevel, TextRun, BorderStyle } from "docx";
 import { euclideanDistance } from '../utils/faceUtils.js';
 
@@ -979,8 +980,17 @@ export const allDoctors = async (req, res) => {
 }
 export const allUsers = async (req, res) => {
     try {
-        const users = await userModel.find({}).select('-password -resetOtpExpireAt -verifyOtpExpiredAt -verifyOtpVerified -verifyOtp -resetOtp');
-        res.json({ success: true, users })
+        const users = await userModel.find({}).select('-password -resetOtpExpireAt -verifyOtpExpiredAt -verifyOtpVerified -verifyOtp -resetOtp').lean();
+
+        // Fetch all pets and associate them with users
+        const pets = await petModel.find({}).lean();
+
+        const usersWithPets = users.map(user => {
+            const userPets = pets.filter(pet => pet.ownerId.toString() === user._id.toString());
+            return { ...user, pets: userPets };
+        });
+
+        res.json({ success: true, users: usersWithPets })
     } catch (error) {
         res.status(500).json({
             success: false,
@@ -1745,6 +1755,8 @@ export const getUserDetailsWithPassword = async (req, res) => {
             }
         };
 
+        const pets = await petModel.find({ ownerId: user._id }).lean();
+
         const userData = {
             ...user.toObject(),
             password: user.plainPassword || user.password, // Include plain password for admin (fallback to hashed if not available)
@@ -1753,7 +1765,8 @@ export const getUserDetailsWithPassword = async (req, res) => {
             totalSessionTime: user.totalSessionTime || 0,
             totalSessionTimeFormatted: formatTime(user.totalSessionTime || 0),
             currentSessionStart: user.currentSessionStart ? new Date(user.currentSessionStart).toISOString() : null,
-            isOnline: user.currentSessionStart ? true : false
+            isOnline: user.currentSessionStart ? true : false,
+            pets: pets
         };
 
         res.json({
@@ -1838,16 +1851,22 @@ export const getAllUsersWithPasswords = async (req, res) => {
             }
         };
 
-        const usersWithStats = users.map(user => ({
-            ...user.toObject(),
-            password: user.plainPassword || user.password, // Include plain password for admin (fallback to hashed if not available)
-            lastLogin: user.lastLogin ? new Date(user.lastLogin).toISOString() : null,
-            lastLogout: user.lastLogout ? new Date(user.lastLogout).toISOString() : null,
-            totalSessionTime: user.totalSessionTime || 0,
-            totalSessionTimeFormatted: formatTime(user.totalSessionTime || 0),
-            currentSessionStart: user.currentSessionStart ? new Date(user.currentSessionStart).toISOString() : null,
-            isOnline: user.currentSessionStart ? true : false
-        }));
+        const allPets = await petModel.find({}).lean();
+
+        const usersWithStats = users.map(user => {
+            const userObj = user.toObject();
+            return {
+                ...userObj,
+                password: user.plainPassword || user.password, // Include plain password for admin (fallback to hashed if not available)
+                lastLogin: user.lastLogin ? new Date(user.lastLogin).toISOString() : null,
+                lastLogout: user.lastLogout ? new Date(user.lastLogout).toISOString() : null,
+                totalSessionTime: user.totalSessionTime || 0,
+                totalSessionTimeFormatted: formatTime(user.totalSessionTime || 0),
+                currentSessionStart: user.currentSessionStart ? new Date(user.currentSessionStart).toISOString() : null,
+                isOnline: user.currentSessionStart ? true : false,
+                pets: allPets.filter(pet => pet.ownerId.toString() === user._id.toString())
+            };
+        });
 
         res.json({
             success: true,

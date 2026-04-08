@@ -169,7 +169,11 @@
     "petAge": "செல்லப்பிராணி வயது",
     "petGender": "செல்லப்பிராணி பாலினம்",
     "breed": "இனம்",
-    "category": "வகை"
+    "category": "வகை",
+    "myPetFamily": "எனது செல்லப்பிராணி குடும்பம்",
+    "premiumPetID": "பிரீமியம் செல்லப்பிராணி ஐடி",
+    "officialPetID": "அதிகாரப்பூர்வ செல்லப்பிரాణి ஐடி",
+    "profileCompleteness": "சுயவிவர நிறைவு"
   },
   "appointments": {
     "myAppointments": "எனது நியமனங்கள்",

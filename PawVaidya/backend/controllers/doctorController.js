@@ -387,14 +387,13 @@ export const appointmentsDoctor = async (req, res) => {
     try {
 
         const { docId } = req.body
-        // Filter out unpaid Razorpay appointments
         const appointments = await appointmentModel.find({
             docId,
             $or: [
                 { payment: true },
                 { paymentMethod: { $ne: 'Razorpay' } }
             ]
-        })
+        }).populate('petId')
 
         res.json({ success: true, appointments })
 
@@ -746,7 +745,7 @@ export const doctorDashboard = async (req, res) => {
                 { payment: true },
                 { paymentMethod: { $ne: 'Razorpay' } }
             ]
-        });
+        }).populate('petId')
 
         // Initialize counters and arrays for tracking appointments
         let earnings = 0;

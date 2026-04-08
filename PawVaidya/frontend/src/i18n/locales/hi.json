@@ -169,7 +169,11 @@
     "petAge": "पालतू उम्र",
     "petGender": "पालतू लिंग",
     "breed": "नस्ल",
-    "category": "श्रेणी"
+    "category": "श्रेणी",
+    "myPetFamily": "मेरा पालतू परिवार",
+    "premiumPetID": "प्रीमियम पेट आईडी",
+    "officialPetID": "आधिकारिक पेट आईडी",
+    "profileCompleteness": "प्रोफ़ाइल पूर्णता"
   },
   "appointments": {
     "myAppointments": "मेरी अपॉइंटमेंट",

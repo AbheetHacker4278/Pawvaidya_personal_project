@@ -169,7 +169,11 @@
     "petAge": "పెంపుడు జంతువు వయస్సు",
     "petGender": "పెంపుడు జంతువు లింగం",
     "breed": "జాతి",
-    "category": "వర్గం"
+    "category": "వర్గం",
+    "myPetFamily": "నా పెంపుడు జంతువుల కుటుంబం",
+    "premiumPetID": "ప్రీమియం పెంపుడు జంతువు ఐడి",
+    "officialPetID": "అధికారిక పెంపుడు జంతువు ఐడి",
+    "profileCompleteness": "ప్రొఫైల్ సంపూర్ణత"
   },
   "appointments": {
     "myAppointments": "నా అపాయింట్‌మెంట్‌లు",

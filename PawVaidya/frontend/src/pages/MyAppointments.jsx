@@ -11,7 +11,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Calendar, Clock, MapPin, Phone, CheckCircle, XCircle,
   MessageCircle, Stethoscope, AlertCircle, Sparkles, Flag,
-  ChevronRight, ChevronUp, ChevronDown, Search
+  ChevronRight, ChevronUp, ChevronDown, Search, PawPrint, Shield
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { translateSpeciality } from '../utils/translateSpeciality';
@@ -384,6 +384,51 @@ const MyAppointments = () => {
                           <Phone className="w-3.5 h-3.5" style={{ color: BRAND.light }} />
                           +91 {item.docData.docphone}
                         </span>
+                      </div>
+
+                      {/* Pet Details */}
+                      <div className="mb-4 p-4 rounded-xl border border-[#e8d5b0] bg-[#fdfaf2]/80 group transition-all hover:bg-[#fdfaf2]">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-[#7a5a48] mb-3 flex items-center gap-1.5">
+                          <PawPrint className="w-3.5 h-3.5 text-[#c8860a]" /> {t('appointments.selectedPet')}
+                        </p>
+                        {item.isStray ? (
+                          <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#5A4035] to-[#3d2b1f] flex items-center justify-center text-white font-bold text-xs shadow-md">
+                              🐾
+                            </div>
+                            <div>
+                              <p className="text-sm font-bold text-[#3d2b1f] capitalize">{item.strayDetails?.petType || 'Unknown'} (Stray)</p>
+                              <p className="text-[11px] text-[#5A4035] italic flex items-center gap-1">
+                                <MapPin className="w-3 h-3" /> {item.strayDetails?.location || 'Location not specified'}
+                              </p>
+                            </div>
+                          </div>
+                        ) : item.petId ? (
+                          <div className="flex items-center gap-3">
+                            <div className="relative">
+                              <img src={item.petId.image} alt={item.petId.name} className="w-12 h-12 rounded-xl object-cover border-2 border-[#e8d5b0] shadow-md" />
+                              <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-[#c8860a] border border-white flex items-center justify-center">
+                                <Sparkles className="w-2 h-2 text-white" />
+                              </div>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <p className="text-sm font-bold text-[#3d2b1f] truncate">{item.petId.name}</p>
+                                <span className="text-[10px] bg-[#e8d5b0] text-[#5A4035] px-1.5 py-0.5 rounded-md font-semibold truncate max-w-[80px]">
+                                  {item.petId.breed}
+                                </span>
+                              </div>
+                              <p className="text-[11px] text-[#5A4035] mt-1 font-medium">
+                                {item.petId.gender} • {item.petId.age} yrs • ID: <span className="text-[#c8860a] font-bold">{item.petId.petId}</span>
+                              </p>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-50 border border-dashed border-gray-300">
+                            <AlertCircle className="w-3.5 h-3.5 text-gray-400" />
+                            <p className="text-xs text-gray-500 italic">No pet selection data available</p>
+                          </div>
+                        )}
                       </div>
 
                       {/* Action Buttons */}

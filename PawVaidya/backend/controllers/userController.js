@@ -28,6 +28,7 @@ import { getLocationFromIP, checkImpossibleTravel } from '../utils/fraudTracker.
 import deletionRequestModel from '../models/deletionRequestModel.js';
 import blacklistModel from '../models/blacklistModel.js';
 import adminCouponModel from '../models/adminCouponModel.js';
+import petModel from '../models/petModel.js';
 
 export const registeruser = async (req, res) => {
     try {
@@ -693,9 +694,83 @@ export const updateprofile = async (req, res) => {
     }
 }
 
+// ─── Pet Management Controllers ──────────────────────────────────────
+
+export const addPet = async (req, res) => {
+    try {
+        const { userId, name, type, breed, age, gender, category } = req.body;
+        const imageFile = req.file;
+
+        if (!name || !type) {
+            return res.json({ success: false, message: "Name and Type are required" });
+        }
+
+        let imageUrl = "";
+        if (imageFile) {
+            const upload = await coludinary.uploader.upload(imageFile.path, { resource_type: 'image' });
+            imageUrl = upload.secure_url;
+        }
+
+        const newPet = new petModel({
+            ownerId: userId,
+            name,
+            type,
+            breed,
+            age,
+            gender,
+            category,
+            image: imageUrl
+        });
+
+        await newPet.save();
+        res.json({ success: true, message: "Pet added successfully" });
+    } catch (error) {
+        res.json({ success: false, message: error.message });
+    }
+};
+
+export const getPets = async (req, res) => {
+    try {
+        const { userId } = req.body;
+        const pets = await petModel.find({ ownerId: userId });
+        res.json({ success: true, pets });
+    } catch (error) {
+        res.json({ success: false, message: error.message });
+    }
+};
+
+export const updatePet = async (req, res) => {
+    try {
+        const { petId, name, type, breed, age, gender, category } = req.body;
+        const imageFile = req.file;
+
+        const updateData = { name, type, breed, age, gender, category };
+
+        if (imageFile) {
+            const upload = await coludinary.uploader.upload(imageFile.path, { resource_type: 'image' });
+            updateData.image = upload.secure_url;
+        }
+
+        await petModel.findByIdAndUpdate(petId, updateData);
+        res.json({ success: true, message: "Pet updated successfully" });
+    } catch (error) {
+        res.json({ success: false, message: error.message });
+    }
+};
+
+export const deletePet = async (req, res) => {
+    try {
+        const { petId } = req.body;
+        await petModel.findByIdAndDelete(petId);
+        res.json({ success: true, message: "Pet deleted successfully" });
+    } catch (error) {
+        res.json({ success: false, message: error.message });
+    }
+};
+
 export const bookappointment = async (req, res) => {
     try {
-        const { userId, docId, slotDate, slotTime, discountCode, adminCouponCode, paymentMethod, useWallet } = req.body;
+        const { userId, docId, slotDate, slotTime, discountCode, adminCouponCode, paymentMethod, useWallet, petId, isStray, strayDetails } = req.body;
         const meetLink = "https://meet.google.com/qfv-rcwa-sec";
 
 
@@ -753,6 +828,15 @@ export const bookappointment = async (req, res) => {
         const userData = await userModel.findById(userId).select("-password");
         if (!userData) {
             return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        // Validate Pet Selection
+        if (!isStray && !petId) {
+            return res.json({ success: false, message: "Please select a pet for the appointment" });
+        }
+
+        if (isStray && (!strayDetails || !strayDetails.petType)) {
+            return res.json({ success: false, message: "Please provide the stray animal's type" });
         }
 
         // ─── Discount code handling ────────────────────────────────────────
@@ -906,7 +990,10 @@ export const bookappointment = async (req, res) => {
             ...(adminDiscountData && { adminDiscountData: adminDiscountData }),
             paymentMethod: finalPaymentMethod,
             walletDeduction,
-            payment
+            payment,
+            petId: isStray ? null : petId,
+            isStray: isStray || false,
+            strayDetails: isStray ? strayDetails : null
         };
 
         // Save appointment
@@ -1285,7 +1372,7 @@ export const listAppointment = async (req, res) => {
                 { payment: true },
                 { paymentMethod: { $ne: 'Razorpay' } }
             ]
-        })
+        }).populate('petId')
 
         res.json({ success: true, appointments })
 

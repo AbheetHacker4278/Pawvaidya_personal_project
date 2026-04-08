@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useContext } from 'react';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, X, Minimize2, Maximize2, RotateCcw, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -17,11 +17,6 @@ const PawIcon = ({ size = 28, color = 'white' }) => (
     <ellipse cx="32" cy="42" rx="18" ry="16" fill={color} opacity="0.95" />
   </svg>
 );
-
-// ─── Gemini setup ─────────────────────────────────────────────────────────────
-const API_KEY = import.meta.env.VITE_API_KEY_GEMINI_2;
-const genAI = new GoogleGenerativeAI(API_KEY);
-const model = genAI.getGenerativeModel({ model: 'gemini-3-flash-preview' });
 
 // ─── System prompt (prepended to every request) ───────────────────────────────
 const SYSTEM_PROMPT = `You are PawBot, the official AI assistant for PawVaidya — a veterinary consultancy platform for pet owners in India.
@@ -160,17 +155,23 @@ const AnimalHealthChatbot = () => {
     setIsLoading(true);
 
     try {
-      const prompt = buildPrompt(trimmed);
-      const result = await model.generateContent(prompt);
-      const raw = result.response.text();
-      const cleaned = processNavigation(raw);
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/bot/query-frontend`, {
+        message: trimmed,
+        history: messages,
+        systemPrompt: SYSTEM_PROMPT
+      });
 
-      setMessages(prev => [...prev, { role: 'bot', text: cleaned, ts: Date.now() }]);
+      if (response.data.success) {
+        const cleaned = processNavigation(response.data.response);
+        setMessages(prev => [...prev, { role: 'bot', text: cleaned, ts: Date.now() }]);
+      } else {
+        throw new Error(response.data.message);
+      }
     } catch (err) {
       console.error('PawBot error:', err);
       setMessages(prev => [...prev, {
         role: 'bot',
-        text: `Sorry, I ran into an issue 🐾 (${err?.message || 'Unknown error'}). Please try again.`,
+        text: `Sorry, I ran into an issue 🐾 (${err?.response?.data?.message || err?.message || 'Unknown error'}). Please try again.`,
         ts: Date.now(),
         isError: true,
       }]);

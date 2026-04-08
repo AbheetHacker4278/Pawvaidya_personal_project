@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import axios from "axios";
 import userModel from "../models/userModel.js";
 import doctorModel from "../models/doctorModel.js";
 import appointmentModel from "../models/appointmentModel.js";
@@ -6,81 +6,95 @@ import { transporter } from "../config/nodemailer.js";
 import VERIFICATION_EMAIL_TEMPLATE from "../mailservice/emailtemplate2.js";
 import { logActivity } from "../utils/activityLogger.js";
 
-// Initialize Gemini
-// We'll use VITE_API_KEY_GEMINI_2 if possible, or GEMINI_API_KEY
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || process.env.VITE_API_KEY_GEMINI_2);
+const NVIDIA_API_URL = "https://integrate.api.nvidia.com/v1/chat/completions";
 
-// Define tools (functions) for the AI
+// Standardize tools for OpenAI/NVIDIA API
 const tools = [
     {
-        name: "getSystemStats",
-        description: "Returns overall system statistics including total users, doctors, and appointments.",
-        parameters: {
-            type: "OBJECT",
-            properties: {},
-        },
-    },
-    {
-        name: "searchUser",
-        description: "Search for a user by their name or email address to get their details.",
-        parameters: {
-            type: "OBJECT",
-            properties: {
-                query: {
-                    type: "STRING",
-                    description: "The name or email of the user to search for.",
-                },
+        type: "function",
+        function: {
+            name: "getSystemStats",
+            description: "Returns overall system statistics including total users, doctors, and appointments.",
+            parameters: {
+                type: "object",
+                properties: {},
+                required: [],
             },
-            required: ["query"],
-        },
+        }
     },
     {
-        name: "sendVerificationEmail",
-        description: "Sends a verification OTP email to a user by their email address.",
-        parameters: {
-            type: "OBJECT",
-            properties: {
-                email: {
-                    type: "STRING",
-                    description: "The email address of the user.",
+        type: "function",
+        function: {
+            name: "searchUser",
+            description: "Search for a user by their name or email address to get their details.",
+            parameters: {
+                type: "object",
+                properties: {
+                    query: {
+                        type: "string",
+                        description: "The name or email of the user to search for.",
+                    },
                 },
+                required: ["query"],
             },
-            required: ["email"],
-        },
+        }
     },
     {
-        name: "getRecentAppointments",
-        description: "Fetches the most recent 5 appointments scheduled on the platform.",
-        parameters: {
-            type: "OBJECT",
-            properties: {},
-        },
-    },
-    {
-        name: "sendCustomEmail",
-        description: "Sends a custom email with a specific subject and message to any email address.",
-        parameters: {
-            type: "OBJECT",
-            properties: {
-                recipientEmail: {
-                    type: "STRING",
-                    description: "The email address of the recipient.",
+        type: "function",
+        function: {
+            name: "sendVerificationEmail",
+            description: "Sends a verification OTP email to a user by their email address.",
+            parameters: {
+                type: "object",
+                properties: {
+                    email: {
+                        type: "string",
+                        description: "The email address of the user.",
+                    },
                 },
-                subject: {
-                    type: "STRING",
-                    description: "The subject line of the email.",
-                },
-                message: {
-                    type: "STRING",
-                    description: "The main body content of the email (plaintext or basic HTML).",
-                },
+                required: ["email"],
             },
-            required: ["recipientEmail", "subject", "message"],
-        },
+        }
+    },
+    {
+        type: "function",
+        function: {
+            name: "getRecentAppointments",
+            description: "Fetches the most recent 5 appointments scheduled on the platform.",
+            parameters: {
+                type: "object",
+                properties: {},
+                required: [],
+            },
+        }
+    },
+    {
+        type: "function",
+        function: {
+            name: "sendCustomEmail",
+            description: "Sends a custom email with a specific subject and message to any email address.",
+            parameters: {
+                type: "object",
+                properties: {
+                    recipientEmail: {
+                        type: "string",
+                        description: "The email address of the recipient.",
+                    },
+                    subject: {
+                        type: "string",
+                        description: "The subject line of the email.",
+                    },
+                    message: {
+                        type: "string",
+                        description: "The main body content of the email (plaintext or basic HTML).",
+                    },
+                },
+                required: ["recipientEmail", "subject", "message"],
+            },
+        }
     },
 ];
 
-// Tool Implementation Logic
 const toolImplementations = {
     getSystemStats: async () => {
         const [userCount, doctorCount, appointmentCount] = await Promise.all([
@@ -88,18 +102,11 @@ const toolImplementations = {
             doctorModel.countDocuments(),
             appointmentModel.countDocuments(),
         ]);
-        return {
-            totalUsers: userCount,
-            totalDoctors: doctorCount,
-            totalAppointments: appointmentCount,
-        };
+        return { totalUsers: userCount, totalDoctors: doctorCount, totalAppointments: appointmentCount };
     },
     searchUser: async ({ query }) => {
         const user = await userModel.findOne({
-            $or: [
-                { email: query },
-                { name: { $regex: query, $options: "i" } },
-            ],
+            $or: [{ email: query }, { name: { $regex: query, $options: "i" } }],
         }).select("-password -plainPassword");
         return user ? { success: true, user } : { success: false, message: `User ${query} not found` };
     },
@@ -149,58 +156,106 @@ const toolImplementations = {
     },
 };
 
+const SYSTEM_PROMPT = `You are the PawVaidya Admin Assistant. You help administrators manage the platform.
+You have access to the following tools. If you need to use a tool, you MUST output a JSON object in your response using this EXACT format:
+{"tool": "toolName", "args": {"arg1": "value1"}}
+
+Available Tools:
+- getSystemStats(): Returns total users, doctors, and appointments.
+- searchUser(query: string): Searches for a user by name or email.
+- sendVerificationEmail(email: string): Sends verification OTP to a user.
+- getRecentAppointments(): Fetches the 5 most recent appointments.
+- sendCustomEmail(recipientEmail: string, subject: string, message: string): Sends a customized email.
+
+Instructions:
+1. If the user asks for information that requires a tool, call the tool first.
+2. After receiving tool results, provide a clear and helpful summary to the admin.
+3. If no tool is needed, respond naturally.
+4. ONLY use the tools listed above.`;
+
 export const queryAdminBot = async (req, res) => {
     try {
         const { message, history } = req.body;
         const adminId = req.admin?.id || "master";
+        const apiKey = process.env.NVIDIA_NIM_API_KEY;
 
-        if (!process.env.GEMINI_API_KEY && !process.env.VITE_API_KEY_GEMINI_2) {
-            return res.json({ success: false, message: "Gemini API Key is missing in .env" });
+        if (!apiKey) {
+            return res.json({ success: false, message: "NVIDIA NIM API Key is missing in .env" });
         }
 
-        const model = genAI.getGenerativeModel({
-            model: "gemini-3-flash-preview",
-            tools: [{ functionDeclarations: tools }],
-        });
+        // Prepare messages for NVIDIA API with strict alternation
+        let apiMessages = [{ role: 'system', content: SYSTEM_PROMPT }];
 
-        const chat = model.startChat({
-            history: (history || []).filter((m, i) => !(i === 0 && m.role !== 'user')),
-        });
+        const chatHistory = (history || []).map(m => ({
+            role: m.role === 'model' ? 'assistant' : 'user',
+            content: m.parts[0].text
+        }));
 
-        let result = await chat.sendMessage(message);
-        let response = result.response;
+        // Skip initial assistant greeting if present to start with User
+        if (chatHistory.length > 0 && chatHistory[0].role === 'assistant') {
+            chatHistory.shift();
+        }
 
-        // Check if parts exist and contains functionCall
-        let call = response.candidates[0].content.parts.find(p => p.functionCall);
+        apiMessages.push(...chatHistory);
+        apiMessages.push({ role: 'user', content: message });
 
-        while (call) {
-            const { name, args } = call.functionCall;
-            console.log(`AI invoking tool: ${name} with args:`, args);
+        const headers = {
+            "Authorization": `Bearer ${apiKey}`,
+            "Content-Type": "application/json"
+        };
 
-            const toolResult = await toolImplementations[name](args);
+        const payload = {
+            model: "google/gemma-3-27b-it",
+            messages: apiMessages,
+            max_tokens: 1024,
+            temperature: 0.1, // Lower temperature for more reliable JSON
+            top_p: 0.7
+        };
 
-            // Log the action if it's sensitive
-            if (name === "sendVerificationEmail" || name === "sendCustomEmail") {
-                await logActivity(adminId, "admin", "bot_action", `Bot performed: ${name} for ${args.email || args.recipientEmail}`, req);
+        console.log("NVIDIA Admin Bot Request (Prompt-based):", message);
+
+        let response = await axios.post(NVIDIA_API_URL, payload, { headers });
+        let aiResponse = response.data.choices[0].message.content;
+
+        // Tool calling loop (max 3 iterations to prevent loops)
+        let iterations = 0;
+        while (iterations < 3) {
+            let toolCallMatch = null;
+            try {
+                // Try to find JSON in the response
+                const jsonMatch = aiResponse.match(/\{[\s\S]*?"tool"[\s\S]*?\}/);
+                if (jsonMatch) {
+                    toolCallMatch = JSON.parse(jsonMatch[0]);
+                }
+            } catch (e) {
+                console.log("No valid JSON tool call found in AI response.");
             }
 
-            result = await chat.sendMessage([
-                {
-                    functionResponse: {
-                        name,
-                        response: { result: toolResult },
-                    },
-                },
-            ]);
-            response = result.response;
-            call = response.candidates[0].content.parts.find(p => p.functionCall);
+            if (!toolCallMatch || !toolImplementations[toolCallMatch.tool]) break;
+
+            const { tool, args } = toolCallMatch;
+            console.log(`Executing Prompt-Tool: ${tool} with args:`, args);
+
+            const result = await toolImplementations[tool](args);
+
+            if (tool === "sendVerificationEmail" || tool === "sendCustomEmail") {
+                await logActivity(adminId, "admin", "bot_action", `Bot performed: ${tool} for ${args.email || args.recipientEmail}`, req);
+            }
+
+            // Feed the result back to the model
+            apiMessages.push({ role: 'assistant', content: aiResponse });
+            apiMessages.push({ role: 'user', content: `Tool Result from ${tool}: ${JSON.stringify(result)}` });
+
+            response = await axios.post(NVIDIA_API_URL, { ...payload, messages: apiMessages }, { headers });
+            aiResponse = response.data.choices[0].message.content;
+            iterations++;
         }
 
-        const finalResponse = response.text();
-        res.json({ success: true, response: finalResponse });
+        res.json({ success: true, response: aiResponse });
 
     } catch (error) {
-        console.error("AdminBot Error:", error);
-        res.json({ success: false, message: "AI Assistant is currently unavailable. " + error.message });
+        console.error("AdminBot Error:", error.response?.data || error.message);
+        const detail = error.response?.data?.detail || error.response?.data?.message || error.message;
+        res.json({ success: false, message: `AI Assistant is currently unavailable. (${detail})` });
     }
 };

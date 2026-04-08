@@ -1245,6 +1245,8 @@ export const verifyRazorpay = async (req, res) => {
             if (!appointment) return res.status(404).json({ success: false, message: 'Appointment not found' });
 
             appointment.payment = true;
+            appointment.razorpayOrderId = razorpay_order_id;
+            appointment.razorpayPaymentId = razorpay_payment_id;
             await appointment.save();
 
             // Send Confirmation Emails now that payment is successful

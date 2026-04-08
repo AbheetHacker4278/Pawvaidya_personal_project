@@ -34,7 +34,10 @@ const appointmentSchema = new mongoose.Schema({
     },
     // Rating
     isRated: { type: Boolean, default: false },
-    rating: { type: Number, default: 0 }
+    rating: { type: Number, default: 0 },
+    // Payment IDs
+    razorpayOrderId: { type: String, default: null },
+    razorpayPaymentId: { type: String, default: null }
 })
 
 const appointmentModel = mongoose.models.appointment || mongoose.model("appointment", appointmentSchema)

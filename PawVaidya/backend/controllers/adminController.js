@@ -3500,3 +3500,146 @@ export const getUnreadSecurityIncidentCount = async (req, res) => {
         res.json({ success: false, message: error.message });
     }
 };
+
+// API to get payment details for a specific user (all their online payments)
+export const getUserPaymentDetails = async (req, res) => {
+    try {
+        const { userId } = req.params;
+
+        if (!userId) {
+            return res.json({ success: false, message: "User ID is required" });
+        }
+
+        // Fetch user info
+        const user = await userModel.findById(userId).select('name email image phone');
+        if (!user) {
+            return res.json({ success: false, message: "User not found" });
+        }
+
+        // Fetch all appointments where payment was made online or payment is true
+        const appointments = await appointmentModel.find({
+            userId,
+            $or: [
+                { payment: true },
+                { paymentMethod: 'Online' },
+                { paymentMethod: 'Razorpay' }
+            ]
+        }).sort({ date: -1 });
+
+        // Build payment records
+        const paymentRecords = appointments.map(apt => ({
+            appointmentId: apt._id,
+            slotDate: apt.slotDate,
+            slotTime: apt.slotTime,
+            doctorName: apt.docData?.name || 'N/A',
+            doctorSpeciality: apt.docData?.speciality || 'N/A',
+            amount: apt.amount,
+            paymentMethod: apt.paymentMethod || 'Online',
+            walletDeduction: apt.walletDeduction || 0,
+            netOnlinePaid: apt.amount || 0,
+            couponCode: apt.discountApplied?.code || apt.adminDiscountApplied?.code || null,
+            discountAmount: apt.discountApplied?.discountValue || apt.adminDiscountApplied?.amount || 0,
+            originalFee: apt.discountApplied?.originalFee || apt.amount,
+            cancelled: apt.cancelled,
+            isCompleted: apt.isCompleted,
+            isPaid: apt.payment,
+            date: apt.date,
+            rating: apt.rating || 0,
+            razorpayOrderId: apt.razorpayOrderId || null,
+            razorpayPaymentId: apt.razorpayPaymentId || null,
+        }));
+
+        // Aggregate stats
+        const totalOnlinePaid = paymentRecords.reduce((sum, r) => sum + (r.netOnlinePaid || 0), 0);
+        const totalWalletUsed = paymentRecords.reduce((sum, r) => sum + (r.walletDeduction || 0), 0);
+        const totalAmount = paymentRecords.reduce((sum, r) => sum + (r.amount || 0), 0);
+        const totalDiscountSaved = paymentRecords.reduce((sum, r) => sum + (r.discountAmount || 0), 0);
+        const cancelledCount = paymentRecords.filter(r => r.cancelled).length;
+        const completedCount = paymentRecords.filter(r => r.isCompleted).length;
+        const pendingCount = paymentRecords.filter(r => !r.cancelled && !r.isCompleted).length;
+
+        res.json({
+            success: true,
+            user,
+            stats: {
+                totalTransactions: paymentRecords.length,
+                totalAmount,
+                totalOnlinePaid,
+                totalWalletUsed,
+                totalDiscountSaved,
+                cancelledCount,
+                completedCount,
+                pendingCount
+            },
+            paymentRecords
+        });
+    } catch (error) {
+        console.error("Error fetching user payment details:", error);
+        res.json({ success: false, message: error.message });
+    }
+};
+
+// API to get all users who have made online payments (for the payment details overview page)
+export const getPaymentUsers = async (req, res) => {
+    try {
+        // Find all unique userIds that have online payments
+        const paidAppointments = await appointmentModel.aggregate([
+            {
+                $match: {
+                    $or: [
+                        { payment: true },
+                        { paymentMethod: 'Online' },
+                        { paymentMethod: 'Razorpay' }
+                    ]
+                }
+            },
+            {
+                $group: {
+                    _id: '$userId',
+                    totalTransactions: { $sum: 1 },
+                    totalAmount: { $sum: '$amount' },
+                    totalWalletUsed: { $sum: '$walletDeduction' },
+                    lastPaymentDate: { $max: '$date' },
+                    cancelledCount: {
+                        $sum: { $cond: ['$cancelled', 1, 0] }
+                    },
+                    completedCount: {
+                        $sum: { $cond: ['$isCompleted', 1, 0] }
+                    }
+                }
+            },
+            { $sort: { totalAmount: -1 } }
+        ]);
+
+        // Fetch user details for each userId
+        const userIds = paidAppointments.map(a => a._id);
+        const users = await userModel.find({ _id: { $in: userIds } })
+            .select('name email image phone pawWallet isAccountverified');
+
+        // Merge user with payment stats
+        const result = paidAppointments.map(apt => {
+            const user = users.find(u => u._id.toString() === apt._id.toString());
+            return {
+                userId: apt._id,
+                name: user?.name || 'Unknown',
+                email: user?.email || 'N/A',
+                image: user?.image || '',
+                phone: user?.phone || 'N/A',
+                pawWallet: user?.pawWallet || 0,
+                isAccountverified: user?.isAccountverified || false,
+                totalTransactions: apt.totalTransactions,
+                totalAmount: apt.totalAmount,
+                totalWalletUsed: apt.totalWalletUsed,
+                netOnlinePaid: Math.max(0, apt.totalAmount - apt.totalWalletUsed),
+                lastPaymentDate: apt.lastPaymentDate,
+                cancelledCount: apt.cancelledCount,
+                completedCount: apt.completedCount
+            };
+        }).filter(u => u.name !== 'Unknown'); // Filter out deleted users
+
+        res.json({ success: true, users: result, total: result.length });
+    } catch (error) {
+        console.error("Error fetching payment users:", error);
+        res.json({ success: false, message: error.message });
+    }
+};

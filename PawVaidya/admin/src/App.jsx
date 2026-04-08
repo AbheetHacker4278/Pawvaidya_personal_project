@@ -53,6 +53,7 @@ import SecurityMonitoring from './pages/Admin/SecurityMonitoring';
 import LocationHandler from './components/LocationHandler';
 import AdminDeployments from './pages/Admin/AdminDeployments';
 import AdminChatbot from './components/AdminChatbot';
+import PaymentDetails from './pages/Admin/PaymentDetails';
 
 const App = () => {
   const { atoken, adminProfile } = useContext(AdminContext)
@@ -136,6 +137,7 @@ const App = () => {
               <Route path='/add-doctor' element={<AddDoctor />} />
               <Route path='/doctor-list' element={<DoctorsList />} />
               <Route path='/total-users' element={<TotalUsers />} />
+              <Route path='/payment-details' element={<PaymentDetails />} />
               <Route path='/admin-messages' element={<AdminMessages />} />
               <Route path='/all-reports' element={<AllReports />} />
               <Route path='/unban-requests' element={<UnbanRequests />} />

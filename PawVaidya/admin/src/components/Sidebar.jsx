@@ -169,6 +169,9 @@ const Sidebar = ({ isOpen }) => {
               {hasPerm('users') && (
                 <SidebarItem to="/total-users" icon={Users} label="Total Users" subtext="Client Registry" isOpen={isOpen} onClick={() => logNavigation('Total Users')} />
               )}
+              {(hasPerm('users') || adminProfile?.role === 'master') && (
+                <SidebarItem to="/payment-details" icon={Database} label="Payment Details" subtext="Transaction History" isOpen={isOpen} onClick={() => logNavigation('Payment Details')} />
+              )}
               {adminProfile?.role === 'master' && (
                 <SidebarItem to="/media-registry" icon={Database} label="Media Registry" subtext="Cloud Assets" isOpen={isOpen} onClick={() => logNavigation('Media Registry')} />
               )}

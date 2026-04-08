@@ -819,6 +819,24 @@ const AdminContextProvider = (props) => {
         blacklistEmails, getBlacklist, removeFromBlacklist,
         verifyAdminOTP,
         getAllCoupons, createCoupon, toggleCoupon, deleteCoupon,
+        getPaymentUsers: async () => {
+            try {
+                const { data } = await axios.get(`${backendurl}/api/admin/payment-users`, { headers: { atoken } });
+                return data;
+            } catch (error) {
+                toast.error(error.message || 'Failed to fetch payment users');
+                return { success: false, users: [] };
+            }
+        },
+        getUserPaymentDetails: async (userId) => {
+            try {
+                const { data } = await axios.get(`${backendurl}/api/admin/user-payment-details/${userId}`, { headers: { atoken } });
+                return data;
+            } catch (error) {
+                toast.error(error.message || 'Failed to fetch user payment details');
+                return { success: false, paymentRecords: [], stats: null };
+            }
+        },
         securityIncidentCount, setSecurityIncidentCount,
         contentViolationCount, setContentViolationCount,
         adminLocation, setAdminLocation

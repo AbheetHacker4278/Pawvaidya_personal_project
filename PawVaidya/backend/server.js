@@ -16,6 +16,7 @@ import banRouter from './routes/banRoute.js';
 import petReportRouter from './routes/petReportRoute.js';
 import appIssueReportRouter from './routes/appIssueReportRoute.js';
 import adminBotRouter from './routes/adminBotRoute.js';
+import botRouter from './routes/botRoute.js';
 import roomRouter from './routes/roomRoute.js';
 import renderRouter from './routes/renderRoute.js';
 
@@ -126,6 +127,11 @@ try {
   app.use('/api/admin/bot', adminBotRouter);
 } catch (error) {
   console.error("Failed to use adminBotRouter:", error.message);
+}
+try {
+  app.use('/api/bot', botRouter);
+} catch (error) {
+  console.error("Failed to use botRouter:", error.message);
 }
 
 // Pet report feature disabled

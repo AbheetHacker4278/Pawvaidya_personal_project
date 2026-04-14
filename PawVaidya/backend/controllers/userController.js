@@ -29,6 +29,7 @@ import deletionRequestModel from '../models/deletionRequestModel.js';
 import blacklistModel from '../models/blacklistModel.js';
 import adminCouponModel from '../models/adminCouponModel.js';
 import petModel from '../models/petModel.js';
+import QRCode from 'qrcode';
 
 export const registeruser = async (req, res) => {
     try {
@@ -711,6 +712,8 @@ export const addPet = async (req, res) => {
             imageUrl = upload.secure_url;
         }
 
+        const qrToken = crypto.randomUUID();
+
         const newPet = new petModel({
             ownerId: userId,
             name,
@@ -719,7 +722,8 @@ export const addPet = async (req, res) => {
             age,
             gender,
             category,
-            image: imageUrl
+            image: imageUrl,
+            qrToken
         });
 
         await newPet.save();
@@ -2141,6 +2145,51 @@ export const loginFace = async (req, res) => {
 
     } catch (error) {
         console.error("Face login error:", error);
+        res.json({ success: false, message: error.message });
+    }
+};
+
+// ─── Generate Pet QR Code ──────────────────────────────────────────────
+export const generatePetQR = async (req, res) => {
+    try {
+        const { userId } = req.body;
+        const { petId } = req.params;
+
+        const pet = await petModel.findById(petId);
+        if (!pet) {
+            return res.json({ success: false, message: 'Pet not found' });
+        }
+
+        // Verify ownership
+        if (pet.ownerId.toString() !== userId) {
+            return res.json({ success: false, message: 'Unauthorized: This pet does not belong to you' });
+        }
+
+        // Generate qrToken if pet doesn't have one
+        if (!pet.qrToken) {
+            pet.qrToken = crypto.randomUUID();
+            await pet.save();
+        }
+
+        // QR payload
+        const qrPayload = JSON.stringify({
+            qrToken: pet.qrToken,
+            petId: pet._id.toString(),
+            ownerId: pet.ownerId.toString()
+        });
+
+        // Generate QR as data URL
+        const qrDataUrl = await QRCode.toDataURL(qrPayload, {
+            width: 200,
+            margin: 1,
+            color: {
+                dark: '#3d2b1f',
+                light: '#00000000' // transparent background
+            }
+        });
+
+        res.json({ success: true, qrDataUrl, qrToken: pet.qrToken });
+    } catch (error) {
         res.json({ success: false, message: error.message });
     }
 };

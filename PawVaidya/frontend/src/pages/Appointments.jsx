@@ -1250,7 +1250,7 @@ const Appointments = () => {
                             My Pets
                           </button>
                           <button
-                            onClick={() => { setIsStray(true); setShowStrayInput(true); }}
+                            onClick={() => { setIsStray(true); setShowStrayInput(true); setUseWallet(false); }}
                             className={`px-6 py-2.5 rounded-xl font-bold transition-all duration-300 ${isStray ? 'bg-[#c8860a] text-white shadow-lg' : 'text-gray-500 hover:text-[#c8860a]'}`}
                           >
                             Stray Animal
@@ -1824,8 +1824,17 @@ const Appointments = () => {
                 <p className="text-sm mt-1 font-medium" style={{ color: '#7a5a48' }}>How would you like to pay?</p>
               </div>
               <div className="flex flex-col gap-4">
-                {/* Wallet Toggle */}
-                {userdata && userdata.pawWallet > 0 && (
+                {/* Wallet Toggle — hidden for stray appointments */}
+                {isStray && (
+                  <div className="p-4 rounded-2xl border-2 border-amber-300/50 bg-amber-50/50">
+                    <div className="flex items-center gap-2">
+                      <span className="text-amber-600 text-base">🚫</span>
+                      <p className="text-amber-800 font-bold text-sm">Wallet payments are not available for stray animal appointments.</p>
+                    </div>
+                    <p className="text-amber-600 text-xs mt-1 ml-7">Please pay via Cash or Card only.</p>
+                  </div>
+                )}
+                {!isStray && userdata && userdata.pawWallet > 0 && (
                   <div
                     className="p-4 rounded-2xl border-2 transition-all cursor-pointer"
                     style={{

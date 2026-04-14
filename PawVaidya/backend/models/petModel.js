@@ -9,7 +9,8 @@ const petSchema = new mongoose.Schema({
     gender: { type: String, default: "Male" },
     image: { type: String, default: "" },
     isVerified: { type: Boolean, default: false },
-    category: { type: String, default: "Not Selected" }
+    category: { type: String, default: "Not Selected" },
+    qrToken: { type: String, unique: true, sparse: true }
 }, { timestamps: true });
 
 const petModel = mongoose.models.pet || mongoose.model("pet", petSchema);

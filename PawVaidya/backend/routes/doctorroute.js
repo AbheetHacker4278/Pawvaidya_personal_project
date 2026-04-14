@@ -1,5 +1,5 @@
 import express from 'express';
-import { appointmentCancel, appointmentComplete, appointmentsDoctor, doctorDashboard, doctorProfile, doctorslist, logindoctor, updateDoctorProfile, logoutdoctor, getDoctorMessages, markDoctorMessageAsRead, getDoctorById, updateDoctorLocation, createReminder, getDoctorReminders, updateReminder, deleteReminder, getDailyEarnings, createDiscount, getDoctorDiscounts, updateDiscount, deleteDiscount, getPublicDoctorDiscounts, registerFaceDr, clockInDr, checkAttendanceStatus, changeavailablity } from '../controllers/doctorController.js';
+import { appointmentCancel, appointmentComplete, appointmentsDoctor, doctorDashboard, doctorProfile, doctorslist, logindoctor, updateDoctorProfile, logoutdoctor, getDoctorMessages, markDoctorMessageAsRead, getDoctorById, updateDoctorLocation, createReminder, getDoctorReminders, updateReminder, deleteReminder, getDailyEarnings, createDiscount, getDoctorDiscounts, updateDiscount, deleteDiscount, getPublicDoctorDiscounts, registerFaceDr, clockInDr, checkAttendanceStatus, changeavailablity, scanQrCode, processQrWalletPayment } from '../controllers/doctorController.js';
 import { createDoctorBlog, getDoctorBlogs, updateDoctorBlog, deleteDoctorBlog, getAllBlogsForDoctor, toggleLikeBlog, addCommentToBlog, incrementBlogView, getBlogDetails } from '../controllers/doctorBlogController.js';
 import { getActivePolls, voteInPoll } from '../controllers/pollController.js';
 import { authDoctor } from '../middleware/authDoctor.js';
@@ -60,6 +60,10 @@ doctorrouter.post('/change-availability', authDoctor, changeavailablity)
 
 // Public route — active coupons for a doctor (no auth, for frontend display)
 doctorrouter.get('/discounts/public/:docId', getPublicDoctorDiscounts)
+
+// QR Code scan and wallet payment routes
+doctorrouter.post('/scan-qr', authDoctor, scanQrCode)
+doctorrouter.post('/process-qr-wallet-payment', authDoctor, processQrWalletPayment)
 
 // Poll routes
 doctorrouter.get('/active-polls', authDoctor, getActivePolls)

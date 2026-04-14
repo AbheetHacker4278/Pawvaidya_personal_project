@@ -14,6 +14,9 @@ import doctorScheduleModel from "../models/doctorScheduleModel.js";
 import systemConfigModel from '../models/systemConfigModel.js';
 import { getLocationFromIP, checkImpossibleTravel } from '../utils/fraudTracker.js';
 import adminCouponModel from '../models/adminCouponModel.js';
+import petModel from '../models/petModel.js';
+import WALLET_PAYMENT_SUCCESS_TEMPLATE from '../mailservice/walletPaymentSuccessTemplate.js';
+import WALLET_PAYMENT_DECLINED_TEMPLATE from '../mailservice/walletPaymentDeclinedTemplate.js';
 
 const getDoctorWindow = async (docId) => {
     // Default window: 10:00 AM to 8:30 PM
@@ -1462,6 +1465,237 @@ export const getPublicDoctorDiscounts = async (req, res) => {
         res.json({ success: true, discounts: activeDiscounts });
     } catch (error) {
         console.error('Error fetching public discounts:', error);
+        res.json({ success: false, message: error.message });
+    }
+};
+
+// ─── QR Code Scan — Verify Pet Owner ─────────────────────────────────────────
+export const scanQrCode = async (req, res) => {
+    try {
+        const { docId, qrToken } = req.body;
+
+        if (!qrToken) {
+            return res.json({ success: false, message: 'QR token is required' });
+        }
+
+        // Find pet by qrToken
+        let pet = await petModel.findOne({ qrToken });
+
+        // Fallback for older pets that haven't been migrated yet (their token is their ID)
+        if (!pet && qrToken.length === 24) {
+            try {
+                pet = await petModel.findById(qrToken);
+            } catch (e) {
+                // Ignore cast errors if it happens
+            }
+        }
+
+        if (!pet) {
+            return res.json({ success: false, message: 'Invalid QR code — pet not found' });
+        }
+
+        // Get owner details
+        const owner = await userModel.findById(pet.ownerId).select('-password -faceDescriptor');
+        if (!owner) {
+            return res.json({ success: false, message: 'Pet owner not found' });
+        }
+
+        // Find active appointment for this specific pet with this doctor
+        const activeAppointment = await appointmentModel.findOne({
+            userId: owner._id.toString(),
+            petId: pet._id.toString(),
+            docId,
+            cancelled: false,
+            isCompleted: false
+        }).sort({ date: -1 });
+
+        if (!activeAppointment) {
+            return res.json({ success: false, message: `No active appointment found for ${pet.name}.` });
+        }
+
+        res.json({
+            success: true,
+            verified: true,
+            pet: {
+                _id: pet._id,
+                name: pet.name,
+                type: pet.type,
+                breed: pet.breed,
+                age: pet.age,
+                gender: pet.gender,
+                image: pet.image,
+                category: pet.category
+            },
+            owner: {
+                _id: owner._id,
+                name: owner.name,
+                email: owner.email,
+                phone: owner.phone,
+                image: owner.image,
+                pawWallet: owner.pawWallet || 0
+            },
+            appointment: activeAppointment ? {
+                _id: activeAppointment._id,
+                slotDate: activeAppointment.slotDate,
+                slotTime: activeAppointment.slotTime,
+                amount: activeAppointment.amount,
+                payment: activeAppointment.payment,
+                paymentMethod: activeAppointment.paymentMethod,
+                walletDeduction: activeAppointment.walletDeduction,
+                isStray: activeAppointment.isStray
+            } : null
+        });
+    } catch (error) {
+        console.error('QR scan error:', error);
+        res.json({ success: false, message: error.message });
+    }
+};
+
+// ─── Process QR Wallet Payment ───────────────────────────────────────────────
+export const processQrWalletPayment = async (req, res) => {
+    try {
+        const { docId, qrToken, appointmentId } = req.body;
+
+        if (!qrToken || !appointmentId) {
+            return res.json({ success: false, message: 'QR token and appointment ID are required' });
+        }
+
+        // Find pet by qrToken
+        let pet = await petModel.findOne({ qrToken });
+
+        // Fallback for older pets that haven't been migrated yet (their token is their ID)
+        if (!pet && qrToken.length === 24) {
+            try {
+                pet = await petModel.findById(qrToken);
+            } catch (e) { }
+        }
+
+        if (!pet) {
+            return res.json({ success: false, message: 'Invalid QR code — scanning payment failed' });
+        }
+
+        // Get appointment
+        const appointment = await appointmentModel.findById(appointmentId);
+        if (!appointment) {
+            return res.json({ success: false, message: 'Appointment not found' });
+        }
+
+        // Validate appointment belongs to this doctor
+        if (appointment.docId !== docId) {
+            return res.json({ success: false, message: 'Unauthorized: appointment does not belong to you' });
+        }
+
+        // Validate appointment belongs to the pet owner
+        if (appointment.userId !== pet.ownerId.toString()) {
+            return res.json({ success: false, message: 'Appointment does not belong to the pet owner' });
+        }
+
+        // Block wallet payment for stray appointments
+        if (appointment.isStray) {
+            return res.json({ success: false, message: 'Wallet payments are not available for stray animal appointments. Please use Cash or Card.' });
+        }
+
+        // Check if already fully paid
+        if (appointment.payment) {
+            return res.json({ success: false, message: 'This appointment is already fully paid' });
+        }
+
+        // Get the remaining amount to pay
+        const amountToPay = appointment.amount;
+        if (amountToPay <= 0) {
+            return res.json({ success: false, message: 'No payment required for this appointment' });
+        }
+
+        // Get owner
+        const owner = await userModel.findById(pet.ownerId);
+        if (!owner) {
+            return res.json({ success: false, message: 'Pet owner not found' });
+        }
+
+        const doctor = await doctorModel.findById(docId).select('name');
+        const walletBalance = owner.pawWallet || 0;
+
+        // Check if wallet has sufficient balance
+        if (walletBalance < amountToPay) {
+            // DECLINED — Insufficient funds
+            // Send declined email
+            try {
+                const declinedHtml = WALLET_PAYMENT_DECLINED_TEMPLATE
+                    .replace(/{userName}/g, owner.name)
+                    .replace(/{amountRequired}/g, amountToPay)
+                    .replace(/{currentBalance}/g, walletBalance)
+                    .replace(/{petName}/g, pet.name)
+                    .replace(/{doctorName}/g, doctor?.name || 'N/A')
+                    .replace(/{appointmentDate}/g, appointment.slotDate);
+
+                await transporter.sendMail({
+                    from: process.env.SENDER_EMAIL,
+                    to: owner.email,
+                    subject: '⚠️ Paw Wallet Payment Declined — Insufficient Balance',
+                    html: declinedHtml
+                });
+            } catch (emailErr) {
+                console.error('Failed to send declined email:', emailErr.message);
+            }
+
+            return res.json({
+                success: false,
+                message: `Insufficient wallet balance. Required: ₹${amountToPay}, Available: ₹${walletBalance}. User has been notified via email.`,
+                declined: true
+            });
+        }
+
+        // SUCCESS — Deduct from wallet
+        const newBalance = walletBalance - amountToPay;
+        await userModel.findByIdAndUpdate(owner._id, { pawWallet: newBalance });
+
+        // Update appointment as paid via wallet and mark completed
+        await appointmentModel.findByIdAndUpdate(appointmentId, {
+            payment: true,
+            paymentMethod: 'Wallet',
+            walletDeduction: (appointment.walletDeduction || 0) + amountToPay,
+            isCompleted: true
+        });
+
+        // Auto-delete chat files from Cloudinary since it's now completed
+        try {
+            autoDeleteFilesOnCompletion(appointmentId).catch(err => {
+                console.error('Error auto-deleting files on QR payment:', err);
+            });
+        } catch (error) {
+            console.error('Failed to trigger file cleanup:', error);
+        }
+
+        // Send success email
+        try {
+            const transactionId = `${appointment._id.toString().slice(-8).toUpperCase()}-${Date.now().toString(36).toUpperCase()}`;
+            const successHtml = WALLET_PAYMENT_SUCCESS_TEMPLATE
+                .replace(/{userName}/g, owner.name)
+                .replace(/{amount}/g, amountToPay)
+                .replace(/{remainingBalance}/g, newBalance)
+                .replace(/{petName}/g, pet.name)
+                .replace(/{doctorName}/g, doctor?.name || 'N/A')
+                .replace(/{appointmentDate}/g, appointment.slotDate)
+                .replace(/{transactionId}/g, transactionId);
+
+            await transporter.sendMail({
+                from: process.env.SENDER_EMAIL,
+                to: owner.email,
+                subject: '✅ Paw Wallet Payment Successful',
+                html: successHtml
+            });
+        } catch (emailErr) {
+            console.error('Failed to send success email:', emailErr.message);
+        }
+
+        res.json({
+            success: true,
+            message: `Payment of ₹${amountToPay} successfully deducted from wallet. Remaining balance: ₹${newBalance}`,
+            amountDeducted: amountToPay,
+            remainingBalance: newBalance
+        });
+    } catch (error) {
+        console.error('QR wallet payment error:', error);
         res.json({ success: false, message: error.message });
     }
 };

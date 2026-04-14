@@ -1,6 +1,6 @@
 import express from 'express';
 
-import { registeruser, loginUser, getprofile, updateprofile, bookappointment, verifyRazorpay, listAppointment, cancelAppointment, sendVerifyOtp, verifyEmail, isAuthenticated, sendResetOtp, resetpassword, getuserdata, logout, getUserMessages, markMessageAsRead, getUserById, updateUserLocation, validateDiscount, rateDoctor, requestAccountDeletion, registerFace, loginFace, addPet, getPets, updatePet, deletePet } from '../controllers/userController.js';
+import { registeruser, loginUser, getprofile, updateprofile, bookappointment, verifyRazorpay, listAppointment, cancelAppointment, sendVerifyOtp, verifyEmail, isAuthenticated, sendResetOtp, resetpassword, getuserdata, logout, getUserMessages, markMessageAsRead, getUserById, updateUserLocation, validateDiscount, rateDoctor, requestAccountDeletion, registerFace, loginFace, addPet, getPets, updatePet, deletePet, generatePetQR } from '../controllers/userController.js';
 import { validateAdminCoupon, getActiveAdminCoupons } from '../controllers/couponController.js';
 import { getNearbyDoctors } from '../controllers/doctorController.js';
 import { createBlog, getAllBlogs, getBlogById, updateBlog, deleteBlog, toggleLike, addComment, deleteComment, getUserBlogs } from '../controllers/blogController.js';
@@ -39,6 +39,7 @@ userRouter.post('/add-pet', upload.single('image'), authuser, addPet)
 userRouter.post('/list-pets', authuser, getPets)
 userRouter.post('/update-pet', upload.single('image'), authuser, updatePet)
 userRouter.post('/delete-pet', authuser, deletePet)
+userRouter.get('/generate-pet-qr/:petId', authuser, generatePetQR)
 
 // Blog routes
 userRouter.post('/blogs/create', authuser, uploadBlogFiles, securityMonitor, createBlog)

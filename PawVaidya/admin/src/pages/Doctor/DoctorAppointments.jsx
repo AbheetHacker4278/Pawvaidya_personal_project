@@ -5,10 +5,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import AppointmentChat from '../../components/AppointmentChat';
 import ReportUserModal from '../../components/ReportUserModal';
 import PetReportModal from '../../components/PetReportModal';
+import QrScanner from '../../components/QrScanner';
+import axios from 'axios';
+import { toast } from 'react-toastify';
 import {
   MessageCircle, Flag, CheckCircle, XCircle, Search, Calendar,
   Clock, Phone, User, Filter, ChevronDown, Tag, IndianRupee,
-  PawPrint, AlertCircle, TrendingUp, Users, Activity, FileText, MapPin
+  PawPrint, AlertCircle, TrendingUp, Users, Activity, FileText, MapPin,
+  QrCode, Wallet, ShieldCheck, X
 } from 'lucide-react';
 
 const THEME = {
@@ -56,7 +60,7 @@ const StatCard = ({ icon: Icon, label, value, color, bg }) => (
 );
 
 const DoctorAppointments = () => {
-  const { dtoken, appointments, getAppointments, cancelAppointment, completeAppointment } = useContext(DoctorContext);
+  const { dtoken, appointments, getAppointments, cancelAppointment, completeAppointment, backendurl } = useContext(DoctorContext);
   const { slotDateFormat, calculateAge } = useContext(AppContext);
 
   const [selectedChat, setSelectedChat] = useState(null);
@@ -64,8 +68,15 @@ const DoctorAppointments = () => {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [sortOrder, setSortOrder] = useState('newest');
-  const [confirmAction, setConfirmAction] = useState(null); // { type:'cancel'|'complete', appointmentId, name }
+  const [confirmAction, setConfirmAction] = useState(null);
   const [reportAppointment, setReportAppointment] = useState(null);
+
+  // QR Scanner states
+  const [showQrScanner, setShowQrScanner] = useState(false);
+  const [qrResult, setQrResult] = useState(null);
+  const [qrLoading, setQrLoading] = useState(false);
+  const [walletPaymentLoading, setWalletPaymentLoading] = useState(false);
+  const [scannedQrToken, setScannedQrToken] = useState('');
 
   useEffect(() => {
     if (dtoken) getAppointments();
@@ -113,6 +124,59 @@ const DoctorAppointments = () => {
     if (confirmAction.type === 'complete') completeAppointment(confirmAction.appointmentId);
     if (confirmAction.type === 'cancel') cancelAppointment(confirmAction.appointmentId);
     setConfirmAction(null);
+  };
+
+  // ─── QR Scan Handler ────────────────────────────
+  const handleQrScanSuccess = async (qrData) => {
+    setShowQrScanner(false);
+    setQrLoading(true);
+    setScannedQrToken(qrData.qrToken);
+    try {
+      const { data } = await axios.post(
+        backendurl + '/api/doctor/scan-qr',
+        { qrToken: qrData.qrToken },
+        { headers: { dtoken } }
+      );
+      if (data.success) {
+        setQrResult(data);
+      } else {
+        toast.error(data.message);
+      }
+    } catch (err) {
+      toast.error(err.message || 'QR verification failed');
+    }
+    setQrLoading(false);
+  };
+
+  // ─── Process Wallet Payment via QR ──────────────
+  const handleWalletPayment = async () => {
+    if (!qrResult?.appointment) return;
+    setWalletPaymentLoading(true);
+    try {
+      const { data } = await axios.post(
+        backendurl + '/api/doctor/process-qr-wallet-payment',
+        {
+          qrToken: scannedQrToken,
+          appointmentId: qrResult.appointment._id
+        },
+        { headers: { dtoken } }
+      );
+
+      if (data.success) {
+        toast.success(data.message);
+        setQrResult(null);
+        getAppointments();
+      } else {
+        toast.error(data.message);
+        if (data.declined) {
+          // Refresh to show updated state
+          getAppointments();
+        }
+      }
+    } catch (err) {
+      toast.error(err.message || 'Payment processing failed');
+    }
+    setWalletPaymentLoading(false);
   };
 
   const filterOptions = [
@@ -207,6 +271,17 @@ const DoctorAppointments = () => {
         <span className="text-sm font-semibold px-4 py-2.5 rounded-xl" style={{ background: THEME.border, color: THEME.primary }}>
           {filtered.length} result{filtered.length !== 1 ? 's' : ''}
         </span>
+
+        {/* Scan QR Button */}
+        <motion.button
+          whileHover={{ scale: 1.05, boxShadow: '0 8px 20px rgba(90,64,53,0.2)' }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => setShowQrScanner(true)}
+          className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm text-white"
+          style={{ background: 'linear-gradient(135deg, #5A4035, #7a5a48)' }}
+        >
+          <QrCode className="w-4 h-4" /> Scan Pet QR
+        </motion.button>
       </motion.div>
 
       {/* ─── Appointment Cards ────────────────────────── */}
@@ -399,6 +474,16 @@ const DoctorAppointments = () => {
                       >
                         <MessageCircle className="w-4 h-4" /> Chat
                       </motion.button>
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => setShowQrScanner(true)}
+                        className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-white shadow-md shadow-[#5A4035]/30"
+                        style={{ background: 'linear-gradient(135deg,#5A4035,#7a5a48)' }}
+                        title="Scan Pet QR"
+                      >
+                        <QrCode className="w-4 h-4" /> Scan QR
+                      </motion.button>
                     </>
                   )}
                   {(item.isCompleted || item.cancelled) && (
@@ -503,6 +588,162 @@ const DoctorAppointments = () => {
       <AnimatePresence>
         {reportAppointment && (
           <PetReportModal appointment={reportAppointment} onClose={() => setReportAppointment(null)} />
+        )}
+      </AnimatePresence>
+
+      {/* ─── QR Scanner Modal ──────────────────────────── */}
+      <AnimatePresence>
+        <QrScanner
+          isOpen={showQrScanner}
+          onClose={() => setShowQrScanner(false)}
+          onScanSuccess={handleQrScanSuccess}
+        />
+      </AnimatePresence>
+
+      {/* ─── QR Loading ────────────────────────────────── */}
+      <AnimatePresence>
+        {qrLoading && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm"
+          >
+            <div className="bg-white rounded-2xl p-8 flex flex-col items-center gap-4 shadow-2xl">
+              <div className="w-12 h-12 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: '#5A4035', borderTopColor: 'transparent' }}></div>
+              <p className="font-bold text-sm" style={{ color: THEME.primary }}>Verifying QR Code...</p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ─── QR Verification Result Modal ──────────────── */}
+      <AnimatePresence>
+        {qrResult && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm"
+            onClick={() => setQrResult(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.85, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.85, opacity: 0, y: 20 }}
+              onClick={e => e.stopPropagation()}
+              className="bg-white rounded-3xl p-6 max-w-md w-full mx-4 shadow-2xl border max-h-[85vh] overflow-y-auto"
+              style={{ borderColor: THEME.border }}
+            >
+              {/* Verified Header */}
+              <div className="text-center mb-6">
+                <div className="w-16 h-16 rounded-full mx-auto mb-3 flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #059669, #10b981)' }}>
+                  <ShieldCheck className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-xl font-black" style={{ color: THEME.primary }}>Identity Verified ✓</h3>
+                <p className="text-xs mt-1" style={{ color: THEME.muted }}>Pet owner identity confirmed via QR scan</p>
+              </div>
+
+              {/* Pet Info */}
+              <div className="p-4 rounded-2xl mb-4" style={{ background: '#fdf8f0', border: '1px solid ' + THEME.border }}>
+                <p className="text-[10px] font-bold uppercase tracking-wider mb-2" style={{ color: THEME.muted }}>
+                  <PawPrint className="w-3 h-3 inline mr-1" /> Pet Details
+                </p>
+                <div className="flex items-center gap-3">
+                  {qrResult.pet.image && (
+                    <img src={qrResult.pet.image} alt="" className="w-12 h-12 rounded-xl object-cover border" style={{ borderColor: THEME.border }} />
+                  )}
+                  <div>
+                    <p className="font-black text-base" style={{ color: THEME.primary }}>{qrResult.pet.name}</p>
+                    <p className="text-xs" style={{ color: THEME.muted }}>{qrResult.pet.type} · {qrResult.pet.breed} · {qrResult.pet.age}y · {qrResult.pet.gender}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Owner Info */}
+              <div className="p-4 rounded-2xl mb-4" style={{ background: '#fdf8f0', border: '1px solid ' + THEME.border }}>
+                <p className="text-[10px] font-bold uppercase tracking-wider mb-2" style={{ color: THEME.muted }}>
+                  <User className="w-3 h-3 inline mr-1" /> Owner Details
+                </p>
+                <div className="flex items-center gap-3">
+                  {qrResult.owner.image && (
+                    <img src={qrResult.owner.image} alt="" className="w-10 h-10 rounded-xl object-cover border" style={{ borderColor: THEME.border }} />
+                  )}
+                  <div>
+                    <p className="font-bold text-sm" style={{ color: THEME.primary }}>{qrResult.owner.name}</p>
+                    <p className="text-xs" style={{ color: THEME.muted }}>{qrResult.owner.email}</p>
+                    {qrResult.owner.phone && <p className="text-xs" style={{ color: THEME.muted }}>📞 {qrResult.owner.phone}</p>}
+                  </div>
+                </div>
+                <div className="mt-3 flex items-center gap-2 p-2 rounded-xl bg-amber-50 border border-amber-200">
+                  <Wallet className="w-4 h-4 text-amber-600" />
+                  <span className="text-sm font-bold text-amber-700">Wallet Balance: ₹{qrResult.owner.pawWallet || 0}</span>
+                </div>
+              </div>
+
+              {/* Active Appointment */}
+              {qrResult.appointment ? (
+                <div className="p-4 rounded-2xl mb-4" style={{ background: qrResult.appointment.payment ? '#f0fdf4' : '#fffbf0', border: '1px solid ' + (qrResult.appointment.payment ? '#bbf7d0' : '#fde68a') }}>
+                  <p className="text-[10px] font-bold uppercase tracking-wider mb-2" style={{ color: qrResult.appointment.payment ? '#059669' : '#c8860a' }}>
+                    <Calendar className="w-3 h-3 inline mr-1" /> Active Appointment
+                  </p>
+                  <div className="space-y-1">
+                    <p className="text-sm font-bold" style={{ color: THEME.primary }}>{qrResult.appointment.slotDate} at {qrResult.appointment.slotTime}</p>
+                    <p className="text-xs" style={{ color: THEME.muted }}>Amount: <span className="font-bold">₹{qrResult.appointment.amount}</span></p>
+                    <p className="text-xs" style={{ color: THEME.muted }}>Payment: <span className="font-bold">{qrResult.appointment.payment ? 'Paid' : 'Pending'}</span> ({qrResult.appointment.paymentMethod || 'Cash'})</p>
+                  </div>
+
+                  {/* Wallet Payment Button */}
+                  {!qrResult.appointment.payment && !qrResult.appointment.isStray && (
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={handleWalletPayment}
+                      disabled={walletPaymentLoading}
+                      className="w-full mt-4 py-3 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-50"
+                      style={{ background: 'linear-gradient(135deg, #c8860a, #e8a020)' }}
+                    >
+                      {walletPaymentLoading ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          <Wallet className="w-4 h-4" /> Pay ₹{qrResult.appointment.amount} via Paw Wallet
+                        </>
+                      )}
+                    </motion.button>
+                  )}
+
+                  {qrResult.appointment.isStray && !qrResult.appointment.payment && (
+                    <div className="mt-3 p-2 rounded-xl bg-amber-50 border border-amber-200 text-center">
+                      <p className="text-xs font-bold text-amber-700">🚫 Wallet payments unavailable for stray appointments</p>
+                    </div>
+                  )}
+
+                  {qrResult.appointment.payment && (
+                    <div className="mt-3 p-2 rounded-xl bg-emerald-50 border border-emerald-200 text-center">
+                      <p className="text-xs font-bold text-emerald-700">✅ This appointment is already paid</p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="p-4 rounded-2xl mb-4 bg-gray-50 border border-dashed border-gray-200 text-center">
+                  <p className="text-sm text-gray-500">No active appointment found with you</p>
+                </div>
+              )}
+
+              {/* Close */}
+              <button
+                onClick={() => setQrResult(null)}
+                className="w-full py-2.5 rounded-xl border font-semibold text-sm"
+                style={{ borderColor: THEME.border, color: THEME.muted }}
+              >
+                Close
+              </button>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>

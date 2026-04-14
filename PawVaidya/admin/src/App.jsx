@@ -114,10 +114,11 @@ const App = () => {
         newestOnTop
         closeOnClick
         rtl={false}
-        pauseOnFocusLoss
+        pauseOnFocusLoss={false}
         draggable
-        pauseOnHover
+        pauseOnHover={false}
         theme="light"
+        limit={3}
       />
       <Navbar toggleSidebar={toggleSidebar} />
 

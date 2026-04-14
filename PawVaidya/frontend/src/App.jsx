@@ -58,9 +58,11 @@ const App = () => {
         hideProgressBar={false}
         newestOnTop
         closeOnClick
-        pauseOnHover
+        pauseOnHover={false}
+        pauseOnFocusLoss={false}
         draggable
         theme="light"
+        limit={3}
         toastClassName="paw-toast"
         progressClassName="paw-toast-progress"
       />

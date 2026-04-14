@@ -17,6 +17,7 @@ import {
     Cancel as CancelIcon
 } from '@mui/icons-material';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const PaymentDetails = () => {
     const { getPaymentUsers, getUserPaymentDetails } = useContext(AdminContext);

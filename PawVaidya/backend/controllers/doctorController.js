@@ -1509,9 +1509,9 @@ export const scanQrCode = async (req, res) => {
             isCompleted: false
         }).sort({ date: -1 });
 
-        if (!activeAppointment) {
-            return res.json({ success: false, message: `No active appointment found for ${pet.name}.` });
-        }
+        // if (!activeAppointment) {
+        //     return res.json({ success: false, message: `No active appointment found for ${pet.name}.` });
+        // }
 
         res.json({
             success: true,

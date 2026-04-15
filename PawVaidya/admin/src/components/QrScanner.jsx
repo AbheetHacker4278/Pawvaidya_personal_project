@@ -6,18 +6,43 @@ import { X, Camera, AlertCircle } from 'lucide-react';
 const QrScanner = ({ isOpen, onClose, onScanSuccess }) => {
     const [error, setError] = useState('');
     const [isScanning, setIsScanning] = useState(false);
+    const [cameras, setCameras] = useState([]);
+    const [selectedCamera, setSelectedCamera] = useState('');
     const scannerRef = useRef(null);
     const containerRef = useRef(null);
 
     useEffect(() => {
         if (isOpen) {
-            startScanner();
+            Html5Qrcode.getCameras().then(devices => {
+                if (devices && devices.length) {
+                    setCameras(devices);
+                    // Default to the first camera, but if there's a back camera, it usually appears later in list or has 'back' in label. 
+                    // Let's just pick the last one or first one, user can change it.
+                    let defaultCam = devices[0].id;
+                    const backCam = devices.find(d => d.label.toLowerCase().includes('back'));
+                    if (backCam) defaultCam = backCam.id;
+                    setSelectedCamera(defaultCam);
+                } else {
+                    // Start default if no device list (might still work)
+                    startScanner();
+                }
+            }).catch(err => {
+                console.error("Error getting cameras", err);
+                startScanner(); // fallback
+            });
         }
         return () => stopScanner();
     }, [isOpen]);
 
+    useEffect(() => {
+        if (isOpen && selectedCamera) {
+            startScanner();
+        }
+    }, [isOpen, selectedCamera]);
+
     const startScanner = async () => {
         try {
+            await stopScanner(); // Stop existing if any
             setError('');
             setIsScanning(true);
 
@@ -27,8 +52,10 @@ const QrScanner = ({ isOpen, onClose, onScanSuccess }) => {
             const html5QrCode = new Html5Qrcode('qr-reader');
             scannerRef.current = html5QrCode;
 
+            const config = selectedCamera ? { deviceId: { exact: selectedCamera } } : { facingMode: 'environment' };
+
             await html5QrCode.start(
-                { facingMode: 'environment' },
+                config,
                 {
                     fps: 15,
                     qrbox: (viewfinderWidth, viewfinderHeight) => {
@@ -90,18 +117,20 @@ const QrScanner = ({ isOpen, onClose, onScanSuccess }) => {
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.85, opacity: 0 }}
                 onClick={e => e.stopPropagation()}
-                className="bg-white rounded-3xl p-6 max-w-md w-full mx-4 shadow-2xl border"
-                style={{ borderColor: '#e8d5b0' }}
+                className="bg-white rounded-3xl p-6 max-w-md w-full mx-4 shadow-2xl border flex flex-col"
+                style={{ borderColor: '#e8d5b0', maxHeight: '90vh' }}
             >
                 {/* Header */}
-                <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: '#5A4035' }}>
-                            <Camera className="w-5 h-5 text-white" />
-                        </div>
-                        <div>
-                            <h3 className="font-black text-lg" style={{ color: '#3d2b1f' }}>Scan Pet QR</h3>
-                            <p className="text-xs" style={{ color: '#a08060' }}>Point camera at pet's ID card QR code</p>
+                <div className="flex items-center justify-between mb-4 flex-shrink-0">
+                    <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: '#5A4035' }}>
+                                <Camera className="w-5 h-5 text-white" />
+                            </div>
+                            <div>
+                                <h3 className="font-black text-lg" style={{ color: '#3d2b1f' }}>Scan Pet QR</h3>
+                                <p className="text-xs" style={{ color: '#a08060' }}>Point camera at pet's ID card QR code</p>
+                            </div>
                         </div>
                     </div>
                     <button
@@ -112,8 +141,27 @@ const QrScanner = ({ isOpen, onClose, onScanSuccess }) => {
                     </button>
                 </div>
 
+                {/* Camera Selection */}
+                {cameras.length > 1 && (
+                    <div className="mb-4 flex-shrink-0">
+                        <label className="block text-xs font-semibold text-gray-600 mb-1">Select Camera</label>
+                        <select
+                            value={selectedCamera}
+                            onChange={(e) => setSelectedCamera(e.target.value)}
+                            className="w-full px-3 py-2 border rounded-xl text-sm outline-none focus:ring-2"
+                            style={{ borderColor: '#e8d5b0', focusRing: '#5A4035' }}
+                        >
+                            {cameras.map(camera => (
+                                <option key={camera.id} value={camera.id}>
+                                    {camera.label || `Camera ${camera.id}`}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                )}
+
                 {/* Scanner Area */}
-                <div className="relative rounded-2xl overflow-hidden bg-black" style={{ minHeight: '300px' }}>
+                <div className="relative rounded-2xl overflow-hidden bg-black flex-grow flex items-center justify-center" style={{ minHeight: '300px' }}>
                     <div id="qr-reader" ref={containerRef} style={{ width: '100%' }}></div>
 
                     {/* Scanning overlay */}
@@ -137,7 +185,7 @@ const QrScanner = ({ isOpen, onClose, onScanSuccess }) => {
                             initial={{ opacity: 0, y: -10 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -10 }}
-                            className="mt-3 p-3 rounded-xl bg-red-50 border border-red-200 flex items-center gap-2"
+                            className="mt-3 p-3 rounded-xl bg-red-50 border border-red-200 flex items-center gap-2 flex-shrink-0"
                         >
                             <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
                             <p className="text-red-600 text-sm font-medium">{error}</p>
@@ -148,8 +196,8 @@ const QrScanner = ({ isOpen, onClose, onScanSuccess }) => {
                 {/* Retry Button */}
                 {error && (
                     <button
-                        onClick={startScanner}
-                        className="w-full mt-3 py-2.5 rounded-xl text-white font-bold text-sm"
+                        onClick={() => startScanner()}
+                        className="w-full mt-3 py-2.5 rounded-xl text-white font-bold text-sm flex-shrink-0"
                         style={{ background: 'linear-gradient(135deg, #5A4035, #7a5a48)' }}
                     >
                         Retry

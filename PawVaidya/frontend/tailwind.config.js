@@ -6,11 +6,11 @@ export default {
   ],
   theme: {
     extend: {
-      colors:{
-        'primary' : "#a8d5ba"
+      colors: {
+        'primary': "#a8d5ba"
       },
-      gridTemplateColumns:{
-        'auto' : 'repeat(auto-fill , minmax(200px , 1fr))'
+      gridTemplateColumns: {
+        'auto': 'repeat(auto-fill , minmax(200px , 1fr))'
       }
     },
   },

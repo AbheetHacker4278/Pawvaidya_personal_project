@@ -1880,6 +1880,65 @@ export const validateDiscount = async (req, res) => {
     }
 };
 
+export const topUpWalletOrder = async (req, res) => {
+    try {
+        const { amount } = req.body;
+        if (!amount || amount < 100) {
+            return res.json({ success: false, message: "Invalid amount. Minimum top-up is ₹100" });
+        }
+
+        const options = {
+            amount: Number(amount) * 100, // amount in the smallest currency unit (paise)
+            currency: "INR",
+            receipt: `receipt_wallet_${Date.now()}`
+        };
+
+        const order = await razorpayInstance.orders.create(options);
+
+        res.json({
+            success: true,
+            order,
+            razorpayKeyId: process.env.RAZORPAY_KEY_ID
+        });
+
+    } catch (error) {
+        console.error("Topup Order Error:", error);
+        res.json({ success: false, message: error.message });
+    }
+}
+
+export const verifyTopUpWalletPayment = async (req, res) => {
+    try {
+        const { userId, razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+
+        const sign = razorpay_order_id + "|" + razorpay_payment_id;
+        const expectedSign = crypto.createHmac("sha256", process.env.RAZORPAY_KEY_SECRET || '0WmHsukHu6ycRC6U0zKh3tIy')
+            .update(sign.toString())
+            .digest("hex");
+
+        if (razorpay_signature === expectedSign) {
+            const order = await razorpayInstance.orders.fetch(razorpay_order_id);
+            if (order.status === 'paid') {
+                const amountAdded = order.amount / 100;
+
+                await userModel.findByIdAndUpdate(userId, {
+                    $inc: { pawWallet: amountAdded }
+                });
+
+                res.json({ success: true, message: `Successfully added ₹${amountAdded} to Wallet` });
+            } else {
+                res.json({ success: false, message: "Payment status is not paid" });
+            }
+        } else {
+            res.json({ success: false, message: "Payment verification failed" });
+        }
+
+    } catch (error) {
+        console.log("Verify Topup Error:", error);
+        res.json({ success: false, message: error.message });
+    }
+}
+
 export default registeruser
 // API to rate a doctor
 export const rateDoctor = async (req, res) => {

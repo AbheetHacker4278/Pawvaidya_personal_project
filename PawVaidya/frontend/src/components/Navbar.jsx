@@ -42,6 +42,13 @@ const Navbar = () => {
     unreadMessages, userLocation, refreshUserLocation
   } = useContext(AppContext);
 
+  const activePlan = userdata?.subscription?.status === 'Active' ? userdata.subscription.plan : 'None';
+  const brandedLogo =
+    activePlan === 'Gold' ? assets.gold_logo :
+      activePlan === 'Platinum' ? assets.platinum_logo :
+        activePlan === 'Silver' ? assets.silver_logo :
+          null;
+
   const [showMenu, setShowMenu] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -121,7 +128,7 @@ const Navbar = () => {
           <img
             onClick={() => navigate('/')}
             className="w-36 lg:w-40 xl:w-48 cursor-pointer drop-shadow-sm hover:scale-105 transition-transform duration-300"
-            src="https://i.ibb.co/R2Y4vBk/Screenshot-2024-11-23-000108-removebg-preview.png"
+            src={brandedLogo || "https://i.ibb.co/R2Y4vBk/Screenshot-2024-11-23-000108-removebg-preview.png"}
             alt="PawVaidya Logo"
           />
           {/* Blacklist Warning Label near Logo */}
@@ -276,11 +283,33 @@ const Navbar = () => {
                     src={userdata.image}
                     alt="Profile"
                   />
-                  <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-green-400 ring-2 ring-white" />
+                  {userdata?.subscription?.plan && userdata.subscription.plan !== 'None' ? (
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-black text-white shadow-sm ring-1 ring-white"
+                      style={{
+                        background: userdata.subscription.plan === 'Platinum' ? 'linear-gradient(135deg, #a855f7, #6b21a8)' :
+                          userdata.subscription.plan === 'Gold' ? 'linear-gradient(135deg, #f59e0b, #b45309)' :
+                            'linear-gradient(135deg, #94a3b8, #475569)'
+                      }}
+                    >
+                      {userdata.subscription.plan[0]}
+                    </motion.div>
+                  ) : (
+                    <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-green-400 ring-2 ring-white" />
+                  )}
                 </div>
-                <span className="hidden sm:block text-[13px] font-semibold tracking-tight" style={{ color: B.dark }}>
-                  {userdata.name}
-                </span>
+                <div className="flex flex-col items-start leading-none gap-0.5">
+                  <span className="hidden sm:block text-[13px] font-semibold tracking-tight" style={{ color: B.dark }}>
+                    {userdata.name}
+                  </span>
+                  {userdata?.subscription?.plan && userdata.subscription.plan !== 'None' && (
+                    <span className="text-[9px] font-bold uppercase tracking-wider opacity-60" style={{ color: B.amber }}>
+                      {userdata.subscription.plan} Member
+                    </span>
+                  )}
+                </div>
                 <motion.div animate={{ rotate: isDropdownOpen ? 180 : 0 }} transition={{ type: 'spring', stiffness: 200, damping: 20 }}>
                   <ChevronDown className="w-3.5 h-3.5 opacity-60" style={{ color: B.dark }} />
                 </motion.div>
@@ -323,6 +352,7 @@ const Navbar = () => {
                       {[
                         { icon: <User className="w-[18px] h-[18px]" />, label: t('navbar.myProfile'), action: () => { navigate('/my-profile'); setIsDropdownOpen(false); } },
                         { icon: <Calendar className="w-[18px] h-[18px]" />, label: t('navbar.myAppointments'), action: () => { navigate('/my-appointments'); setIsDropdownOpen(false); } },
+                        { icon: <Calendar className="w-[18px] h-[18px]" />, label: 'PawPlan / Subscription', action: () => { navigate('/subscription'); setIsDropdownOpen(false); } },
                         { icon: <Wallet className="w-[18px] h-[18px]" />, label: 'Paw Wallet', action: () => { navigate('/paw-wallet'); setIsDropdownOpen(false); } },
                         { icon: <Bell className="w-[18px] h-[18px]" />, label: t('navbar.notifications'), badge: unreadMessages, action: () => { navigate('/messages'); setIsDropdownOpen(false); } },
                         { icon: <AlertCircle className="w-[18px] h-[18px]" />, label: t('navbar.reportIssue'), action: () => { navigate('/report-issue'); setIsDropdownOpen(false); } },
@@ -455,8 +485,8 @@ const Navbar = () => {
                 <img
                   onClick={() => { navigate('/'); setShowMenu(false); }}
                   className="w-32 cursor-pointer invert brightness-0"
-                  style={{ filter: 'brightness(0) invert(1)' }}
-                  src="https://i.ibb.co/R2Y4vBk/Screenshot-2024-11-23-000108-removebg-preview.png"
+                  style={{ filter: brandedLogo ? 'none' : 'brightness(0) invert(1)' }}
+                  src={brandedLogo || "https://i.ibb.co/R2Y4vBk/Screenshot-2024-11-23-000108-removebg-preview.png"}
                   alt="PawVaidya"
                 />
                 <motion.button

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { AppContext } from '../context/AppContext';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-import { assets } from '../assets/assets';
+import { assets } from '../assets/assets_frontend/assets';
 import RunningDogLoader from '../components/RunningDogLoader';
 
 const AdminProfile = () => {

@@ -1,5 +1,5 @@
 import React from 'react'
-import { Route, Routes, useLocation } from "react-router-dom"
+import { Route, Routes, useLocation, Navigate } from "react-router-dom"
 import Home from "./pages/Home"
 import Doctors from './pages/Doctors'
 import Signup from './pages/Signup'
@@ -36,10 +36,12 @@ import LocationHandler from './components/LocationHandler'
 import { AppContext } from './context/AppContext'
 import { useContext } from 'react'
 import PawWallet from './pages/PawWallet'
+import Subscription from './pages/Subscription'
+
 
 const App = () => {
   const location = useLocation();
-  const { systemConfig } = useContext(AppContext);
+  const { systemConfig, token } = useContext(AppContext);
 
   return (
     <div className='mx-4 sm:mx-[10%] '>
@@ -71,9 +73,9 @@ const App = () => {
         <Route path='/' element={<Home />} />
         <Route path='/doctors' element={<Doctors />} />
         <Route path='/doctors/:speciality' element={<Doctors />} />
-        <Route path='/login' element={<Signup />} />
+        <Route path='/login' element={token ? <Navigate to='/' /> : <Signup />} />
         <Route path='/email-verify' element={<Emailverify />} />
-        <Route path='/login-form' element={<LoginForm />} />
+        <Route path='/login-form' element={token ? <Navigate to='/' /> : <LoginForm />} />
         <Route path='/about' element={<About />} />
         <Route path='/contact' element={<Contact />} />
         <Route path='/my-profile' element={<MyProfile />} />
@@ -96,6 +98,7 @@ const App = () => {
         <Route path='/report-issue' element={<ReportIssue />} />
         <Route path='/polls' element={<Polls />} />
         <Route path='/paw-wallet' element={<PawWallet />} />
+        <Route path='/subscription' element={<Subscription />} />
       </Routes>
 
       {location.pathname != "/login-form" && location.pathname != "/login" && <Footer />}

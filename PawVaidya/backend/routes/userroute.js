@@ -1,6 +1,6 @@
 import express from 'express';
 
-import { registeruser, loginUser, getprofile, updateprofile, bookappointment, verifyRazorpay, listAppointment, cancelAppointment, sendVerifyOtp, verifyEmail, isAuthenticated, sendResetOtp, resetpassword, getuserdata, logout, getUserMessages, markMessageAsRead, getUserById, updateUserLocation, validateDiscount, rateDoctor, requestAccountDeletion, registerFace, loginFace, addPet, getPets, updatePet, deletePet, generatePetQR, topUpWalletOrder, verifyTopUpWalletPayment } from '../controllers/userController.js';
+import { registeruser, loginUser, getprofile, updateprofile, bookappointment, verifyRazorpay, listAppointment, cancelAppointment, sendVerifyOtp, verifyEmail, isAuthenticated, sendResetOtp, resetpassword, getuserdata, logout, getUserMessages, markMessageAsRead, getUserById, updateUserLocation, validateDiscount, rateDoctor, requestAccountDeletion, registerFace, loginFace, addPet, getPets, updatePet, deletePet, generatePetQR, topUpWalletOrder, verifyTopUpWalletPayment, getUserSubscriptionUsage } from '../controllers/userController.js';
 import { validateAdminCoupon, getActiveAdminCoupons } from '../controllers/couponController.js';
 import { getNearbyDoctors } from '../controllers/doctorController.js';
 import { createBlog, getAllBlogs, getBlogById, updateBlog, deleteBlog, toggleLike, addComment, deleteComment, getUserBlogs } from '../controllers/blogController.js';
@@ -69,5 +69,6 @@ userRouter.post('/vote-poll', authuser, voteInPoll)
 // Wallet Top-up routes
 userRouter.post('/wallet/topup-order', authuser, topUpWalletOrder)
 userRouter.post('/wallet/verify-topup', authuser, verifyTopUpWalletPayment)
+userRouter.get('/subscription-usage', authuser, getUserSubscriptionUsage)
 
 export default userRouter

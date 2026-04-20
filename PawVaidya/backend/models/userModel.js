@@ -49,6 +49,13 @@ const userSchema = new mongoose.Schema({
         longitude: { type: Number, default: null },
         accuracy: { type: Number, default: null },
         timestamp: { type: Date, default: null }
+    },
+    // Subscription tracking
+    subscription: {
+        plan: { type: String, enum: ['None', 'Silver', 'Gold', 'Platinum'], default: 'None' },
+        status: { type: String, enum: ['Active', 'Expired', 'Cancelled', 'None'], default: 'None' },
+        expiryDate: { type: Date, default: null },
+        razorpaySubscriptionId: { type: String, default: null }
     }
 }, { timestamps: true })
 

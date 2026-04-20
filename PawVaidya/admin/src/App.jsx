@@ -54,6 +54,7 @@ import LocationHandler from './components/LocationHandler';
 import AdminDeployments from './pages/Admin/AdminDeployments';
 import AdminChatbot from './components/AdminChatbot';
 import PaymentDetails from './pages/Admin/PaymentDetails';
+import AllSubscriptions from './pages/Admin/AllSubscriptions';
 
 const App = () => {
   const { atoken, adminProfile } = useContext(AdminContext)
@@ -139,6 +140,7 @@ const App = () => {
               <Route path='/doctor-list' element={<DoctorsList />} />
               <Route path='/total-users' element={<TotalUsers />} />
               <Route path='/payment-details' element={<PaymentDetails />} />
+              <Route path='/all-subscriptions' element={<AllSubscriptions />} />
               <Route path='/admin-messages' element={<AdminMessages />} />
               <Route path='/all-reports' element={<AllReports />} />
               <Route path='/unban-requests' element={<UnbanRequests />} />

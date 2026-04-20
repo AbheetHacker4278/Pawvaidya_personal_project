@@ -554,7 +554,8 @@ export const getprofile = async (req, res) => {
             unbanRequestAttempts: userdata.unbanRequestAttempts || 0,
             isFaceRegistered: userdata.isFaceRegistered || false,
             faceImage: userdata.faceImage || '',
-            pawWallet: userdata.pawWallet || 0
+            pawWallet: userdata.pawWallet || 0,
+            subscription: userdata.subscription || { plan: 'None' }
         }
 
         res.json({
@@ -679,7 +680,8 @@ export const updateprofile = async (req, res) => {
             isAccountverified: updatedUser.isAccountverified,
             isFaceRegistered: updatedUser.isFaceRegistered || false,
             faceImage: updatedUser.faceImage || '',
-            pawWallet: updatedUser.pawWallet || 0
+            pawWallet: updatedUser.pawWallet || 0,
+            subscription: updatedUser.subscription || { plan: 'None' }
         }
 
         res.json({
@@ -772,6 +774,81 @@ export const deletePet = async (req, res) => {
     }
 };
 
+// Helper to get start of current week (Sunday at midnight)
+const getStartOfWeek = () => {
+    const now = new Date();
+    const start = new Date(now);
+    start.setHours(0, 0, 0, 0);
+    start.setDate(now.getDate() - now.getDay()); // Sunday is 0
+    return start;
+};
+
+// Helper to count appointments with subscription discount this week
+const getWeeklySubscriptionAppointmentCount = async (userId) => {
+    const startOfWeek = getStartOfWeek();
+    const count = await appointmentModel.countDocuments({
+        userId,
+        'subscriptionDiscount.applied': true,
+        createdAt: { $gte: startOfWeek }
+    });
+    return count;
+};
+
+// Helper to count total appointments in current month (for non-subscribers)
+const getMonthlyBookingCount = async (userId) => {
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const count = await appointmentModel.countDocuments({
+        userId,
+        createdAt: { $gte: startOfMonth },
+        cancelled: false // Don't count cancelled appointments against the limit
+    });
+    return count;
+};
+
+// API to get current week's subscription discount usage
+export const getUserSubscriptionUsage = async (req, res) => {
+    try {
+        const { userId } = req.body;
+        const user = await userModel.findById(userId);
+        if (!user) return res.json({ success: false, message: 'User not found' });
+
+        let limit = 0;
+        let count = 0;
+        let duration = 'week';
+
+        if (!user.subscription || user.subscription.plan === 'None') {
+            limit = 2;
+            count = await getMonthlyBookingCount(userId);
+            duration = 'month';
+        } else if (user.subscription.plan === 'Silver') {
+            limit = 3;
+            count = await getWeeklySubscriptionAppointmentCount(userId);
+            duration = 'week';
+        } else if (user.subscription.plan === 'Gold') {
+            limit = 6;
+            count = await getWeeklySubscriptionAppointmentCount(userId);
+            duration = 'week';
+        } else if (user.subscription.plan === 'Platinum') {
+            limit = Infinity;
+            count = await getWeeklySubscriptionAppointmentCount(userId);
+            duration = 'week';
+        }
+
+        res.json({
+            success: true,
+            plan: user.subscription?.plan || 'None',
+            status: user.subscription?.status || 'None',
+            count,
+            limit: limit === Infinity ? 'Unlimited' : limit,
+            remaining: limit === Infinity ? 'Unlimited' : Math.max(0, limit - count),
+            duration
+        });
+    } catch (error) {
+        res.json({ success: false, message: error.message });
+    }
+};
+
 export const bookappointment = async (req, res) => {
     try {
         const { userId, docId, slotDate, slotTime, discountCode, adminCouponCode, paymentMethod, useWallet, petId, isStray, strayDetails } = req.body;
@@ -797,6 +874,18 @@ export const bookappointment = async (req, res) => {
                 success: false,
                 message: 'Mandatory Face Registration Required. Please register your face in your profile to book appointments.'
             });
+        }
+
+        // Check Monthly Booking Limit for Non-Subscribers
+        if (!user.subscription || user.subscription.plan === 'None') {
+            const monthlyCount = await getMonthlyBookingCount(userId);
+            if (monthlyCount >= 2) {
+                return res.json({
+                    success: false,
+                    message: `Monthly booking limit reached (2/month for free tier). Please subscribe to a Wellness Tier for more bookings.`,
+                    limitReached: true
+                });
+            }
         }
 
         // Fetch doctor details
@@ -871,6 +960,33 @@ export const bookappointment = async (req, res) => {
                 finalFee += incentiveValue;
             }
         }
+
+        // ─── Subscription Discount Handling ────────────────────────────────
+        let subscriptionDiscount = { plan: 'None', discountPercentage: 0, amount: 0, applied: false };
+
+        if (userData.subscription && userData.subscription.status === 'Active' && new Date(userData.subscription.expiryDate) > new Date()) {
+            const plan = userData.subscription.plan;
+            const weekCount = await getWeeklySubscriptionAppointmentCount(userId);
+
+            let limit = 0;
+            let discountPercent = 0;
+
+            if (plan === 'Silver') { limit = 3; discountPercent = 10; }
+            else if (plan === 'Gold') { limit = 6; discountPercent = 20; }
+            else if (plan === 'Platinum') { limit = Infinity; discountPercent = 30; }
+
+            if (weekCount < limit) {
+                const discountAmount = Math.round((finalFee * discountPercent) / 100);
+                finalFee -= discountAmount;
+                subscriptionDiscount = {
+                    plan,
+                    discountPercentage: discountPercent,
+                    amount: discountAmount,
+                    applied: true
+                };
+            }
+        }
+        // ──────────────────────────────────────────────────────────────────
 
         let appliedDiscount = null;
 
@@ -997,7 +1113,8 @@ export const bookappointment = async (req, res) => {
             payment,
             petId: isStray ? null : petId,
             isStray: isStray || false,
-            strayDetails: isStray ? strayDetails : null
+            strayDetails: isStray ? strayDetails : null,
+            subscriptionDiscount
         };
 
         // Save appointment

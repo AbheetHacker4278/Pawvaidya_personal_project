@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import assets from '../assets/assets_frontend/assets';
+import { AppContext } from '../context/AppContext';
 import docimage1 from '../assets/New/Doctorfront1.png';
-import { ArrowRight, Star, Shield, Clock } from 'lucide-react';
+import { ArrowRight, Star, Shield, Clock, Crown } from 'lucide-react';
 
 // ─── Brand palette ────────────────────────────────────────────────────────────
 const B = {
@@ -20,6 +21,7 @@ const B = {
 const Header = () => {
     const { t } = useTranslation();
     const navigate = useNavigate();
+    const { userdata, token } = useContext(AppContext);
 
     const badges = [
         { icon: <Star className="w-3.5 h-3.5" />, label: t('home.ratingBadge') },
@@ -42,18 +44,59 @@ const Header = () => {
                         style={{ background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(8px)' }}
                     >
                         <span className="w-2 h-2 rounded-full bg-amber-400" />
-                        {t('home.platformLabel', "India's #1 Veterinary Platform")}
+                        {token && userdata && userdata?.subscription?.plan && userdata.subscription.plan !== 'None' ? (
+                            <span className="flex items-center gap-1.5">
+                                <Crown size={12} className="text-amber-400 fill-current" />
+                                Premium {userdata.subscription.plan} Member
+                            </span>
+                        ) : (
+                            t('home.platformLabel', "India's #1 Veterinary Platform")
+                        )}
                     </motion.div>
 
-                    {/* Headline */}
-                    <motion.h1
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.15, duration: 0.6 }}
-                        className="text-2xl md:text-3xl lg:text-4xl font-bold text-white leading-[1.2] tracking-tight"
-                    >
-                        {t('home.bookAppointment', 'Book Appointment With Trusted Doctors')}
-                    </motion.h1>
+                    {/* Headline Wrapper */}
+                    <div className="flex flex-col gap-2">
+                        {token && userdata && userdata?.subscription?.plan && userdata.subscription.plan !== 'None' && (
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                className="inline-flex items-center gap-2 px-3 py-1 rounded-xl bg-gradient-to-r from-[#f59e0b]/90 to-[#b45309]/90 backdrop-blur-md border border-amber-300 shadow-xl shadow-amber-900/20 w-fit mb-1"
+                            >
+                                <div className="p-1 bg-white/20 rounded-lg">
+                                    <Crown size={14} className="text-white fill-current" />
+                                </div>
+                                <span className="text-[10px] font-black text-white uppercase tracking-[0.15em]">
+                                    {userdata.subscription.plan} Member
+                                </span>
+                            </motion.div>
+                        )}
+                        <motion.h1
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.15, duration: 0.6 }}
+                            className="text-2xl md:text-3xl lg:text-4xl font-bold text-white leading-[1.2] tracking-tight"
+                        >
+                            {token && userdata ? (
+                                <div className="flex flex-col gap-1">
+                                    <span className="text-lg md:text-xl font-medium opacity-80 flex items-center gap-2">
+                                        Welcome back, {userdata.name}
+                                        {userdata?.subscription?.plan && userdata.subscription.plan !== 'None' && (
+                                            <motion.span
+                                                animate={{ opacity: [0.5, 1, 0.5] }}
+                                                transition={{ duration: 2, repeat: Infinity }}
+                                                className="text-amber-400"
+                                            >
+                                                ✨
+                                            </motion.span>
+                                        )}
+                                    </span>
+                                    {t('home.bookAppointment', 'Book Appointment With Trusted Doctors')}
+                                </div>
+                            ) : (
+                                t('home.bookAppointment', 'Book Appointment With Trusted Doctors')
+                            )}
+                        </motion.h1>
+                    </div>
 
                     {/* Sub-text */}
                     <motion.div
@@ -127,9 +170,6 @@ const Header = () => {
                         src={docimage1}
                         alt="Doctor"
                     />
-
-                    {/* Small Polaroid Decoration #PawVaidya */}
-                    
                 </motion.div>
             </div>
         </div>

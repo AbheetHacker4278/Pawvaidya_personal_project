@@ -30,6 +30,7 @@ import {
   Zap,
   CreditCard,
   X,
+  Crown,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import AnimalHealthChatbot from "../components/AnimalHealthChatbot";
@@ -563,7 +564,20 @@ const MyProfile = () => {
               ) : (
                 <div className="relative group">
                   <div className="absolute -inset-1 bg-gradient-to-r from-[#9a6458] to-[#7b483d] rounded-[2.5rem] blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
-                  <div className="relative w-40 h-40 rounded-[2.5rem] overflow-hidden border-4 border-white shadow-2xl bg-white">
+                  <div className={`relative w-40 h-40 rounded-[2.5rem] overflow-hidden border-4 border-white shadow-2xl bg-white ${userdata?.subscription?.plan && userdata.subscription.plan !== 'None' ? 'ring-4 ring-amber-400/50 ring-offset-2 animate-pulse' : ''}`}>
+                    {userdata?.subscription?.plan && userdata.subscription.plan !== 'None' && (
+                      <motion.div
+                        animate={{
+                          boxShadow: [
+                            "0 0 20px rgba(251, 191, 36, 0.4)",
+                            "0 0 40px rgba(251, 191, 36, 0.7)",
+                            "0 0 20px rgba(251, 191, 36, 0.4)"
+                          ]
+                        }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                        className="absolute inset-0 rounded-[2.5rem] pointer-events-none"
+                      />
+                    )}
                     <img
                       src={editedData.image}
                       alt="Profile"
@@ -613,7 +627,19 @@ const MyProfile = () => {
                         placeholder="Enter your name"
                       />
                     ) : (
-                      userdata.name
+                      <div className="flex flex-col md:flex-row md:items-center gap-3">
+                        <span>{userdata.name}</span>
+                        {userdata?.subscription?.plan && userdata.subscription.plan !== 'None' && (
+                          <motion.div
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-amber-400 to-amber-600 text-white text-[10px] font-black uppercase tracking-wider shadow-lg shadow-amber-200/50 border border-amber-300"
+                          >
+                            <Crown size={12} className="fill-current" />
+                            Premium {userdata.subscription.plan}
+                          </motion.div>
+                        )}
+                      </div>
                     )}
                   </h1>
                   <div className="hidden md:block">
@@ -759,6 +785,53 @@ const MyProfile = () => {
               </motion.div>
             )}
           </AnimatePresence>
+
+          {/* Subscription Section */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className={`mt-8 p-6 rounded-[2rem] border-2 flex flex-col md:flex-row items-center justify-between gap-4 overflow-hidden relative ${userdata?.subscription?.plan && userdata.subscription.plan !== 'None'
+              ? 'bg-amber-50 border-amber-100'
+              : 'bg-gray-50 border-gray-100'
+              }`}
+          >
+            {userdata?.subscription?.plan && userdata.subscription.plan !== 'None' && (
+              <div className="absolute top-0 right-0 w-32 h-32 bg-amber-200/20 rounded-full -mr-16 -mt-16 blur-2xl"></div>
+            )}
+
+            <div className="flex items-center gap-4 relative z-10">
+              <div className={`p-4 rounded-2xl shadow-lg ${userdata.subscription?.plan === 'Platinum' ? 'bg-purple-600 text-white' :
+                userdata.subscription?.plan === 'Gold' ? 'bg-amber-500 text-white' :
+                  userdata.subscription?.plan === 'Silver' ? 'bg-slate-500 text-white' :
+                    'bg-gray-400 text-white'
+                }`}>
+                <CreditCard size={28} />
+              </div>
+              <div>
+                <h4 className="text-lg font-black text-gray-900 leading-tight">
+                  {userdata?.subscription?.plan && userdata.subscription.plan !== 'None' ? `${userdata.subscription.plan} Membership` : 'Basic Access'}
+                </h4>
+                {userdata?.subscription?.plan && userdata.subscription.plan !== 'None' ? (
+                  <div className="flex items-center gap-2 mt-1">
+                    <Clock size={14} className="text-amber-600" />
+                    <span className="text-xs font-bold text-amber-700">Expires: {formatDate(userdata.subscription.expiryDate)}</span>
+                  </div>
+                ) : (
+                  <p className="text-xs text-gray-500 mt-1">Upgrade to unlock premium features and priority care.</p>
+                )}
+              </div>
+            </div>
+
+            <button
+              onClick={() => navigate('/subscription')}
+              className={`w-full md:w-auto px-8 py-3 rounded-2xl font-black text-sm transition-all shadow-xl relative z-10 ${userdata.subscription?.plan !== 'None'
+                ? 'bg-white text-amber-600 hover:bg-amber-50 border border-amber-200'
+                : 'bg-primary text-white hover:bg-primary/90'
+                }`}
+            >
+              {userdata.subscription?.plan !== 'None' ? 'Manage Plan' : 'View Plans'}
+            </button>
+          </motion.div>
         </div>
       </motion.div>
 

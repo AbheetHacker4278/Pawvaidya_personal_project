@@ -10,6 +10,7 @@ import doctorModel from '../models/doctorModel.js';
 import jwt from 'jsonwebtoken';
 import appointmentModel from '../models/appointmentModel.js';
 import userModel from '../models/userModel.js';
+import subscriptionModel from '../models/subscriptionModel.js';
 import { logActivity } from '../utils/activityLogger.js';
 import { transporter } from '../config/nodemailer.js';
 import VERIFICATION_EMAIL_TEMPLATE from '../mailservice/emailtemplate2.js';
@@ -17,6 +18,7 @@ import VERIFICATION_REMINDER_TEMPLATE from '../mailservice/verificationReminderT
 import adminMessageModel from '../models/adminMessageModel.js';
 import adminModel from '../models/adminModel.js';
 import ADMIN_OTP_TEMPLATE from '../mailservice/adminOTPTemplate.js';
+import { SUBSCRIPTION_REVOCATION_TEMPLATE, GIFT_SUBSCRIPTION_TEMPLATE } from '../mailservice/subscriptionTemplates.js';
 import ADMIN_LOGIN_SUCCESS_TEMPLATE from '../mailservice/adminLoginSuccessTemplate.js';
 import ADMIN_LOGIN_FAILED_ALERT_TEMPLATE from '../mailservice/adminLoginFailedAlertTemplate.js';
 import ADMIN_GEOLOCATION_ALERT_TEMPLATE from '../mailservice/adminGeolocationAlertTemplate.js';
@@ -3660,5 +3662,226 @@ export const getPaymentUsers = async (req, res) => {
     } catch (error) {
         console.error("Error fetching payment users:", error);
         res.json({ success: false, message: error.message });
+    }
+};
+
+// API to get all subscriptions for admin
+export const getAllSubscriptions = async (req, res) => {
+    try {
+        const subscriptions = await subscriptionModel.find({})
+            .populate('userId', 'name email image phone')
+            .sort({ createdAt: -1 });
+
+        res.json({
+            success: true,
+            subscriptions
+        });
+    } catch (error) {
+        console.error("Error fetching subscriptions:", error.message);
+        res.status(500).json({
+            success: false,
+            message: "Failed to fetch subscriptions",
+            error: error.message
+        });
+    }
+};
+
+// API to revoke a user subscription
+export const revokeSubscription = async (req, res) => {
+    try {
+        const { userId, reason, shouldRefund } = req.body;
+
+        if (!reason || reason.trim() === "Revoked by Admin" || reason.trim() === "") {
+            return res.json({ success: false, message: "Please provide a specific reason for revocation" });
+        }
+
+        const user = await userModel.findById(userId);
+        if (!user) {
+            return res.json({ success: false, message: "User not found" });
+        }
+
+        let refundAmount = 0;
+        if (shouldRefund) {
+            // Find the active subscription to get the amount paid
+            const activeSub = await subscriptionModel.findOne({ userId, status: 'Active' });
+            if (activeSub) {
+                refundAmount = activeSub.amount;
+                // Add amount back to user wallet
+                user.pawWallet = (user.pawWallet || 0) + refundAmount;
+            }
+        }
+
+        // Reset user subscription status
+        user.subscription = {
+            plan: 'None',
+            status: 'None',
+            expiryDate: null
+        };
+
+        await user.save();
+
+        // Update all related active subscriptions to 'Revoked' in history
+        await subscriptionModel.updateMany(
+            { userId, status: 'Active' },
+            {
+                status: 'Revoked',
+                cancellationReason: reason || 'Revoked by Admin',
+                refunded: shouldRefund ? true : false,
+                refundAmount: refundAmount
+            }
+        );
+
+        // Find the specific active plan name for the email
+        const revokedPlan = await subscriptionModel.findOne({ userId, status: 'Revoked' }).sort({ updatedAt: -1 });
+        const planName = revokedPlan ? revokedPlan.plan : 'Premium';
+
+        // Send Revocation Email
+        const refundHtml = shouldRefund && refundAmount > 0
+            ? `<div class="refund-box"><p style="margin:0;"><strong>Refund Issued:</strong> ₹${refundAmount} has been credited to your Paw Wallet.</p></div>`
+            : "";
+
+        const mailOptions = {
+            from: process.env.SENDER_EMAIL,
+            to: user.email,
+            subject: 'Account Update: Subscription Revoked - PawVaidya',
+            html: SUBSCRIPTION_REVOCATION_TEMPLATE
+                .replace('{userName}', user.name)
+                .replace('{planName}', planName)
+                .replace('{reason}', reason)
+                .replace('{refundHtml}', refundHtml)
+        };
+
+        try {
+            await transporter.sendMail(mailOptions);
+        } catch (emailError) {
+            console.error("Failed to send revocation email:", emailError.message);
+        }
+
+        res.json({
+            success: true,
+            message: shouldRefund
+                ? `Subscription revoked and ${refundAmount} refunded to wallet.`
+                : "Subscription revoked successfully (No refund)."
+        });
+    } catch (error) {
+        console.error("Error revoking subscription:", error.message);
+        res.status(500).json({
+            success: false,
+            message: "Failed to revoke subscription",
+            error: error.message
+        });
+    }
+};
+
+// API to gift subscription (Individual or All Users)
+export const giftSubscription = async (req, res) => {
+    try {
+        const { userId, allUsers, plan, duration, durationUnit, reason } = req.body;
+
+        if (!plan || !duration || isNaN(duration)) {
+            return res.json({ success: false, message: "Invalid plan or duration" });
+        }
+
+        const expiryDate = new Date();
+        const durationValue = parseInt(duration);
+        const unit = durationUnit || 'months';
+
+        switch (unit) {
+            case 'minutes':
+                expiryDate.setMinutes(expiryDate.getMinutes() + durationValue);
+                break;
+            case 'hours':
+                expiryDate.setHours(expiryDate.getHours() + durationValue);
+                break;
+            case 'days':
+                expiryDate.setDate(expiryDate.getDate() + durationValue);
+                break;
+            case 'months':
+            default:
+                expiryDate.setMonth(expiryDate.getMonth() + durationValue);
+                break;
+        }
+
+        const SUBSCRIPTION_PLANS = {
+            Silver: 199,
+            Gold: 499,
+            Platinum: 999
+        };
+
+        const planPrice = SUBSCRIPTION_PLANS[plan] || 0;
+
+        const processGifting = async (user) => {
+            // Deactivate any existing active subscriptions for this user
+            await subscriptionModel.updateMany(
+                { userId: user._id, status: 'Active' },
+                { status: 'Expired' }
+            );
+
+            // Update user model
+            user.subscription = {
+                plan: plan,
+                status: 'Active',
+                expiryDate: expiryDate
+            };
+            await user.save();
+
+            // Create subscription record
+            const newSub = new subscriptionModel({
+                userId: user._id,
+                plan: plan,
+                amount: planPrice,
+                status: 'Active',
+                startDate: new Date(),
+                expiryDate: expiryDate,
+                paymentMethod: 'Wallet', // Marked as Wallet for accounting, but it's complimentary
+                cancellationReason: reason || 'Gifted by Admin',
+                refundAmount: 0,
+                refunded: false,
+                isGift: true
+            });
+            await newSub.save();
+
+            // Send Email
+            const mailOptions = {
+                from: process.env.SENDER_EMAIL,
+                to: user.email,
+                subject: `🎁 A Special Gift for You: Premium ${plan} Access!`,
+                html: GIFT_SUBSCRIPTION_TEMPLATE
+                    .replace('{userName}', user.name)
+                    .replace('{planName}', plan)
+                    .replace('{duration}', `${duration} ${unit}`)
+                    .replace('{expiryDate}', expiryDate.toLocaleString())
+            };
+
+            try {
+                await transporter.sendMail(mailOptions);
+            } catch (err) {
+                console.error(`Failed to send gift email to ${user.email}:`, err.message);
+            }
+        };
+
+        if (allUsers) {
+            const users = await userModel.find({});
+            for (const user of users) {
+                await processGifting(user);
+            }
+        } else {
+            const user = await userModel.findById(userId);
+            if (!user) {
+                return res.json({ success: false, message: "User not found" });
+            }
+            await processGifting(user);
+        }
+
+        await logActivity(req.admin.id, 'admin', 'gift_subscription', `Gifted ${plan} for ${duration} ${unit} to ${allUsers ? 'All Users' : (await userModel.findById(userId)).name}`, req, { plan, duration, unit, allUsers });
+
+        res.json({
+            success: true,
+            message: allUsers ? `Subscription gifted to all users successfully!` : `Subscription gifted successfully!`
+        });
+
+    } catch (error) {
+        console.error("Error gifting subscription:", error.message);
+        res.status(500).json({ success: false, message: error.message });
     }
 };

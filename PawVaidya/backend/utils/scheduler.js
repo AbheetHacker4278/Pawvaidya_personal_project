@@ -8,6 +8,8 @@ import { transporter } from '../config/nodemailer.js';
 import VERIFICATION_REMINDER_TEMPLATE from '../mailservice/verificationReminderTemplate.js';
 import appointmentModel from '../models/appointmentModel.js';
 import { PAYMENT_FAILED_TEMPLATE } from '../mailservice/paymentFailedTemplate.js';
+import subscriptionModel from '../models/subscriptionModel.js';
+import { SUBSCRIPTION_EXPIRY_TEMPLATE, GIFT_SUBSCRIPTION_EXPIRY_TEMPLATE } from '../mailservice/subscriptionTemplates.js';
 
 const initScheduler = () => {
     // Run every minute to check for expired incentives
@@ -170,6 +172,57 @@ const initScheduler = () => {
 
                 } catch (err) {
                     console.error(`Failed to cancel stale appointment ${appointment._id}:`, err.message);
+                }
+            }
+        }
+    }));
+
+    // Prune Expired Subscriptions (Check every minute for short-duration gifts)
+    cron.schedule('* * * * *', () => observeJob('Expire Subscriptions', async () => {
+        const now = new Date();
+
+        const expiredSubscriptions = await subscriptionModel.find({
+            status: 'Active',
+            expiryDate: { $lte: now }
+        }).populate('userId');
+
+        if (expiredSubscriptions.length > 0) {
+            console.log(`Found ${expiredSubscriptions.length} expired subscriptions. Processing...`);
+
+            for (const sub of expiredSubscriptions) {
+                try {
+                    // Update subscription history
+                    sub.status = 'Expired';
+                    await sub.save();
+
+                    // Retrieve and update User
+                    const user = sub.userId;
+                    if (user && user.subscription && user.subscription.plan === sub.plan) {
+                        user.subscription = {
+                            plan: 'None',
+                            status: 'None',
+                            expiryDate: null
+                        };
+                        await user.save();
+
+                        // Send Expiry Notification Email
+                        const appUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+
+                        const mailOptions = {
+                            from: process.env.SENDER_EMAIL,
+                            to: user.email,
+                            subject: sub.isGift ? '🎁 Gifted Access Ended - PawVaidya' : 'Account Update: Subscription Expired - PawVaidya',
+                            html: (sub.isGift ? GIFT_SUBSCRIPTION_EXPIRY_TEMPLATE : SUBSCRIPTION_EXPIRY_TEMPLATE)
+                                .replace('{userName}', user.name)
+                                .replace('{planName}', sub.plan)
+                                .replace('{expiryDate}', new Date(sub.expiryDate).toLocaleString())
+                                .replace(/{appUrl}/g, appUrl)
+                        };
+
+                        await transporter.sendMail(mailOptions);
+                    }
+                } catch (err) {
+                    console.error(`Failed to process expired subscription ${sub._id}:`, err.message);
                 }
             }
         }

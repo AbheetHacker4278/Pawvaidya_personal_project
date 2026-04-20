@@ -346,7 +346,21 @@ const DoctorAppointments = () => {
                     </span>
                   </div>
                   <div className="min-w-0">
-                    <p className="font-black text-base truncate" style={{ color: THEME.primary }}>{item.userData.name}</p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="font-black text-base truncate" style={{ color: THEME.primary }}>{item.userData.name}</p>
+                      {item.userSubscription && item.userSubscription.plan !== 'None' && item.userSubscription.status === 'Active' && (
+                        <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border shadow-sm ${item.userSubscription.plan === 'Platinum' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' :
+                          item.userSubscription.plan === 'Gold' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                            'bg-slate-50 text-slate-600 border-slate-200'
+                          }`}>
+                          <ShieldCheck className={`w-3 h-3 ${item.userSubscription.plan === 'Platinum' ? 'text-indigo-500' :
+                            item.userSubscription.plan === 'Gold' ? 'text-amber-500' :
+                              'text-slate-400'
+                            }`} />
+                          <span className="uppercase tracking-wider">{item.userSubscription.plan} Member</span>
+                        </div>
+                      )}
+                    </div>
                     <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-0.5">
                       <span className="text-xs flex items-center gap-1" style={{ color: THEME.muted }}>
                         <User className="w-3 h-3" /> {calculateAge(item.userData.dob)} yrs
@@ -674,10 +688,6 @@ const DoctorAppointments = () => {
                     <p className="text-xs" style={{ color: THEME.muted }}>{qrResult.owner.email}</p>
                     {qrResult.owner.phone && <p className="text-xs" style={{ color: THEME.muted }}>📞 {qrResult.owner.phone}</p>}
                   </div>
-                </div>
-                <div className="mt-3 flex items-center gap-2 p-2 rounded-xl bg-amber-50 border border-amber-200">
-                  <Wallet className="w-4 h-4 text-amber-600" />
-                  <span className="text-sm font-bold text-amber-700">Wallet Balance: ₹{qrResult.owner.pawWallet || 0}</span>
                 </div>
               </div>
 

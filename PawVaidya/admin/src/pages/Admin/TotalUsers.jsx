@@ -300,6 +300,10 @@ const TotalUsers = () => {
         return date.toLocaleString();
     };
 
+    const formatCurrency = (amount) => {
+        return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(amount || 0);
+    };
+
     const handleSendVerificationEmail = async (user) => {
         if (window.confirm(`Send email verification request to ${user.email}?`)) {
             setSendingEmail(user._id);
@@ -550,6 +554,24 @@ const TotalUsers = () => {
                                                     sx={{ height: 20, fontSize: '0.65rem', fontWeight: 800, bgcolor: '#fee2e2', color: '#b91c1c' }}
                                                 />
                                             )}
+                                            {user.subscription && user.subscription.plan !== 'None' && (
+                                                <Chip
+                                                    label={user.subscription.plan}
+                                                    size="small"
+                                                    sx={{
+                                                        height: 20,
+                                                        fontSize: '0.65rem',
+                                                        fontWeight: 800,
+                                                        bgcolor: user.subscription.plan === 'Platinum' ? '#f3e8ff' :
+                                                            user.subscription.plan === 'Gold' ? '#fef3c7' : '#f1f5f9',
+                                                        color: user.subscription.plan === 'Platinum' ? '#7e22ce' :
+                                                            user.subscription.plan === 'Gold' ? '#b45309' : '#475569',
+                                                        border: `1px solid ${user.subscription.plan === 'Platinum' ? '#e9d5ff' :
+                                                                user.subscription.plan === 'Gold' ? '#fde68a' : '#e2e8f0'
+                                                            }`
+                                                    }}
+                                                />
+                                            )}
                                         </Box>
                                         <Typography variant="body2" color="#64748b" sx={{ fontSize: '0.75rem', fontWeight: 500 }}>
                                             {user.gender.charAt(0).toUpperCase() + user.gender.slice(1)} • {calculateAge(user.dob)} yrs
@@ -629,11 +651,27 @@ const TotalUsers = () => {
 
                                 {/* Bottom Stat + Actions */}
                                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 'auto' }}>
-                                    <Box>
-                                        <Typography variant="caption" color="#94a3b8" fontWeight="700">APPOINTMENTS</Typography>
-                                        <Typography variant="h6" color="#1e293b" fontWeight="800">
-                                            {dashdata?.userAppointments?.find(ap => ap.userId === user._id)?.totalAppointments || 0}
-                                        </Typography>
+                                    <Box sx={{ display: 'flex', gap: 4 }}>
+                                        <Box>
+                                            <Typography variant="caption" color="#94a3b8" fontWeight="700">APPOINTMENTS</Typography>
+                                            <Typography variant="h6" color="#1e293b" fontWeight="800">
+                                                {dashdata?.userAppointments?.find(ap => ap.userId === user._id)?.totalAppointments || 0}
+                                            </Typography>
+                                        </Box>
+                                        <Box>
+                                            <Typography variant="caption" color="#f59e0b" fontWeight="700">PAW WALLET</Typography>
+                                            <Typography variant="h6" color="#d97706" fontWeight="800">
+                                                {formatCurrency(user.pawWallet)}
+                                            </Typography>
+                                        </Box>
+                                        {user.subscription && user.subscription.plan !== 'None' && (
+                                            <Box>
+                                                <Typography variant="caption" color="#7e22ce" fontWeight="700">PLAN EXPIRY</Typography>
+                                                <Typography variant="body2" color="#6b21a8" fontWeight="800">
+                                                    {new Date(user.subscription.expiryDate).toLocaleDateString()}
+                                                </Typography>
+                                            </Box>
+                                        )}
                                     </Box>
                                     <Box sx={{ display: 'flex', gap: 1 }}>
                                         <Tooltip title="View Analytics & Logs">
@@ -804,7 +842,13 @@ const TotalUsers = () => {
                         <Avatar src={selectedUserDetails?.image} sx={{ width: 64, height: 64, border: '3px solid rgba(255,255,255,0.3)' }} />
                         <Box>
                             <Typography variant="h5" fontWeight="900" sx={{ letterSpacing: '-0.025em' }}>{selectedUserDetails?.name}</Typography>
-                            <Typography variant="body2" sx={{ opacity: 0.8 }}>Advanced User Insights & Monitoring</Typography>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                                <Typography variant="body2" sx={{ opacity: 0.8 }}>Advanced User Insights & Monitoring</Typography>
+                                <Box sx={{ width: 4, height: 4, borderRadius: '50%', bgcolor: 'rgba(255,255,255,0.4)' }} />
+                                <Typography variant="body2" sx={{ color: '#fbbf24', fontWeight: 700 }}>
+                                    Wallet: {formatCurrency(selectedUserDetails?.pawWallet)}
+                                </Typography>
+                            </Box>
                         </Box>
                         <Tabs
                             value={detailsTab}
@@ -1062,6 +1106,42 @@ const TotalUsers = () => {
                         sx={{ bgcolor: '#7c3aed', '&:hover': { bgcolor: '#6d28d9' }, borderRadius: 3, px: 4, fontWeight: 800 }}
                     >
                         {sendingIndividualEmail ? 'Transmitting...' : 'Dispatch Email'}
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Delete Confirmation Dialog */}
+            <Dialog
+                open={deleteDialogOpen}
+                onClose={handleDeleteDialogClose}
+                PaperProps={{ sx: { borderRadius: 5, p: 1 } }}
+            >
+                <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Box sx={{ p: 1.5, bgcolor: '#fef2f2', color: '#ef4444', borderRadius: 3 }}>
+                        <WarningIcon />
+                    </Box>
+                    <Typography variant="h6" fontWeight="900">Confirm Deletion</Typography>
+                </DialogTitle>
+                <DialogContent>
+                    <DialogContentText sx={{ fontWeight: 500, color: '#475569' }}>
+                        Are you sure you want to delete <strong>{userToDelete?.name}</strong>? This action is permanent and will remove all associated pet profiles and appointment history.
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions sx={{ p: 3, pt: 1 }}>
+                    <Button onClick={handleDeleteDialogClose} color="inherit" sx={{ fontWeight: 700 }}>Cancel</Button>
+                    <Button
+                        onClick={handleDeleteConfirm}
+                        variant="contained"
+                        sx={{
+                            bgcolor: '#ef4444',
+                            '&:hover': { bgcolor: '#dc2626' },
+                            borderRadius: 3,
+                            px: 4,
+                            fontWeight: 800,
+                            boxShadow: '0 4px 6px -1px rgba(239, 68, 68, 0.2)'
+                        }}
+                    >
+                        Delete Permanently
                     </Button>
                 </DialogActions>
             </Dialog>

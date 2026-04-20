@@ -19,6 +19,7 @@ import adminBotRouter from './routes/adminBotRoute.js';
 import botRouter from './routes/botRoute.js';
 import roomRouter from './routes/roomRoute.js';
 import renderRouter from './routes/renderRoute.js';
+import subscriptionRouter from './routes/subscriptionRoute.js';
 
 import cookieParser from 'cookie-parser';
 import { initializeSocket } from './socketServer.js';
@@ -127,6 +128,11 @@ try {
   app.use('/api/admin/bot', adminBotRouter);
 } catch (error) {
   console.error("Failed to use adminBotRouter:", error.message);
+}
+try {
+  app.use('/api/subscription', subscriptionRouter);
+} catch (error) {
+  console.error("Failed to use subscriptionRouter:", error.message);
 }
 try {
   app.use('/api/bot', botRouter);

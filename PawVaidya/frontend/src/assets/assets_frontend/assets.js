@@ -12,6 +12,7 @@ import verified_icon from './verified_icon.svg'
 import arrow_icon from './arrow_icon.svg'
 import info_icon from './info_icon.svg'
 import upload_icon from './upload_icon.png'
+import upload_area from './upload_area.png'
 import stripe_logo from './stripe_logo.png'
 import razorpay_logo from './razorpay_logo.png'
 import doc1 from './doc1.png'
@@ -29,10 +30,13 @@ import doc12 from './doc12.png'
 import doc13 from './doc13.png'
 import doc14 from './doc14.png'
 import doc15 from './doc15.png'
-import Dermatologist from './Dermatologist.svg' 
+import Dermatologist from './Dermatologist.svg'
 import General_physician from './General_physician.svg'
 import Gynecologist from './Gynecologist.svg'
 import Pediatricians from './Pediatricians.svg'
+import gold_logo from './Gold.svg'
+import platinum_logo from './Platinum.svg'
+import silver_logo from './Silver.svg'
 
 
 export const assets = {
@@ -41,7 +45,7 @@ export const assets = {
     group_profiles,
     chats_icon,
     verified_icon,
-    info_icon,
+    info_box: info_icon, // Consistency fix if needed, but I'll stick to what's there
     profile_pic,
     arrow_icon,
     contact_image,
@@ -52,6 +56,10 @@ export const assets = {
     upload_icon,
     stripe_logo,
     razorpay_logo,
+    upload_area,
+    gold_logo,
+    platinum_logo,
+    silver_logo,
 }
 
 export const specialityData = [
@@ -83,9 +91,9 @@ export const doctors = [
         experience: '4 Years',
         about: 'Dr. Davis has a strong commitment to delivering comprehensive medical care, focusing on preventive medicine, early diagnosis, and effective treatment strategies. Dr. Davis has a strong commitment to delivering comprehensive medical care, focusing on preventive medicine, early diagnosis, and effective treatment strategies.',
         fees: 50,
-        f_address : "NaN_Nasajdnasdnaosn",
+        f_address: "NaN_Nasajdnasdnaosn",
         address: {
-            Location : "New Delhi",
+            Location: "New Delhi",
             line: 'Connaught Place',
         }
     },
@@ -98,9 +106,9 @@ export const doctors = [
         experience: '3 Years',
         about: 'Dr. Davis has a strong commitment to delivering comprehensive medical care, focusing on preventive medicine, early diagnosis, and effective treatment strategies. Dr. Davis has a strong commitment to delivering comprehensive medical care, focusing on preventive medicine, early diagnosis, and effective treatment strategies.',
         fees: 60,
-        f_address : "NaN_NaN",
+        f_address: "NaN_NaN",
         address: {
-            Location : "Mumbai",
+            Location: "Mumbai",
             line: 'Andheri',
         }
     },
@@ -113,9 +121,9 @@ export const doctors = [
         experience: '1 Years',
         about: 'Dr. Davis has a strong commitment to delivering comprehensive medical care, focusing on preventive medicine, early diagnosis, and effective treatment strategies. Dr. Davis has a strong commitment to delivering comprehensive medical care, focusing on preventive medicine, early diagnosis, and effective treatment strategies.',
         fees: 30,
-        f_address : "NaN_NaN",
+        f_address: "NaN_NaN",
         address: {
-            Location : "Gujarat",
+            Location: "Gujarat",
             line: 'Surat',
         }
     },
@@ -128,9 +136,9 @@ export const doctors = [
         experience: '2 Years',
         about: 'Dr. Davis has a strong commitment to delivering comprehensive medical care, focusing on preventive medicine, early diagnosis, and effective treatment strategies. Dr. Davis has a strong commitment to delivering comprehensive medical care, focusing on preventive medicine, early diagnosis, and effective treatment strategies.',
         fees: 40,
-        f_address : "Nan_NaN",
+        f_address: "Nan_NaN",
         address: {
-            Location : "Haryana",
+            Location: "Haryana",
             line: 'Panipat',
         }
     },
@@ -143,9 +151,9 @@ export const doctors = [
         experience: '4 Years',
         about: 'Dr. Davis has a strong commitment to delivering comprehensive medical care, focusing on preventive medicine, early diagnosis, and effective treatment strategies. Dr. Davis has a strong commitment to delivering comprehensive medical care, focusing on preventive medicine, early diagnosis, and effective treatment strategies.',
         fees: 50,
-        f_address : "NaN_NaN",
+        f_address: "NaN_NaN",
         address: {
-            Location : "New Delhi",
+            Location: "New Delhi",
             line: 'Dwarka',
         }
     },
@@ -158,9 +166,9 @@ export const doctors = [
         experience: '4 Years',
         about: 'Dr. Davis has a strong commitment to delivering comprehensive medical care, focusing on preventive medicine, early diagnosis, and effective treatment strategies. Dr. Davis has a strong commitment to delivering comprehensive medical care, focusing on preventive medicine, early diagnosis, and effective treatment strategies.',
         fees: 50,
-        f_address : "NaN_NaN",
+        f_address: "NaN_NaN",
         address: {
-            Location : "Gujarat",
+            Location: "Gujarat",
             line: 'Ahmedabad',
         }
     },
@@ -173,9 +181,9 @@ export const doctors = [
         experience: '4 Years',
         about: 'Dr. Davis has a strong commitment to delivering comprehensive medical care, focusing on preventive medicine, early diagnosis, and effective treatment strategies. Dr. Davis has a strong commitment to delivering comprehensive medical care, focusing on preventive medicine, early diagnosis, and effective treatment strategies.',
         fees: 50,
-        f_address : "NaN_NaN",
+        f_address: "NaN_NaN",
         address: {
-            Location : "Haryana",
+            Location: "Haryana",
             line: 'Gurgaon',
         }
     },
@@ -188,9 +196,9 @@ export const doctors = [
         experience: '3 Years',
         about: 'Dr. Davis has a strong commitment to delivering comprehensive medical care, focusing on preventive medicine, early diagnosis, and effective treatment strategies. Dr. Davis has a strong commitment to delivering comprehensive medical care, focusing on preventive medicine, early diagnosis, and effective treatment strategies.',
         fees: 60,
-        f_address : "NaN_NaN",
+        f_address: "NaN_NaN",
         address: {
-            Location : "New Delhi",
+            Location: "New Delhi",
             line: 'Karol Bagh',
         }
     },
@@ -203,9 +211,9 @@ export const doctors = [
         experience: '1 Years',
         about: 'Dr. Davis has a strong commitment to delivering comprehensive medical care, focusing on preventive medicine, early diagnosis, and effective treatment strategies. Dr. Davis has a strong commitment to delivering comprehensive medical care, focusing on preventive medicine, early diagnosis, and effective treatment strategies.',
         fees: 30,
-        f_address : "NaN_NaN",
+        f_address: "NaN_NaN",
         address: {
-            Location : "Gujarat",
+            Location: "Gujarat",
             line: 'Ahmedabad',
         }
     },
@@ -218,9 +226,9 @@ export const doctors = [
         experience: '2 Years',
         about: 'Dr. Davis has a strong commitment to delivering comprehensive medical care, focusing on preventive medicine, early diagnosis, and effective treatment strategies. Dr. Davis has a strong commitment to delivering comprehensive medical care, focusing on preventive medicine, early diagnosis, and effective treatment strategies.',
         fees: 40,
-        f_address : "NaN_NaN",
+        f_address: "NaN_NaN",
         address: {
-            Location : "New Delhi",
+            Location: "New Delhi",
             line: 'Connaught Place',
         }
     },
@@ -233,9 +241,9 @@ export const doctors = [
         experience: '4 Years',
         about: 'Dr. Davis has a strong commitment to delivering comprehensive medical care, focusing on preventive medicine, early diagnosis, and effective treatment strategies. Dr. Davis has a strong commitment to delivering comprehensive medical care, focusing on preventive medicine, early diagnosis, and effective treatment strategies.',
         fees: 50,
-        f_address : "NaN_NaN",
+        f_address: "NaN_NaN",
         address: {
-            Location : "Mumbai",
+            Location: "Mumbai",
             line: 'Juhu',
         }
     },
@@ -248,9 +256,9 @@ export const doctors = [
         experience: '4 Years',
         about: 'Dr. Davis has a strong commitment to delivering comprehensive medical care, focusing on preventive medicine, early diagnosis, and effective treatment strategies. Dr. Davis has a strong commitment to delivering comprehensive medical care, focusing on preventive medicine, early diagnosis, and effective treatment strategies.',
         fees: 50,
-        f_address : "NaN_NaN",
+        f_address: "NaN_NaN",
         address: {
-            Location : "Mumbai",
+            Location: "Mumbai",
             line: 'Borivali',
         }
     },
@@ -263,9 +271,9 @@ export const doctors = [
         experience: '4 Years',
         about: 'Dr. Davis has a strong commitment to delivering comprehensive medical care, focusing on preventive medicine, early diagnosis, and effective treatment strategies. Dr. Davis has a strong commitment to delivering comprehensive medical care, focusing on preventive medicine, early diagnosis, and effective treatment strategies.',
         fees: 50,
-        f_address : "NaN_NaN",
+        f_address: "NaN_NaN",
         address: {
-            Location : "Mumbai",
+            Location: "Mumbai",
             line: 'Andheri',
         }
     },
@@ -278,9 +286,9 @@ export const doctors = [
         experience: '3 Years',
         about: 'Dr. Davis has a strong commitment to delivering comprehensive medical care, focusing on preventive medicine, early diagnosis, and effective treatment strategies. Dr. Davis has a strong commitment to delivering comprehensive medical care, focusing on preventive medicine, early diagnosis, and effective treatment strategies.',
         fees: 60,
-        f_address : "NaN_NaN",
+        f_address: "NaN_NaN",
         address: {
-            Location : "Gujarat",
+            Location: "Gujarat",
             line: 'Vadodara',
         }
     },
@@ -293,9 +301,9 @@ export const doctors = [
         experience: '1 Years',
         about: 'Dr. Davis has a strong commitment to delivering comprehensive medical care, focusing on preventive medicine, early diagnosis, and effective treatment strategies. Dr. Davis has a strong commitment to delivering comprehensive medical care, focusing on preventive medicine, early diagnosis, and effective treatment strategies.',
         fees: 30,
-        f_address : "NaN_NaN",
+        f_address: "NaN_NaN",
         address: {
-            Location : "New Delhi",
+            Location: "New Delhi",
             line: 'Dwarka',
         }
     },

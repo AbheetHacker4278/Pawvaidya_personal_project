@@ -3,6 +3,9 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import footerLogo from '../assets/New/footerlogo.png';
+import { assets } from '../assets/assets_frontend/assets';
+import { AppContext } from '../context/AppContext';
+import { useContext } from 'react';
 import { Phone, Mail, MapPin, ArrowRight, Heart } from 'lucide-react';
 
 // ─── Brand palette ────────────────────────────────────────────────────────────
@@ -19,6 +22,14 @@ const B = {
 const Footer = () => {
     const { t } = useTranslation();
     const navigate = useNavigate();
+    const { userdata } = useContext(AppContext);
+
+    const activePlan = userdata?.subscription?.status === 'Active' ? userdata.subscription.plan : 'None';
+    const brandedLogo =
+        activePlan === 'Gold' ? assets.gold_logo :
+            activePlan === 'Platinum' ? assets.platinum_logo :
+                activePlan === 'Silver' ? assets.silver_logo :
+                    null;
 
     const companyLinks = [
         { label: t('footer.home'), path: '/' },
@@ -94,7 +105,7 @@ const Footer = () => {
                         transition={{ duration: 0.5 }}
                         className="lg:col-span-1"
                     >
-                        <img src={footerLogo} alt="PawVaidya" className="w-36 mb-4" />
+                        <img src={brandedLogo || footerLogo} alt="PawVaidya" className="w-36 mb-4" />
                         <p className="text-sm leading-relaxed mb-5" style={{ color: '#d4b896' }}>
                             {t('footer.description')}
                         </p>

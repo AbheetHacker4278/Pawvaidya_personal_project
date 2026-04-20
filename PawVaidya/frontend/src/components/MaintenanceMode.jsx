@@ -1,7 +1,18 @@
 import React from 'react'
 import { FiTool, FiAlertOctagon, FiAlertTriangle, FiPhoneCall } from 'react-icons/fi'
+import { useContext } from 'react'
+import { AppContext } from '../context/AppContext'
+import { assets } from '../assets/assets_frontend/assets'
 
 const MaintenanceMode = ({ isKillSwitch, message }) => {
+    const { userdata } = useContext(AppContext);
+    const activePlan = userdata?.subscription?.status === 'Active' ? userdata.subscription.plan : 'None';
+    const brandedLogo =
+        activePlan === 'Gold' ? assets.gold_logo :
+            activePlan === 'Platinum' ? assets.platinum_logo :
+                activePlan === 'Silver' ? assets.silver_logo :
+                    null;
+
     return (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900 overflow-hidden">
             {/* Dynamic Background Elements */}
@@ -53,7 +64,11 @@ const MaintenanceMode = ({ isKillSwitch, message }) => {
 
                 {/* Branding Footer */}
                 <div className="mt-12 flex items-center justify-center gap-3 opacity-40">
-                    <img src="/logo.png" alt="PawVaidya" className="h-6 filter grayscale invert" />
+                    <img
+                        src={brandedLogo || "/logo.png"}
+                        alt="PawVaidya"
+                        className={`h-6 ${!brandedLogo ? 'filter grayscale invert' : ''}`}
+                    />
                     <p className="text-[10px] font-bold text-white uppercase tracking-[0.2em]">PawVaidya Core Engine</p>
                 </div>
             </div>

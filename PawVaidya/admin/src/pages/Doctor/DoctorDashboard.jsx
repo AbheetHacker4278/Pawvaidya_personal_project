@@ -4,7 +4,7 @@ import assets from '../../assets/assets_admin/assets';
 import { AppContext } from '../../context/AppContext';
 import { DoctorContext } from '../../context/DoctorContext';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Gift, Calendar, Award } from 'lucide-react';
+import { Gift, Calendar, Award, ShieldCheck } from 'lucide-react';
 import DoctorCalendar from '../../components/DoctorCalendar';
 import AnalogClock from '../../components/AnalogClock';
 import DoctorPollCard from '../../components/DoctorPollCard';

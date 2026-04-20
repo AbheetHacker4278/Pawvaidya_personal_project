@@ -9,7 +9,7 @@ import {
   LayoutDashboard, User, History, Users, Calendar, UserPlus,
   Stethoscope, Trophy, Radio, MessageSquare, Mail,
   AlertTriangle, Trash2, ShieldCheck, Database,
-  Clock, BookOpen, ClipboardList, Tag, Tv, Search,
+  Clock, BookOpen, ClipboardList, Tag, Tv, Search, Star,
   Menu, X, ChevronRight, Bell, ShieldAlert, BarChart3, Server
 } from 'lucide-react';
 
@@ -171,6 +171,9 @@ const Sidebar = ({ isOpen }) => {
               )}
               {(hasPerm('users') || adminProfile?.role === 'master') && (
                 <SidebarItem to="/payment-details" icon={Database} label="Payment Details" subtext="Transaction History" isOpen={isOpen} onClick={() => logNavigation('Payment Details')} />
+              )}
+              {(hasPerm('users') || adminProfile?.role === 'master') && (
+                <SidebarItem to="/all-subscriptions" icon={Star} label="All Subscriptions" subtext="Membership Monitor" isOpen={isOpen} onClick={() => logNavigation('All Subscriptions')} />
               )}
               {adminProfile?.role === 'master' && (
                 <SidebarItem to="/media-registry" icon={Database} label="Media Registry" subtext="Cloud Assets" isOpen={isOpen} onClick={() => logNavigation('Media Registry')} />

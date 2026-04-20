@@ -6,6 +6,7 @@ import Banner from '../components/Banner'
 import PawBackground from '../components/PawBackground'
 import PollCard from '../components/PollCard'
 import WeatherCareAlerts from '../components/WeatherCareAlerts'
+import SubscriptionBanner from '../components/SubscriptionBanner'
 
 export const Home = () => {
   return (
@@ -72,6 +73,7 @@ export const Home = () => {
       <div className="-mt-4 relative z-20">
         <SpecialityMenu />
         <TopDoctors />
+        <SubscriptionBanner />
         <PollCard />
         <Banner />
       </div>

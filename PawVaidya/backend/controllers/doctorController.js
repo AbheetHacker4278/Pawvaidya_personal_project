@@ -396,9 +396,18 @@ export const appointmentsDoctor = async (req, res) => {
                 { payment: true },
                 { paymentMethod: { $ne: 'Razorpay' } }
             ]
-        }).populate('petId')
+        }).populate('petId').lean()
 
-        res.json({ success: true, appointments })
+        // Fetch current subscription status for each user
+        const updatedAppointments = await Promise.all(appointments.map(async (appointment) => {
+            const user = await userModel.findById(appointment.userId).select('subscription');
+            return {
+                ...appointment,
+                userSubscription: user ? user.subscription : { plan: 'None', status: 'None' }
+            };
+        }));
+
+        res.json({ success: true, appointments: updatedAppointments })
 
     } catch (error) {
         console.log(error)
@@ -748,7 +757,16 @@ export const doctorDashboard = async (req, res) => {
                 { payment: true },
                 { paymentMethod: { $ne: 'Razorpay' } }
             ]
-        }).populate('petId')
+        }).populate('petId').lean()
+
+        // Fetch current subscription status for each user
+        const updatedAppointments = await Promise.all(appointments.map(async (appointment) => {
+            const user = await userModel.findById(appointment.userId).select('subscription');
+            return {
+                ...appointment,
+                userSubscription: user ? user.subscription : { plan: 'None', status: 'None' }
+            };
+        }));
 
         // Initialize counters and arrays for tracking appointments
         let earnings = 0;
@@ -757,7 +775,7 @@ export const doctorDashboard = async (req, res) => {
         const latestAppointments = [];
 
         // Iterate through the appointments to calculate earnings and segregate data
-        appointments.forEach((item) => {
+        updatedAppointments.forEach((item) => {
             // Calculate earnings for completed appointments
             if (item.isCompleted) {
                 earnings += item.amount || 0; // Default to 0 if `amount` is undefined
@@ -775,7 +793,7 @@ export const doctorDashboard = async (req, res) => {
 
         // Collect unique patient IDs
         const patients = new Set();
-        appointments.forEach((item) => {
+        updatedAppointments.forEach((item) => {
             patients.add(item.userId.toString()); // Ensure `userId` is handled as a string
         });
 
@@ -791,7 +809,7 @@ export const doctorDashboard = async (req, res) => {
 
         // Prepare dashboard data
         const dashData = {
-            appointments: appointments.length, // Total number of appointments
+            appointments: updatedAppointments.length, // Total number of appointments
             patients: patients.size, // Unique patient count
             latestAppointments: latestAppointments.reverse(), // Reverse for latest first
             latestCancelled: cancelledAppointments.reverse(), // Latest canceled appointments
@@ -1531,8 +1549,7 @@ export const scanQrCode = async (req, res) => {
                 name: owner.name,
                 email: owner.email,
                 phone: owner.phone,
-                image: owner.image,
-                pawWallet: owner.pawWallet || 0
+                image: owner.image
             },
             appointment: activeAppointment ? {
                 _id: activeAppointment._id,

@@ -9,6 +9,8 @@ const AdminContextProvider = (props) => {
     const [atoken, setatoken] = useState(localStorage.getItem('atoken') ? localStorage.getItem('atoken') : '')
     const [doctors, setdoctors] = useState([])
     const [users, setusers] = useState([])
+    const [subscriptions, setSubscriptions] = useState([]);
+    const [loadingSubscriptions, setLoadingSubscriptions] = useState(false);
     const [appointments, setappointments] = useState([])
     const [dashdata, setdashdata] = useState(false)
     const [adminProfile, setAdminProfile] = useState(null)
@@ -227,11 +229,6 @@ const AdminContextProvider = (props) => {
     // Delete user function
     const deleteUser = async (userId) => {
         try {
-            // Confirmation before deleting
-            if (!window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
-                return;
-            }
-
             const { data } = await axios.delete(`${backendurl}/api/admin/users/${userId}`, {
                 headers: { atoken }
             });
@@ -251,11 +248,6 @@ const AdminContextProvider = (props) => {
     };
     const deleteDoctor = async (doctorId) => {
         try {
-            // Confirmation before deleting
-            if (!window.confirm('Are you sure you want to delete this doctor? This will also remove all associated appointments.')) {
-                return;
-            }
-
             const { data } = await axios.delete(`${backendurl}/api/admin/doctors/${doctorId}`, {
                 headers: { atoken }
             });
@@ -609,6 +601,64 @@ const AdminContextProvider = (props) => {
         }
     };
 
+    const getAllSubscriptions = async () => {
+        setLoadingSubscriptions(true);
+        try {
+            const { data } = await axios.get(backendurl + '/api/admin/all-subscriptions', { headers: { atoken } });
+            if (data.success) {
+                setSubscriptions(data.subscriptions);
+            } else {
+                toast.error(data.message);
+            }
+        } catch (error) {
+            toast.error(error.message || 'Failed to fetch subscriptions');
+        } finally {
+            setLoadingSubscriptions(false);
+        }
+    };
+
+    const revokeSubscription = async (userId, reason, shouldRefund = false) => {
+        try {
+            const { data } = await axios.post(
+                `${backendurl}/api/admin/revoke-subscription`,
+                { userId, reason, shouldRefund },
+                { headers: { atoken } }
+            );
+            if (data.success) {
+                toast.success(data.message);
+                getAllSubscriptions(); // Refresh the list
+                return true;
+            } else {
+                toast.error(data.message);
+                return false;
+            }
+        } catch (error) {
+            toast.error(error.message || 'Failed to revoke subscription');
+            return false;
+        }
+    };
+
+    const giftSubscription = async (giftData) => {
+        try {
+            const { data } = await axios.post(
+                `${backendurl}/api/admin/gift-subscription`,
+                giftData,
+                { headers: { atoken } }
+            );
+            if (data.success) {
+                toast.success(data.message);
+                getAllSubscriptions(); // Refresh the list
+                return true;
+            } else {
+                toast.error(data.message);
+                return false;
+            }
+        } catch (error) {
+            toast.error(error.message || 'Failed to gift subscription');
+            return false;
+        }
+    };
+
     // ── Admin Intelligence Functions ──────────────────────────────────────────
     const getFraudAlerts = async () => {
         try {
@@ -819,6 +869,7 @@ const AdminContextProvider = (props) => {
         blacklistEmails, getBlacklist, removeFromBlacklist,
         verifyAdminOTP,
         getAllCoupons, createCoupon, toggleCoupon, deleteCoupon,
+        giftSubscription,
         getPaymentUsers: async () => {
             try {
                 const { data } = await axios.get(`${backendurl}/api/admin/payment-users`, { headers: { atoken } });
@@ -839,7 +890,8 @@ const AdminContextProvider = (props) => {
         },
         securityIncidentCount, setSecurityIncidentCount,
         contentViolationCount, setContentViolationCount,
-        adminLocation, setAdminLocation
+        adminLocation, setAdminLocation,
+        subscriptions, loadingSubscriptions, getAllSubscriptions, revokeSubscription
     }
 
     return (

@@ -7,7 +7,7 @@ import { AppContext } from '../context/AppContext';
 import { translateSpeciality } from '../utils/translateSpeciality';
 import { toast } from 'react-toastify';
 import axios from 'axios';
-import { Stethoscope, Calendar, CheckCircle, Clock, ArrowRight, X, Loader, MapPin, Award, IndianRupee, Info, Shield } from 'lucide-react';
+import { Stethoscope, Calendar, CheckCircle, Clock, ArrowRight, X, Loader, MapPin, Award, IndianRupee, Info, Shield, Star, Zap, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Appointments = () => {
@@ -49,6 +49,8 @@ const Appointments = () => {
   const [isStray, setIsStray] = useState(false);
   const [strayType, setStrayType] = useState('Unknown');
   const [showStrayInput, setShowStrayInput] = useState(false);
+  const [subscriptionUsage, setSubscriptionUsage] = useState({ count: 0, limit: 0, remaining: 0, plan: 'None' });
+  const [loadingSubscription, setLoadingSubscription] = useState(false);
 
   const loadingMessages = [
     "Checking Available Slots...",
@@ -135,6 +137,64 @@ const Appointments = () => {
         </div>
       </div>
     );
+  };
+
+  // Fetch subscription usage
+  const fetchSubscriptionUsage = async () => {
+    if (!token) return;
+    setLoadingSubscription(true);
+    try {
+      const { data } = await axios.get(backendurl + '/api/user/subscription-usage', { headers: { token } });
+      if (data.success) {
+        setSubscriptionUsage({
+          count: data.count,
+          limit: data.limit,
+          remaining: data.remaining,
+          plan: data.plan
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching subscription usage:", error.message);
+    } finally {
+      setLoadingSubscription(false);
+    }
+  };
+
+  const calculateFinalFee = () => {
+    if (!docInfo) return 0;
+    let fee = docInfo.fees;
+
+    // Apply incentive if bonus
+    if (docInfo.incentive && docInfo.incentive.type === 'bonus' && docInfo.incentive.value && (!docInfo.incentive.expiryDate || new Date(docInfo.incentive.expiryDate) > new Date())) {
+      const valStr = String(docInfo.incentive.value).trim();
+      if (valStr.includes('%')) {
+        const perc = parseFloat(valStr.replace('%', ''));
+        if (!isNaN(perc)) fee += (docInfo.fees * perc) / 100;
+      } else {
+        const val = Number(valStr);
+        if (!isNaN(val)) fee += val;
+      }
+    }
+
+    // Apply subscription discount if within limit
+    let subDiscountAmount = 0;
+    if (subscriptionUsage.remaining !== 0 && subscriptionUsage.plan !== 'None') {
+      let discountPercent = 0;
+      if (subscriptionUsage.plan === 'Silver') discountPercent = 10;
+      else if (subscriptionUsage.plan === 'Gold') discountPercent = 20;
+      else if (subscriptionUsage.plan === 'Platinum') discountPercent = 30;
+
+      subDiscountAmount = Math.round((fee * discountPercent) / 100);
+      fee -= subDiscountAmount;
+    }
+
+    if (appliedDoctorCoupon) {
+      fee -= appliedDoctorCoupon.discountAmount;
+    }
+    if (appliedAdminCoupon) {
+      fee -= (appliedAdminCoupon.amount || appliedAdminCoupon.discountAmount);
+    }
+    return { finalFee: Math.max(0, fee), subDiscountAmount };
   };
 
   // Check if user has any active appointments and ban status
@@ -663,9 +723,10 @@ const Appointments = () => {
       fetchDoctorSchedule();
     }
     if (token) {
-      fetchUserPets();
+      checkActiveAppointments();
+      fetchSubscriptionUsage();
     }
-  }, [doctors, docId, token]);
+  }, [backendurl, token, docId]);
 
   useEffect(() => {
     if (!document.getElementById('razorpay-js')) {
@@ -1735,6 +1796,116 @@ const Appointments = () => {
                     </div>
                   </motion.div>
 
+                  {/* Subscription Benefits Showcase */}
+                  {subscriptionUsage.plan !== 'None' && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.9 }}
+                      className="mt-7 p-6 rounded-2xl relative overflow-hidden group border"
+                      style={{
+                        background: 'linear-gradient(135deg, #1e293b, #0f172a)',
+                        borderColor: 'rgba(255,255,255,0.1)',
+                        boxShadow: '0 8px 30px rgba(0,0,0,0.15)'
+                      }}
+                    >
+                      {/* Decorative elements */}
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-blue-500/20 transition-colors duration-500" />
+                      <div className="absolute bottom-0 left-0 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl -ml-12 -mb-12 group-hover:bg-purple-500/20 transition-colors duration-500" />
+
+                      <div className="relative z-10">
+                        <div className="flex items-center justify-between mb-5">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 rounded-xl bg-white/10 backdrop-blur-md">
+                              <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
+                            </div>
+                            <div>
+                              <p className="text-white font-black text-sm tracking-wide uppercase">
+                                {subscriptionUsage.plan} PLAN BENEFITS
+                              </p>
+                              <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Active Member Status</p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="px-3 py-1 bg-emerald-500/20 rounded-full backdrop-blur-md border border-emerald-500/30">
+                              <p className="text-emerald-400 font-black text-xs">
+                                {subscriptionUsage.plan === 'Silver' ? '10%' : subscriptionUsage.plan === 'Gold' ? '20%' : '30%'} DISCOUNT
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Usage Visualizer */}
+                        <div className="space-y-4">
+                          <div className="flex justify-between items-end">
+                            <p className="text-slate-300 text-xs font-bold">Weekly Discount Qty</p>
+                            <p className="text-white text-xs font-black">
+                              {subscriptionUsage.count} / {subscriptionUsage.limit === 'Unlimited' ? '∞' : subscriptionUsage.limit} used
+                            </p>
+                          </div>
+                          <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">
+                            <motion.div
+                              initial={{ width: 0 }}
+                              animate={{ width: subscriptionUsage.limit === 'Unlimited' ? '100%' : `${(subscriptionUsage.count / subscriptionUsage.limit) * 100}%` }}
+                              transition={{ duration: 1.5, ease: "circOut" }}
+                              className="h-full rounded-full"
+                              style={{
+                                background: 'linear-gradient(to right, #3b82f6, #a855f7)'
+                              }}
+                            />
+                          </div>
+                          <div className="flex items-start gap-2 pt-1">
+                            <Info className="w-3.5 h-3.5 text-blue-400 mt-0.5 flex-shrink-0" />
+                            <p className="text-slate-400 text-[10px] font-semibold leading-relaxed">
+                              {subscriptionUsage.remaining === 0
+                                ? "Weekly quota reached. Regular consultation fee will be applied for new bookings."
+                                : `Tier-based discount active. You have ${subscriptionUsage.remaining === 'Unlimited' ? 'unlimited' : subscriptionUsage.remaining} more discounted slots this week.`}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {/* Price Summary Breakdown */}
+                  {docInfo && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 1 }}
+                      className="mt-6 p-4 rounded-2xl bg-white/40 border border-[#e8d5b0]/50"
+                    >
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-500 font-medium">Base Fee</span>
+                          <span className="text-gray-900 font-bold">₹{docInfo.fees}</span>
+                        </div>
+
+                        {calculateFinalFee().subDiscountAmount > 0 && (
+                          <div className="flex justify-between text-sm text-emerald-600">
+                            <span className="font-medium flex items-center gap-1.5">
+                              <Star className="w-3.5 h-3.5 fill-emerald-500" />
+                              Member Discount ({subscriptionUsage.plan})
+                            </span>
+                            <span className="font-black">-₹{calculateFinalFee().subDiscountAmount}</span>
+                          </div>
+                        )}
+
+                        {(appliedAdminCoupon || appliedDoctorCoupon) && (
+                          <div className="flex justify-between text-sm text-emerald-600">
+                            <span className="font-medium">Coupon Savings</span>
+                            <span className="font-bold">-₹{(appliedAdminCoupon?.amount || 0) + (appliedDoctorCoupon?.discountAmount || 0)}</span>
+                          </div>
+                        )}
+
+                        <div className="pt-2 mt-2 border-t border-[#e8d5b0]/50 flex justify-between items-center text-lg">
+                          <span className="text-[#3d2b1f] font-black italic">Final Amount</span>
+                          <span className="text-[#c8860a] font-black text-xl">₹{calculateFinalFee().finalFee}</span>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+
                   {/* Book Button */}
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -1864,7 +2035,7 @@ const Appointments = () => {
                       <p className="text-xs font-medium text-gray-500">Available: ₹{userdata.pawWallet}</p>
                       {useWallet && (
                         <p className="text-xs font-bold text-amber-600">
-                          -{userdata.pawWallet >= (appliedAdminCoupon || appliedDoctorCoupon ? (appliedAdminCoupon ? (appliedDoctorCoupon ? (docInfo.fees - appliedDoctorCoupon.discountAmount - appliedAdminCoupon.amount) : (docInfo.fees - appliedAdminCoupon.amount)) : (docInfo.fees - appliedDoctorCoupon.discountAmount)) : docInfo.fees) ? 'Full amount covered' : `₹${userdata.pawWallet} deducted`}
+                          -{userdata.pawWallet >= calculateFinalFee().finalFee ? 'Full amount covered' : `₹${userdata.pawWallet} deducted`}
                         </p>
                       )}
                     </div>
@@ -1872,7 +2043,7 @@ const Appointments = () => {
                 )}
 
                 {/* Main Action Buttons */}
-                {useWallet && userdata.pawWallet >= (appliedAdminCoupon || appliedDoctorCoupon ? (appliedAdminCoupon ? (appliedDoctorCoupon ? (docInfo.fees - appliedDoctorCoupon.discountAmount - appliedAdminCoupon.amount) : (docInfo.fees - appliedAdminCoupon.amount)) : (docInfo.fees - appliedDoctorCoupon.discountAmount)) : docInfo.fees) ? (
+                {useWallet && userdata.pawWallet >= calculateFinalFee().finalFee ? (
                   <button
                     onClick={() => bookappointment("Wallet", true)}
                     className="w-full flex justify-center items-center gap-2 py-4 rounded-xl font-extrabold text-white transition-all shadow-lg active:scale-95"

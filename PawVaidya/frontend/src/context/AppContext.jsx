@@ -299,6 +299,64 @@ const AppContextProvider = (props) => {
         }
     };
 
+    // Subscription related functions
+    const getSubscriptionPlans = async () => {
+        try {
+            const { data } = await axios.get(backendurl + '/api/subscription/plans');
+            if (data.success) {
+                return data.plans;
+            }
+        } catch (error) {
+            console.error('Error fetching plans:', error.message);
+        }
+        return null;
+    };
+
+    const subscribeViaWallet = async (planName) => {
+        try {
+            const { data } = await axios.post(backendurl + '/api/subscription/wallet-subscribe', { userId: userdata?._id, planName }, { headers: { token } });
+            if (data.success) {
+                toast.success(data.message);
+                await loaduserprofiledata();
+                return true;
+            }
+            toast.error(data.message);
+            return false;
+        } catch (error) {
+            toast.error(error.message);
+            return false;
+        }
+    };
+
+    const createRazorpaySubscription = async (planName) => {
+        try {
+            const { data } = await axios.post(backendurl + '/api/subscription/create-order', { userId: userdata?._id, planName }, { headers: { token } });
+            if (data.success) {
+                return data;
+            }
+            toast.error(data.message);
+        } catch (error) {
+            toast.error(error.message);
+        }
+        return null;
+    };
+
+    const verifySubscriptionPayment = async (paymentData) => {
+        try {
+            const { data } = await axios.post(backendurl + '/api/subscription/verify-payment', { ...paymentData, userId: userdata?._id }, { headers: { token } });
+            if (data.success) {
+                toast.success(data.message);
+                await loaduserprofiledata();
+                return true;
+            }
+            toast.error(data.message);
+            return false;
+        } catch (error) {
+            toast.error(error.message);
+            return false;
+        }
+    };
+
     const value = {
         doctors, getdoctorsdata,
         token, settoken,
@@ -319,7 +377,8 @@ const AppContextProvider = (props) => {
         registerFace,
         loginWithFace,
         userPets, setUserPets,
-        fetchUserPets, addPet, updatePet, deletePet
+        fetchUserPets, addPet, updatePet, deletePet,
+        getSubscriptionPlans, subscribeViaWallet, createRazorpaySubscription, verifySubscriptionPayment
     }
 
     useEffect(() => {

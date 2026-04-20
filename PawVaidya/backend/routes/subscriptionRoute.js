@@ -6,14 +6,14 @@ import {
     subscribeViaWallet,
     getSubscriptionStatus
 } from "../controllers/subscriptionController.js";
-import authUser from "../middleware/authUser.js";
+import authuser from "../middleware/authuser.js";
 
 const subscriptionRouter = express.Router();
 
 subscriptionRouter.get("/plans", getSubscriptionPlans);
-subscriptionRouter.get("/status/:userId", authUser, getSubscriptionStatus);
-subscriptionRouter.post("/create-order", authUser, createSubscriptionOrder);
-subscriptionRouter.post("/verify-payment", authUser, verifySubscriptionPayment);
-subscriptionRouter.post("/wallet-subscribe", authUser, subscribeViaWallet);
+subscriptionRouter.get("/status/:userId", authuser, getSubscriptionStatus);
+subscriptionRouter.post("/create-order", authuser, createSubscriptionOrder);
+subscriptionRouter.post("/verify-payment", authuser, verifySubscriptionPayment);
+subscriptionRouter.post("/wallet-subscribe", authuser, subscribeViaWallet);
 
 export default subscriptionRouter;

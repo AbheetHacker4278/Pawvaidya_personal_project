@@ -9,17 +9,17 @@ import {
     getRoomManagementData,
     deleteRoom
 } from '../controllers/roomController.js';
-import authUser from '../middleware/authuser.js';
+import authuser from '../middleware/authuser.js';
 
 const roomRouter = express.Router();
 
-roomRouter.post('/create', authUser, createRoom);
+roomRouter.post('/create', authuser, createRoom);
 roomRouter.get('/', getAllRooms);
 roomRouter.get('/:roomId', getRoomById);
-roomRouter.get('/:roomId/manage', authUser, getRoomManagementData);
-roomRouter.post('/:roomId/request', authUser, requestJoinRoom);
-roomRouter.post('/:roomId/approve', authUser, approveJoinRequest);
-roomRouter.post('/:roomId/reject', authUser, rejectJoinRequest);
-roomRouter.delete('/:roomId', authUser, deleteRoom);
+roomRouter.get('/:roomId/manage', authuser, getRoomManagementData);
+roomRouter.post('/:roomId/request', authuser, requestJoinRoom);
+roomRouter.post('/:roomId/approve', authuser, approveJoinRequest);
+roomRouter.post('/:roomId/reject', authuser, rejectJoinRequest);
+roomRouter.delete('/:roomId', authuser, deleteRoom);
 
 export default roomRouter;

@@ -15,6 +15,7 @@ const RedisMonitoring = () => {
     const { getRedisStats } = useContext(AdminContext);
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [history, setHistory] = useState([]);
     const [lastRefresh, setLastRefresh] = useState(new Date());
 
@@ -37,8 +38,9 @@ const RedisMonitoring = () => {
 
     const fetchStats = async () => {
         const data = await getRedisStats();
-        if (data) {
+        if (data && data !== null) {
             setStats(data);
+            setError(null);
             setLastRefresh(new Date());
             setHistory(prev => {
                 const newHistory = [...prev, {
@@ -56,6 +58,8 @@ const RedisMonitoring = () => {
                 }];
                 return newHistory.slice(-30);
             });
+        } else {
+            setError("Unable to connect to Redis server. Please check your REDIS_URL environment variable.");
         }
         setLoading(false);
     };
@@ -73,6 +77,34 @@ const RedisMonitoring = () => {
                     <div className="w-12 h-12 border-4 border-[#00A971] border-t-transparent rounded-full animate-spin"></div>
                     <p className="text-[#00A971] font-black uppercase tracking-widest text-xs">Connecting to Redis Clusters...</p>
                 </div>
+            </div>
+        );
+    }
+
+    if (error && !stats) {
+        return (
+            <div className="min-h-[80vh] flex flex-col items-center justify-center p-6 text-center">
+                <div className="w-16 h-16 bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center mb-6">
+                    <ShieldAlert size={32} />
+                </div>
+                <h1 className="text-xl font-bold text-slate-800 mb-2">Connection Failure</h1>
+                <p className="text-slate-500 max-w-md mb-8">{error}</p>
+                <div className="bg-white border border-slate-200 rounded-xl p-4 text-left max-w-lg mb-8">
+                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                        <Terminal size={14} /> Troubleshooting
+                    </h3>
+                    <ul className="text-sm text-slate-600 space-y-2">
+                        <li className="flex gap-2"><span>1.</span> <span>Verify <b>REDIS_URL</b> is set in Render Environment Variables.</span></li>
+                        <li className="flex gap-2"><span>2.</span> <span>Ensure your Redis provider allows connections from Render's IP range.</span></li>
+                        <li className="flex gap-2"><span>3.</span> <span>Check if the URL requires <b>rediss://</b> (SSL) instead of <b>redis://</b>.</span></li>
+                    </ul>
+                </div>
+                <button
+                    onClick={fetchStats}
+                    className="flex items-center gap-2 bg-[#00A971] text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-emerald-100 hover:scale-105 transition-all"
+                >
+                    <RefreshCw size={18} /> Retry Connection
+                </button>
             </div>
         );
     }

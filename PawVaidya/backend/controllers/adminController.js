@@ -3890,75 +3890,98 @@ export const giftSubscription = async (req, res) => {
 // API to get Redis Statistics
 export const getRedisStats = async (req, res) => {
     try {
-        const [info, commandStatsRaw] = await Promise.all([
-            redis.info(),
-            redis.info('commandstats')
-        ]);
+        if (!redis) {
+            return res.status(200).json({ success: false, message: "Redis client not initialized" });
+        }
+
+        let info = "";
+        let commandStatsRaw = "";
+
+        try {
+            const results = await Promise.allSettled([
+                redis.info(),
+                redis.info('commandstats')
+            ]);
+
+            if (results[0].status === 'fulfilled') info = results[0].value;
+            if (results[1].status === 'fulfilled') commandStatsRaw = results[1].value;
+
+            if (!info) {
+                throw new Error("Could not retrieve Redis info");
+            }
+        } catch (redisErr) {
+            console.error("Redis Command Error:", redisErr.message);
+            return res.status(200).json({ success: false, message: `Redis Error: ${redisErr.message}` });
+        }
 
         const stats = {};
         const cmdStats = {};
 
         // Parse regular info
-        info.split('\r\n').forEach(line => {
-            const parts = line.split(':');
-            if (parts.length === 2) stats[parts[0]] = parts[1];
-        });
+        if (info) {
+            info.split('\r\n').forEach(line => {
+                const parts = line.split(':');
+                if (parts.length === 2) stats[parts[0]] = parts[1];
+            });
+        }
 
         // Parse command stats
-        commandStatsRaw.split('\r\n').forEach(line => {
-            if (line.startsWith('cmdstat_')) {
-                const [cmdPart, statsPart] = line.split(':');
-                const cmdName = cmdPart.replace('cmdstat_', '');
-                const statsObj = {};
-                statsPart.split(',').forEach(s => {
-                    const [k, v] = s.split('=');
-                    statsObj[k] = v;
-                });
-                cmdStats[cmdName] = {
-                    calls: parseInt(statsObj.calls) || 0,
-                    usec: parseFloat(statsObj.usec) || 0,
-                    usec_per_call: parseFloat(statsObj.usec_per_call) || 0
-                };
-            }
-        });
+        if (commandStatsRaw) {
+            commandStatsRaw.split('\r\n').forEach(line => {
+                if (line.startsWith('cmdstat_')) {
+                    const [cmdPart, statsPart] = line.split(':');
+                    const cmdName = cmdPart.replace('cmdstat_', '');
+                    const statsObj = {};
+                    statsPart.split(',').forEach(s => {
+                        const components = s.split('=');
+                        if (components.length === 2) {
+                            statsObj[components[0]] = components[1];
+                        }
+                    });
+                    cmdStats[cmdName] = {
+                        calls: parseInt(statsObj.calls) || 0,
+                        usec: parseFloat(statsObj.usec) || 0,
+                        usec_per_call: parseFloat(statsObj.usec_per_call) || 0
+                    };
+                }
+            });
+        }
 
         const topCommands = Object.entries(cmdStats)
             .sort((a, b) => b[1].calls - a[1].calls)
             .slice(0, 5)
             .map(([name, data]) => ({ name, ...data }));
 
+        const hits = parseInt(stats.keyspace_hits) || 0;
+        const misses = parseInt(stats.keyspace_misses) || 0;
+        const total = hits + misses;
+
         res.json({
             success: true,
             stats: {
-                version: stats.redis_version,
-                uptime: stats.uptime_in_seconds,
+                version: stats.redis_version || "Unknown",
+                uptime: stats.uptime_in_seconds || "0",
                 uptimeDays: stats.uptime_in_days || "0",
                 clients: stats.connected_clients || "0",
                 memory: stats.used_memory_human || "0B",
                 memoryRaw: stats.used_memory || 0,
                 opsPerSec: stats.instantaneous_ops_per_sec || "0",
-                hits: parseInt(stats.keyspace_hits) || 0,
-                misses: parseInt(stats.keyspace_misses) || 0,
-                hitRate: (parseInt(stats.keyspace_hits) + parseInt(stats.keyspace_misses)) > 0
-                    ? ((parseInt(stats.keyspace_hits) / (parseInt(stats.keyspace_hits) + parseInt(stats.keyspace_misses))) * 100).toFixed(2)
-                    : "0",
-                missRate: (parseInt(stats.keyspace_hits) + parseInt(stats.keyspace_misses)) > 0
-                    ? ((parseInt(stats.keyspace_misses) / (parseInt(stats.keyspace_hits) + parseInt(stats.keyspace_misses))) * 100).toFixed(2)
-                    : "0",
-                emat: (parseInt(stats.keyspace_hits) + parseInt(stats.keyspace_misses)) > 0
-                    ? (((parseInt(stats.keyspace_hits) * 1.5) + (parseInt(stats.keyspace_misses) * 120)) / (parseInt(stats.keyspace_hits) + parseInt(stats.keyspace_misses))).toFixed(2)
-                    : "0.00",
-                totalConnections: stats.total_connections_received,
-                totalCommands: stats.total_commands_processed,
-                cpuUsage: stats.used_cpu_user,
+                hits: hits,
+                misses: misses,
+                hitRate: total > 0 ? ((hits / total) * 100).toFixed(2) : "0",
+                missRate: total > 0 ? ((misses / total) * 100).toFixed(2) : "0",
+                emat: total > 0 ? (((hits * 1.5) + (misses * 120)) / total).toFixed(2) : "0.00",
+                totalConnections: stats.total_connections_received || "0",
+                totalCommands: stats.total_commands_processed || "0",
+                cpuUsage: stats.used_cpu_user || "0",
                 maxMemory: stats.maxmemory_human || "Default",
-                role: stats.role,
+                role: stats.role || "Unknown",
                 topCommands,
                 keyspace: stats.db0 || "keys=0,expires=0,avg_ttl=0"
             }
         });
     } catch (error) {
-        console.error("Error fetching Redis stats:", error.message);
-        res.status(500).json({ success: false, message: error.message });
+        console.error("Critical Redis Stats Error:", error);
+        res.status(200).json({ success: false, message: error.message });
     }
 };

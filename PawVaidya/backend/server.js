@@ -24,6 +24,7 @@ import subscriptionRouter from './routes/subscriptionRoute.js';
 import cookieParser from 'cookie-parser';
 import { initializeSocket } from './socketServer.js';
 import initScheduler from './utils/scheduler.js';
+import { initHealthScheduler } from './schedulers/healthScheduler.js';
 import telemetryMiddleware from './middleware/telemetryMiddleware.js';
 import maintenanceMiddleware from './middleware/maintenanceMiddleware.js';
 import securityMonitor from './middleware/securityMonitor.js';
@@ -38,8 +39,9 @@ const server = http.createServer(app);
 connectdb()
 connectCloudnairy()
 
-// Initialize Scheduler
+// Initialize Schedulers
 initScheduler();
+initHealthScheduler();
 
 // Initialize Socket.io
 initializeSocket(server);

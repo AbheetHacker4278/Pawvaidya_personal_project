@@ -47,7 +47,15 @@ const appointmentSchema = new mongoose.Schema({
     rating: { type: Number, default: 0 },
     // Payment IDs
     razorpayOrderId: { type: String, default: null },
-    razorpayPaymentId: { type: String, default: null }
+    razorpayPaymentId: { type: String, default: null },
+    // Video Consultation fields
+    isVideo: { type: Boolean, default: false },
+    videoStatus: { type: String, enum: ['pending', 'approved', 'declined', 'rescheduled', 'Approved', 'Declined', 'Rescheduled', 'Pending', 'none'], default: 'none' },
+    videoMessage: { type: String, default: '' },
+    rescheduleSlot: {
+        slotDate: String,
+        slotTime: String
+    }
 })
 
 const appointmentModel = mongoose.models.appointment || mongoose.model("appointment", appointmentSchema)

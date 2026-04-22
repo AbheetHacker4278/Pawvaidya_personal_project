@@ -11,7 +11,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Calendar, Clock, MapPin, Phone, CheckCircle, XCircle,
   MessageCircle, Stethoscope, AlertCircle, Sparkles, Flag,
-  ChevronRight, ChevronUp, ChevronDown, Search, PawPrint, Shield
+  ChevronRight, ChevronUp, ChevronDown, Search, PawPrint, Shield, Video
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { translateSpeciality } from '../utils/translateSpeciality';
@@ -44,6 +44,7 @@ const MyAppointments = () => {
   const [reportAppointment, setReportAppointment] = useState(null)
   const [ratingAppointment, setRatingAppointment] = useState(null)
   const [activeTab, setActiveTab] = useState('all')
+  const [categoryFilter, setCategoryFilter] = useState('clinic') // 'clinic' or 'video'
   const [searchQuery, setSearchQuery] = useState('')
 
   const months = ["", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -134,6 +135,10 @@ const MyAppointments = () => {
 
   const filtered = useMemo(() => {
     let list = appointments;
+
+    if (categoryFilter === 'clinic') list = list.filter(a => !a.isVideo);
+    else if (categoryFilter === 'video') list = list.filter(a => a.isVideo);
+
     if (activeTab === 'upcoming') list = list.filter(a => !a.cancelled && !a.isCompleted);
     if (activeTab === 'completed') list = list.filter(a => a.isCompleted);
     if (activeTab === 'cancelled') list = list.filter(a => a.cancelled);
@@ -216,46 +221,67 @@ const MyAppointments = () => {
 
       <div className="max-w-5xl mx-auto px-4">
 
-        {/* ── Search + Tab Bar ─────────────────────────────────────────────── */}
+        {/* ── Category + Search + Tab Bar ─────────────────────────────────────────────── */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
-          className="flex flex-col sm:flex-row gap-3 mb-6">
-          {/* Search */}
-          <div className="relative flex-1">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: BRAND.light }} />
-            <input
-              type="text"
-              placeholder={t('appointments.searchPlaceholder')}
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl text-sm outline-none transition"
-              style={{
-                background: '#fff',
-                border: `1.5px solid ${BRAND.sand}`,
-                color: BRAND.dark,
-                boxShadow: '0 1px 4px rgba(90,64,53,0.08)',
-              }}
-            />
+          className="flex flex-col gap-4 mb-6">
+
+          {/* Category Tabs */}
+          <div className="flex p-1 bg-white rounded-2xl border-2 self-start" style={{ borderColor: BRAND.sand }}>
+            <button
+              onClick={() => setCategoryFilter('clinic')}
+              className={`px-6 py-2 rounded-xl text-sm font-bold transition-all ${categoryFilter === 'clinic' ? 'text-white shadow-lg' : 'text-[#5A4035] hover:bg-amber-50'}`}
+              style={{ background: categoryFilter === 'clinic' ? BRAND.mid : 'transparent' }}
+            >
+              🏥 Clinic Appointments
+            </button>
+            <button
+              onClick={() => setCategoryFilter('video')}
+              className={`px-6 py-2 rounded-xl text-sm font-bold transition-all ${categoryFilter === 'video' ? 'text-white shadow-lg' : 'text-[#5A4035] hover:bg-amber-50'}`}
+              style={{ background: categoryFilter === 'video' ? BRAND.mid : 'transparent' }}
+            >
+              📹 Video Consultations
+            </button>
           </div>
-          {/* Tabs */}
-          <div className="flex gap-1 rounded-xl p-1 border"
-            style={{ background: '#fff', borderColor: BRAND.sand, boxShadow: '0 1px 4px rgba(90,64,53,0.08)' }}>
-            {TABS.map(tab => (
-              <button key={tab.key} onClick={() => setActiveTab(tab.key)}
-                className="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all"
-                style={activeTab === tab.key
-                  ? { background: BRAND.mid, color: '#fff' }
-                  : { color: BRAND.light }
-                }>
-                {t(tab.label)}
-                <span className="ml-1.5 text-[10px] px-1.5 py-0.5 rounded-full"
+
+          <div className="flex flex-col sm:flex-row gap-3">
+            {/* Search */}
+            <div className="relative flex-1">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: BRAND.light }} />
+              <input
+                type="text"
+                placeholder={t('appointments.searchPlaceholder')}
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl text-sm outline-none transition"
+                style={{
+                  background: '#fff',
+                  border: `1.5px solid ${BRAND.sand}`,
+                  color: BRAND.dark,
+                  boxShadow: '0 1px 4px rgba(90,64,53,0.08)',
+                }}
+              />
+            </div>
+            {/* Tabs */}
+            <div className="flex gap-1 rounded-xl p-1 border"
+              style={{ background: '#fff', borderColor: BRAND.sand, boxShadow: '0 1px 4px rgba(90,64,53,0.08)' }}>
+              {TABS.map(tab => (
+                <button key={tab.key} onClick={() => setActiveTab(tab.key)}
+                  className="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all"
                   style={activeTab === tab.key
-                    ? { background: 'rgba(255,255,255,0.2)', color: '#fff' }
-                    : { background: BRAND.sand, color: BRAND.mid }
+                    ? { background: BRAND.mid, color: '#fff' }
+                    : { color: BRAND.light }
                   }>
-                  {tab.key === 'all' ? stats.total : tab.key === 'upcoming' ? stats.upcoming : tab.key === 'completed' ? stats.completed : stats.cancelled}
-                </span>
-              </button>
-            ))}
+                  {t(tab.label)}
+                  <span className="ml-1.5 text-[10px] px-1.5 py-0.5 rounded-full"
+                    style={activeTab === tab.key
+                      ? { background: 'rgba(255,255,255,0.2)', color: '#fff' }
+                      : { background: BRAND.sand, color: BRAND.mid }
+                    }>
+                    {tab.key === 'all' ? stats.total : tab.key === 'upcoming' ? stats.upcoming : tab.key === 'completed' ? stats.completed : stats.cancelled}
+                  </span>
+                </button>
+              ))}
+            </div>
           </div>
         </motion.div>
 
@@ -322,6 +348,13 @@ const MyAppointments = () => {
                   <div className="h-1 w-full" style={{ background: status.barColor }} />
 
                   <div className="p-5 md:p-6 flex flex-col sm:flex-row gap-5">
+                    {/* Video Banner for Video Consultations */}
+                    {item.isVideo && (
+                      <div className="absolute top-1 right-1 px-2 py-1 bg-[#5A4035] text-[#F2E4C6] text-[10px] font-bold rounded-bl-xl flex items-center gap-1 shadow-sm">
+                        <Video size={10} /> VIDEO CONSULTATION
+                      </div>
+                    )}
+                    {/* ... (rest of doctor image section unchanged) */}
                     {/* Doctor Image */}
                     <div className="relative flex-shrink-0 self-start">
                       <div className="w-20 h-20 md:w-24 md:h-24 rounded-2xl overflow-hidden border-2"
@@ -386,54 +419,94 @@ const MyAppointments = () => {
                         </span>
                       </div>
 
-                      {/* Pet Details */}
-                      <div className="mb-4 p-4 rounded-xl border border-[#e8d5b0] bg-[#fdfaf2]/80 group transition-all hover:bg-[#fdfaf2]">
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-[#7a5a48] mb-3 flex items-center gap-1.5">
-                          <PawPrint className="w-3.5 h-3.5 text-[#c8860a]" /> {t('appointments.selectedPet')}
-                        </p>
-                        {item.isStray ? (
-                          <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#5A4035] to-[#3d2b1f] flex items-center justify-center text-white font-bold text-xs shadow-md">
-                              🐾
-                            </div>
-                            <div>
-                              <p className="text-sm font-bold text-[#3d2b1f] capitalize">{item.strayDetails?.petType || 'Unknown'} (Stray)</p>
-                              <p className="text-[11px] text-[#5A4035] italic flex items-center gap-1">
-                                <MapPin className="w-3 h-3" /> {item.strayDetails?.location || 'Location not specified'}
-                              </p>
-                            </div>
-                          </div>
-                        ) : item.petId ? (
-                          <div className="flex items-center gap-3">
-                            <div className="relative">
-                              <img src={item.petId.image} alt={item.petId.name} className="w-12 h-12 rounded-xl object-cover border-2 border-[#e8d5b0] shadow-md" />
-                              <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-[#c8860a] border border-white flex items-center justify-center">
-                                <Sparkles className="w-2 h-2 text-white" />
+                      {/* Pet Details (Hidden for Video) */}
+                      {!item.isVideo && (
+                        <div className="mb-4 p-4 rounded-xl border border-[#e8d5b0] bg-[#fdfaf2]/80 group transition-all hover:bg-[#fdfaf2]">
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-[#7a5a48] mb-3 flex items-center gap-1.5">
+                            <PawPrint className="w-3.5 h-3.5 text-[#c8860a]" /> {t('appointments.selectedPet')}
+                          </p>
+                          {item.isStray ? (
+                            <div className="flex items-center gap-3">
+                              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#5A4035] to-[#3d2b1f] flex items-center justify-center text-white font-bold text-xs shadow-md">
+                                🐾
+                              </div>
+                              <div>
+                                <p className="text-sm font-bold text-[#3d2b1f] capitalize">{item.strayDetails?.petType || 'Unknown'} (Stray)</p>
+                                <p className="text-[11px] text-[#5A4035] italic flex items-center gap-1">
+                                  <MapPin className="w-3 h-3" /> {item.strayDetails?.location || 'Location not specified'}
+                                </p>
                               </div>
                             </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <p className="text-sm font-bold text-[#3d2b1f] truncate">{item.petId.name}</p>
-                                <span className="text-[10px] bg-[#e8d5b0] text-[#5A4035] px-1.5 py-0.5 rounded-md font-semibold truncate max-w-[80px]">
-                                  {item.petId.breed}
-                                </span>
+                          ) : item.petId ? (
+                            <div className="flex items-center gap-3">
+                              <div className="relative">
+                                <img src={item.petId.image} alt={item.petId.name} className="w-12 h-12 rounded-xl object-cover border-2 border-[#e8d5b0] shadow-md" />
+                                <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-[#c8860a] border border-white flex items-center justify-center">
+                                  <Sparkles className="w-2 h-2 text-white" />
+                                </div>
                               </div>
-                              <p className="text-[11px] text-[#5A4035] mt-1 font-medium">
-                                {item.petId.gender} • {item.petId.age} yrs • ID: <span className="text-[#c8860a] font-bold">{item.petId.petId}</span>
-                              </p>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <p className="text-sm font-bold text-[#3d2b1f] truncate">{item.petId.name}</p>
+                                  <span className="text-[10px] bg-[#e8d5b0] text-[#5A4035] px-1.5 py-0.5 rounded-md font-semibold truncate max-w-[80px]">
+                                    {item.petId.breed}
+                                  </span>
+                                </div>
+                                <p className="text-[11px] text-[#5A4035] mt-1 font-medium">
+                                  {item.petId.gender} • {item.petId.age} yrs • ID: <span className="text-[#c8860a] font-bold">{item.petId.petId}</span>
+                                </p>
+                              </div>
                             </div>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-50 border border-dashed border-gray-300">
-                            <AlertCircle className="w-3.5 h-3.5 text-gray-400" />
-                            <p className="text-xs text-gray-500 italic">No pet selection data available</p>
-                          </div>
-                        )}
-                      </div>
+                          ) : (
+                            <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-50 border border-dashed border-gray-300">
+                              <AlertCircle className="w-3.5 h-3.5 text-gray-400" />
+                              <p className="text-xs text-gray-500 italic">No pet selection data available</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
 
                       {/* Action Buttons */}
                       {isUpcoming && (
                         <div className="flex flex-wrap gap-2">
+                          {item.isVideo && !isCancelled && !isCompleted && (
+                            <>
+                              {item.videoStatus === 'Approved' ? (
+                                <motion.button
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                  disabled={parseAppointmentDateTime(item.slotDate, item.slotTime).getTime() - 600000 > currentTime.getTime()}
+                                  onClick={() => navigate(`/video-call/${item._id}`)}
+                                  className={`inline-flex items-center gap-1.5 px-6 py-2 text-white text-xs font-bold rounded-xl shadow-lg transition-all ${parseAppointmentDateTime(item.slotDate, item.slotTime).getTime() - 600000 > currentTime.getTime() ? 'opacity-50 cursor-not-allowed grayscale' : 'bg-gradient-to-r from-[#5A4035] to-[#c8860a]'}`}
+                                >
+                                  <Video size={14} /> {parseAppointmentDateTime(item.slotDate, item.slotTime).getTime() - 600000 > currentTime.getTime() ? 'Joinable at Scheduled' : 'Join Video Call'}
+                                </motion.button>
+                              ) : item.videoStatus === 'Pending' ? (
+                                <div className="flex items-center gap-2 px-4 py-2 bg-[#fdf8f0] border border-[#e8d5b0] rounded-xl text-xs font-bold text-[#c8860a]">
+                                  <Clock size={14} /> Video Request Pending Approval
+                                </div>
+                              ) : null}
+                            </>
+                          )}
+
+                          {item.isVideo && item.videoStatus === 'Declined' && (
+                            <div className="w-full mt-2 p-3 bg-red-50 border border-red-100 rounded-xl">
+                              <p className="text-[11px] font-bold text-red-700 uppercase flex items-center gap-1">
+                                <XCircle size={12} /> Appointment Declined
+                              </p>
+                              {item.videoMessage && <p className="text-xs text-red-600 mt-1 italic">"{item.videoMessage}"</p>}
+                            </div>
+                          )}
+
+                          {item.isVideo && item.videoStatus === 'Rescheduled' && (
+                            <div className="w-full mt-2 p-3 bg-amber-50 border border-amber-100 rounded-xl">
+                              <p className="text-[11px] font-bold text-amber-700 uppercase flex items-center gap-1">
+                                <Calendar size={12} /> Reschedule Suggested
+                              </p>
+                              <p className="text-xs text-amber-800 mt-1">Suggested Slot: <span className="font-bold">{item.rescheduleSlot}</span></p>
+                              {item.videoMessage && <p className="text-xs text-amber-600 mt-1 italic">"{item.videoMessage}"</p>}
+                            </div>
+                          )}
                           {!item.payment && item.paymentMethod !== 'Cash' && (
                             <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
                               onClick={() => toast.info('Order recovery for late payment is currently being integrated by Admin.')}
@@ -479,12 +552,14 @@ const MyAppointments = () => {
                             <Flag className="w-3.5 h-3.5" /> Report
                           </motion.button>
 
-                          <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-                            onClick={() => cancelAppointment(item._id)}
-                            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-xl border transition"
-                            style={{ background: '#fef2f2', borderColor: '#fecaca', color: '#dc2626' }}>
-                            <XCircle className="w-3.5 h-3.5" /> Cancel
-                          </motion.button>
+                          {!item.isVideo && (
+                            <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+                              onClick={() => cancelAppointment(item._id)}
+                              className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-xl border transition"
+                              style={{ background: '#fef2f2', borderColor: '#fecaca', color: '#dc2626' }}>
+                              <XCircle className="w-3.5 h-3.5" /> Cancel
+                            </motion.button>
+                          )}
                         </div>
                       )}
 

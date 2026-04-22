@@ -13,7 +13,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 const Appointments = () => {
   const { t } = useTranslation();
   const { docId } = useParams();
-  const { doctors, backendurl, token, getdoctorsdata, userdata, userPets, fetchUserPets } = useContext(AppContext);
+  const { doctors, backendurl, token, getdoctorsdata, userdata, userPets, fetchUserPets, authLoading, isDoctorsLoading } = useContext(AppContext);
   const daysofWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const navigate = useNavigate();
 
@@ -724,9 +724,10 @@ const Appointments = () => {
     }
     if (token) {
       checkActiveAppointments();
+      fetchUserPets(); // Synchronize pet list
       fetchSubscriptionUsage();
     }
-  }, [backendurl, token, docId]);
+  }, [backendurl, token, docId, doctors, authLoading, isDoctorsLoading]);
 
   useEffect(() => {
     if (!document.getElementById('razorpay-js')) {
@@ -748,12 +749,54 @@ const Appointments = () => {
     setValidationError('');
   }, [slotIndex, slotTime]);
 
+  if (authLoading || (isDoctorsLoading && doctors.length === 0)) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen" style={{ background: '#F2E4C6' }}>
+        <div className="relative">
+          <div className="w-16 h-16 border-4 border-[#5A4035]/20 border-t-[#c8860a] rounded-full animate-spin" />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Stethoscope className="w-6 h-6 text-[#5A4035]/40" />
+          </div>
+        </div>
+        <p className="mt-6 text-[#5A4035] font-bold animate-pulse tracking-wide">
+          Verifying Clinical Connection...
+        </p>
+      </div>
+    );
+  }
+
   if (isLoading) {
     if (activeAppointmentInfo) {
       return <CancellationLoadingState step={loadingStep} />;
     } else {
       return <LoadingState step={loadingStep} />;
     }
+  }
+
+  if (!docInfo && !isDoctorsLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen p-6 text-center" style={{ background: '#F2E4C6' }}>
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="bg-white/80 backdrop-blur-md p-10 rounded-[30px] border-2 border-[#e8d5b0] shadow-2xl max-w-md"
+        >
+          <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <X className="w-10 h-10 text-red-500" />
+          </div>
+          <h2 className="text-2xl font-black text-[#3d2b1f] mb-3">Doctor Not Found</h2>
+          <p className="text-[#7a5a48] font-medium mb-8">
+            The medical professional you're looking for might have moved or is currently unavailable.
+          </p>
+          <button
+            onClick={() => navigate('/doctors')}
+            className="w-full py-4 rounded-xl bg-[#5A4035] text-white font-bold shadow-lg hover:scale-[1.02] active:scale-98 transition-all"
+          >
+            Browse Other Doctors
+          </button>
+        </motion.div>
+      </div>
+    );
   }
 
   return docInfo && (

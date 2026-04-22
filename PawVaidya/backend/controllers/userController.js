@@ -29,7 +29,14 @@ import deletionRequestModel from '../models/deletionRequestModel.js';
 import blacklistModel from '../models/blacklistModel.js';
 import adminCouponModel from '../models/adminCouponModel.js';
 import petModel from '../models/petModel.js';
+import videoSlotModel from '../models/videoSlotModel.js';
+import subscriptionModel from '../models/subscriptionModel.js';
 import QRCode from 'qrcode';
+import { autoDeleteFilesOnCompletion } from './cleanupController.js';
+import { VIDEO_BOOKING_TEMPLATE } from '../mailservice/videoConsultationTemplates.js';
+import { getCache, setCache, deleteCache } from '../utils/cacheUtils.js';
+
+
 
 export const registeruser = async (req, res) => {
     try {
@@ -530,6 +537,13 @@ export const resetpassword = async (req, res) => {
 export const getprofile = async (req, res) => {
     try {
         const { userId } = req.body
+        const cacheKey = `user_profile_${userId}`;
+
+        const cachedProfile = await getCache(cacheKey);
+        if (cachedProfile) {
+            return res.json({ success: true, userdata: cachedProfile, source: 'cache' });
+        }
+
         const userdata = await userModel.findById(userId).select('-password')
 
         // Prepare user data for localStorage
@@ -558,6 +572,9 @@ export const getprofile = async (req, res) => {
             subscription: userdata.subscription || { plan: 'None' }
         }
 
+        // Cache for 30 minutes
+        await setCache(cacheKey, userResponseData, 1800);
+
         res.json({
             success: true,
             userdata: userResponseData
@@ -569,6 +586,7 @@ export const getprofile = async (req, res) => {
         })
     }
 }
+
 
 export const updateprofile = async (req, res) => {
     try {
@@ -661,7 +679,11 @@ export const updateprofile = async (req, res) => {
             { new: true }
         ).select('-password');
 
+        // Invalidate cache
+        await deleteCache(`user_profile_${userId}`);
+
         // Prepare updated user data for localStorage
+
         const userResponseData = {
             id: updatedUser._id,
             name: updatedUser.name,
@@ -2369,3 +2391,144 @@ export const generatePetQR = async (req, res) => {
         res.json({ success: false, message: error.message });
     }
 };
+
+export const bookVideoConsultation = async (req, res) => {
+    try {
+        const { userId, docId, slotDate, slotTime, petId, isStray, strayDetails } = req.body;
+
+        const user = await userModel.findById(userId);
+        if (!user) return res.json({ success: false, message: 'User not found' });
+
+        // 1. Eligibility Checks
+        if (user.subscription.plan !== 'Gold' && user.subscription.plan !== 'Platinum') {
+            return res.json({ success: false, message: 'Video consultation is exclusive to Gold and Platinum subscribers.' });
+        }
+
+        if (user.subscription.status !== 'Active' || new Date(user.subscription.expiryDate) < new Date()) {
+            return res.json({ success: false, message: 'Your subscription has expired.' });
+        }
+
+        const subscription = await subscriptionModel.findOne({ userId, status: 'Active' }).sort({ createdAt: -1 });
+        if (subscription && subscription.isGift) {
+            return res.json({ success: false, message: 'Video consultation is not available for gifted subscriptions.' });
+        }
+
+        // 2. Limit Check
+        const limit = user.subscription.plan === 'Gold' ? 10 : 25;
+        if (user.videoCallsUsed >= limit) {
+            return res.json({ success: false, message: `You have reached your video call limit for this subscription (Limit: ${limit}).` });
+        }
+
+        // 3. Doctor/Slot Check
+        const docData = await doctorModel.findById(docId).select("-password");
+        if (!docData || !docData.available) {
+            return res.json({ success: false, message: 'Doctor is not available.' });
+        }
+
+        let slots_booked = docData.slots_booked || {};
+        if (slots_booked[slotDate]?.includes(slotTime)) {
+            return res.json({ success: false, message: 'Slot is already booked.' });
+        }
+
+        // 4. Create Video Appointment Request
+        const appointmentData = {
+            userId,
+            docId,
+            slotDate,
+            slotTime,
+            userData: user,
+            docData: docData,
+            petId: isStray ? null : petId,
+            isStray,
+            strayDetails,
+            amount: 0, // Video calls are part of the subscription
+            date: Date.now(),
+            isVideo: true,
+            videoStatus: 'pending'
+        };
+
+        const newAppointment = new appointmentModel(appointmentData);
+        await newAppointment.save();
+
+        // Mark slot as booked temporarily? Actually, for video calls, we might want to wait for approval.
+        // But to prevent duplicates at the same time, we book it.
+        slots_booked[slotDate] = slots_booked[slotDate] || [];
+        slots_booked[slotDate].push(slotTime);
+        await doctorModel.findByIdAndUpdate(docId, { slots_booked });
+
+        res.json({ success: true, message: 'Video consultation request sent to the doctor.' });
+
+        // Send Email Notification
+        try {
+            const mailOptions = {
+                from: process.env.SENDER_EMAIL,
+                to: user.email,
+                subject: 'Video Consultation Booked',
+                html: VIDEO_BOOKING_TEMPLATE(user.name, docData.name, slotDate, slotTime)
+            };
+            await transporter.sendMail(mailOptions);
+        } catch (mailError) {
+            console.error('Error sending video booking email:', mailError);
+        }
+
+
+    } catch (error) {
+        res.json({ success: false, message: error.message });
+    }
+};
+
+export const getVideoCallCredentials = async (req, res) => {
+    try {
+        res.json({
+            success: true,
+            appId: 764864110,
+            serverSecret: "b75015503f1e5f5b37a6dcbb820c1756"
+        });
+    } catch (error) {
+        res.json({ success: false, message: error.message });
+    }
+};
+
+export const getDoctorVideoSlotsUser = async (req, res) => {
+    try {
+        const { docId } = req.params;
+        const slots = await videoSlotModel.find({ doctorId: docId, isActive: true }).sort({ dayOfWeek: 1, slotTime: 1 });
+        res.json({ success: true, slots });
+    } catch (error) {
+        res.json({ success: false, message: error.message });
+    }
+};
+
+export const appointmentCompleteUser = async (req, res) => {
+    try {
+        const { userId, appointmentId } = req.body;
+        const appointmentData = await appointmentModel.findById(appointmentId);
+
+        if (!appointmentData) {
+            return res.json({ success: false, message: 'Appointment not found' });
+        }
+
+        if (appointmentData.userId !== userId) {
+            return res.json({ success: false, message: 'Unauthorized action' });
+        }
+
+        if (!appointmentData.isVideo) {
+            return res.json({ success: false, message: 'Only video appointments can be auto-completed by users' });
+        }
+
+        // Update appointment status
+        await appointmentModel.findByIdAndUpdate(appointmentId, { isCompleted: true });
+
+        // Auto-delete chat files
+        autoDeleteFilesOnCompletion(appointmentId).catch(err => {
+            console.error('Error auto-deleting files:', err);
+        });
+
+        res.json({ success: true, message: 'Appointment Completed' });
+
+    } catch (error) {
+        console.log(error);
+        res.json({ success: false, message: error.message });
+    }
+};
+

@@ -55,6 +55,8 @@ import BlockIcon from '@mui/icons-material/Block';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import PetsIcon from '@mui/icons-material/Pets';
 import CreditCardIcon from '@mui/icons-material/CreditCard';
+import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
+import VideoCallIcon from '@mui/icons-material/VideoCall';
 
 import { assets } from '../../assets/assets_admin/assets';
 
@@ -151,7 +153,22 @@ const TotalUsers = () => {
     };
 
     const calculateAge = (dob) => {
-        const birthDate = new Date(dob);
+        if (!dob) return null;
+        let birthDate;
+
+        // Handle DD_MM_YYYY format
+        if (typeof dob === 'string' && dob.includes('_')) {
+            const parts = dob.split('_');
+            if (parts.length === 3) {
+                // new Date(year, monthIndex, day)
+                birthDate = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+            }
+        } else {
+            birthDate = new Date(dob);
+        }
+
+        if (isNaN(birthDate.getTime())) return null;
+
         const today = new Date();
         let age = today.getFullYear() - birthDate.getFullYear();
         const monthDifference = today.getMonth() - birthDate.getMonth();
@@ -159,6 +176,15 @@ const TotalUsers = () => {
             age--;
         }
         return age;
+    };
+
+    const formatCurrency = (amount) => {
+        const val = parseFloat(amount) || 0;
+        return new Intl.NumberFormat('en-IN', {
+            style: 'currency',
+            currency: 'INR',
+            maximumFractionDigits: 0
+        }).format(val);
     };
 
     useEffect(() => {
@@ -300,9 +326,6 @@ const TotalUsers = () => {
         return date.toLocaleString();
     };
 
-    const formatCurrency = (amount) => {
-        return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(amount || 0);
-    };
 
     const handleSendVerificationEmail = async (user) => {
         if (window.confirm(`Send email verification request to ${user.email}?`)) {
@@ -343,7 +366,16 @@ const TotalUsers = () => {
         show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 100 } }
     };
 
-    return dashdata && (
+    if (!dashdata) {
+        return (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', gap: 2, flexDirection: 'column' }}>
+                <CircularProgress sx={{ color: '#10b981', size: 50 }} />
+                <Typography variant="body2" color="#64748b" fontWeight="600">Initializing User Management Hub...</Typography>
+            </Box>
+        );
+    }
+
+    return (
         <Box
             component={motion.div}
             initial={{ opacity: 0 }}
@@ -453,107 +485,139 @@ const TotalUsers = () => {
                     animate="show"
                 >
                     {filteredUsers.map((user, index) => (
-                        <Grid item xs={12} md={6} lg={4} key={user._id || index} component={motion.div} variants={itemVariants}>
+                        <Grid item xs={12} sm={6} lg={4} xl={3} key={user._id || index} component={motion.div} variants={itemVariants}>
                             <Card
                                 sx={{
                                     height: '100%',
-                                    p: 3,
-                                    borderRadius: 5,
-                                    boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
-                                    transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                                    background: 'rgba(255, 255, 255, 0.8)',
-                                    backdropFilter: 'blur(10px)',
-                                    border: '1px solid rgba(255, 255, 255, 0.3)',
+                                    p: 0,
+                                    borderRadius: 7,
+                                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05)',
+                                    transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
+                                    background: 'rgba(255, 255, 255, 0.7)',
+                                    backdropFilter: 'blur(20px)',
+                                    border: '1px solid rgba(255, 255, 255, 0.6)',
                                     position: 'relative',
+                                    display: 'flex',
+                                    flexDirection: 'column',
                                     overflow: 'hidden',
                                     '&:hover': {
-                                        boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)',
-                                        transform: 'translateY(-6px)',
-                                        background: 'rgba(255, 255, 255, 0.95)',
-                                        '& .action-overlay': { opacity: 1 }
+                                        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.15)',
+                                        transform: 'translateY(-8px)',
+                                        background: '#ffffff',
+                                        '& .action-overlay': { opacity: 1, transform: 'translateY(0)' }
                                     },
                                 }}
                             >
-                                {/* Status Badges Top Right */}
-                                <Box sx={{ position: 'absolute', top: 16, right: 16, display: 'flex', gap: 0.5 }}>
-                                    {user.isOnline && (
-                                        <Tooltip title="Currently Online">
-                                            <Box sx={{ width: 10, height: 10, bgcolor: '#10b981', borderRadius: '50%', border: '2px solid white', boxShadow: '0 0 0 2px rgba(16,185,129,0.2)' }} />
-                                        </Tooltip>
-                                    )}
-                                </Box>
+                                {/* Top Gradient Bar */}
+                                <Box sx={{ h: 6, width: '100%', background: 'linear-gradient(90deg, #6366f1, #a855f7, #ec4899)' }} />
 
-                                {/* User Profile Header */}
-                                <Box display="flex" alignItems="center" mb={3} gap={2}>
-                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedUsers.includes(user.email)}
-                                            onChange={() => handleSelectUser(user.email)}
-                                            style={{ cursor: 'pointer', scale: 1.2 }}
-                                        />
-                                    </Box>
-                                    <Box sx={{ position: 'relative' }}>
-                                        <Avatar
-                                            src={user.image || assets.people_icon}
-                                            alt={user.name}
+                                <Box sx={{ p: 3, position: 'relative' }}>
+                                    {/* Selection Checkbox - Custom Style */}
+                                    <Box sx={{ position: 'absolute', top: 24, left: 24, zIndex: 10 }}>
+                                        <Box
+                                            onClick={() => handleSelectUser(user.email)}
                                             sx={{
-                                                width: 80,
-                                                height: 80,
-                                                border: '4px solid white',
-                                                boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)',
-                                                flexShrink: 0
+                                                width: 20,
+                                                height: 20,
+                                                borderRadius: '6px',
+                                                border: '2px solid',
+                                                borderColor: selectedUsers.includes(user.email) ? '#10b981' : '#e2e8f0',
+                                                bgcolor: selectedUsers.includes(user.email) ? '#10b981' : 'transparent',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                cursor: 'pointer',
+                                                transition: 'all 0.2s'
                                             }}
-                                        />
-                                        {user.isFaceRegistered && (
-                                            <Tooltip title="View Registered Face">
-                                                <Avatar
-                                                    src={user.faceImage}
-                                                    sx={{
-                                                        width: 32,
-                                                        height: 32,
-                                                        position: 'absolute',
-                                                        bottom: -2,
-                                                        right: -2,
-                                                        border: '2px solid white',
-                                                        boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-                                                        cursor: 'pointer',
-                                                        zIndex: 2,
-                                                        '&:hover': { scale: 1.15 }
-                                                    }}
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        window.open(user.faceImage, '_blank');
-                                                    }}
-                                                />
+                                        >
+                                            {selectedUsers.includes(user.email) && <CheckCircleIcon sx={{ fontSize: 14, color: 'white' }} />}
+                                        </Box>
+                                    </Box>
+
+                                    {/* Status Badges - Top Right */}
+                                    <Box sx={{ position: 'absolute', top: 24, right: 24, display: 'flex', gap: 1, zIndex: 10 }}>
+                                        {user.isOnline && (
+                                            <Tooltip title="Currently Online">
+                                                <Box sx={{
+                                                    width: 10,
+                                                    height: 10,
+                                                    bgcolor: '#10b981',
+                                                    borderRadius: '50%',
+                                                    border: '2px solid white',
+                                                    boxShadow: '0 0 10px rgba(16, 185, 129, 0.5)',
+                                                    animation: 'pulse 2s infinite'
+                                                }} />
                                             </Tooltip>
                                         )}
+                                        {user.isBanned && (
+                                            <Chip
+                                                label="BANNED"
+                                                size="small"
+                                                sx={{
+                                                    height: 16,
+                                                    fontSize: '0.5rem',
+                                                    fontWeight: 900,
+                                                    bgcolor: '#fee2e2',
+                                                    color: '#ef4444',
+                                                    borderRadius: 1
+                                                }}
+                                            />
+                                        )}
                                     </Box>
-                                    <Box flex={1} minWidth={0}>
-                                        <Typography variant="h6" fontWeight="800" color="#1e293b" noWrap sx={{ fontSize: '1.1rem', mb: 0.5 }}>
+
+                                    {/* User Profile Header */}
+                                    <Box display="flex" flexDirection="column" alignItems="center" mb={3} textAlign="center">
+                                        <Box sx={{ position: 'relative', mb: 2 }}>
+                                            <Avatar
+                                                src={user.image || assets.people_icon}
+                                                alt={user.name}
+                                                sx={{
+                                                    width: 96,
+                                                    height: 96,
+                                                    border: '4px solid white',
+                                                    boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)',
+                                                }}
+                                            />
+                                            {user.isAccountverified && (
+                                                <Box
+                                                    sx={{
+                                                        position: 'absolute',
+                                                        bottom: 4,
+                                                        right: 4,
+                                                        bgcolor: '#10b981',
+                                                        color: 'white',
+                                                        borderRadius: '50%',
+                                                        width: 24,
+                                                        height: 24,
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        border: '2px solid white',
+                                                        boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                                                    }}
+                                                >
+                                                    <VerifiedIcon sx={{ fontSize: 14 }} />
+                                                </Box>
+                                            )}
+                                        </Box>
+
+                                        <Typography variant="h6" fontWeight="900" color="#1e293b" sx={{ fontSize: '1.25rem', mb: 0.5, lineHeight: 1.2 }}>
                                             {user.name}
                                         </Typography>
-                                        <Box display="flex" items="center" gap={1} mb={1}>
+
+                                        <Box display="flex" justifyContent="center" gap={1} mb={2}>
                                             <Chip
                                                 label={user.isAccountverified ? 'Verified' : 'Unverified'}
                                                 size="small"
-                                                variant="contained"
                                                 sx={{
                                                     height: 20,
                                                     fontSize: '0.65rem',
                                                     fontWeight: 800,
                                                     bgcolor: user.isAccountverified ? '#dcfce7' : '#fff7ed',
                                                     color: user.isAccountverified ? '#15803d' : '#9a3412',
-                                                    '& .MuiChip-label': { px: 1 }
+                                                    borderRadius: 1.5
                                                 }}
                                             />
-                                            {user.isBanned && (
-                                                <Chip
-                                                    label="Banned"
-                                                    size="small"
-                                                    sx={{ height: 20, fontSize: '0.65rem', fontWeight: 800, bgcolor: '#fee2e2', color: '#b91c1c' }}
-                                                />
-                                            )}
                                             {user.subscription && user.subscription.plan !== 'None' && (
                                                 <Chip
                                                     label={user.subscription.plan}
@@ -562,175 +626,169 @@ const TotalUsers = () => {
                                                         height: 20,
                                                         fontSize: '0.65rem',
                                                         fontWeight: 800,
-                                                        bgcolor: user.subscription.plan === 'Platinum' ? '#f3e8ff' :
-                                                            user.subscription.plan === 'Gold' ? '#fef3c7' : '#f1f5f9',
-                                                        color: user.subscription.plan === 'Platinum' ? '#7e22ce' :
-                                                            user.subscription.plan === 'Gold' ? '#b45309' : '#475569',
-                                                        border: `1px solid ${user.subscription.plan === 'Platinum' ? '#e9d5ff' :
-                                                                user.subscription.plan === 'Gold' ? '#fde68a' : '#e2e8f0'
-                                                            }`
+                                                        background: user.subscription.plan === 'Platinum'
+                                                            ? 'linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%)'
+                                                            : 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
+                                                        color: user.subscription.plan === 'Platinum' ? '#7e22ce' : '#b45309',
+                                                        borderRadius: 1.5,
+                                                        border: '1px solid rgba(0,0,0,0.05)'
                                                     }}
                                                 />
                                             )}
                                         </Box>
-                                        <Typography variant="body2" color="#64748b" sx={{ fontSize: '0.75rem', fontWeight: 500 }}>
-                                            {user.gender.charAt(0).toUpperCase() + user.gender.slice(1)} • {calculateAge(user.dob)} yrs
+
+                                        <Typography variant="body2" color="#64748b" fontWeight="600" sx={{ mb: 0.5 }}>
+                                            {user.email}
+                                        </Typography>
+                                        <Typography variant="caption" color="#94a3b8" sx={{ fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase' }}>
+                                            {(user.gender && user.gender !== 'Not Selected') ? user.gender : 'Gender N/A'} • {user.dob ? `${calculateAge(user.dob)} YRS` : 'AGE UNKNOWN'}
                                         </Typography>
                                     </Box>
-                                </Box>
 
-                                <Divider sx={{ my: 2, borderStyle: 'dashed' }} />
-
-                                {/* Info Grid */}
-                                <Grid container spacing={2} sx={{ mb: 3 }}>
-                                    <Grid item xs={6}>
-                                        <Box>
-                                            <Typography variant="caption" color="#94a3b8" fontWeight="700" sx={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}>Contact</Typography>
-                                            <Typography variant="body2" color="#334155" fontWeight="600" sx={{ mt: 0.5, overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.phone}</Typography>
-                                            <Typography variant="caption" color="#64748b" sx={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.email}</Typography>
-                                        </Box>
+                                    {/* Stats Grid - Premium Glass Layout */}
+                                    <Grid container spacing={1.5} sx={{ mb: 3 }}>
+                                        {[
+                                            { label: 'EVENTS', val: dashdata?.userAppointments?.find(ap => ap.userId === user._id)?.totalAppointments || 0, icon: <CalendarTodayIcon />, color: '#6366f1', bg: '#f5f7ff' },
+                                            { label: 'WALLET', val: formatCurrency(user.pawWallet), icon: <AccountBalanceWalletIcon />, color: '#f59e0b', bg: '#fffbf0' },
+                                            { label: 'CALLS', val: user.subscription?.plan === 'Platinum' || user.subscription?.plan === 'Gold' ? `${Math.max(0, (user.subscription.plan === 'Platinum' ? 25 : 10) - (user.videoCallsUsed || 0))}` : "—", icon: <VideoCallIcon />, color: '#0ea5e9', bg: '#f0f9ff' },
+                                            { label: 'PETS', val: user.pets?.length || 0, icon: <PetsIcon />, color: '#ef4444', bg: '#fff5f5' }
+                                        ].map((stat, i) => (
+                                            <Grid item xs={6} key={i}>
+                                                <Box sx={{
+                                                    p: 2,
+                                                    bgcolor: stat.bg,
+                                                    borderRadius: 4,
+                                                    border: '1px solid rgba(0,0,0,0.02)',
+                                                    display: 'flex',
+                                                    flexDirection: 'column',
+                                                    alignItems: 'start',
+                                                    transition: 'all 0.3s',
+                                                    '&:hover': { transform: 'scale(1.05)', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.05)' }
+                                                }}>
+                                                    <Box display="flex" alignItems="center" gap={1} mb={1}>
+                                                        {React.cloneElement(stat.icon, { sx: { fontSize: 16, color: stat.color } })}
+                                                        <Typography variant="caption" color={stat.color} fontWeight="900" sx={{ fontSize: '0.6rem', letterSpacing: 1 }}>{stat.label}</Typography>
+                                                    </Box>
+                                                    <Typography variant="h6" color="#1e293b" fontWeight="900" sx={{ lineHeight: 1 }}>
+                                                        {stat.val}
+                                                    </Typography>
+                                                </Box>
+                                            </Grid>
+                                        ))}
                                     </Grid>
-                                    <Grid item xs={6}>
-                                        <Box>
-                                            <Typography variant="caption" color="#94a3b8" fontWeight="700" sx={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}>Pet Details</Typography>
-                                            <Typography variant="body2" color="#334155" fontWeight="600" sx={{ mt: 0.5 }}>{user.pet_type || 'N/A'}</Typography>
-                                            <Typography variant="caption" color="#64748b" sx={{ display: 'block' }}>{user.breed || 'Unknown Breed'}</Typography>
+
+                                    {/* Location Banner */}
+                                    <Box sx={{
+                                        p: 2,
+                                        bgcolor: 'rgba(243, 232, 255, 0.4)',
+                                        borderRadius: 4,
+                                        border: '1px solid #f3e8ff',
+                                        mb: 3,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 2,
+                                        backdropFilter: 'blur(4px)'
+                                    }}>
+                                        <Box sx={{ p: 1, bgcolor: 'white', borderRadius: 2, color: '#a855f7', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+                                            <LocationOnIcon sx={{ fontSize: 18 }} />
                                         </Box>
-                                    </Grid>
-                                </Grid>
-
-                                {/* Pet Family Preview */}
-                                <Box sx={{ mb: 3 }}>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                                        <PetsIcon sx={{ fontSize: 16, color: '#f59e0b' }} />
-                                        <Typography variant="caption" color="#94a3b8" fontWeight="700" sx={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}>Pet Family ({user.pets?.length || 0})</Typography>
-                                    </Box>
-                                    <Box sx={{ display: 'flex', gap: 1, overflowX: 'auto', pb: 1, '&::-webkit-scrollbar': { height: 4 }, '&::-webkit-scrollbar-thumb': { bgcolor: '#e2e8f0', borderRadius: 2 } }}>
-                                        {user.pets && user.pets.length > 0 ? (
-                                            user.pets.map((pet, i) => (
-                                                <Tooltip key={pet._id || i} title={`${pet.name} (${pet.type})`}>
-                                                    <Avatar
-                                                        src={pet.image || assets.pet_icon}
-                                                        sx={{
-                                                            width: 36,
-                                                            height: 36,
-                                                            border: '2px solid white',
-                                                            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                                                            cursor: 'pointer',
-                                                            '&:hover': { scale: 1.1, zIndex: 1 }
-                                                        }}
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            handleViewDetails(user);
-                                                            setDetailsTab(2); // Jump to Pet Family tab
-                                                            setHighlightedPetId(pet._id);
-                                                            // Auto-reset highlight after 3 seconds
-                                                            setTimeout(() => setHighlightedPetId(null), 3000);
-                                                        }}
-                                                    />
-                                                </Tooltip>
-                                            ))
-                                        ) : (
-                                            <Typography variant="body2" color="#94a3b8" sx={{ fontStyle: 'italic', fontSize: '0.75rem' }}>No pet profiles</Typography>
-                                        )}
-                                    </Box>
-                                </Box>
-
-                                {/* Location Banner */}
-                                <Box sx={{ p: 1.5, bgcolor: '#f8fafc', borderRadius: 3, border: '1px solid #e2e8f0', mb: 3, display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                                    <Box sx={{ p: 1, bgcolor: 'white', borderRadius: 2, boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-                                        <LocationOnIcon sx={{ color: '#10b981', fontSize: 18 }} />
-                                    </Box>
-                                    <Box>
-                                        <Typography variant="caption" color="#64748b" fontWeight="600">{user.address.LOCATION}, {user.address.LINE}</Typography>
-                                        <Typography variant="body2" color="#475569" fontWeight="500" sx={{ fontSize: '0.7rem', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                                            {user.full_address}
-                                        </Typography>
-                                    </Box>
-                                </Box>
-
-                                {/* Bottom Stat + Actions */}
-                                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 'auto' }}>
-                                    <Box sx={{ display: 'flex', gap: 4 }}>
-                                        <Box>
-                                            <Typography variant="caption" color="#94a3b8" fontWeight="700">APPOINTMENTS</Typography>
-                                            <Typography variant="h6" color="#1e293b" fontWeight="800">
-                                                {dashdata?.userAppointments?.find(ap => ap.userId === user._id)?.totalAppointments || 0}
+                                        <Box minWidth={0}>
+                                            <Typography variant="caption" color="#9333ea" fontWeight="900" sx={{ display: 'block', fontSize: '0.6rem', letterSpacing: 1 }}>LOCATION</Typography>
+                                            <Typography variant="body2" color="#1e293b" fontWeight="700" noWrap>
+                                                {user.address?.LOCATION || 'No State'} • {user.full_address || 'No Address'}
                                             </Typography>
                                         </Box>
-                                        <Box>
-                                            <Typography variant="caption" color="#f59e0b" fontWeight="700">PAW WALLET</Typography>
-                                            <Typography variant="h6" color="#d97706" fontWeight="800">
-                                                {formatCurrency(user.pawWallet)}
-                                            </Typography>
-                                        </Box>
-                                        {user.subscription && user.subscription.plan !== 'None' && (
-                                            <Box>
-                                                <Typography variant="caption" color="#7e22ce" fontWeight="700">PLAN EXPIRY</Typography>
-                                                <Typography variant="body2" color="#6b21a8" fontWeight="800">
-                                                    {new Date(user.subscription.expiryDate).toLocaleDateString()}
-                                                </Typography>
-                                            </Box>
-                                        )}
                                     </Box>
-                                    <Box sx={{ display: 'flex', gap: 1 }}>
-                                        <Tooltip title="View Analytics & Logs">
+
+                                    {/* Footer Actions */}
+                                    <Box display="flex" gap={1.5}>
+                                        <Button
+                                            variant="contained"
+                                            fullWidth
+                                            startIcon={<EmailIcon />}
+                                            onClick={() => handleOpenEmailDialog(user)}
+                                            sx={{
+                                                bgcolor: '#1e293b',
+                                                color: 'white',
+                                                borderRadius: 4,
+                                                py: 1.5,
+                                                fontSize: '0.8rem',
+                                                fontWeight: 900,
+                                                textTransform: 'none',
+                                                boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
+                                                '&:hover': { bgcolor: '#0f172a', transform: 'translateY(-2px)' }
+                                            }}
+                                        >
+                                            Message
+                                        </Button>
+                                        <Box display="flex" gap={1}>
                                             <IconButton
-                                                onClick={() => handleViewDetails(user)}
-                                                sx={{ bgcolor: '#eff6ff', color: '#2563eb', '&:hover': { bgcolor: '#2563eb', color: 'white' } }}
-                                                size="small"
+                                                onClick={() => handleBanUser(user, false)}
+                                                sx={{
+                                                    bgcolor: user.isBanned ? '#ecfdf5' : '#fff1f2',
+                                                    color: user.isBanned ? '#10b981' : '#f43f5e',
+                                                    border: '1px solid',
+                                                    borderColor: user.isBanned ? '#dcfce7' : '#fee2e2',
+                                                    borderRadius: 3,
+                                                    p: 1.5
+                                                }}
                                             >
-                                                <VisibilityIcon fontSize="small" />
+                                                {user.isBanned ? <CheckCircleIcon /> : <BlockIcon />}
                                             </IconButton>
-                                        </Tooltip>
-                                        <Tooltip title="Quick Edit">
                                             <IconButton
-                                                onClick={() => handleEditClick(user)}
-                                                sx={{ bgcolor: '#f0fdf4', color: '#059669', '&:hover': { bgcolor: '#059669', color: 'white' } }}
-                                                size="small"
+                                                onClick={() => handleDeleteClick(user)}
+                                                sx={{
+                                                    bgcolor: '#f8fafc',
+                                                    color: '#64748b',
+                                                    border: '1px solid #e2e8f0',
+                                                    borderRadius: 3,
+                                                    p: 1.5,
+                                                    '&:hover': { color: '#ef4444', bgcolor: '#fef2f2', borderColor: '#fee2e2' }
+                                                }}
                                             >
-                                                <EditIcon fontSize="small" />
+                                                <DeleteIcon />
                                             </IconButton>
-                                        </Tooltip>
-                                        <Tooltip title="Communicate">
-                                            <IconButton
-                                                onClick={() => handleOpenEmailDialog(user)}
-                                                sx={{ bgcolor: '#f5f3ff', color: '#7c3aed', '&:hover': { bgcolor: '#7c3aed', color: 'white' } }}
-                                                size="small"
-                                            >
-                                                <EmailIcon fontSize="small" />
-                                            </IconButton>
-                                        </Tooltip>
+                                        </Box>
                                     </Box>
                                 </Box>
 
-                                {/* Security Action Drawer (Overlay style) */}
-                                <Box sx={{ mt: 3, pt: 2, borderTop: '1px solid #f1f5f9', display: 'flex', gap: 1 }}>
+                                {/* Action Overlay - Visible on Hover */}
+                                <Box
+                                    className="action-overlay"
+                                    sx={{
+                                        position: 'absolute',
+                                        top: 0,
+                                        left: 0,
+                                        right: 0,
+                                        bgcolor: 'rgba(255,255,255,0.9)',
+                                        p: 2,
+                                        display: 'flex',
+                                        justifyContent: 'center',
+                                        gap: 2,
+                                        opacity: 0,
+                                        transform: 'translateY(-100%)',
+                                        transition: 'all 0.3s ease-in-out',
+                                        zIndex: 20,
+                                        borderBottom: '1px solid #f1f5f9',
+                                        backdropFilter: 'blur(8px)'
+                                    }}
+                                >
                                     <Button
-                                        variant="outlined"
-                                        color={user.isBanned ? "success" : "error"}
                                         size="small"
-                                        fullWidth
-                                        startIcon={user.isBanned ? <CheckCircleIcon /> : <BlockIcon />}
-                                        onClick={() => handleBanUser(user, false)}
-                                        sx={{
-                                            borderRadius: 2.5,
-                                            fontSize: '0.65rem',
-                                            fontWeight: 800,
-                                            textTransform: 'uppercase',
-                                            letterSpacing: '0.025em',
-                                            borderWidth: 2,
-                                            '&:hover': { borderWidth: 2 }
-                                        }}
+                                        startIcon={<VisibilityIcon />}
+                                        onClick={() => handleViewDetails(user)}
+                                        sx={{ color: '#6366f1', fontWeight: 800, textTransform: 'none' }}
                                     >
-                                        {user.isBanned ? 'Unlock' : 'Blacklist'}
+                                        Inspect
                                     </Button>
-                                    <IconButton
-                                        onClick={() => handleDeleteClick(user)}
-                                        sx={{ color: '#ef4444', bgcolor: '#fef2f2', border: '1px solid #fee2e2', borderRadius: 2.5 }}
+                                    <Button
+                                        size="small"
+                                        startIcon={<EditIcon />}
+                                        onClick={() => handleEditClick(user)}
+                                        sx={{ color: '#10b981', fontWeight: 800, textTransform: 'none' }}
                                     >
-                                        <DeleteIcon fontSize="small" />
-                                    </IconButton>
+                                        Edit
+                                    </Button>
                                 </Box>
                             </Card>
                         </Grid>
@@ -747,7 +805,8 @@ const TotalUsers = () => {
                     <Typography variant="h4" fontWeight="900" color="#1e293b" mb={1}>No Users Found</Typography>
                     <Typography variant="body1" color="#64748b">Adjust your filters to see more results from the network.</Typography>
                 </Box>
-            )}
+            )
+            }
 
             {/* Edit User Dialog */}
             <Dialog
@@ -1164,7 +1223,7 @@ const TotalUsers = () => {
                     return result;
                 }}
             />
-        </Box>
+        </Box >
     );
 };
 

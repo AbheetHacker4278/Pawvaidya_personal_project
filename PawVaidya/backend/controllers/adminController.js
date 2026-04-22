@@ -43,6 +43,7 @@ import pollModel from '../models/pollModel.js';
 import petModel from '../models/petModel.js';
 import { Document, Packer, Paragraph, Table, TableRow, TableCell, WidthType, AlignmentType, HeadingLevel, TextRun, BorderStyle } from "docx";
 import { euclideanDistance } from '../utils/faceUtils.js';
+import redis from '../config/redis.js';
 
 const execAsync = promisify(exec);
 
@@ -1350,8 +1351,8 @@ export const admindashboard = async (req, res) => {
         const userLocations = await userModel.find({ "location.latitude": { $ne: null } }).select('location');
 
         const geoHeatmap = [
-            ...doctorLocations.map(d => ({ lat: d.location.latitude, lng: d.location.longitude, weight: 1, type: 'doctor' })),
-            ...userLocations.map(u => ({ lat: u.location.latitude, lng: u.location.longitude, weight: 1, type: 'user' }))
+            ...doctorLocations.map(d => ({ lat: d.location?.latitude, lng: d.location?.longitude, weight: 1, type: 'doctor' })),
+            ...userLocations.map(u => ({ lat: u.location?.latitude, lng: u.location?.longitude, weight: 1, type: 'user' }))
         ];
 
         // ── Appointment Density (24h Clock) ───────────────────────────────────────
@@ -3882,6 +3883,82 @@ export const giftSubscription = async (req, res) => {
 
     } catch (error) {
         console.error("Error gifting subscription:", error.message);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// API to get Redis Statistics
+export const getRedisStats = async (req, res) => {
+    try {
+        const [info, commandStatsRaw] = await Promise.all([
+            redis.info(),
+            redis.info('commandstats')
+        ]);
+
+        const stats = {};
+        const cmdStats = {};
+
+        // Parse regular info
+        info.split('\r\n').forEach(line => {
+            const parts = line.split(':');
+            if (parts.length === 2) stats[parts[0]] = parts[1];
+        });
+
+        // Parse command stats
+        commandStatsRaw.split('\r\n').forEach(line => {
+            if (line.startsWith('cmdstat_')) {
+                const [cmdPart, statsPart] = line.split(':');
+                const cmdName = cmdPart.replace('cmdstat_', '');
+                const statsObj = {};
+                statsPart.split(',').forEach(s => {
+                    const [k, v] = s.split('=');
+                    statsObj[k] = v;
+                });
+                cmdStats[cmdName] = {
+                    calls: parseInt(statsObj.calls) || 0,
+                    usec: parseFloat(statsObj.usec) || 0,
+                    usec_per_call: parseFloat(statsObj.usec_per_call) || 0
+                };
+            }
+        });
+
+        const topCommands = Object.entries(cmdStats)
+            .sort((a, b) => b[1].calls - a[1].calls)
+            .slice(0, 5)
+            .map(([name, data]) => ({ name, ...data }));
+
+        res.json({
+            success: true,
+            stats: {
+                version: stats.redis_version,
+                uptime: stats.uptime_in_seconds,
+                uptimeDays: stats.uptime_in_days || "0",
+                clients: stats.connected_clients || "0",
+                memory: stats.used_memory_human || "0B",
+                memoryRaw: stats.used_memory || 0,
+                opsPerSec: stats.instantaneous_ops_per_sec || "0",
+                hits: parseInt(stats.keyspace_hits) || 0,
+                misses: parseInt(stats.keyspace_misses) || 0,
+                hitRate: (parseInt(stats.keyspace_hits) + parseInt(stats.keyspace_misses)) > 0
+                    ? ((parseInt(stats.keyspace_hits) / (parseInt(stats.keyspace_hits) + parseInt(stats.keyspace_misses))) * 100).toFixed(2)
+                    : "0",
+                missRate: (parseInt(stats.keyspace_hits) + parseInt(stats.keyspace_misses)) > 0
+                    ? ((parseInt(stats.keyspace_misses) / (parseInt(stats.keyspace_hits) + parseInt(stats.keyspace_misses))) * 100).toFixed(2)
+                    : "0",
+                emat: (parseInt(stats.keyspace_hits) + parseInt(stats.keyspace_misses)) > 0
+                    ? (((parseInt(stats.keyspace_hits) * 1.5) + (parseInt(stats.keyspace_misses) * 120)) / (parseInt(stats.keyspace_hits) + parseInt(stats.keyspace_misses))).toFixed(2)
+                    : "0.00",
+                totalConnections: stats.total_connections_received,
+                totalCommands: stats.total_commands_processed,
+                cpuUsage: stats.used_cpu_user,
+                maxMemory: stats.maxmemory_human || "Default",
+                role: stats.role,
+                topCommands,
+                keyspace: stats.db0 || "keys=0,expires=0,avg_ttl=0"
+            }
+        });
+    } catch (error) {
+        console.error("Error fetching Redis stats:", error.message);
         res.status(500).json({ success: false, message: error.message });
     }
 };

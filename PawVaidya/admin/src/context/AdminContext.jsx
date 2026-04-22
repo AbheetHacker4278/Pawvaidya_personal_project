@@ -848,6 +848,21 @@ const AdminContextProvider = (props) => {
         }
     };
 
+    const getRedisStats = async () => {
+        try {
+            const { data } = await axios.get(backendurl + '/api/admin/redis-stats', { headers: { atoken } });
+            if (data.success) {
+                return data.stats;
+            } else {
+                toast.error(data.message);
+                return null;
+            }
+        } catch (error) {
+            toast.error(error.message || 'Failed to fetch Redis stats');
+            return null;
+        }
+    };
+
     const value = {
         atoken, setatoken,
         backendurl, doctors,
@@ -891,7 +906,8 @@ const AdminContextProvider = (props) => {
         securityIncidentCount, setSecurityIncidentCount,
         contentViolationCount, setContentViolationCount,
         adminLocation, setAdminLocation,
-        subscriptions, loadingSubscriptions, getAllSubscriptions, revokeSubscription
+        subscriptions, loadingSubscriptions, getAllSubscriptions, revokeSubscription,
+        getRedisStats
     }
 
     return (

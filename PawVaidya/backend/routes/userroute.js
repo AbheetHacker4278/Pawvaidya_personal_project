@@ -1,6 +1,6 @@
 import express from 'express';
 
-import { registeruser, loginUser, getprofile, updateprofile, bookappointment, verifyRazorpay, listAppointment, cancelAppointment, sendVerifyOtp, verifyEmail, isAuthenticated, sendResetOtp, resetpassword, getuserdata, logout, getUserMessages, markMessageAsRead, getUserById, updateUserLocation, validateDiscount, rateDoctor, requestAccountDeletion, registerFace, loginFace, addPet, getPets, updatePet, deletePet, generatePetQR, topUpWalletOrder, verifyTopUpWalletPayment, getUserSubscriptionUsage } from '../controllers/userController.js';
+import { registeruser, loginUser, getprofile, updateprofile, bookappointment, verifyRazorpay, listAppointment, cancelAppointment, sendVerifyOtp, verifyEmail, isAuthenticated, sendResetOtp, resetpassword, getuserdata, logout, getUserMessages, markMessageAsRead, getUserById, updateUserLocation, validateDiscount, rateDoctor, requestAccountDeletion, registerFace, loginFace, addPet, getPets, updatePet, deletePet, generatePetQR, topUpWalletOrder, verifyTopUpWalletPayment, getUserSubscriptionUsage, bookVideoConsultation, getVideoCallCredentials, getDoctorVideoSlotsUser, appointmentCompleteUser } from '../controllers/userController.js';
 import { validateAdminCoupon, getActiveAdminCoupons } from '../controllers/couponController.js';
 import { getNearbyDoctors } from '../controllers/doctorController.js';
 import { createBlog, getAllBlogs, getBlogById, updateBlog, deleteBlog, toggleLike, addComment, deleteComment, getUserBlogs } from '../controllers/blogController.js';
@@ -18,9 +18,13 @@ userRouter.post('/logout', logout)
 userRouter.get('/get-profile', authuser, getprofile)
 userRouter.post('/update-profile', upload.single('image'), authuser, securityMonitor, updateprofile)
 userRouter.post('/book-appointment', authuser, bookappointment)
+userRouter.post('/book-video-appointment', authuser, bookVideoConsultation)
+userRouter.get('/doctor-video-slots/:docId', authuser, getDoctorVideoSlotsUser)
 userRouter.post('/verify-razorpay', authuser, verifyRazorpay)
 userRouter.get("/appointments", authuser, listAppointment)
 userRouter.post("/cancel-appointment", authuser, cancelAppointment)
+userRouter.post("/complete-video-appointment", authuser, appointmentCompleteUser)
+userRouter.get("/video-call-credentials", authuser, getVideoCallCredentials)
 userRouter.post("/send-verify-otp", authuser, sendVerifyOtp)
 userRouter.post("/verify-account", authuser, verifyEmail)
 userRouter.get("/is-auth", authuser, isAuthenticated)

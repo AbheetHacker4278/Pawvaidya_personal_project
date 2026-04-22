@@ -55,8 +55,10 @@ const userSchema = new mongoose.Schema({
         plan: { type: String, enum: ['None', 'Silver', 'Gold', 'Platinum'], default: 'None' },
         status: { type: String, enum: ['Active', 'Expired', 'Cancelled', 'None'], default: 'None' },
         expiryDate: { type: Date, default: null },
-        razorpaySubscriptionId: { type: String, default: null }
-    }
+        razorpaySubscriptionId: { type: String, default: null },
+        isGift: { type: Boolean, default: false }
+    },
+    videoCallsUsed: { type: Number, default: 0 }
 }, { timestamps: true })
 
 const userModel = mongoose.models.user || mongoose.model('user', userSchema);

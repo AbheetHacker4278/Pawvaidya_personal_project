@@ -229,7 +229,7 @@ const DoctorCard = ({ item, index, onClick, t }) => {
 const TopDoctors = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { doctors } = useContext(AppContext);
+  const { doctors, isDoctorsLoading } = useContext(AppContext);
 
   return (
     <div className="flex flex-col gap-10 my-20 md:mx-10 px-4 overflow-hidden">
@@ -289,15 +289,35 @@ const TopDoctors = () => {
           animate="visible"
           className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 pt-4 max-w-[1600px] w-full"
         >
-          {doctors.slice(0, 10).map((item, index) => (
-            <DoctorCard
-              key={item._id || index}
-              item={item}
-              index={index}
-              t={t}
-              onClick={() => { navigate(`/appointment/${item._id}`); scrollTo(0, 0); }}
-            />
-          ))}
+          {isDoctorsLoading && doctors.length === 0 ? (
+            Array.from({ length: 5 }).map((_, i) => (
+              <div
+                key={`sk-top-${i}`}
+                className="rounded-[24px] overflow-hidden border border-[rgba(232,213,176,0.6)] animate-pulse"
+                style={{ background: 'rgba(237, 228, 216, 0.85)', minHeight: '360px' }}
+              >
+                <div className="h-[200px]" style={{ background: B.sand }} />
+                <div className="p-5 space-y-4">
+                  <div className="h-6 w-3/4 rounded-lg" style={{ background: B.sand }} />
+                  <div className="h-4 w-1/2 rounded-lg" style={{ background: B.sand }} />
+                  <div className="flex gap-2">
+                    <div className="h-5 w-16 rounded-full" style={{ background: B.sand }} />
+                    <div className="h-5 w-20 rounded-full" style={{ background: B.sand }} />
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            doctors.slice(0, 10).map((item, index) => (
+              <DoctorCard
+                key={item._id || index}
+                item={item}
+                index={index}
+                t={t}
+                onClick={() => { navigate(`/appointment/${item._id}`); scrollTo(0, 0); }}
+              />
+            ))
+          )}
         </motion.div>
       </div>
 

@@ -43,7 +43,7 @@ export const Doctors = () => {
   const [isLoadingNearby, setIsLoadingNearby] = useState(false);
   const [nearbyError, setNearbyError] = useState(null);
   const { translateText, translateBatch } = useAITranslation();
-  const { doctors, userLocation, refreshUserLocation, backendurl } = useContext(AppContext);
+  const { doctors, userLocation, refreshUserLocation, backendurl, isDoctorsLoading } = useContext(AppContext);
   const navigate = useNavigate();
 
   const filterNearbyDoctors = () => {
@@ -128,11 +128,12 @@ export const Doctors = () => {
     translateFiltered(filtered);
   };
 
-  useEffect(() => { applyFilter(); }, [speciality, location, showNearbyOnly, userLocation]);
+  useEffect(() => { applyFilter(); }, [speciality, location, showNearbyOnly, userLocation, doctors, isDoctorsLoading]);
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 800);
-    return () => clearTimeout(timer);
-  }, []);
+    if (!isDoctorsLoading) {
+      setIsLoading(false);
+    }
+  }, [isDoctorsLoading]);
   useEffect(() => {
     if (showNearbyOnly && userLocation) fetchNearbyDoctorsFromAPI();
   }, [showNearbyOnly, userLocation]);

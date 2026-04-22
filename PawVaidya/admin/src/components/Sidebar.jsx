@@ -10,7 +10,7 @@ import {
   Stethoscope, Trophy, Radio, MessageSquare, Mail,
   AlertTriangle, Trash2, ShieldCheck, Database,
   Clock, BookOpen, ClipboardList, Tag, Tv, Search, Star,
-  Menu, X, ChevronRight, Bell, ShieldAlert, BarChart3, Server
+  Menu, X, ChevronRight, Bell, ShieldAlert, BarChart3, Server, Activity
 } from 'lucide-react';
 
 const SidebarItem = ({ to, icon: Icon, label, isOpen, onClick, subtext, badge }) => {
@@ -148,6 +148,9 @@ const Sidebar = ({ isOpen }) => {
               <SidebarItem to="/admin-dashboard" icon={LayoutDashboard} label="Dashboard" subtext="Overview & Stats" isOpen={isOpen} onClick={() => logNavigation('Dashboard')} />
               {adminProfile?.role === 'master' && (
                 <SidebarItem to="/admin-deployments" icon={Server} label="Deployments" subtext="Render Status" isOpen={isOpen} onClick={() => logNavigation('Deployments')} />
+              )}
+              {adminProfile?.role === 'master' && (
+                <SidebarItem to="/redis-monitoring" icon={Activity} label="Redis Monitor" subtext="Cache Performance" isOpen={isOpen} onClick={() => logNavigation('Redis Monitor')} />
               )}
 
               <SectionHeader label="Management" isOpen={isOpen} />

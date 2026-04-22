@@ -1,4 +1,4 @@
-import { createContext, useEffect, useState } from "react";
+import { createContext, useEffect, useState, useRef } from "react";
 import axios from 'axios'
 import { toast } from 'react-toastify'
 import { getCurrentLocation, isLocationValid } from '../utils/geolocation'
@@ -8,7 +8,7 @@ export const AppContext = createContext();
 const AppContextProvider = (props) => {
 
     const backendurl = import.meta.env.VITE_BACKEND_URL || "http://localhost:4000"
-    const [isLoggedin, setisLoggedin] = useState(false)
+    const [isLoggedin, setisLoggedin] = useState(!!localStorage.getItem('token'))
     const [doctors, setdoctors] = useState([])
     const [token, settoken] = useState(localStorage.getItem('token') ? localStorage.getItem('token') : null)
     const [userdata, setuserdata] = useState(false)
@@ -16,6 +16,9 @@ const AppContextProvider = (props) => {
     const [unreadMessages, setUnreadMessages] = useState(0)
     const [userLocation, setUserLocation] = useState(null)
     const [systemConfig, setSystemConfig] = useState({ maintenanceMode: false, killSwitch: false, maintenanceMessage: "" })
+    const [authLoading, setAuthLoading] = useState(!!localStorage.getItem('token'))
+    const [isDoctorsLoading, setIsDoctorsLoading] = useState(true)
+    const tokenRef = useRef(token)
 
     const getSystemConfig = async () => {
         try {
@@ -28,15 +31,24 @@ const AppContextProvider = (props) => {
         }
     }
 
-    const getAuthstate = async () => {
+    const getAuthstate = async (currentToken) => {
+        const t = currentToken || tokenRef.current;
+        if (!t) { setAuthLoading(false); return; }
         try {
-            const { data } = await axios.get(backendurl + '/api/user/is-auth')
+            const { data } = await axios.get(backendurl + '/api/user/is-auth', { headers: { token: t } })
             if (data.success) {
                 setisLoggedin(true)
-                loaduserprofiledata()
+                await loaduserprofiledata(t)
+            } else {
+                // Token is no longer valid
+                setisLoggedin(false)
+                settoken(null)
+                localStorage.removeItem('token')
+                setAuthLoading(false)
             }
         } catch (error) {
-            toast.error(error.message)
+            console.error('Auth check failed:', error.message)
+            setAuthLoading(false)
         }
     }
 
@@ -50,6 +62,7 @@ const AppContextProvider = (props) => {
     }
 
     const getdoctorsdata = async () => {
+        setIsDoctorsLoading(true)
         try {
             const { data } = await axios.get(backendurl + '/api/doctor/list')
             if (data.success) {
@@ -59,20 +72,27 @@ const AppContextProvider = (props) => {
             }
         } catch (error) {
             toast.error(error.message)
+        } finally {
+            setIsDoctorsLoading(false)
         }
     }
 
-    const loaduserprofiledata = async () => {
+    const loaduserprofiledata = async (currentToken) => {
+        const t = currentToken || tokenRef.current;
+        if (!t) return;
         try {
-            const { data } = await axios.get(backendurl + '/api/user/get-profile', { headers: { token } })
+            const { data } = await axios.get(backendurl + '/api/user/get-profile', { headers: { token: t } })
             if (data.success) {
                 setuserdata(data.userdata)
+                setisLoggedin(true)
             } else {
                 toast.error(data.message)
             }
         } catch (error) {
             toast.error(error.message)
             console.log(error.message)
+        } finally {
+            setAuthLoading(false)
         }
     }
 
@@ -378,11 +398,23 @@ const AppContextProvider = (props) => {
         loginWithFace,
         userPets, setUserPets,
         fetchUserPets, addPet, updatePet, deletePet,
-        getSubscriptionPlans, subscribeViaWallet, createRazorpaySubscription, verifySubscriptionPayment
+        getSubscriptionPlans, subscribeViaWallet, createRazorpaySubscription, verifySubscriptionPayment,
+        authLoading, isDoctorsLoading,
     }
 
+    // Keep tokenRef in sync so async functions always use the latest token
     useEffect(() => {
-        getAuthstate()
+        tokenRef.current = token;
+    }, [token]);
+
+    useEffect(() => {
+        const storedToken = localStorage.getItem('token');
+        if (storedToken) {
+            setAuthLoading(true);
+            getAuthstate(storedToken);
+        } else {
+            setAuthLoading(false);
+        }
     }, [])
 
     useEffect(() => {
@@ -392,7 +424,7 @@ const AppContextProvider = (props) => {
 
     useEffect(() => {
         if (token) {
-            loaduserprofiledata()
+            loaduserprofiledata(token)
             fetchUserPets()
         } else {
             setuserdata(false)

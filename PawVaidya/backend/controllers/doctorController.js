@@ -11,12 +11,16 @@ import reminderModel from '../models/reminderModel.js';
 import { v2 as cloudinary } from 'cloudinary';
 import activityLogModel from '../models/activityLogModel.js';
 import doctorScheduleModel from "../models/doctorScheduleModel.js";
-import systemConfigModel from '../models/systemConfigModel.js';
+import videoSlotModel from "../models/videoSlotModel.js";
 import { getLocationFromIP, checkImpossibleTravel } from '../utils/fraudTracker.js';
 import adminCouponModel from '../models/adminCouponModel.js';
 import petModel from '../models/petModel.js';
 import WALLET_PAYMENT_SUCCESS_TEMPLATE from '../mailservice/walletPaymentSuccessTemplate.js';
 import WALLET_PAYMENT_DECLINED_TEMPLATE from '../mailservice/walletPaymentDeclinedTemplate.js';
+import { VIDEO_STATUS_UPDATE_TEMPLATE } from '../mailservice/videoConsultationTemplates.js';
+import { getCache, setCache, deleteCache } from '../utils/cacheUtils.js';
+
+
 
 const getDoctorWindow = async (docId) => {
     // Default window: 10:00 AM to 8:30 PM
@@ -97,10 +101,15 @@ export const changeavailablity = async (req, res) => {
         }
 
         await doctorModel.findByIdAndUpdate(docId, { available: !docdata.available })
+
+        // Invalidate doctors list cache
+        await deleteCache('doctors_list');
+
         res.json({
             success: true,
             message: 'Availablity changed'
         })
+
     } catch (error) {
         console.log(error)
         res.json({
@@ -260,7 +269,22 @@ export const logoutdoctor = async (req, res) => {
 
 export const doctorslist = async (req, res) => {
     try {
+        const cacheKey = 'doctors_list';
+        const cachedDoctors = await getCache(cacheKey);
+
+        if (cachedDoctors) {
+            return res.json({
+                success: true,
+                doctors: cachedDoctors,
+                source: 'cache'
+            });
+        }
+
         const doctors = await doctorModel.find({}).select(['-password', '-email'])
+
+        // Cache for 1 hour
+        await setCache(cacheKey, doctors, 3600);
+
         res.json({
             success: true,
             doctors
@@ -272,6 +296,7 @@ export const doctorslist = async (req, res) => {
         })
     }
 }
+
 
 export const logindoctor = async (req, res) => {
     try {
@@ -835,9 +860,18 @@ export const doctorDashboard = async (req, res) => {
 
 export const doctorProfile = async (req, res) => {
     try {
-
         const { docId } = req.body
+        const cacheKey = `doctor_profile_${docId}`;
+
+        const cachedProfile = await getCache(cacheKey);
+        if (cachedProfile) {
+            return res.json({ success: true, profileData: cachedProfile, source: 'cache' });
+        }
+
         const profileData = await doctorModel.findById(docId).select('-password')
+
+        // Cache for 30 minutes
+        await setCache(cacheKey, profileData, 1800);
 
         res.json({ success: true, profileData })
 
@@ -846,6 +880,7 @@ export const doctorProfile = async (req, res) => {
         res.json({ success: false, message: error.message })
     }
 }
+
 
 export const updateDoctorProfile = async (req, res) => {
     try {
@@ -883,19 +918,17 @@ export const updateDoctorProfile = async (req, res) => {
             const imageurl = imageupload.secure_url;
 
             await doctorModel.findByIdAndUpdate(docId, { image: imageurl });
-        } else if (image && typeof image === 'string' && image.startsWith('http')) {
-            // Upload from URL to Cloudinary
-            const imageupload = await cloudinary.uploader.upload(image, {
-                resource_type: 'image',
-            });
-            const imageurl = imageupload.secure_url;
-            await doctorModel.findByIdAndUpdate(docId, { image: imageurl });
         }
+
+        // Invalidate caches
+        await deleteCache(`doctor_profile_${docId}`);
+        await deleteCache('doctors_list');
 
         res.status(200).json({
             success: true,
             message: 'Profile updated successfully',
         });
+
 
     } catch (error) {
         console.error('Error updating profile:', error.message);
@@ -1713,6 +1746,159 @@ export const processQrWalletPayment = async (req, res) => {
         });
     } catch (error) {
         console.error('QR wallet payment error:', error);
+        res.json({ success: false, message: error.message });
+    }
+};
+
+
+export const updateVideoStatus = async (req, res) => {
+    try {
+        const { docId, appointmentId, status, message, rescheduleSlot } = req.body;
+
+        const appointment = await appointmentModel.findById(appointmentId);
+        if (!appointment) return res.json({ success: false, message: 'Appointment not found' });
+
+        if (appointment.docId !== docId) return res.json({ success: false, message: 'Unauthorized action' });
+
+        const oldStatus = appointment.videoStatus;
+        appointment.videoStatus = status;
+        appointment.videoMessage = message;
+
+        // Handle Rescheduling logic
+        if (status.toLowerCase() === 'rescheduled' && rescheduleSlot) {
+            appointment.rescheduleSlot = rescheduleSlot;
+
+            // If rescheduleSlot is an object (original logic expectation)
+            if (typeof rescheduleSlot === 'object' && rescheduleSlot.slotDate) {
+                const docData = await doctorModel.findById(docId);
+                let slots_booked = docData.slots_booked || {};
+
+                // Remove old slot
+                if (slots_booked[appointment.slotDate]) {
+                    slots_booked[appointment.slotDate] = slots_booked[appointment.slotDate].filter(t => t !== appointment.slotTime);
+                }
+
+                // Add new slot
+                slots_booked[rescheduleSlot.slotDate] = slots_booked[rescheduleSlot.slotDate] || [];
+                slots_booked[rescheduleSlot.slotDate].push(rescheduleSlot.slotTime);
+
+                await doctorModel.findByIdAndUpdate(docId, { slots_booked });
+            }
+            // If it's a string from the frontend, we just store it as a message/note in appointment.rescheduleSlot
+        }
+
+        // Usage Tracking: Increment if moved to approved, Decrement if moved FROM approved to cancelled/declined
+        if (status.toLowerCase() === 'approved' && oldStatus.toLowerCase() !== 'approved') {
+            const user = await userModel.findById(appointment.userId);
+            if (user) {
+                user.videoCallsUsed += 1;
+                await user.save();
+            }
+        } else if ((status.toLowerCase() === 'cancelled' || status.toLowerCase() === 'declined') && oldStatus.toLowerCase() === 'approved') {
+            const user = await userModel.findById(appointment.userId);
+            if (user) {
+                user.videoCallsUsed = Math.max(0, user.videoCallsUsed - 1);
+                await user.save();
+            }
+        }
+
+        await appointment.save();
+
+        res.json({ success: true, message: `Video consultation updated to ${status}.` });
+
+        // Send Email Notification to User
+        try {
+            const user = await userModel.findById(appointment.userId);
+            if (user) {
+                const mailOptions = {
+                    from: process.env.SENDER_EMAIL,
+                    to: user.email,
+                    subject: `Update on your Video Consultation: ${status}`,
+                    html: VIDEO_STATUS_UPDATE_TEMPLATE(
+                        user.name,
+                        appointment.docData.name,
+                        status,
+                        appointment.slotDate,
+                        appointment.slotTime,
+                        message,
+                        typeof rescheduleSlot === 'string' ? rescheduleSlot : (rescheduleSlot?.slotDate ? `${rescheduleSlot.slotDate} at ${rescheduleSlot.slotTime}` : '')
+                    )
+                };
+                await transporter.sendMail(mailOptions);
+            }
+        } catch (mailError) {
+            console.error('Error sending video status update email:', mailError);
+        }
+
+    } catch (error) {
+        res.json({ success: false, message: error.message });
+    }
+};
+
+
+
+export const addVideoSlot = async (req, res) => {
+    try {
+        const { docId, dayOfWeek, slotTime } = req.body;
+
+        const currentSlotsCount = await videoSlotModel.countDocuments({ doctorId: docId });
+        if (currentSlotsCount >= 10) {
+            return res.json({ success: false, message: 'Maximum 10 video slots allowed.' });
+        }
+
+        const newSlot = new videoSlotModel({
+            doctorId: docId,
+            dayOfWeek,
+            slotTime
+        });
+
+        await newSlot.save();
+        res.json({ success: true, message: 'Video slot added successfully.' });
+
+    } catch (error) {
+        if (error.code === 11000) {
+            return res.json({ success: false, message: 'Slot already exists for this day and time.' });
+        }
+        res.json({ success: false, message: error.message });
+    }
+};
+
+export const getVideoSlots = async (req, res) => {
+    try {
+        const { docId } = req.body;
+        const slots = await videoSlotModel.find({ doctorId: docId }).sort({ dayOfWeek: 1, slotTime: 1 });
+        res.json({ success: true, slots });
+    } catch (error) {
+        res.json({ success: false, message: error.message });
+    }
+};
+
+export const deleteVideoSlot = async (req, res) => {
+    try {
+        const { docId, slotId } = req.body;
+        const slot = await videoSlotModel.findOneAndDelete({ _id: slotId, doctorId: docId });
+        if (slot) {
+            res.json({ success: true, message: 'Video slot deleted.' });
+        } else {
+            res.json({ success: false, message: 'Slot not found or unauthorized.' });
+        }
+    } catch (error) {
+        res.json({ success: false, message: error.message });
+    }
+};
+
+export const toggleVideoSlotStatus = async (req, res) => {
+    try {
+        const { docId, slotId } = req.body;
+        const slot = await videoSlotModel.findOne({ _id: slotId, doctorId: docId });
+        if (slot) {
+            slot.isActive = !slot.isActive;
+            await slot.save();
+            res.json({ success: true, message: 'Video slot status updated.' });
+        } else {
+            res.json({ success: false, message: 'Slot not found or unauthorized.' });
+        }
+    } catch (error) {
         res.json({ success: false, message: error.message });
     }
 };

@@ -1,5 +1,5 @@
 import express from 'express';
-import { appointmentCancel, appointmentComplete, appointmentsDoctor, doctorDashboard, doctorProfile, doctorslist, logindoctor, updateDoctorProfile, logoutdoctor, getDoctorMessages, markDoctorMessageAsRead, getDoctorById, updateDoctorLocation, createReminder, getDoctorReminders, updateReminder, deleteReminder, getDailyEarnings, createDiscount, getDoctorDiscounts, updateDiscount, deleteDiscount, getPublicDoctorDiscounts, registerFaceDr, clockInDr, checkAttendanceStatus, changeavailablity, scanQrCode, processQrWalletPayment } from '../controllers/doctorController.js';
+import { appointmentCancel, appointmentComplete, appointmentsDoctor, doctorDashboard, doctorProfile, doctorslist, logindoctor, updateDoctorProfile, logoutdoctor, getDoctorMessages, markDoctorMessageAsRead, getDoctorById, updateDoctorLocation, createReminder, getDoctorReminders, updateReminder, deleteReminder, getDailyEarnings, createDiscount, getDoctorDiscounts, updateDiscount, deleteDiscount, getPublicDoctorDiscounts, registerFaceDr, clockInDr, checkAttendanceStatus, changeavailablity, scanQrCode, processQrWalletPayment, updateVideoStatus, addVideoSlot, getVideoSlots, deleteVideoSlot, toggleVideoSlotStatus } from '../controllers/doctorController.js';
 import { createDoctorBlog, getDoctorBlogs, updateDoctorBlog, deleteDoctorBlog, getAllBlogsForDoctor, toggleLikeBlog, addCommentToBlog, incrementBlogView, getBlogDetails } from '../controllers/doctorBlogController.js';
 import { getActivePolls, voteInPoll } from '../controllers/pollController.js';
 import { authDoctor } from '../middleware/authDoctor.js';
@@ -14,6 +14,11 @@ doctorrouter.post('/logout', authDoctor, logoutdoctor)
 doctorrouter.get('/appointments', authDoctor, appointmentsDoctor)
 doctorrouter.post('/complete-appointment', authDoctor, appointmentComplete)
 doctorrouter.post('/cancel-appointment', authDoctor, appointmentCancel)
+doctorrouter.post('/update-video-status', authDoctor, updateVideoStatus)
+doctorrouter.post('/video-slots/add', authDoctor, addVideoSlot)
+doctorrouter.get('/video-slots/get', authDoctor, getVideoSlots)
+doctorrouter.post('/video-slots/delete', authDoctor, deleteVideoSlot)
+doctorrouter.post('/video-slots/toggle-status', authDoctor, toggleVideoSlotStatus)
 doctorrouter.get('/dashboard', authDoctor, doctorDashboard)
 doctorrouter.get('/profile', authDoctor, doctorProfile)
 doctorrouter.post('/update-profile', upload.single('image'), authDoctor, securityMonitor, updateDoctorProfile)

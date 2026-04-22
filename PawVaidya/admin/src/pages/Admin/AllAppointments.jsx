@@ -140,8 +140,8 @@ const AllAppointments = () => {
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setSelectedRegion(selectedRegion === region ? '' : region)}
                 className={`p-3 rounded-xl text-left transition-all duration-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 ${selectedRegion === region
-                    ? 'bg-gradient-to-r from-green-500 to-emerald-600 border-transparent text-white shadow-green-500/30'
-                    : 'bg-white border border-gray-200 hover:border-green-400 hover:shadow-md'
+                  ? 'bg-gradient-to-r from-green-500 to-emerald-600 border-transparent text-white shadow-green-500/30'
+                  : 'bg-white border border-gray-200 hover:border-green-400 hover:shadow-md'
                   }`}
               >
                 <p className={`text-xs font-semibold truncate ${selectedRegion === region ? 'text-green-100' : 'text-gray-500'}`}>{region}</p>
@@ -166,7 +166,7 @@ const AllAppointments = () => {
                 variants={itemVariants}
                 layout
                 key={item._id || index}
-                className="bg-white/80 backdrop-blur-sm border border-gray-200/70 rounded-2xl p-5 md:p-6 shadow-md hover:shadow-xl shadow-gray-200/50 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group"
+                className="bg-white/90 backdrop-blur-xl border border-white/40 rounded-[2rem] p-6 shadow-sm hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 flex flex-col h-full relative group overflow-hidden"
               >
                 {/* Decorative background glow for card on hover */}
                 <div className="absolute -z-10 inset-0 bg-gradient-to-br from-green-50/0 to-emerald-50/0 group-hover:from-green-50/50 group-hover:to-emerald-50/50 transition-colors duration-500" />
@@ -194,101 +194,66 @@ const AllAppointments = () => {
                   </div>
                 </div>
 
-                {/* Appointment Details Grid */}
-                <div className="grid grid-cols-2 gap-3 mb-5">
-                  <div className="bg-gray-50/80 rounded-xl p-3 border border-gray-100/50">
-                    <p className="text-[11px] text-gray-500 font-bold uppercase tracking-wider">Category</p>
-                    <p className="text-sm font-semibold text-gray-800 mt-1">{item.userData.category || 'N/A'}</p>
+                {/* Info Grid - 2x2 for consistent look */}
+                <div className="grid grid-cols-2 gap-3 mb-6 relative z-10">
+                  <div className="p-3 bg-slate-50/80 rounded-2xl border border-slate-100 flex flex-col">
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter mb-1">Schedule</span>
+                    <span className="text-xs font-black text-slate-700">{slotDateFormat(item.slotDate)}</span>
+                    <span className="text-[10px] font-bold text-indigo-600 mt-1">{item.slotTime}</span>
                   </div>
-                  <div className="bg-gray-50/80 rounded-xl p-3 border border-gray-100/50">
-                    <p className="text-[11px] text-gray-500 font-bold uppercase tracking-wider">Breed</p>
-                    <p className="text-sm font-semibold text-gray-800 mt-1">{item.userData.breed || 'N/A'}</p>
+                  <div className="p-3 bg-indigo-50/80 rounded-2xl border border-indigo-100 flex flex-col">
+                    <span className="text-[9px] font-black text-indigo-400 uppercase tracking-tighter mb-1">Consult Fee</span>
+                    <span className="text-sm font-black text-indigo-900">₹{item.amount}</span>
+                    <span className="text-[8px] font-bold text-indigo-500 mt-1 uppercase">{item.paymentMethod || 'Cash'}</span>
                   </div>
-                  <div className="bg-gray-50/80 rounded-xl p-3 border border-gray-100/50">
-                    <p className="text-[11px] text-gray-500 font-bold uppercase tracking-wider">Age</p>
-                    <p className="text-sm font-semibold text-gray-800 mt-1">{item.userData.pet_age || 'N/A'}</p>
+                  <div className="p-3 bg-amber-50/80 rounded-2xl border border-amber-100 flex flex-col">
+                    <span className="text-[9px] font-black text-amber-500 uppercase tracking-tighter mb-1">Category</span>
+                    <span className="text-xs font-black text-amber-900 uppercase truncate">{item.userData.category || 'General'}</span>
                   </div>
-                  <div className="bg-gray-50/80 rounded-xl p-3 border border-gray-100/50">
-                    <p className="text-[11px] text-gray-500 font-bold uppercase tracking-wider">Time</p>
-                    <p className="text-sm font-semibold text-gray-800 mt-1">{item.slotTime}</p>
-                  </div>
-                </div>
-
-                {/* Booking Date */}
-                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-xl p-3 mb-5 flex justify-between items-center">
-                  <div>
-                    <p className="text-[11px] text-blue-600 font-bold uppercase tracking-wider">Appointment Date</p>
-                    <p className="text-[15px] font-bold text-blue-900 mt-0.5">{slotDateFormat(item.slotDate)}</p>
-                  </div>
-                  <div className="bg-blue-100/50 p-2 rounded-lg">
-                    <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                  </div>
-                </div>
-
-                {/* Doctor Info */}
-                <div className="border-t border-gray-100 pt-5 mb-5 relative">
-                  <p className="absolute -top-3 left-4 bg-white px-2 text-[10px] font-black tracking-widest text-gray-400 uppercase">
-                    Assigned Doctor
-                  </p>
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={item.docData.image}
-                      alt={item.docData.name}
-                      className="w-12 h-12 rounded-full bg-gray-50 object-cover shadow-sm border border-gray-200"
-                      onError={(e) => {
-                        e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0yMCAxMEMyNC40MTgzIDEwIDI4IDEzLjU4MTcgMjggMThDMjggMjIuNDE4MyAyNC40MTgzIDI2IDIwIDI2QzE1LjU4MTcgMjYgMTIgMjIuNDE4MyAxMiAxOEMxMiAxMy41ODE3IDE1LjU4MTcgMTAgMjAgMTBaIiBmaWxsPSIjODg4QzYxQSIvPgo8cGF0aCBkPSJNOS4wOTEgMjkuMDg4QzkuNzEzMyAyOC42NjM5IDEwLjQ2IDI4LjQ0NDQgMTEuMjI5NyAyOC40NDQ0SDI4Ljc3MDNDMjkuNTQgMjguNDQ0NCAzMC4yODY3IDI4LjY2MzkgMzAuOTA5IDI5LjA4OEMzMi43MjkgMzAuMjc3OCAzMC41NTU2IDM2LjY2NjcgMjAgMzYuNjY2N0M5LjQ0NDQgMzYuNjY2NyA3LjI3MSAzMC4yNzc4IDkuMDkxIDI5LjA4OFoiIGZpbGw9IiM4ODhDNjFBIi8+Cjwvc3ZnPgo=';
-                      }}
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-base font-bold text-gray-800 truncate">{item.docData.name}</p>
-                      <div className="flex flex-wrap gap-2 mt-1">
-                        <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 bg-gray-100 text-gray-600 rounded">
-                          {item.docData.address?.Location || 'Unknown'}
-                        </span>
-                      </div>
+                  <div className="p-3 bg-slate-900 rounded-2xl flex flex-col justify-center">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[8px] font-black text-slate-400 uppercase">Short ID</span>
+                      <span className="text-[9px] font-mono text-white">#{item._id?.slice(-6).toUpperCase()}</span>
+                    </div>
+                    <div className="mt-1 h-1 w-full bg-slate-800 rounded-full overflow-hidden">
+                      <div className="h-full bg-emerald-500 w-full opacity-50" />
                     </div>
                   </div>
                 </div>
 
-                {/* Fee and Status */}
-                <div className="bg-gray-50/50 -mx-6 -mb-6 px-6 py-4 border-t border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-4 mt-auto">
-                  <div className="flex flex-col gap-1 w-full sm:w-auto">
-                    <p className="text-xs font-semibold text-gray-500">Consultation Fee</p>
-                    <p className="text-2xl font-black text-gray-900 tracking-tight">₹{item.amount}</p>
-                    <div className="flex items-center gap-2 mt-1 flex-wrap">
-                      <span className={`px-2 py-1 rounded text-[10px] font-bold border uppercase tracking-wider ${item.payment ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : (item.paymentMethod === 'Razorpay' ? 'bg-orange-50 text-orange-700 border-orange-200' : (item.paymentMethod === 'Wallet' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-blue-50 text-blue-700 border-blue-200'))}`}>
-                        {item.payment ? 'Paid Online' : (item.paymentMethod === 'Razorpay' ? 'Unpaid Online' : (item.paymentMethod === 'Wallet' ? 'Paid via Wallet' : 'Cash'))}
-                      </span>
-                    </div>
-                    {item.walletDeduction > 0 && (
-                      <p className="text-[10px] font-black text-amber-600 mt-1 uppercase tracking-tighter">
-                        Wallet: -₹{item.walletDeduction} | Rem: ₹{item.amount}
-                      </p>
-                    )}
+                {/* Assigned Doctor Mini Panel */}
+                <div className="bg-slate-50/50 rounded-2xl p-4 border border-slate-100 mb-6 flex items-center gap-3 group/doc transition-all hover:bg-white hover:shadow-md">
+                  <img
+                    src={item.docData.image}
+                    alt={item.docData.name}
+                    className="w-10 h-10 rounded-xl object-cover border-2 border-white shadow-sm grayscale group-hover/doc:grayscale-0 transition-all"
+                  />
+                  <div className="flex-1 overflow-hidden">
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">Assigned Doctor</p>
+                    <p className="text-sm font-black text-slate-700 truncate">{item.docData.name}</p>
                   </div>
+                  <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-[12px] opacity-40 group-hover/doc:opacity-100 transition-all">
+                    🩺
+                  </div>
+                </div>
 
-                  <div className="flex sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto gap-3">
-                    {item.cancelled ? (
-                      <span className="px-4 py-2 bg-red-100 border border-red-200 text-red-700 text-xs font-bold uppercase tracking-wider rounded-xl shadow-sm">
-                        Cancelled
-                      </span>
-                    ) : item.isCompleted ? (
-                      <span className="px-4 py-2 bg-green-100 border border-green-200 text-green-700 text-xs font-bold uppercase tracking-wider rounded-xl shadow-sm">
-                        Completed
-                      </span>
-                    ) : (
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => cancelappointment(item._id)}
-                        className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-md shadow-red-500/20 focus:ring-4 focus:ring-red-500/30 focus:outline-none transition-colors duration-200 flex items-center justify-center gap-2 w-full sm:w-auto"
-                        aria-label="Cancel Appointment"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                        Cancel
-                      </motion.button>
-                    )}
-                    <p className="text-[10px] font-medium text-gray-400 font-mono">ID:{item._id?.slice(-6)}</p>
+                {/* Action Bar */}
+                <div className="mt-auto flex items-center gap-2">
+                  {!item.cancelled && !item.isCompleted ? (
+                    <button
+                      onClick={() => cancelappointment(item._id)}
+                      className="flex-1 py-3 bg-rose-50 text-rose-600 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-rose-100 hover:bg-rose-600 hover:text-white transition-all active:scale-95 flex items-center justify-center gap-2"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                      Cancel Engagement
+                    </button>
+                  ) : (
+                    <div className={`flex-1 py-3 px-4 rounded-2xl text-[10px] font-black uppercase tracking-widest text-center ${item.cancelled ? 'bg-slate-100 text-slate-400' : 'bg-emerald-50 text-emerald-600'}`}>
+                      {item.cancelled ? 'Session Revoked' : 'Session Finalized'}
+                    </div>
+                  )}
+                  <div className="w-12 h-12 rounded-2xl bg-slate-900 flex items-center justify-center text-white cursor-help group/id transition-all hover:bg-indigo-600" title={`Full ID: ${item._id}`}>
+                    <span className="text-[10px] font-mono font-bold">{item._id?.slice(-2).toUpperCase()}</span>
                   </div>
                 </div>
               </motion.div>

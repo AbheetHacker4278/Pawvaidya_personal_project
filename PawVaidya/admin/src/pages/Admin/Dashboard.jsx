@@ -12,9 +12,16 @@ import {
   Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
   LineChart, Line
 } from 'recharts'
-import { FileText, Download, Loader2, FileDown } from 'lucide-react'
+import {
+  FileText, Download, Loader2, FileDown,
+  Activity, Zap, Star, Shield, LayoutDashboard,
+  Database, Activity as ActivityIcon,
+  Globe, Server, Box, Cpu, AlertTriangle,
+  CheckCircle2, Clock, MapPin, Users, Heart
+} from 'lucide-react'
 import axios from 'axios'
 import { toast } from 'react-toastify'
+import { motion, AnimatePresence } from 'framer-motion'
 
 // ─── Colour system ────────────────────────────────────────────────────────────
 const PALETTE = ['#818cf8', '#34d399', '#fbbf24', '#f87171', '#a78bfa', '#22d3ee', '#f472b6', '#2dd4bf']
@@ -68,71 +75,98 @@ const PieLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
 }
 
 // ─── Stat card with animated counter ─────────────────────────────────────────
-const StatCard = ({ title, value, icon, from, to, delay = 0 }) => {
+const StatCard = ({ title, value, icon, colorClass, delay = 0 }) => {
   const count = useCounter(value)
   return (
-    <div className={`relative overflow-hidden rounded-2xl p-5 bg-gradient-to-br ${from} ${to} text-white shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-default`}>
-      {/* decorative circle */}
-      <div className="absolute -right-4 -top-4 w-24 h-24 rounded-full bg-white/10" />
-      <div className="absolute -right-2 -bottom-6 w-16 h-16 rounded-full bg-white/5" />
-      <div className="relative">
-        <span className="text-3xl">{icon}</span>
-        <p className="text-4xl font-black mt-2 tracking-tight">{count.toLocaleString()}</p>
-        <p className="text-white/75 text-sm font-medium mt-1">{title}</p>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay }}
+      className="bg-white/80 backdrop-blur-xl p-6 rounded-[2.2rem] border border-white/50 shadow-2xl shadow-slate-200/40 relative overflow-hidden group hover:-translate-y-1 transition-all duration-300"
+    >
+      <div className={`w-14 h-14 rounded-2xl ${colorClass} flex items-center justify-center mb-6 relative z-10 group-hover:rotate-6 transition-transform shadow-lg shadow-inner`}>
+        <span className="text-2xl">{icon}</span>
       </div>
-    </div>
+      <div className="relative z-10">
+        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">{title}</p>
+        <h3 className="text-3xl font-black text-slate-900 tracking-tighter tabular-nums">{count.toLocaleString()}</h3>
+        <div className="mt-4 flex items-center gap-2">
+          <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-[10px] font-black text-emerald-600 uppercase">Live</span>
+          <span className="text-[10px] font-black text-slate-300 uppercase tracking-tighter">Real-time sync</span>
+        </div>
+      </div>
+      <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-slate-50 rounded-full opacity-50 group-hover:scale-150 transition-transform duration-700" />
+    </motion.div>
   )
 }
 
 // ─── Section card ─────────────────────────────────────────────────────────────
-const Card = ({ title, subtitle, icon, children, className = '' }) => (
-  <div className={`bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow duration-300 ${className}`}>
-    <div className="flex items-start gap-3 px-6 py-4 border-b border-gray-50">
-      {icon && <span className="text-xl mt-0.5">{icon}</span>}
-      <div>
-        <h3 className="font-bold text-gray-800 text-sm">{title}</h3>
-        {subtitle && <p className="text-gray-400 text-xs mt-0.5">{subtitle}</p>}
+const SectionCard = ({ title, subtitle, icon, children, className = '' }) => (
+  <div className={`bg-white/80 backdrop-blur-md rounded-[2.5rem] border border-white/50 shadow-xl shadow-slate-200/30 overflow-hidden group hover:shadow-2xl transition-all duration-500 ${className}`}>
+    <div className="flex items-center justify-between px-8 py-6 border-b border-slate-50">
+      <div className="flex items-center gap-4">
+        <div className="p-3 bg-slate-50 rounded-2xl text-slate-400 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300">
+          {icon}
+        </div>
+        <div>
+          <h3 className="font-black text-slate-900 text-[11px] uppercase tracking-widest">{title}</h3>
+          {subtitle && <p className="text-slate-400 text-[10px] font-bold mt-0.5">{subtitle}</p>}
+        </div>
       </div>
     </div>
-    <div className="p-5">{children}</div>
+    <div className="p-8">{children}</div>
   </div>
 )
 
 // ─── Mini metric tile ─────────────────────────────────────────────────────────
-const MetricTile = ({ label, value, icon, color }) => (
-  <div className={`flex items-center gap-3 p-4 rounded-xl border ${color} hover:shadow-md transition-all duration-200 hover:-translate-y-0.5`}>
-    <span className="text-2xl">{icon}</span>
+const MetricTile = ({ label, value, icon, colorClass }) => (
+  <div className={`flex flex-col gap-3 p-5 rounded-3xl bg-white border border-slate-100 hover:border-indigo-200 hover:shadow-lg transition-all duration-300 group`}>
+    <div className={`w-10 h-10 rounded-xl ${colorClass} flex items-center justify-center text-xl group-hover:scale-110 transition-transform`}>
+      {icon}
+    </div>
     <div>
-      <p className="text-xs font-medium opacity-60 leading-none">{label}</p>
-      <p className="text-2xl font-black mt-0.5">{(value ?? 0).toLocaleString()}</p>
+      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1.5">{label}</p>
+      <p className="text-2xl font-black text-slate-900 tabular-nums">{(value ?? 0).toLocaleString()}</p>
     </div>
   </div>
 )
 
 // ─── Appointment row ──────────────────────────────────────────────────────────
 const ApptRow = ({ item, slotDateFormat }) => (
-  <div className="flex items-center gap-3 py-3 px-1 hover:bg-gray-50 rounded-xl transition-colors group">
-    <img
-      className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm flex-shrink-0"
-      src={item.docData.image}
-      alt={item.docData.name}
-      onError={e => { e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHZpZXdCb3g9IjAgMCA0OCA0OCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIGZpbGw9IiNlMGUwZTAiLz48L3N2Zz4=' }}
-    />
-    <div className="min-w-0 flex-1">
-      <p className="font-semibold text-gray-800 text-sm truncate">{item.docData.name}</p>
-      <p className="text-gray-400 text-xs truncate">{slotDateFormat(item.slotDate)} · {item.slotTime}</p>
+  <div className="flex items-center gap-4 py-4 px-2 hover:bg-slate-50 transition-all duration-300 rounded-[1.2rem] group border border-transparent hover:border-slate-100">
+    <div className="relative flex-shrink-0">
+      <img
+        className="w-11 h-11 rounded-full object-cover border-2 border-white shadow-md relative z-10"
+        src={item.docData.image}
+        alt={item.docData.name}
+        onError={e => { e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHZpZXdCb3g9IjAgMCA0OCA0OCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIGZpbGw9IiNlMGUwZTAiLz48L3N2Zz4=' }}
+      />
+      <div className="absolute -inset-1 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-full blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity" />
     </div>
-    <span className="text-gray-300 text-xs hidden group-hover:block transition-all">📍 {item.docData.address?.Location || '—'}</span>
+    <div className="flex-1 min-w-0">
+      <p className="text-[11px] font-black text-slate-900 truncate tracking-tight">{item.docData.name}</p>
+      <p className="text-[10px] font-bold text-slate-400 mt-0.5">{slotDateFormat(item.slotDate)}</p>
+    </div>
+    <div className="flex flex-col items-end gap-1">
+      <span className="text-[9px] font-black text-slate-800 uppercase tracking-tighter bg-slate-100 px-2 py-0.5 rounded-full">{item.slotTime}</span>
+      <div className={`w-1.5 h-1.5 rounded-full ${item.cancelled ? 'bg-rose-500' : item.isCompleted ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+    </div>
   </div>
 )
 
 // ─── Platform Health Pulsar ──────────────────────────────────────────────────
-const HealthPulsar = ({ status }) => {
+const HealthPulsar = ({ status, label }) => {
   const isHealthy = status === 'Healthy'
   return (
-    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/50 border border-gray-100 shadow-sm transition-all hover:bg-white group">
-      <div className={`w-2 h-2 rounded-full ${isHealthy ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] animate-pulse' : 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.5)]'}`} />
-      <span className={`text-[10px] font-bold uppercase tracking-wider ${isHealthy ? 'text-emerald-700' : 'text-rose-700'}`}>{status}</span>
+    <div className="flex items-center gap-3 px-4 py-2 rounded-2xl bg-white/50 backdrop-blur-md border border-slate-100 shadow-sm transition-all hover:bg-white group cursor-help">
+      <div className="relative">
+        <div className={`w-2.5 h-2.5 rounded-full ${isHealthy ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] animate-pulse' : 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.5)]'}`} />
+        {isHealthy && <div className="absolute inset-0 w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping opacity-20" />}
+      </div>
+      <div className="flex flex-col">
+        <span className="text-[8px] font-black uppercase tracking-[0.15em] text-slate-400 leading-none mb-0.5">{label}</span>
+        <span className={`text-[10px] font-black uppercase tracking-wider ${isHealthy ? 'text-emerald-700' : 'text-rose-700'}`}>{status}</span>
+      </div>
     </div>
   )
 }
@@ -758,43 +792,56 @@ const Dashboard = () => {
   }))
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50/30 to-purple-50/20">
-      <div className="p-5 md:p-7 lg:p-9 max-w-[1600px] mx-auto">
+    <div className="min-h-screen bg-[#fdfaf7] p-6 md:p-10 lg:p-12 w-full">
+      <div className="max-w-[1700px] mx-auto">
 
-        <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-black text-gray-900 tracking-tight">
-              Admin <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Dashboard</span>
+        {/* Header Section */}
+        <div className="mb-14 flex flex-col xl:flex-row xl:items-end justify-between gap-10">
+          <div className="w-full">
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-indigo-100/50 rounded-full text-[10px] font-black uppercase tracking-tighter text-indigo-700 mb-5 border border-indigo-200/50">
+              <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
+              Strategic Overwatch Console
+            </div>
+            <h1 className="text-5xl md:text-7xl font-black text-slate-900 tracking-tight leading-[0.85] mb-6">
+              Intelligence <span className="text-indigo-600 block sm:inline">Command</span>
             </h1>
-            <p className="text-gray-500 text-sm mt-1 font-medium">Real-time Command Center for PawVaidya</p>
+            <p className="text-slate-500 font-medium text-xl leading-relaxed max-w-3xl">
+              Unified telemetry and asset management for the PawVaidya ecosystem.
+              <span className="block text-xs font-black text-slate-400 uppercase tracking-widest mt-3 bg-slate-100 inline-block px-3 py-1 rounded border border-slate-200">System State: {platformHealth.backend === 'Healthy' ? 'Operational' : 'Degraded Output'}</span>
+            </p>
           </div>
-          <div className="flex flex-wrap items-center gap-3">
+
+          <div className="flex flex-wrap gap-5 items-center">
             <button
               onClick={exportReport}
               disabled={isExporting}
-              className="group flex items-center gap-2.5 bg-white text-indigo-700 px-5 py-2.5 rounded-2xl border border-indigo-100 shadow-sm hover:shadow-xl hover:bg-indigo-50/50 hover:-translate-y-0.5 transition-all duration-300 font-black text-xs uppercase tracking-widest disabled:opacity-50"
+              className="group px-10 py-5 bg-slate-900 text-white font-black rounded-[1.8rem] flex items-center gap-4 hover:bg-slate-800 transition-all duration-300 shadow-2xl active:scale-95 disabled:opacity-50"
             >
-              {isExporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4 group-hover:scale-110 transition-transform" />}
-              {isExporting ? "Compiling..." : "Global Data Export (Word)"}
+              {isExporting ? <Loader2 className="w-6 h-6 animate-spin" /> : <FileDown className="group-hover:rotate-12 transition-transform" size={24} />}
+              <span className="uppercase tracking-widest text-[12px]">{isExporting ? "Compiling Vault Data..." : "Strategic Audit (DOCX)"}</span>
             </button>
-            <HealthPulsar status={platformHealth.backend} label="API" />
-            <HealthPulsar status={platformHealth.database} label="DB" />
-            <HealthPulsar status={platformHealth.gemini} label="AI" />
-            <HealthPulsar status={platformHealth.cloudinary} label="Cloud" />
+
+            <div className="flex gap-3">
+              <HealthPulsar status={platformHealth.backend} label="Core" />
+              <HealthPulsar status={platformHealth.database} label="Storage" />
+              <HealthPulsar status={platformHealth.gemini} label="Neurolink" />
+              <HealthPulsar status={platformHealth.cloudinary} label="Assets" />
+            </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
-          <StatCard title="Total Doctors" value={dashdata.doctors} icon="👨‍⚕️" from="from-indigo-500" to="to-indigo-700" />
-          <StatCard title="Appointments" value={dashdata.appointments} icon="📅" from="from-blue-500" to="to-blue-700" />
+        {/* Essential Stat Matrix */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-8 mb-14">
+          <StatCard title="Field Agents" value={dashdata.doctors} icon={<Users size={24} />} colorClass="bg-indigo-100 text-indigo-600" />
+          <StatCard title="Active Operations" value={dashdata.appointments} icon={<ActivityIcon size={24} />} colorClass="bg-emerald-100 text-emerald-600" />
           {adminProfile?.role === 'master' && (
             <>
-              <StatCard title="Admin Total Earnings" value={revenueInsights.totalEarnings} icon="💰" from="from-amber-500" to="to-amber-700" />
-              <StatCard title="Live Sockets" value={systemHealth.liveSockets} icon="🔌" from="from-cyan-500" to="to-cyan-700" />
-              <StatCard title="DB Size (MB)" value={parseFloat(systemHealth.dbStats.totalSize)} icon="💾" from="from-emerald-500" to="to-emerald-700" />
+              <StatCard title="Net Intelligence" value={revenueInsights.totalEarnings} icon={<Heart size={24} />} colorClass="bg-rose-100 text-rose-600" />
+              <StatCard title="Live Uplinks" value={systemHealth.liveSockets} icon={<ActivityIcon size={24} />} colorClass="bg-amber-100 text-amber-600" />
+              <StatCard title="Vault Density" value={parseFloat(systemHealth.dbStats.totalSize)} icon={<Database size={24} />} colorClass="bg-blue-100 text-blue-600" />
             </>
           )}
-          <StatCard title="Cancelled" value={dashdata.canceledAppointmentCount} icon="❌" from="from-rose-500" to="to-rose-700" />
+          <StatCard title="Abort Actions" value={dashdata.canceledAppointmentCount} icon={<AlertTriangle size={24} />} colorClass="bg-rose-100 text-rose-600" />
         </div>
 
         {/* ── Service Health Command Center ─────────────────────────────── */}
@@ -805,327 +852,358 @@ const Dashboard = () => {
         )}
 
         {/* ── Platform Activity & Blog Metrics ─────────────────────────────── */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
-          <MetricTile label="Daily Active Users" value={activeUsers.dau} icon="👥" color="text-emerald-700 bg-emerald-50 border-emerald-100" />
-          <MetricTile label="Monthly Active Users" value={activeUsers.mau} icon="📈" color="text-blue-700 bg-blue-50 border-blue-100" />
-          <MetricTile label="Total Blogs" value={blog.totalBlogs} icon="📝" color="text-indigo-700 bg-indigo-50 border-indigo-100" />
-          <MetricTile label="Total Likes" value={blog.totalLikes} icon="❤️" color="text-rose-700 bg-rose-50 border-rose-100" />
-          <MetricTile label="Total Comments" value={blog.totalComments} icon="💬" color="text-amber-700 bg-amber-50 border-amber-100" />
-          <MetricTile label="Total Views" value={blog.totalViews} icon="👁️" color="text-teal-700 bg-teal-50 border-teal-100" />
+        {/* ── Platform Activity & Blog Metrics ─────────────────────────────── */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-8 mb-14">
+          <MetricTile label="Daily Active Nodes" value={activeUsers.dau} icon={<Users size={20} />} colorClass="bg-emerald-50 text-emerald-600 border-emerald-100" />
+          <MetricTile label="Monthly Cycle Active" value={activeUsers.mau} icon={<Activity size={20} />} colorClass="bg-blue-50 text-blue-600 border-blue-100" />
+          <MetricTile label="Cortex Entries" value={blog.totalBlogs} icon={<FileText size={20} />} colorClass="bg-indigo-50 text-indigo-600 border-indigo-100" />
+          <MetricTile label="Sentiment Hits" value={blog.totalLikes} icon={<Heart size={20} />} colorClass="bg-rose-50 text-rose-600 border-rose-100" />
+          <MetricTile label="Feedback Loops" value={blog.totalComments} icon={<Users size={20} />} colorClass="bg-amber-50 text-amber-600 border-amber-100" />
+          <MetricTile label="Neural Views" value={blog.totalViews} icon={<Zap size={20} />} colorClass="bg-teal-50 text-teal-600 border-teal-100" />
         </div>
 
         {/* ── Advanced Analytics Grid ───────────────────────────────────────── */}
         {adminProfile?.role === 'master' && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-            <Card title="Appointment Density" subtitle="Peak consultation hours (24h Clock)" icon="🕒" className="lg:col-span-1">
-              <ResponsiveContainer width="100%" height={280}>
-                <RadarChart cx="50%" cy="50%" outerRadius="80%" data={densityChartData}>
-                  <PolarGrid stroke="#e2e8f0" />
-                  <PolarAngleAxis dataKey="hour" tick={{ fontSize: 10, fill: '#64748b' }} />
-                  <Radar name="Density" dataKey="count" stroke="#6366f1" fill="#6366f1" fillOpacity={0.6} />
-                  <Tooltip content={<CustomTooltip />} />
-                </RadarChart>
-              </ResponsiveContainer>
-            </Card>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 mb-14">
+            <SectionCard title="Consultation Density" subtitle="Peak neural load (24h Clock)" icon={<Clock size={18} />} className="lg:col-span-1">
+              <div className="h-[350px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <RadarChart cx="50%" cy="50%" outerRadius="80%" data={densityChartData}>
+                    <PolarGrid stroke="#f1f5f9" />
+                    <PolarAngleAxis dataKey="hour" tick={{ fontSize: 10, fontStyle: 'italic', fill: '#94a3b8', fontWeight: 900 }} />
+                    <Radar name="Density" dataKey="count" stroke="#6366f1" strokeWidth={3} fill="#6366f1" fillOpacity={0.4} />
+                    <Tooltip content={<CustomTooltip />} />
+                  </RadarChart>
+                </ResponsiveContainer>
+              </div>
+            </SectionCard>
 
-            <Card title="Doctors Combined Earnings" subtitle="Total income generated by doctors (80%)" icon="🩺" className="bg-gradient-to-br from-emerald-50 to-emerald-100/50">
-              <div className="flex flex-col items-center justify-center py-2">
-                <h2 className="text-3xl font-black text-emerald-700 tracking-tighter">
+            <SectionCard title="Agent Collective Yield" subtitle="Aggregated gross revenue (Platform 20%)" icon={<Database size={18} />} className="bg-emerald-50/20">
+              <div className="flex flex-col items-center justify-center py-8">
+                <p className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.3em] mb-4">Net Platform Share</p>
+                <h2 className="text-6xl font-black text-slate-900 tracking-tighter">
                   {currency} {dashdata.revenueInsights?.totalDoctorsEarnings || 0}
                 </h2>
-                <div className="mt-1 flex items-center gap-1 text-[10px] font-bold text-emerald-600/70 uppercase tracking-widest leading-none">
-                  <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
-                  Net Doctor Share
-                </div>
               </div>
 
-              <div className="mt-4 flex flex-col gap-2.5 pb-2">
+              <div className="mt-10 grid grid-cols-1 gap-4">
                 {[
-                  { label: 'Today', value: dashdata.revenueInsights?.doctorBreakdown?.daily },
-                  { label: 'This Week', value: dashdata.revenueInsights?.doctorBreakdown?.weekly },
-                  { label: 'This Month', value: dashdata.revenueInsights?.doctorBreakdown?.monthly }
+                  { label: 'Diurnal (24h)', value: dashdata.revenueInsights?.doctorBreakdown?.daily, color: 'emerald' },
+                  { label: 'Weekly Cluster', value: dashdata.revenueInsights?.doctorBreakdown?.weekly, color: 'blue' },
+                  { label: 'Monthly Cycle', value: dashdata.revenueInsights?.doctorBreakdown?.monthly, color: 'indigo' }
                 ].map((item, idx) => (
-                  <div key={idx} className="flex justify-between items-center px-2 py-1.5 rounded-lg bg-white/40 border border-emerald-100/50">
-                    <span className="text-[9px] font-black text-emerald-800/60 uppercase tracking-wider">{item.label}</span>
-                    <span className="text-[11px] font-black text-emerald-700">{currency} {(item.value || 0).toLocaleString()}</span>
+                  <div key={idx} className="flex justify-between items-center px-6 py-4 rounded-[1.5rem] bg-white border border-slate-100 shadow-sm group hover:border-emerald-200 transition-all duration-300">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{item.label}</span>
+                    <span className="text-base font-black text-slate-900">{currency} {(item.value || 0).toLocaleString()}</span>
                   </div>
                 ))}
               </div>
+            </SectionCard>
 
-              <div className="mt-2 pt-3 border-t border-emerald-200/50 flex justify-between items-center text-[9px] text-emerald-800/50 font-bold uppercase tracking-tighter">
-                <span>Gross: {currency} {(dashdata.revenueInsights?.totalGrossRevenue || 0).toLocaleString()}</span>
-                <span className="bg-emerald-200/50 px-1.5 py-0.5 rounded text-emerald-900">80% Share</span>
-              </div>
-            </Card>
-
-            <Card title="Geo-Heatmap Coverage" subtitle="Doctor & Patient distribution" icon="🗺️" className="lg:col-span-1">
-              <div className="flex items-center justify-center p-2 min-h-[160px]">
+            <SectionCard title="Geo-Spatial Distribution" subtitle="Active operation nodes" icon={<Globe size={18} />} className="lg:col-span-1">
+              <div className="flex items-center justify-center p-4">
                 {geoHeatmap.length > 0 ? (
                   <GeoGrid data={geoHeatmap} />
                 ) : (
-                  <div className="text-center py-10 opacity-40 group cursor-default">
-                    <div className="text-4xl mb-2 animate-pulse group-hover:scale-110 transition-transform">🛰️</div>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Waiting for GPS Uplink...</p>
-                    <p className="text-[8px] text-slate-400 mt-1">No active location nodes detected</p>
+                  <div className="text-center py-16 flex flex-col items-center justify-center gap-6 opacity-40">
+                    <div className="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center animate-pulse">
+                      <Globe size={40} className="text-slate-400" />
+                    </div>
+                    <p className="text-[11px] font-black uppercase tracking-widest text-slate-500">Waiting for GPS Uplink...</p>
                   </div>
                 )}
               </div>
-              <div className="mt-4 flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">
-                <span>Low Density</span>
-                <span>High Density</span>
+              <div className="mt-8 flex justify-between text-[11px] font-black text-slate-300 uppercase tracking-[0.25em]">
+                <span>Low Intensity</span>
+                <span>Max Saturation</span>
               </div>
-            </Card>
+            </SectionCard>
 
-            <Card title="Revenue Growth" subtitle="Monthly earnings forecast" icon="💎" className="lg:col-span-1">
-              <ResponsiveContainer width="100%" height={240}>
-                <AreaChart data={revenueInsights.monthlyGrowth} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#fbbf24" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#fbbf24" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <XAxis dataKey="_id" hide />
-                  <YAxis hide />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Area type="monotone" dataKey="revenue" stroke="#fbbf24" strokeWidth={3} fill="url(#revenueGrad)" />
-                </AreaChart>
-              </ResponsiveContainer>
-              <div className="mt-4 p-4 rounded-xl bg-amber-50 border border-amber-100">
-                <p className="text-amber-800 text-[10px] font-bold uppercase tracking-widest flex justify-between">
-                  <span>AI Forecast</span>
-                  <span className="text-amber-600">Platform Fee: 20%</span>
+            <SectionCard title="Projected Trajectory" subtitle="Revenue velocity forecast" icon={<Zap size={18} />} className="lg:col-span-1">
+              <div className="h-[280px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={revenueInsights.monthlyGrowth} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#fbbf24" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="#fbbf24" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <XAxis dataKey="_id" hide />
+                    <YAxis hide />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Area type="monotone" dataKey="revenue" stroke="#fbbf24" strokeWidth={5} fill="url(#revenueGrad)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="mt-8 p-8 rounded-[2.5rem] bg-slate-900 text-white shadow-2xl relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:rotate-12 transition-transform">
+                  <Zap size={64} />
+                </div>
+                <p className="text-[11px] font-black text-slate-500 uppercase tracking-[0.25em] mb-3 flex justify-between relative z-10">
+                  <span>Cortex Projection</span>
+                  <span className="text-emerald-500">Stability: 98%</span>
                 </p>
-                <h4 className="text-amber-900 text-lg font-black mt-1">
-                  Expected Growth: +12.5%
-                </h4>
-                <p className="text-amber-700/70 text-[10px] mt-1 italic">Calculated based on 20% commission from bookings.</p>
+                <div className="flex items-end gap-3 relative z-10">
+                  <h4 className="text-4xl font-black tracking-tighter text-white">
+                    +12.5%
+                  </h4>
+                  <span className="text-[11px] font-black text-slate-400 mb-2 uppercase">MoM Velocity</span>
+                </div>
               </div>
-            </Card>
+            </SectionCard>
 
-            <Card title="API Latency & Sentinel" subtitle="Real-time performance metrics" icon="🛰️" className="lg:col-span-1 border-indigo-200 shadow-[0_0_20px_rgba(99,102,241,0.05)]">
-              <div className="flex flex-col h-full justify-between gap-4">
+            <SectionCard title="Tactical Latency" subtitle="Network heartbeat sentinel" icon={<Cpu size={18} />} className="lg:col-span-1 border-indigo-200">
+              <div className="flex flex-col h-full gap-10">
                 <div>
-                  <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center justify-between mb-8">
                     <div className="flex flex-col">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Avg Response</span>
-                      <span className="text-xl font-black text-slate-800">{systemHealth.latencyTrends[new Date().getHours()]?.latency || 0}ms</span>
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Avg Ping</span>
+                      <span className="text-4xl font-black text-slate-900 uppercase tracking-tighter tabular-nums">{systemHealth.latencyTrends[new Date().getHours()]?.latency || 0}ms</span>
                     </div>
                     <div className="text-right">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Throughput</span>
-                      <span className="text-xl font-black text-slate-800">{systemHealth.latencyTrends[new Date().getHours()]?.requests || 0} pings</span>
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Load Factor</span>
+                      <span className="text-4xl font-black text-slate-900 uppercase tracking-tighter tabular-nums">{systemHealth.latencyTrends[new Date().getHours()]?.requests || 0} Rx</span>
                     </div>
                   </div>
                   <LatencyPulse data={systemHealth.latencyTrends} />
                 </div>
                 <ErrorSentinel failures={systemHealth.topFailures} rate={systemHealth.overallErrorRate} breakdown={systemHealth.errorSentinel} />
               </div>
-            </Card>
+            </SectionCard>
 
-            <Card title="Database Integrity" subtitle="Collection storage & growth" icon="📂" className="lg:col-span-1 border-emerald-100 shadow-[0_0_20px_rgba(16,185,129,0.05)]">
+            <SectionCard title="Vault Integrity" subtitle="DB partition & growth metrics" icon={<Database size={18} />} className="lg:col-span-1 border-emerald-100">
               <DBMonitor stats={systemHealth.dbStats} />
-            </Card>
+            </SectionCard>
 
-            <Card title="Third-Party Heartbeat" subtitle="Real-time connectivity history" icon="🩺" className="lg:col-span-1 border-amber-100 shadow-[0_0_20px_rgba(245,158,11,0.05)]">
+            <SectionCard title="Module Uplinks" subtitle="3rd-party integration status" icon={<Server size={18} />} className="lg:col-span-1 border-amber-100">
               <HeartbeatPulse history={systemHealth.heartbeatHistory} />
-            </Card>
+            </SectionCard>
 
-            <Card title="Background Task Observer" subtitle="Automated cron job monitoring" icon="🤖" className="lg:col-span-1 border-indigo-100 shadow-[0_0_20px_rgba(99,102,241,0.05)]">
+            <SectionCard title="Automation Threads" subtitle="Live background orchestrator" icon={<Cpu size={18} />} className="lg:col-span-1 border-indigo-100">
               <BackgroundTaskObserver jobs={systemHealth.backgroundJobs} />
-            </Card>
+            </SectionCard>
 
-            <Card title="Network Sentinel" subtitle="Active listening ports monitoring" icon="🌐" className="lg:col-span-1 border-emerald-100 shadow-[0_0_20px_rgba(16,185,129,0.05)]">
+            <SectionCard title="Network Vectors" subtitle="Active socket ports map" icon={<Globe size={18} />} className="lg:col-span-1 border-emerald-100">
               <ActivePortsMonitor ports={systemHealth.activePorts} />
-            </Card>
+            </SectionCard>
 
-            <SupabaseHealthMonitor />
+            <div className="xl:col-span-1">
+              <SupabaseHealthMonitor />
+            </div>
 
-            <Card title="Cache & Performance Heatmap" subtitle="Route effectiveness analysis" icon="🔥" className="lg:col-span-1 border-indigo-100/50">
+            <SectionCard title="Cache Hit Matrix" subtitle="Routing effectiveness index" icon={<Zap size={18} />} className="lg:col-span-1 border-indigo-100/50">
               <PerformanceHeatmap data={performanceHeatmap} />
-            </Card>
+            </SectionCard>
 
-            <Card title="Admin Pricing & Intelligence" subtitle="Dynamic commission & fraud tracking" icon="🧠" className="lg:col-span-1 border-blue-200 shadow-[0_0_20px_rgba(37,99,235,0.05)]">
-              <div className="flex flex-col gap-6">
+            <SectionCard title="Strategic Algorithms" subtitle="Financial logic & fraud sentinel" icon={<Cpu size={18} />} className="lg:col-span-1 border-blue-200">
+              <div className="flex flex-col gap-10">
                 <CommissionEngine rules={dashdata.systemConfig?.commissionRules} onUpdate={updateCommissionRules} />
                 <FraudWatch alerts={fraudAlerts} />
               </div>
-            </Card>
+            </SectionCard>
 
-            <div className="lg:col-span-1 flex flex-col gap-6">
+            <div className="lg:col-span-1 flex flex-col gap-10">
               <EmergencySOS onSend={sendEmergencyBroadcast} />
-              <Card title="Critical System Overrides" subtitle="Maintenance & kill-switch" icon="🛡️" className="border-rose-100/50">
+              <SectionCard title="Root Overrides" subtitle="Core system toggle controls" icon={<Shield size={18} />} className="border-rose-100/50">
                 <SystemConfigPanel config={systemConfig} onUpdate={updateSystemConfig} />
-              </Card>
+              </SectionCard>
             </div>
 
-            <Card title="Supabase Intelligence" subtitle="Cloud metrics & log clustering" icon="☁️" className="lg:col-span-1 border-indigo-200 shadow-[0_0_25px_rgba(99,102,241,0.08)]">
-              <div className="flex flex-col gap-6">
+            <SectionCard title="Cortex Records" subtitle="Cloud data telemetry" icon={<Box size={18} />} className="lg:col-span-1 border-indigo-200">
+              <div className="flex flex-col gap-12">
                 <SupabaseRecordMonitor counts={dashdata.supabaseIntelligence?.recordCounts || { activity_logs: 0, system_metrics: 0 }} />
 
-                <div className="pt-2">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter mb-4 border-l-2 border-emerald-500 pl-2">Response Distribution (24h)</p>
+                <div className="relative">
+                  <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-8 border-l-4 border-indigo-600 pl-4">Response Distribution</p>
                   <StatusCodePie data={dashdata.supabaseIntelligence?.statusCodeDistribution || []} />
                 </div>
 
-                <div className="pt-2">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter mb-4 border-l-2 border-indigo-500 pl-2">Top Activity Clusters</p>
+                <div className="relative">
+                  <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-8 border-l-4 border-emerald-600 pl-4">Temporal Clusters</p>
                   <ActivityTrendChart data={dashdata.supabaseIntelligence?.activityTypeDistribution || []} />
                 </div>
               </div>
-            </Card>
-            <RepoHealth />
+            </SectionCard>
+
+            <div className="xl:col-span-1">
+              <RepoHealth />
+            </div>
           </div>
         )}
 
-        {/* ── Analytical Row 2 ────────────────────────────────────────────── */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        {/* ── Analytical Matrices ────────────────────────────────────────────── */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 mb-14">
           {adminProfile?.role === 'master' && <BroadcastComposer />}
 
-          <Card title="Monthly Appointment Trends" subtitle="Overview" icon="📈">
-            <ResponsiveContainer width="100%" height={260}>
-              <AreaChart data={monthlyData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                <defs>
-                  {[['total', '#818cf8'], ['completed', '#34d399'], ['cancelled', '#f87171']].map(([k, c]) => (
-                    <linearGradient key={k} id={`grad-${k}`} x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor={c} stopOpacity={0.25} />
-                      <stop offset="95%" stopColor={c} stopOpacity={0} />
-                    </linearGradient>
-                  ))}
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-                <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-                <Tooltip content={<CustomTooltip />} />
-                <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />
-                <Area type="monotone" dataKey="total" name="Total" stroke="#818cf8" strokeWidth={2.5} fill="url(#grad-total)" dot={{ r: 4, fill: '#818cf8' }} activeDot={{ r: 6 }} />
-                <Area type="monotone" dataKey="completed" name="Completed" stroke="#34d399" strokeWidth={2.5} fill="url(#grad-completed)" dot={{ r: 4, fill: '#34d399' }} activeDot={{ r: 6 }} />
-                <Area type="monotone" dataKey="cancelled" name="Cancelled" stroke="#f87171" strokeWidth={2.5} fill="url(#grad-cancelled)" dot={{ r: 4, fill: '#f87171' }} activeDot={{ r: 6 }} />
-              </AreaChart>
-            </ResponsiveContainer>
-          </Card>
+          <SectionCard title="Consultation Cycles" subtitle="Aggregated monthly volume" icon={<Activity size={18} />}>
+            <div className="h-[350px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={monthlyData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                  <defs>
+                    {[['total', '#818cf8'], ['completed', '#34d399'], ['cancelled', '#f87171']].map(([k, c]) => (
+                      <linearGradient key={k} id={`grad-${k}`} x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor={c} stopOpacity={0.25} />
+                        <stop offset="95%" stopColor={c} stopOpacity={0} />
+                      </linearGradient>
+                    ))}
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                  <XAxis dataKey="month" tick={{ fontSize: 10, fontWeight: 900, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+                  <YAxis allowDecimals={false} tick={{ fontSize: 10, fontWeight: 900, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 10, fontWeight: 900, paddingTop: 25, textTransform: 'uppercase', letterSpacing: '0.15em' }} />
+                  <Area type="monotone" dataKey="total" name="Total Ops" stroke="#818cf8" strokeWidth={5} fill="url(#grad-total)" dot={{ r: 5, fill: '#818cf8', strokeWidth: 3, stroke: '#fff' }} activeDot={{ r: 8 }} />
+                  <Area type="monotone" dataKey="completed" name="Success" stroke="#34d399" strokeWidth={5} fill="url(#grad-completed)" dot={{ r: 5, fill: '#34d399', strokeWidth: 3, stroke: '#fff' }} activeDot={{ r: 8 }} />
+                  <Area type="monotone" dataKey="cancelled" name="Aborted" stroke="#f87171" strokeWidth={5} fill="url(#grad-cancelled)" dot={{ r: 5, fill: '#f87171', strokeWidth: 3, stroke: '#fff' }} activeDot={{ r: 8 }} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </SectionCard>
         </div>
 
-        {/* ── 4 Pie charts ─────────────────────────────────────────────────── */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+        {/* ── Status Archetypes ─────────────────────────────────────────────────── */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-8 mb-14">
           {[
-            { title: 'Appointment Status', subtitle: 'By outcome', icon: '📊', data: apptStatusData, colors: [STATUS_COLORS.completed, STATUS_COLORS.cancelled, STATUS_COLORS.pending] },
-            { title: 'User Verification', subtitle: 'Account status', icon: '✅', data: verifyData, colors: ['#34d399', '#fbbf24'] },
-            { title: 'Doctor Availability', subtitle: 'Active vs inactive', icon: '🩺', data: doctorAvailData, colors: ['#818cf8', '#e2e8f0'] },
-            { title: 'Report Status', subtitle: 'Moderation queue', icon: '🚨', data: reportData, colors: PALETTE },
+            { title: 'Operation Status', subtitle: 'Outcome mapping', icon: <Box size={18} />, data: apptStatusData, colors: [STATUS_COLORS.completed, STATUS_COLORS.cancelled, STATUS_COLORS.pending] },
+            { title: 'Identity Audit', subtitle: 'Trust factor', icon: <Shield size={18} />, data: verifyData, colors: ['#34d399', '#fbbf24'] },
+            { title: 'Agent Duty', subtitle: 'Service readiness', icon: <Users size={18} />, data: doctorAvailData, colors: ['#818cf8', '#f1f5f9'] },
+            { title: 'Security Alert Queue', subtitle: 'Threat matrix', icon: <AlertTriangle size={18} />, data: reportData, colors: PALETTE },
           ].filter(c => c.data.length > 0).map((chart, i) => (
-            <Card key={i} title={chart.title} subtitle={chart.subtitle} icon={chart.icon}>
-              <ResponsiveContainer width="100%" height={190}>
-                <PieChart>
-                  <Pie data={chart.data} cx="50%" cy="50%" outerRadius={70} innerRadius={28} dataKey="value" labelLine={false} label={PieLabel} paddingAngle={3}>
-                    {chart.data.map((_, j) => <Cell key={j} fill={chart.colors[j % chart.colors.length]} />)}
-                  </Pie>
-                  <Tooltip content={<CustomTooltip />} />
-                  <Legend iconType="circle" iconSize={7} wrapperStyle={{ fontSize: 11, paddingTop: 4 }} />
-                </PieChart>
-              </ResponsiveContainer>
-            </Card>
+            <SectionCard key={i} title={chart.title} subtitle={chart.subtitle} icon={chart.icon}>
+              <div className="h-[250px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={chart.data} cx="50%" cy="50%" outerRadius={85} innerRadius={55} dataKey="value" labelLine={false} label={PieLabel} paddingAngle={8}>
+                      {chart.data.map((_, j) => <Cell key={j} fill={chart.colors[j % chart.colors.length]} stroke="rgba(255,255,255,0.1)" strokeWidth={3} />)}
+                    </Pie>
+                    <Tooltip content={<CustomTooltip />} />
+                    <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 10, fontWeight: 900, paddingTop: 15, textTransform: 'uppercase' }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </SectionCard>
           ))}
         </div>
 
-        {/* ── Pet type + Top doctors ────────────────────────────────────────── */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        {/* ── Asset Distribution Matrix ────────────────────────────────────────── */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mb-14">
           {petData.length > 0 && (
-            <Card title="Pet Type Distribution" subtitle="Types of pets registered" icon="🐾">
-              <ResponsiveContainer width="100%" height={240}>
-                <PieChart>
-                  <Pie data={petData} cx="50%" cy="50%" outerRadius={90} innerRadius={45} dataKey="value" labelLine={false} label={PieLabel} paddingAngle={4}>
-                    {petData.map((_, i) => <Cell key={i} fill={PALETTE[i % PALETTE.length]} />)}
-                  </Pie>
-                  <Tooltip content={<CustomTooltip />} />
-                  <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />
-                </PieChart>
-              </ResponsiveContainer>
-            </Card>
+            <SectionCard title="Biological Asset Mix" subtitle="Registered species telemetry" icon={<Users size={18} />}>
+              <div className="h-[320px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={petData} cx="50%" cy="50%" outerRadius={110} innerRadius={70} dataKey="value" labelLine={false} label={PieLabel} paddingAngle={5}>
+                      {petData.map((_, i) => <Cell key={i} fill={PALETTE[i % PALETTE.length]} stroke="rgba(255,255,255,0.1)" strokeWidth={3} />)}
+                    </Pie>
+                    <Tooltip content={<CustomTooltip />} />
+                    <Legend iconType="circle" iconSize={10} wrapperStyle={{ fontSize: 11, fontWeight: 900, paddingTop: 20, textTransform: 'uppercase' }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </SectionCard>
           )}
 
           {adminProfile?.role === 'master' && topDoctorsData.length > 0 && (
-            <Card title="Top Doctors by Appointments" subtitle="Most booked veterinarians" icon="🏆">
-              <ResponsiveContainer width="100%" height={240}>
-                <BarChart data={topDoctorsData} layout="vertical" margin={{ top: 0, right: 20, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
-                  <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-                  <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Bar dataKey="count" name="Appointments" radius={[0, 6, 6, 0]} maxBarSize={22}>
-                    {topDoctorsData.map((_, i) => <Cell key={i} fill={PALETTE[i % PALETTE.length]} />)}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </Card>
+            <SectionCard title="Agent Efficiency Leaderboard" subtitle="Top performing operators" icon={<Star size={18} />}>
+              <div className="h-[320px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={topDoctorsData} layout="vertical" margin={{ top: 0, right: 40, left: 20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
+                    <XAxis type="number" hide />
+                    <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 10, fontStyle: 'italic', fontWeight: 900, fill: '#64748b' }} axisLine={false} tickLine={false} />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Bar dataKey="count" name="Operations" radius={[0, 12, 12, 0]} barSize={28}>
+                      {topDoctorsData.map((_, i) => <Cell key={i} fill={PALETTE[i % PALETTE.length]} />)}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </SectionCard>
           )}
         </div>
 
-        {/* ── Speciality bar chart ──────────────────────────────────────────── */}
+        {/* ── Speciality Intelligence ──────────────────────────────────────────── */}
         {specialityData.length > 0 && (
-          <Card title="Appointments by Speciality" subtitle="Which specialities are most in demand" icon="🔬" className="mb-6">
-            <ResponsiveContainer width="100%" height={260}>
-              <BarChart data={specialityData} margin={{ top: 5, right: 10, left: -10, bottom: 50 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748b' }} angle={-35} textAnchor="end" interval={0} axisLine={false} tickLine={false} />
-                <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-                <Tooltip content={<CustomTooltip />} />
-                <Bar dataKey="count" name="Appointments" radius={[6, 6, 0, 0]} maxBarSize={40}>
-                  {specialityData.map((_, i) => <Cell key={i} fill={PALETTE[i % PALETTE.length]} />)}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </Card>
+          <SectionCard title="Domain Saturation" subtitle="Demand by clinical vertical" icon={<Box size={18} />} className="mb-14">
+            <div className="h-[350px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={specialityData} margin={{ top: 10, right: 10, left: -10, bottom: 80 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                  <XAxis dataKey="name" tick={{ fontSize: 10, fontWeight: 900, fill: '#64748b' }} angle={-35} textAnchor="end" interval={0} axisLine={false} tickLine={false} />
+                  <YAxis allowDecimals={false} tick={{ fontSize: 11, fontWeight: 900, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Bar dataKey="count" name="Ops" radius={[12, 12, 0, 0]} barSize={50}>
+                    {specialityData.map((_, i) => <Cell key={i} fill={PALETTE[i % PALETTE.length]} />)}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </SectionCard>
         )}
 
         {/* ── Location bookings ─────────────────────────────────────────────── */}
         {locationData.length > 0 && (
-          <Card title="Booking Locations" subtitle="Top 10 locations by booking volume" icon="📍" className="mb-6">
-            <ResponsiveContainer width="100%" height={260}>
-              <BarChart data={locationData} layout="vertical" margin={{ top: 0, right: 20, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
-                <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-                <YAxis type="category" dataKey="name" width={130} tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
-                <Tooltip content={<CustomTooltip />} />
-                <Bar dataKey="count" name="Bookings" radius={[0, 6, 6, 0]} maxBarSize={22}>
-                  {locationData.map((_, i) => <Cell key={i} fill={`hsl(${245 + i * 18}, 70%, ${55 + i * 2}%)`} />)}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </Card>
+          <SectionCard title="Tactical Operations Geography" subtitle="Success by operation zone" icon={<Globe size={18} />} className="mb-14">
+            <div className="h-[350px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={locationData} layout="vertical" margin={{ top: 0, right: 40, left: 30, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
+                  <XAxis type="number" hide />
+                  <YAxis type="category" dataKey="name" width={110} tick={{ fontSize: 10, fontStyle: 'italic', fontWeight: 900, fill: '#64748b' }} axisLine={false} tickLine={false} />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Bar dataKey="count" name="Success Ops" radius={[0, 12, 12, 0]} barSize={24}>
+                    {locationData.map((_, i) => <Cell key={i} fill={`hsl(${245 + i * 18}, 70%, ${55 + i * 2}%)`} />)}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </SectionCard>
         )}
 
-        {/* ── Latest appointment lists ──────────────────────────────────────── */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+        {/* ── Tactical Logs ────────────────────────────────────────────────────── */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 mb-14">
           {[
-            { title: 'Latest Bookings', data: dashdata.latestAppointments, accent: 'from-blue-500 to-indigo-600', badge: 'bg-blue-100 text-blue-700' },
-            { title: 'Latest Cancellations', data: dashdata.cancelledAppointments, accent: 'from-rose-500 to-pink-600', badge: 'bg-rose-100 text-rose-700' },
-            { title: 'Latest Completed', data: dashdata.completedAppointments, accent: 'from-emerald-500 to-teal-600', badge: 'bg-emerald-100 text-emerald-700' },
+            { title: 'Latest Bookings', data: dashdata.latestAppointments, color: 'indigo' },
+            { title: 'Latest Aborts', data: dashdata.cancelledAppointments, color: 'rose' },
+            { title: 'Operation Success', data: dashdata.completedAppointments, color: 'emerald' },
           ].map((section, i) => (
-            <div key={i} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
-              {/* coloured top bar */}
-              <div className={`h-1.5 bg-gradient-to-r ${section.accent}`} />
-              <div className="px-5 py-4 flex items-center justify-between border-b border-gray-50">
-                <h3 className="font-bold text-gray-800 text-sm">{section.title}</h3>
-                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${section.badge}`}>
+            <div key={i} className={`bg-white/95 backdrop-blur-md rounded-[3rem] shadow-2xl border border-white/50 overflow-hidden group hover:shadow-${section.color}-500/5 transition-all duration-700`}>
+              <div className={`h-2.5 bg-${section.color}-500`} />
+              <div className="px-10 py-8 flex items-center justify-between border-b border-slate-50">
+                <h3 className="font-black text-slate-900 text-[12px] uppercase tracking-[0.2em]">{section.title}</h3>
+                <span className={`text-[11px] font-black px-4 py-1.5 rounded-full bg-${section.color}-50 text-${section.color}-600 border border-${section.color}-100`}>
                   {section.data?.length || 0}
                 </span>
               </div>
-              <div className="px-4 py-2 divide-y divide-gray-50">
+              <div className="px-8 py-6 space-y-3">
                 {section.data?.length > 0
-                  ? section.data.map((item, idx) => <ApptRow key={idx} item={item} slotDateFormat={slotDateFormat} />)
-                  : <p className="text-center text-gray-400 text-sm py-6">No items found</p>
+                  ? section.data.map((item, idx) => (
+                    <motion.div
+                      key={idx}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: idx * 0.08 }}
+                    >
+                      <ApptRow item={item} slotDateFormat={slotDateFormat} />
+                    </motion.div>
+                  ))
+                  : <div className="text-center py-16 flex flex-col items-center gap-4 opacity-25">
+                    <Clock size={40} />
+                    <p className="text-[11px] font-black uppercase tracking-[0.25em]">No Recent Logs</p>
+                  </div>
                 }
               </div>
             </div>
           ))}
         </div>
 
-        {/* ── Empty state ───────────────────────────────────────────────────── */}
+        {/* ── System Idle State ────────────────────────────────────────────────── */}
         {!dashdata.appointments && (
-          <div className="text-center py-20">
-            <div className="text-7xl mb-4 animate-bounce">📊</div>
-            <h3 className="text-xl font-bold text-gray-700 mb-2">No data yet</h3>
-            <p className="text-gray-400">Charts and analytics will appear once appointments are created.</p>
+          <div className="text-center py-40 flex flex-col items-center justify-center bg-white/50 rounded-[4rem] border border-dashed border-slate-300">
+            <LayoutDashboard size={80} className="text-slate-200 mb-8" />
+            <h3 className="text-3xl font-black text-slate-400 tracking-tight mb-3 uppercase tracking-[0.3em]">Awaiting Pulse</h3>
+            <p className="text-slate-400 font-medium text-lg max-w-lg">Cortex is ready. Real-time telemetry will populate upon first agent appointment creation.</p>
           </div>
         )}
       </div>

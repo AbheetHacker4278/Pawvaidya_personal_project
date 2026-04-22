@@ -46,6 +46,7 @@ import CalendarTodayIcon from '@mui/icons-material/CalendarToday'
 import BlockIcon from '@mui/icons-material/Block'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import WarningIcon from '@mui/icons-material/Warning'
+import DeleteIcon from '@mui/icons-material/Delete'
 
 const DoctorsList = () => {
   const { doctors, atoken, getalldoctors, changeavailablity, deleteDoctor, makeAllDoctorsAvailable, makeAllDoctorsUnavailable, getDoctorsWithPasswords, getActivityLogs, banUser, unbanUser, blacklistEmails } = useContext(AdminContext)
@@ -105,132 +106,150 @@ const DoctorsList = () => {
     const isDeleting = deletingDoctorId === doctor._id
 
     return (
-      <div className={`relative border-2 ${isAvailable
-        ? 'border-green-200 hover:border-green-400 bg-gradient-to-b from-green-50 to-white'
-        : 'border-red-200 hover:border-red-400 bg-gradient-to-b from-red-50 to-white'
-        } rounded-2xl overflow-hidden cursor-pointer group transition-all duration-300 hover:shadow-xl hover:scale-105`}>
+      <div className={`relative group bg-white/90 backdrop-blur-xl rounded-[2rem] border border-white/40 shadow-sm transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 overflow-hidden flex flex-col h-full ${isDeleting ? 'opacity-50 pointer-events-none' : ''}`}>
         {isDeleting && <LoadingSpinner />}
 
-        <div className="absolute top-3 left-3 z-20">
-          <input
-            type="checkbox"
-            checked={selectedDoctors.includes(doctor.email)}
-            onChange={(e) => {
-              e.stopPropagation();
-              handleSelectDoctor(doctor.email);
-            }}
-            className="w-5 h-5 cursor-pointer accent-green-600"
-          />
+        {/* Selection & Status Header */}
+        <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-10">
+          <div className="bg-white/80 backdrop-blur-md p-1.5 rounded-xl border border-white/50 shadow-sm">
+            <input
+              type="checkbox"
+              checked={selectedDoctors.includes(doctor.email)}
+              onChange={(e) => {
+                e.stopPropagation();
+                handleSelectDoctor(doctor.email);
+              }}
+              className="w-5 h-5 cursor-pointer accent-emerald-600 rounded-md"
+            />
+          </div>
+          <div className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg ${isAvailable
+            ? 'bg-emerald-500 text-white shadow-emerald-200'
+            : 'bg-rose-500 text-white shadow-rose-200'
+            }`}>
+            {isAvailable ? 'Active' : 'Busy'}
+          </div>
         </div>
 
-        {/* Doctor Image */}
-        <div className={`relative h-48 overflow-hidden ${isAvailable ? 'bg-green-100' : 'bg-red-100'
-          }`}>
+        {/* Doctor Image & Specialty Banner */}
+        <div className="relative h-56 overflow-hidden">
           <img
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
             src={doctor.image}
             alt={doctor.name}
             onError={(e) => {
               e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik03NSA4Ny41Qzc1IDc4LjgxODIgODEuODE4MiA3MiA5MC41IDcyQzk5LjE4MTggNzIgMTA2IDc4LjgxODIgMTA2IDg3LjVDMTA2IDk2LjE4MTggOTkuMTgxOCAxMDMgOTAuNSAxMDNDODEuODE4MiAxMDMgNzUgOTYuMTgxOCA3NSA4Ny41WiIgZmlsbD0iIzlDQThBNiIvPgo8cGF0aCBkPSJNMTIwLjUgMTI4LjVDMTIwLjUgMTE5LjgxOCAxMjcuMzE4IDExMyAxMzYgMTEzQzE0NC42ODIgMTEzIDE1MS41IDExOS44MTggMTUxLjUgMTI4LjVDMTUxLjUgMTM3LjE4MiAxNDQuNjgyIDE0NCAxMzYgMTQ0QzEyNy4zMTggMTQ0IDEyMC41IDEzNy4xODIgMTIwLjUgMTI4LjVaIiBmaWxsPSIjOUNBOEE2Ii8+CjxwYXRoIGQ9Ik00OC41IDEyOC41QzQ4LjUgMTE5LjgxOCA1NS4zMTgyIDExMyA2NCAxMTNDNzIuNjgxOCAxMTMgNzkuNSAxMTkuODE4IDc5LjUgMTI4LjVDNzkuNSAxMzcuMTgyIDcyLjY4MTggMTQ0IDY0IDE0NEM1NS4zMTgyIDE0NCA0OC41IDEzNy4xODIgNDguNSAxMjguNVoiIGZpbGw9IiM5Q0E4QTYiLz4KPHBhdGggZD0iTTE0MCA3MEMxNDAgNjEuODE4MiAxNDYuODE4IDU1IDE1NSA1NUMxNjMuMTgyIDU1IDE3MCA2MS44MTgyIDE3MCA3MEMxNzAgNzguMTgxOCAxNjMuMTgyIDg1IDE1NSA4NUMxNDYuODE4IDg1IDE0MCA3OC4xODE4IDE0MCA3MFoiIGZpbGw9IiM5Q0E4QTYiLz4KPC9zdmc+';
             }}
           />
-          <div className={`absolute top-3 right-3 px-3 py-1 rounded-full text-xs font-semibold ${isAvailable
-            ? 'bg-green-500 text-white'
-            : 'bg-red-500 text-white'
-            }`}>
-            {isAvailable ? 'Available' : 'Busy'}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-6">
+            <p className="text-white text-xs font-semibold leading-relaxed line-clamp-2 italic">
+              {doctor.about || "Dedicated veterinary professional committed to pet wellness."}
+            </p>
           </div>
         </div>
 
-        {/* Doctor Info */}
-        <div className='p-5'>
-          <h3 className='text-lg font-bold text-gray-800 mb-1 truncate'>{doctor.name}</h3>
-          <p className='text-emerald-600 font-semibold text-sm mb-2'>{doctor.speciality}</p>
+        {/* Doctor Info Content */}
+        <div className="p-6 flex flex-col flex-1">
+          <div className="mb-4">
+            <h3 className="text-xl font-black text-slate-800 truncate tracking-tight">{doctor.name}</h3>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 text-[10px] font-bold rounded-lg border border-emerald-100 uppercase tracking-wider">
+                {doctor.speciality}
+              </span>
+              {doctor.isBanned && (
+                <span className="px-2 py-0.5 bg-rose-50 text-rose-700 text-[10px] font-bold rounded-lg border border-rose-100 uppercase tracking-wider">
+                  Banned
+                </span>
+              )}
+            </div>
+          </div>
 
-          <div className='space-y-1 mb-4'>
-            <div className='flex items-center gap-2 text-gray-600 text-sm'>
-              <EmailIcon sx={{ fontSize: 14 }} />
-              <span className='truncate'>{doctor.email}</span>
-            </div>
-            <div className='flex items-center gap-2 text-gray-600 text-sm'>
-              <PhoneIcon sx={{ fontSize: 14 }} />
-              <span>+91 {doctor.docphone}</span>
-            </div>
-            {doctor.lastLoginIp && (
-              <div className='flex items-center gap-2 text-gray-600 text-sm'>
-                <LoginIcon sx={{ fontSize: 14 }} />
-                <span>IP: <strong>{doctor.lastLoginIp}</strong></span>
+          {/* Professional Stats Grid */}
+          <div className="grid grid-cols-2 gap-3 mb-5">
+            <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100 flex flex-col">
+              <div className="flex items-center gap-2 mb-1">
+                <SchoolIcon className="text-indigo-500" sx={{ fontSize: 14 }} />
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Degree</span>
               </div>
-            )}
+              <span className="text-xs font-black text-slate-700 truncate">{doctor.degree}</span>
+            </div>
+            <div className="p-3 bg-indigo-50 rounded-2xl border border-indigo-100 flex flex-col">
+              <div className="flex items-center gap-2 mb-1">
+                <WorkIcon className="text-indigo-600" sx={{ fontSize: 14 }} />
+                <span className="text-[10px] font-black text-indigo-400 uppercase tracking-tighter">Experience</span>
+              </div>
+              <span className="text-xs font-black text-indigo-700">{doctor.experience}</span>
+            </div>
+            <div className="p-3 bg-amber-50 rounded-2xl border border-amber-100 flex flex-col">
+              <div className="flex items-center gap-2 mb-1">
+                <AttachMoneyIcon className="text-amber-600" sx={{ fontSize: 14 }} />
+                <span className="text-[10px] font-black text-amber-500 uppercase tracking-tighter">Consult Fees</span>
+              </div>
+              <span className="text-xs font-black text-amber-700">₹{doctor.fees || '0'}</span>
+            </div>
+            <div className="p-3 bg-rose-50 rounded-2xl border border-rose-100 flex flex-col">
+              <div className="flex items-center gap-2 mb-1">
+                <HistoryIcon className="text-rose-600" sx={{ fontSize: 14 }} />
+                <span className="text-[10px] font-black text-rose-400 uppercase tracking-tighter">Last Seen IP</span>
+              </div>
+              <span className="text-xs font-black text-rose-700 truncate">{doctor.lastLoginIp || 'N/A'}</span>
+            </div>
           </div>
 
-          {/* Availability Toggle */}
-          <div className='flex items-center gap-2 mb-4 p-2 bg-gray-100 rounded-lg'>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                onChange={() => changeavailablity(doctor._id)}
-                type="checkbox"
-                checked={doctor.available}
-                disabled={isDeleting}
-                className="sr-only peer"
-              />
-              <div className={`w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer ${doctor.available ? 'peer-checked:bg-green-500' : 'peer-checked:bg-red-500'
-                } peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all ${doctor.available ? 'peer-checked:border-green-500' : 'peer-checked:border-red-500'
-                }`}></div>
-            </label>
-            <span className='text-sm font-medium text-gray-700'>
-              {doctor.available ? 'Available' : 'Not Available'}
-            </span>
+          <div className="space-y-2 mb-6">
+            <div className="flex items-center gap-2 text-slate-500 group/item">
+              <div className="w-7 h-7 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center group-hover/item:border-emerald-200 transition-colors">
+                <EmailIcon sx={{ fontSize: 14 }} />
+              </div>
+              <span className="text-xs font-medium truncate">{doctor.email}</span>
+            </div>
+            <div className="flex items-center gap-2 text-slate-500 group/item">
+              <div className="w-7 h-7 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center group-hover/item:border-emerald-200 transition-colors">
+                <PhoneIcon sx={{ fontSize: 14 }} />
+              </div>
+              <span className="text-xs font-medium">+91 {doctor.docphone}</span>
+            </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className='flex flex-wrap gap-2'>
+          {/* Action Footer */}
+          <div className="mt-auto pt-4 border-t border-slate-100 flex items-center gap-2">
             <button
               onClick={() => handleViewDetails(doctor)}
-              disabled={isDeleting}
-              className={`flex-1 flex items-center justify-center gap-1 py-2 px-3 rounded-lg font-medium text-sm transition-all duration-200 ${isDeleting
-                ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
-                : 'bg-blue-500 text-white hover:bg-blue-600 hover:shadow-md'
-                }`}
+              className="flex-1 py-3 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-lg shadow-slate-100 active:scale-95"
             >
-              <VisibilityIcon sx={{ fontSize: 16 }} />
-              View
+              Full Profile
             </button>
+
+            <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-100 rounded-2xl">
+              <div className="flex flex-col items-end mr-1">
+                <span className="text-[8px] font-black text-slate-400 uppercase">Availability</span>
+                <span className={`text-[9px] font-bold ${doctor.available ? 'text-emerald-600' : 'text-slate-500'}`}>{doctor.available ? 'ON' : 'OFF'}</span>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  onChange={() => changeavailablity(doctor._id)}
+                  type="checkbox"
+                  checked={doctor.available}
+                  className="sr-only peer"
+                />
+                <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500 shadow-inner"></div>
+              </label>
+            </div>
+          </div>
+
+          <div className="mt-3 flex gap-2">
             <button
               onClick={() => handleBanDoctor(doctor, false)}
-              disabled={isDeleting}
-              className={`flex-1 flex items-center justify-center gap-1 py-2 px-3 rounded-lg font-medium text-sm transition-all duration-200 ${isDeleting
-                ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
-                : doctor.isBanned
-                  ? 'bg-green-500 text-white hover:bg-green-600 hover:shadow-md'
-                  : 'bg-orange-500 text-white hover:bg-orange-600 hover:shadow-md'
-                }`}
+              className={`flex-1 py-2 rounded-xl text-[9px] font-black uppercase tracking-wider border transition-all ${doctor.isBanned
+                ? 'bg-emerald-50 text-emerald-700 border-emerald-100 hover:bg-emerald-100'
+                : 'bg-amber-50 text-amber-700 border-amber-100 hover:bg-amber-100'}`}
             >
-              {doctor.isBanned ? <CheckCircleIcon sx={{ fontSize: 16 }} /> : <BlockIcon sx={{ fontSize: 16 }} />}
-              {doctor.isBanned ? 'Unban' : 'Ban'}
+              {doctor.isBanned ? 'Unlock' : 'Restrict'}
             </button>
-            {!doctor.isBanned && (
-              <button
-                onClick={() => handleBanDoctor(doctor, true)}
-                disabled={isDeleting}
-                className={`flex-1 flex items-center justify-center gap-1 py-2 px-3 rounded-lg font-medium text-sm transition-all duration-200 ${isDeleting
-                  ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
-                  : 'bg-red-600 text-white hover:bg-red-700 hover:shadow-md'
-                  }`}
-              >
-                <WarningIcon sx={{ fontSize: 16 }} />
-                Ban IP
-              </button>
-            )}
             <button
               onClick={() => handleDeleteDoctor(doctor._id)}
-              disabled={isDeleting}
-              className={`flex-1 min-w-[30%] py-2 px-3 rounded-lg font-medium text-sm transition-all duration-200 ${isDeleting
-                ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
-                : 'bg-red-500 text-white hover:bg-red-600 hover:shadow-md'
-                }`}
+              className="px-4 py-2 bg-rose-50 text-rose-600 border border-rose-100 rounded-xl text-[9px] font-black uppercase tracking-wider hover:bg-rose-600 hover:text-white transition-all"
             >
-              {isDeleting ? '...' : 'Delete'}
+              <DeleteIcon sx={{ fontSize: 14 }} />
             </button>
           </div>
         </div>

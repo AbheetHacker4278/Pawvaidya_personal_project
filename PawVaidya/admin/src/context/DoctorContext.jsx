@@ -11,6 +11,8 @@ const DoctorContextProvider = (props) => {
     const [appointments, setAppointments] = useState([])
     const [dashdata, setdashdata] = useState(false)
     const [profileData, setProfileData] = useState(false)
+    const [videoSlots, setVideoSlots] = useState([])
+
 
 
     const getAppointments = async () => {
@@ -220,6 +222,56 @@ const DoctorContextProvider = (props) => {
         }
     }
 
+    const updateVideoStatus = async (updateData) => {
+        try {
+            const { data } = await axios.post(backendurl + '/api/doctor/update-video-status', updateData, { headers: { dtoken } })
+            if (data.success) {
+                toast.success(data.message)
+                getAppointments()
+                return true
+            } else {
+                toast.error(data.message)
+                return false
+            }
+        } catch (error) {
+            toast.error(error.message)
+            console.log(error)
+            return false
+        }
+    }
+
+    const getVideoSlots = async () => {
+        try {
+            const { data } = await axios.get(backendurl + '/api/doctor/video-slots/get', { headers: { dtoken } })
+            if (data.success) {
+                setVideoSlots(data.slots)
+                return data.slots
+            } else {
+                toast.error(data.message)
+            }
+        } catch (error) {
+            console.error('Error fetching video slots:', error)
+            toast.error('Failed to fetch video slots')
+        }
+    }
+
+    const addVideoSlot = async (slotData) => {
+        try {
+            const { data } = await axios.post(backendurl + '/api/doctor/video-slots/add', slotData, { headers: { dtoken } })
+            if (data.success) {
+                toast.success(data.message)
+                getVideoSlots()
+                return true
+            } else {
+                toast.error(data.message)
+                return false
+            }
+        } catch (error) {
+            toast.error('Failed to add video slot')
+            return false
+        }
+    }
+
 
 
 
@@ -228,8 +280,10 @@ const DoctorContextProvider = (props) => {
         completeAppointment, cancelAppointment, getdashdata, dashdata, setdashdata,
         getProfileData, profileData, setProfileData,
         createReminder, getDoctorReminders, updateReminder, deleteReminder, getDailyEarnings,
-        getPetReports, createPetReport, addVisitNote
+        getPetReports, createPetReport, addVisitNote, updateVideoStatus,
+        videoSlots, getVideoSlots, addVideoSlot
     }
+
 
     return (
         <DoctorContext.Provider value={value}>

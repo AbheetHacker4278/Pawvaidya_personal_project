@@ -12,7 +12,7 @@ import {
   MessageCircle, Flag, CheckCircle, XCircle, Search, Calendar,
   Clock, Phone, User, Filter, ChevronDown, Tag, IndianRupee,
   PawPrint, AlertCircle, TrendingUp, Users, Activity, FileText, MapPin,
-  QrCode, Wallet, ShieldCheck, X
+  QrCode, Wallet, ShieldCheck, X, Video, Plus
 } from 'lucide-react';
 
 const THEME = {
@@ -37,9 +37,16 @@ const StatusBadge = ({ item }) => {
       </span>
     );
   return (
-    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700 border border-amber-200">
-      <Clock className="w-3 h-3" /> Pending
-    </span>
+    <div className="flex flex-col gap-1 items-start">
+      <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700 border border-amber-200">
+        <Clock className="w-3 h-3" /> Pending
+      </span>
+      {item.isVideo && (
+        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black border ${item.videoStatus === 'Approved' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : 'bg-rose-50 text-rose-700 border-rose-200'}`}>
+          {item.videoStatus === 'Approved' ? '✓ Video Approved' : '⏳ Video ' + item.videoStatus}
+        </span>
+      )}
+    </div>
   );
 };
 
@@ -60,8 +67,9 @@ const StatCard = ({ icon: Icon, label, value, color, bg }) => (
 );
 
 const DoctorAppointments = () => {
-  const { dtoken, appointments, getAppointments, cancelAppointment, completeAppointment, backendurl } = useContext(DoctorContext);
+  const { dtoken, appointments, getAppointments, cancelAppointment, completeAppointment, backendurl, updateVideoStatus, videoSlots, getVideoSlots, addVideoSlot } = useContext(DoctorContext);
   const { slotDateFormat, calculateAge } = useContext(AppContext);
+
 
   const [selectedChat, setSelectedChat] = useState(null);
   const [reportUser, setReportUser] = useState(null);
@@ -70,6 +78,15 @@ const DoctorAppointments = () => {
   const [sortOrder, setSortOrder] = useState('newest');
   const [confirmAction, setConfirmAction] = useState(null);
   const [reportAppointment, setReportAppointment] = useState(null);
+  const [categoryFilter, setCategoryFilter] = useState('clinic'); // 'clinic' or 'video'
+
+  // Video Management States
+  const [showVideoModal, setShowVideoModal] = useState(false);
+  const [selectedVideoAppt, setSelectedVideoAppt] = useState(null);
+  const [videoStatus, setVideoStatus] = useState('Approved');
+  const [videoMessage, setVideoMessage] = useState('');
+  const [rescheduleSlot, setRescheduleSlot] = useState('');
+  const [videoLoading, setVideoLoading] = useState(false);
 
   // QR Scanner states
   const [showQrScanner, setShowQrScanner] = useState(false);
@@ -78,9 +95,20 @@ const DoctorAppointments = () => {
   const [walletPaymentLoading, setWalletPaymentLoading] = useState(false);
   const [scannedQrToken, setScannedQrToken] = useState('');
 
+  // Add Video Slot States for Modal
+  const [showAddSlot, setShowAddSlot] = useState(false);
+  const [newSlotDay, setNewSlotDay] = useState('');
+  const [newSlotTime, setNewSlotTime] = useState('');
+  const [isAddingSlot, setIsAddingSlot] = useState(false);
+
+
   useEffect(() => {
-    if (dtoken) getAppointments();
+    if (dtoken) {
+      getAppointments();
+      getVideoSlots();
+    }
   }, [dtoken]);
+
 
   // Stats
   const stats = useMemo(() => ({
@@ -102,6 +130,9 @@ const DoctorAppointments = () => {
         (a.userData.phone && String(a.userData.phone).includes(q))
       );
     }
+
+    if (categoryFilter === 'clinic') list = list.filter(a => !a.isVideo);
+    else if (categoryFilter === 'video') list = list.filter(a => a.isVideo);
 
     if (statusFilter === 'pending') list = list.filter(a => !a.cancelled && !a.isCompleted);
     else if (statusFilter === 'completed') list = list.filter(a => a.isCompleted);
@@ -222,10 +253,27 @@ const DoctorAppointments = () => {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="flex flex-wrap gap-3 mb-6 items-center"
+        className="flex flex-wrap gap-4 mb-6 items-center"
       >
-        {/* Search */}
-        <div className="relative flex-1 min-w-[200px]">
+        {/* Category Tabs */}
+        <div className="flex p-1 bg-white rounded-2xl border-2" style={{ borderColor: THEME.border }}>
+          <button
+            onClick={() => setCategoryFilter('clinic')}
+            className={`px-6 py-2 rounded-xl text-sm font-black transition-all ${categoryFilter === 'clinic' ? 'text-white' : 'text-[#5A4035] hover:bg-amber-50'}`}
+            style={{ background: categoryFilter === 'clinic' ? THEME.primary : 'transparent' }}
+          >
+            🏥 Clinic Appointments
+          </button>
+          <button
+            onClick={() => setCategoryFilter('video')}
+            className={`px-6 py-2 rounded-xl text-sm font-black transition-all ${categoryFilter === 'video' ? 'text-white' : 'text-[#5A4035] hover:bg-amber-50'}`}
+            style={{ background: categoryFilter === 'video' ? THEME.primary : 'transparent' }}
+          >
+            📹 Video Consultations
+          </button>
+        </div>
+
+        <div className="flex-1 min-w-[200px] flex gap-3 items-center">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: THEME.muted }} />
           <input
             type="text"
@@ -372,49 +420,51 @@ const DoctorAppointments = () => {
                   </div>
                 </div>
 
-                {/* ── Pet Details ── */}
-                <div className="flex-1 min-w-[200px] lg:border-x px-0 lg:px-6 py-2 lg:py-0" style={{ borderColor: THEME.border }}>
-                  <p className="text-[10px] font-bold uppercase tracking-wider mb-2 flex items-center gap-1.5" style={{ color: THEME.muted }}>
-                    <PawPrint className="w-3 h-3" /> Selected Pet
-                  </p>
-                  {item.isStray ? (
-                    <div className="flex items-center gap-2">
-                      <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#5A4035] to-[#3d2b1f] flex items-center justify-center text-white text-xs shadow-sm">
-                        🐾
-                      </div>
-                      <div>
-                        <p className="text-xs font-bold capitalize" style={{ color: THEME.primary }}>{item.strayDetails?.petType || 'Unknown'} (Stray)</p>
-                        <p className="text-[10px] italic truncate max-w-[150px]" style={{ color: THEME.muted }}>
-                          <MapPin className="w-2.5 h-2.5 inline mr-1" /> {item.strayDetails?.location || 'No location'}
-                        </p>
-                      </div>
-                    </div>
-                  ) : item.petId ? (
-                    <div className="flex items-center gap-2">
-                      <div className="relative">
-                        <img src={item.petId.image} alt={item.petId.name} className="w-9 h-9 rounded-xl object-cover border shadow-sm" style={{ borderColor: THEME.border }} />
-                        <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 border border-white flex items-center justify-center shadow-sm">
-                          <CheckCircle className="w-2 h-2 text-white" />
+                {/* ── Pet Details (Hidden for Video) ── */}
+                {!item.isVideo && (
+                  <div className="flex-1 min-w-[200px] lg:border-x px-0 lg:px-6 py-2 lg:py-0" style={{ borderColor: THEME.border }}>
+                    <p className="text-[10px] font-bold uppercase tracking-wider mb-2 flex items-center gap-1.5" style={{ color: THEME.muted }}>
+                      <PawPrint className="w-3 h-3" /> Selected Pet
+                    </p>
+                    {item.isStray ? (
+                      <div className="flex items-center gap-2">
+                        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#5A4035] to-[#3d2b1f] flex items-center justify-center text-white text-xs shadow-sm">
+                          🐾
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold capitalize" style={{ color: THEME.primary }}>{item.strayDetails?.petType || 'Unknown'} (Stray)</p>
+                          <p className="text-[10px] italic truncate max-w-[150px]" style={{ color: THEME.muted }}>
+                            <MapPin className="w-2.5 h-2.5 inline mr-1" /> {item.strayDetails?.location || 'No location'}
+                          </p>
                         </div>
                       </div>
-                      <div className="min-w-0">
-                        <p className="text-xs font-bold truncate" style={{ color: THEME.primary }}>{item.petId.name}</p>
-                        <p className="text-[10px] font-medium tracking-tight" style={{ color: THEME.muted }}>
-                          {item.petId.breed} · {item.petId.age}y · <span className="font-bold text-[#c8860a]">{item.petId.petId}</span>
-                        </p>
+                    ) : item.petId ? (
+                      <div className="flex items-center gap-2">
+                        <div className="relative">
+                          <img src={item.petId.image} alt={item.petId.name} className="w-9 h-9 rounded-xl object-cover border shadow-sm" style={{ borderColor: THEME.border }} />
+                          <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 border border-white flex items-center justify-center shadow-sm">
+                            <CheckCircle className="w-2 h-2 text-white" />
+                          </div>
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-bold truncate" style={{ color: THEME.primary }}>{item.petId.name}</p>
+                          <p className="text-[10px] font-medium tracking-tight" style={{ color: THEME.muted }}>
+                            {item.petId.breed} · {item.petId.age}y · <span className="font-bold text-[#c8860a]">{item.petId.petId}</span>
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-1.5 py-1 px-2 rounded-lg bg-gray-50 border border-dashed border-gray-200">
-                      <AlertCircle className="w-3 h-3 text-gray-400" />
-                      <span className="text-[10px] text-gray-400 italic">No pet data selection</span>
-                    </div>
-                  )}
-                </div>
+                    ) : (
+                      <div className="flex items-center gap-1.5 py-1 px-2 rounded-lg bg-gray-50 border border-dashed border-gray-200">
+                        <AlertCircle className="w-3 h-3 text-gray-400" />
+                        <span className="text-[10px] text-gray-400 italic">No pet data selection</span>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* ── Date / Time ── */}
                 <div className="flex flex-col items-start lg:items-center min-w-[120px]">
-                  <span className="text-xs font-semibold uppercase tracking-wider mb-0.5" style={{ color: THEME.muted }}>Date &amp; Time</span>
+                  <span className="text-xs font-semibold uppercase tracking-wider mb-0.5" style={{ color: THEME.muted }}>Date & Time</span>
                   <span className="font-bold text-sm flex items-center gap-1.5" style={{ color: THEME.primary }}>
                     <Calendar className="w-4 h-4" style={{ color: THEME.accent }} />
                     {slotDateFormat(item.slotDate)}
@@ -424,29 +474,33 @@ const DoctorAppointments = () => {
                   </span>
                 </div>
 
-                {/* ── Fee ── */}
-                <div className="flex flex-col items-start lg:items-center min-w-[90px]">
-                  <span className="text-xs font-semibold uppercase tracking-wider mb-0.5" style={{ color: THEME.muted }}>Fee</span>
-                  {item.discountApplied && (
-                    <span className="text-xs line-through" style={{ color: THEME.muted }}>₹{item.discountApplied.originalFee}</span>
-                  )}
-                  <span className="text-lg font-black flex items-center gap-0.5" style={{ color: item.discountApplied ? '#059669' : THEME.primary }}>
-                    <IndianRupee className="w-4 h-4" />{item.amount}
-                  </span>
-                  {item.walletDeduction > 0 && (
-                    <span className="text-[10px] font-bold text-amber-600 mt-1">
-                      Wallet: -₹{item.walletDeduction}
+                {/* ── Fee (Hidden for Video) ── */}
+                {!item.isVideo && (
+                  <div className="flex flex-col items-start lg:items-center min-w-[90px]">
+                    <span className="text-xs font-semibold uppercase tracking-wider mb-0.5" style={{ color: THEME.muted }}>Fee</span>
+                    {item.discountApplied && (
+                      <span className="text-xs line-through" style={{ color: THEME.muted }}>₹{item.discountApplied.originalFee}</span>
+                    )}
+                    <span className="text-lg font-black flex items-center gap-0.5" style={{ color: item.discountApplied ? '#059669' : THEME.primary }}>
+                      <IndianRupee className="w-4 h-4" />{item.amount}
                     </span>
-                  )}
-                </div>
+                    {item.walletDeduction > 0 && (
+                      <span className="text-[10px] font-bold text-amber-600 mt-1">
+                        Wallet: -₹{item.walletDeduction}
+                      </span>
+                    )}
+                  </div>
+                )}
 
-                {/* ── Payment ── */}
-                <div className="flex flex-col items-start lg:items-center min-w-[80px]">
-                  <span className="text-xs font-semibold uppercase tracking-wider mb-0.5" style={{ color: THEME.muted }}>Payment</span>
-                  <span className={`px-3 py-0.5 rounded-full text-xs font-bold border ${item.payment ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : (item.paymentMethod === 'Razorpay' ? 'bg-orange-50 text-orange-700 border-orange-200' : (item.paymentMethod === 'Wallet' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-gray-50 text-gray-700 border-gray-200'))}`}>
-                    {item.payment ? 'Paid Online' : (item.paymentMethod === 'Razorpay' ? 'Unpaid Online' : (item.paymentMethod === 'Wallet' ? 'Paid via Wallet' : 'Cash'))}
-                  </span>
-                </div>
+                {/* ── Payment (Hidden for Video) ── */}
+                {!item.isVideo && (
+                  <div className="flex flex-col items-start lg:items-center min-w-[80px]">
+                    <span className="text-xs font-semibold uppercase tracking-wider mb-0.5" style={{ color: THEME.muted }}>Payment</span>
+                    <span className={`px-3 py-0.5 rounded-full text-xs font-bold border ${item.payment ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : (item.paymentMethod === 'Razorpay' ? 'bg-orange-50 text-orange-700 border-orange-200' : (item.paymentMethod === 'Wallet' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-gray-50 text-gray-700 border-gray-200'))}`}>
+                      {item.payment ? 'Paid Online' : (item.paymentMethod === 'Razorpay' ? 'Unpaid Online' : (item.paymentMethod === 'Wallet' ? 'Paid via Wallet' : 'Cash'))}
+                    </span>
+                  </div>
+                )}
 
                 {/* ── Status ── */}
                 <div className="flex flex-col items-start lg:items-center min-w-[100px]">
@@ -456,28 +510,108 @@ const DoctorAppointments = () => {
 
                 {/* ── Actions ── */}
                 <div className="flex gap-2 flex-wrap lg:flex-nowrap items-center flex-shrink-0">
+                  {item.isVideo && !item.cancelled && !item.isCompleted && (
+                    <div className="flex gap-2">
+                      {item.videoStatus === 'pending' ? (
+                        <>
+                          <motion.button
+                            whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                            onClick={() => {
+                              if (window.confirm('Accept this video consultation request?')) {
+                                updateVideoStatus({ appointmentId: item._id, status: 'Approved', message: 'Video consultation request accepted.' });
+                              }
+                            }}
+                            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-white shadow-md shadow-emerald-200"
+                            style={{ background: 'linear-gradient(135deg, #059669, #10b981)' }}
+                          >
+                            <CheckCircle className="w-4 h-4" /> Accept Video
+                          </motion.button>
+                          <motion.button
+                            whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                            onClick={() => {
+                              if (window.confirm('Reject this video consultation request?')) {
+                                updateVideoStatus({ appointmentId: item._id, status: 'Declined', message: 'Video consultation request declined.' });
+                              }
+                            }}
+                            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-white shadow-md shadow-rose-200"
+                            style={{ background: 'linear-gradient(135deg, #dc2626, #ef4444)' }}
+                          >
+                            <XCircle className="w-4 h-4" /> Reject Video
+                          </motion.button>
+                          <motion.button
+                            whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                            onClick={() => { setSelectedVideoAppt(item); setShowVideoModal(true); setVideoStatus('Rescheduled'); }}
+                            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-white shadow-md shadow-blue-200"
+                            style={{ background: 'linear-gradient(135deg, #1d4ed8, #3b82f6)' }}
+                          >
+                            <Calendar className="w-4 h-4" /> Reschedule
+                          </motion.button>
+                        </>
+                      ) : item.videoStatus === 'Approved' ? (
+                        <div className="flex gap-2">
+                          <motion.button
+                            whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                            onClick={() => window.open(`${window.location.origin}/doctor-video-call/${item._id}`, '_blank')}
+                            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-white shadow-md shadow-indigo-200"
+                            style={{ background: 'linear-gradient(135deg, #4f46e5, #6366f1)' }}
+                          >
+                            <Video className="w-4 h-4" /> Join Call
+                          </motion.button>
+                          <motion.button
+                            whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                            onClick={() => { setSelectedVideoAppt(item); setShowVideoModal(true); setVideoStatus('Rescheduled'); }}
+                            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-white shadow-md shadow-blue-200"
+                            style={{ background: 'linear-gradient(135deg, #1d4ed8, #3b82f6)' }}
+                          >
+                            <Calendar className="w-4 h-4" /> Reschedule
+                          </motion.button>
+                          <motion.button
+                            whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                            onClick={() => {
+                              if (window.confirm('Cancel this approved video consultation?')) {
+                                updateVideoStatus({ appointmentId: item._id, status: 'Cancelled', message: 'Video consultation cancelled by doctor.' });
+                              }
+                            }}
+                            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-white shadow-md shadow-rose-200"
+                            style={{ background: 'linear-gradient(135deg, #dc2626, #ef4444)' }}
+                          >
+                            <XCircle className="w-4 h-4" /> Cancel Video
+                          </motion.button>
+                        </div>
+                      ) : (
+                        <span className="text-xs font-bold px-3 py-2 rounded-xl bg-gray-100 text-gray-500">
+                          Video {item.videoStatus}
+                        </span>
+                      )}
+                    </div>
+                  )}
                   {!item.cancelled && !item.isCompleted && (
                     <>
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => setConfirmAction({ type: 'complete', appointmentId: item._id, name: item.userData.name })}
-                        className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-white"
-                        style={{ background: 'linear-gradient(135deg,#059669,#10b981)' }}
-                        title="Mark Complete"
-                      >
-                        <CheckCircle className="w-4 h-4" /> Complete
-                      </motion.button>
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => setConfirmAction({ type: 'cancel', appointmentId: item._id, name: item.userData.name })}
-                        className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-white"
-                        style={{ background: 'linear-gradient(135deg,#dc2626,#ef4444)' }}
-                        title="Cancel Appointment"
-                      >
-                        <XCircle className="w-4 h-4" /> Cancel
-                      </motion.button>
+                      {!item.isVideo && (
+                        <>
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => setConfirmAction({ type: 'complete', appointmentId: item._id, name: item.userData.name })}
+                            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-white"
+                            style={{ background: 'linear-gradient(135deg,#059669,#10b981)' }}
+                            title="Mark Complete"
+                          >
+                            <CheckCircle className="w-4 h-4" /> Complete
+                          </motion.button>
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => setConfirmAction({ type: 'cancel', appointmentId: item._id, name: item.userData.name })}
+                            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-white"
+                            style={{ background: 'linear-gradient(135deg,#dc2626,#ef4444)' }}
+                            title="Cancel Appointment"
+                          >
+                            <XCircle className="w-4 h-4" /> Cancel
+                          </motion.button>
+                        </>
+                      )}
+
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
@@ -488,16 +622,19 @@ const DoctorAppointments = () => {
                       >
                         <MessageCircle className="w-4 h-4" /> Chat
                       </motion.button>
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => setShowQrScanner(true)}
-                        className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-white shadow-md shadow-[#5A4035]/30"
-                        style={{ background: 'linear-gradient(135deg,#5A4035,#7a5a48)' }}
-                        title="Scan Pet QR"
-                      >
-                        <QrCode className="w-4 h-4" /> Scan QR
-                      </motion.button>
+
+                      {!item.isVideo && (
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => setShowQrScanner(true)}
+                          className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-white shadow-md shadow-[#5A4035]/30"
+                          style={{ background: 'linear-gradient(135deg,#5A4035,#7a5a48)' }}
+                          title="Scan Pet QR"
+                        >
+                          <QrCode className="w-4 h-4" /> Scan QR
+                        </motion.button>
+                      )}
                     </>
                   )}
                   {(item.isCompleted || item.cancelled) && (
@@ -602,6 +739,168 @@ const DoctorAppointments = () => {
       <AnimatePresence>
         {reportAppointment && (
           <PetReportModal appointment={reportAppointment} onClose={() => setReportAppointment(null)} />
+        )}
+      </AnimatePresence>
+
+      {/* ─── Video Management Modal ──────────────────────────── */}
+      <AnimatePresence>
+        {showVideoModal && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+            onClick={() => setShowVideoModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              onClick={e => e.stopPropagation()}
+              className="bg-white rounded-[2rem] p-8 max-w-md w-full shadow-2xl border"
+              style={{ borderColor: THEME.border }}
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-black text-[#5A4035]">Manage Video Request</h2>
+                <button onClick={() => setShowVideoModal(false)}><X size={24} className="text-[#5A4035]" /></button>
+              </div>
+
+              <div className="space-y-6">
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-widest text-[#5A4035] mb-2 block">Action</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {['Approved', 'Declined', 'Rescheduled'].map(status => (
+                      <button
+                        key={status}
+                        onClick={() => setVideoStatus(status)}
+                        className={`py-2 rounded-xl text-[10px] font-bold border transition-all ${videoStatus === status ? 'bg-[#5A4035] text-white' : 'bg-white text-[#5A4035]'}`}
+                      >
+                        {status}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-widest text-[#5A4035] mb-2 block">Response Message</label>
+                  <textarea
+                    value={videoMessage}
+                    onChange={e => setVideoMessage(e.target.value)}
+                    placeholder="Enter message for patient..."
+                    className="w-full p-4 rounded-2xl border-2 text-sm focus:outline-none min-h-[100px]"
+                    style={{ borderColor: THEME.border }}
+                  />
+                </div>
+
+                {videoStatus === 'Rescheduled' && (
+                  <div className="space-y-4">
+                    <label className="text-xs font-bold uppercase tracking-widest text-[#5A4035] mb-2 block">New Time Slot</label>
+
+                    {/* Existing Slots Picker */}
+                    {videoSlots.length > 0 && (
+                      <div className="space-y-2">
+                        <p className="text-[10px] font-bold text-gray-400 uppercase">Existing Available Slots</p>
+                        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                          {videoSlots.filter(s => s.isActive).map((slot, idx) => {
+                            const slotLabel = `${slot.dayOfWeek.substring(0, 3)}, ${slot.slotTime}`;
+                            return (
+                              <button
+                                key={idx}
+                                onClick={() => setRescheduleSlot(slotLabel)}
+                                className={`whitespace-nowrap px-4 py-2 rounded-xl text-xs font-bold border transition-all ${rescheduleSlot === slotLabel ? 'bg-amber-100 border-amber-400 text-amber-700' : 'bg-gray-50 border-gray-100 text-gray-500 hover:border-amber-200'}`}
+                              >
+                                {slotLabel}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Custom / Add New Slot */}
+                    <div className="bg-gray-50 p-4 rounded-2xl border border-dashed border-gray-200">
+                      <button
+                        onClick={() => setShowAddSlot(!showAddSlot)}
+                        className="text-[10px] font-black text-amber-600 flex items-center gap-1 uppercase hover:text-amber-700 transition-colors"
+                      >
+                        {showAddSlot ? <X size={12} /> : <Plus size={12} />}
+                        {showAddSlot ? 'Hide New Slot Form' : 'Add & Select New Slot'}
+                      </button>
+
+                      {showAddSlot ? (
+                        <div className="mt-4 grid grid-cols-2 gap-3">
+                          <select
+                            value={newSlotDay}
+                            onChange={e => setNewSlotDay(e.target.value)}
+                            className="bg-white p-2.5 rounded-xl border-2 text-xs focus:outline-none"
+                            style={{ borderColor: THEME.border }}
+                          >
+                            <option value="">Day</option>
+                            {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(d => <option key={d} value={d}>{d}</option>)}
+                          </select>
+                          <input
+                            type="time"
+                            value={newSlotTime}
+                            onChange={e => setNewSlotTime(e.target.value)}
+                            className="bg-white p-2.5 rounded-xl border-2 text-xs focus:outline-none"
+                            style={{ borderColor: THEME.border }}
+                          />
+                          <button
+                            onClick={async () => {
+                              if (!newSlotDay || !newSlotTime) return toast.warn('Fill both fields');
+                              setIsAddingSlot(true);
+                              const success = await addVideoSlot({ dayOfWeek: newSlotDay, slotTime: newSlotTime });
+                              if (success) {
+                                const newLabel = `${newSlotDay.substring(0, 3)}, ${newSlotTime}`;
+                                setRescheduleSlot(newLabel);
+                                setShowAddSlot(false);
+                                setNewSlotDay('');
+                                setNewSlotTime('');
+                              }
+                              setIsAddingSlot(false);
+                            }}
+                            disabled={isAddingSlot}
+                            className="col-span-2 py-2 bg-amber-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-amber-100 disabled:opacity-50"
+                          >
+                            {isAddingSlot ? 'Adding...' : 'Add & Pick Slot'}
+                          </button>
+                        </div>
+                      ) : (
+                        <input
+                          type="text"
+                          value={rescheduleSlot}
+                          onChange={e => setRescheduleSlot(e.target.value)}
+                          placeholder="Or type e.g. 25 Apr, 11:30 AM"
+                          className="w-full mt-2 bg-white p-3 rounded-xl border-2 text-xs focus:outline-none"
+                          style={{ borderColor: THEME.border }}
+                        />
+                      )}
+                    </div>
+                  </div>
+                )}
+
+
+                <button
+                  onClick={async () => {
+                    setVideoLoading(true);
+                    const success = await updateVideoStatus({
+                      appointmentId: selectedVideoAppt._id,
+                      status: videoStatus,
+                      message: videoMessage,
+                      rescheduleSlot: videoStatus === 'Rescheduled' ? rescheduleSlot : ''
+                    });
+                    if (success) {
+                      setShowVideoModal(false);
+                      setVideoMessage('');
+                      setRescheduleSlot('');
+                    }
+                    setVideoLoading(false);
+                  }}
+                  disabled={videoLoading}
+                  className="w-full py-4 bg-[#5A4035] text-white rounded-2xl font-bold text-lg hover:bg-[#3d2b1f] transition-all flex items-center justify-center gap-2"
+                >
+                  {videoLoading ? <Activity className="animate-spin" /> : <CheckCircle size={20} />}
+                  Update Video Status
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
 

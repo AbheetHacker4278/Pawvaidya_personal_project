@@ -37,6 +37,8 @@ import { AppContext } from './context/AppContext'
 import { useContext } from 'react'
 import PawWallet from './pages/PawWallet'
 import Subscription from './pages/Subscription'
+import VideoConsultation from './pages/VideoConsultation'
+import VideoCall from './pages/VideoCall'
 
 
 const App = () => {
@@ -99,6 +101,8 @@ const App = () => {
         <Route path='/polls' element={<Polls />} />
         <Route path='/paw-wallet' element={<PawWallet />} />
         <Route path='/subscription' element={<Subscription />} />
+        <Route path='/video-consultation' element={<VideoConsultation />} />
+        <Route path='/video-call/:appointmentId' element={<VideoCall />} />
       </Routes>
 
       {location.pathname != "/login-form" && location.pathname != "/login" && <Footer />}

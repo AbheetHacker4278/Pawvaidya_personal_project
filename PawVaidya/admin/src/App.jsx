@@ -12,6 +12,7 @@ import AllAppointments from './pages/Admin/AllAppointments';
 import AddDoctor from './pages/Admin/AddDoctor';
 import DoctorsList from './pages/Admin/DoctorsList';
 import { DoctorContext } from './context/DoctorContext';
+import RedisMonitoring from './pages/Admin/RedisMonitoring';
 import DoctorDashboard from './pages/Doctor/DoctorDashboard';
 import DoctorAppointments from './pages/Doctor/DoctorAppointments';
 import DoctorProfile from './pages/Doctor/DoctorProfile';
@@ -24,7 +25,6 @@ import AllReports from './pages/Admin/AllReports';
 import UnbanRequests from './pages/Admin/UnbanRequests';
 import AccountDeletionRequests from './pages/Admin/AccountDeletionRequests';
 import TrashReports from './pages/Admin/TrashReports';
-// import AdminProfile from './pages/Admin/AdminProfile';
 import AdminProfile from './pages/Admin/AdminProfile';
 import GlobalReminderNotifications from './components/GlobalReminderNotifications';
 import DoctorChat from './pages/Admin/DoctorChat';
@@ -55,6 +55,7 @@ import AdminDeployments from './pages/Admin/AdminDeployments';
 import AdminChatbot from './components/AdminChatbot';
 import PaymentDetails from './pages/Admin/PaymentDetails';
 import AllSubscriptions from './pages/Admin/AllSubscriptions';
+import DoctorVideoCall from './pages/Doctor/DoctorVideoCall';
 
 const App = () => {
   const { atoken, adminProfile } = useContext(AdminContext)
@@ -87,7 +88,6 @@ const App = () => {
       getSystemConfig()
     })
 
-    // Poll every 30s as a fallback
     const interval = setInterval(getSystemConfig, 30000)
     return () => {
       clearInterval(interval)
@@ -123,13 +123,10 @@ const App = () => {
       />
       <Navbar toggleSidebar={toggleSidebar} />
 
-      {/* Main Content Area with padding for fixed navbar */}
       <div className='pt-16'>
         <Sidebar isOpen={sidebarOpen} />
 
-        {/* Main Content */}
-        <main className={`min-h-screen overflow-auto transition-all duration-300 ${sidebarOpen ? 'lg:ml-72' : 'lg:ml-20'
-          }`}>
+        <main className={`min-h-screen overflow-auto transition-all duration-300 ${sidebarOpen ? 'lg:ml-72' : 'lg:ml-20'}`}>
           <div className='animate-fadeIn'>
             <Routes>
               <Route path='/' element={<></>} />
@@ -160,6 +157,7 @@ const App = () => {
               <Route path='/polls' element={<Polls />} />
               <Route path='/security-monitoring' element={<SecurityMonitoring />} />
               <Route path='/admin-deployments' element={<AdminDeployments />} />
+              <Route path='/redis-monitoring' element={<RedisMonitoring />} />
 
               <Route path='/doctor-dashboard' element={<DoctorDashboard />} />
               <Route path='/doctor-appointments' element={<DoctorAppointments />} />
@@ -170,40 +168,25 @@ const App = () => {
               <Route path='/doctor-messages' element={<DoctorMessages />} />
               <Route path='/doctor-chat' element={<DoctorChat />} />
               <Route path='/admin-chat' element={<AdminChat />} />
-              <Route path='/doctor-live-stream' element={<DoctorLiveStream />} />
               <Route path='/doctor-watch-admin-stream' element={<DoctorWatchAdminStream />} />
               <Route path='/patient-records' element={<PatientRecords />} />
+              <Route path='/doctor-video-call/:appointmentId' element={<DoctorVideoCall />} />
             </Routes>
           </div>
         </main>
       </div>
 
-      {/* Global Reminder Notifications - Only for doctors */}
       {dtoken && <GlobalReminderNotifications />}
-
-      {/* Omni-Search Command Palette */}
       {atoken && <CommandPalette />}
-
-      {/* Admin Side AI Chatbot */}
       {atoken && adminProfile?.role === 'master' && <AdminChatbot />}
-
-      {/* Global Broadcast Listener */}
       <GlobalBroadcastListener />
 
       <style>{`
         @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
         }
-        .animate-fadeIn {
-          animation: fadeIn 0.5s ease-out;
-        }
+        .animate-fadeIn { animation: fadeIn 0.5s ease-out; }
       `}</style>
     </div>
   ) : (

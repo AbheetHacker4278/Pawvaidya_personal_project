@@ -31,6 +31,7 @@ import {
   CreditCard,
   X,
   Crown,
+  Video,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import AnimalHealthChatbot from "../components/AnimalHealthChatbot";
@@ -723,7 +724,14 @@ const MyProfile = () => {
               { icon: Activity, label: "Status", value: editedData.isBanned ? "Restricted" : "Verified", color: "blue" },
               { icon: PawPrint, label: "Total Pets", value: `${userPets?.length || 0} Pets`, color: "green" },
               { icon: Zap, label: "Paw Wallet", value: `₹${userdata.pawWallet || 0}`, color: "purple" },
-              { icon: Heart, label: "Health Index", value: `${profileCompleteness}%`, color: "orange" }
+              {
+                icon: Video,
+                label: "Video Calls",
+                value: userdata?.subscription?.plan === 'Platinum' || userdata?.subscription?.plan === 'Gold'
+                  ? `${Math.max(0, (userdata.subscription.plan === 'Platinum' ? 25 : 10) - (userdata.videoCallsUsed || 0))} Left`
+                  : "Upgrade",
+                color: "rose"
+              }
             ].map((stat, i) => (
               <div key={i} className="bg-white/60 backdrop-blur-md p-4 rounded-[2rem] border border-white/50 shadow-sm hover:shadow-md transition-all">
                 <div className="flex items-center gap-3 mb-2">
@@ -929,6 +937,39 @@ const MyProfile = () => {
         </div>
 
         <div className="lg:col-span-4 space-y-8">
+          {userdata?.subscription?.plan && (userdata.subscription.plan === 'Gold' || userdata.subscription.plan === 'Platinum') && (
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.1 }}
+              className="bg-white/40 backdrop-blur-xl p-6 rounded-[3rem] shadow-2xl border border-white/60 relative overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 p-8 opacity-10 rotate-12"> <Video size={100} className="text-[#9a6458]" /> </div>
+              <div className="relative z-10 text-center">
+                <div className="flex items-center gap-3 mb-4 justify-center">
+                  <div className="p-2 bg-[#9a6458]/10 rounded-xl text-[#9a6458]"> <Video size={20} /> </div>
+                  <span className="text-xs font-black uppercase tracking-[0.2em] text-[#5A4035]">Video Consultations</span>
+                </div>
+
+                <div className="text-4xl font-black text-[#5A4035] mb-2">
+                  {Math.max(0, (userdata.subscription.plan === 'Gold' ? 10 : 25) - (userdata.videoCallsUsed || 0))}
+                  <span className="text-sm font-bold text-[#5A4035]/40 ml-1">LEFT</span>
+                </div>
+
+                <div className="w-full bg-[#9a6458]/10 rounded-full h-2.5 overflow-hidden mb-2">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${((userdata.videoCallsUsed || 0) / (userdata.subscription.plan === 'Gold' ? 10 : 25)) * 100}%` }}
+                    className="bg-gradient-to-r from-[#9a6458] to-[#7b483d] h-full"
+                  />
+                </div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-[#5A4035]/40">
+                  Total allowance: {userdata.subscription.plan === 'Gold' ? 10 : 25} credits
+                </p>
+              </div>
+            </motion.div>
+          )}
+
           {nextAppointment && (
             <motion.div
               initial={{ opacity: 0, x: 20 }}

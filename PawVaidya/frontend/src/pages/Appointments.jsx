@@ -144,7 +144,7 @@ const Appointments = () => {
     if (!token) return;
     setLoadingSubscription(true);
     try {
-      const { data } = await axios.get(backendurl + '/api/user/subscription-usage', { headers: { token } });
+      const { data } = await axios.post(backendurl + '/api/user/subscription-usage', {}, { headers: { token } });
       if (data.success) {
         setSubscriptionUsage({
           count: data.count,

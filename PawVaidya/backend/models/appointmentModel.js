@@ -55,6 +55,12 @@ const appointmentSchema = new mongoose.Schema({
     rescheduleSlot: {
         slotDate: String,
         slotTime: String
+    },
+    subscriptionDiscount: {
+        plan: String,
+        discountPercentage: Number,
+        amount: Number,
+        applied: { type: Boolean, default: false }
     }
 })
 

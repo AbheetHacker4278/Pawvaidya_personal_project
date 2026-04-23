@@ -31,7 +31,7 @@ const SPECIALITIES = [
 ];
 
 export const Doctors = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { speciality } = useParams();
   const [filterDoc, setFilterDoc] = useState([]);
   const [showfilter, setshowfilter] = useState(false);

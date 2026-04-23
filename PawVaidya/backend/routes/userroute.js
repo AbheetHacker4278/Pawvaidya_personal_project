@@ -73,6 +73,6 @@ userRouter.post('/vote-poll', authuser, voteInPoll)
 // Wallet Top-up routes
 userRouter.post('/wallet/topup-order', authuser, topUpWalletOrder)
 userRouter.post('/wallet/verify-topup', authuser, verifyTopUpWalletPayment)
-userRouter.get('/subscription-usage', authuser, getUserSubscriptionUsage)
+userRouter.post('/subscription-usage', authuser, getUserSubscriptionUsage)
 
 export default userRouter

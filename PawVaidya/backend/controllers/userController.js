@@ -797,35 +797,36 @@ export const deletePet = async (req, res) => {
 };
 
 // Helper to get start of current week (Sunday at midnight)
-const getStartOfWeek = () => {
-    const now = new Date();
-    const start = new Date(now);
-    start.setHours(0, 0, 0, 0);
-    start.setDate(now.getDate() - now.getDay()); // Sunday is 0
-    return start;
-};
 
-// Helper to count appointments with subscription discount this week
+// Helper to get number of appointments with subscription discount this week
 const getWeeklySubscriptionAppointmentCount = async (userId) => {
-    const startOfWeek = getStartOfWeek();
-    const count = await appointmentModel.countDocuments({
-        userId,
-        'subscriptionDiscount.applied': true,
-        createdAt: { $gte: startOfWeek }
-    });
-    return count;
+    try {
+        const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+        return await appointmentModel.countDocuments({
+            userId,
+            date: { $gte: oneWeekAgo },
+            cancelled: false,
+            'subscriptionDiscount.applied': true
+        });
+    } catch (error) {
+        console.error("Error in getWeeklySubscriptionAppointmentCount:", error);
+        return 0;
+    }
 };
 
-// Helper to count total appointments in current month (for non-subscribers)
+// Helper to get total appointments this month
 const getMonthlyBookingCount = async (userId) => {
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const count = await appointmentModel.countDocuments({
-        userId,
-        createdAt: { $gte: startOfMonth },
-        cancelled: false // Don't count cancelled appointments against the limit
-    });
-    return count;
+    try {
+        const oneMonthAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+        return await appointmentModel.countDocuments({
+            userId,
+            date: { $gte: oneMonthAgo },
+            cancelled: false
+        });
+    } catch (error) {
+        console.error("Error in getMonthlyBookingCount:", error);
+        return 0;
+    }
 };
 
 // API to get current week's subscription discount usage

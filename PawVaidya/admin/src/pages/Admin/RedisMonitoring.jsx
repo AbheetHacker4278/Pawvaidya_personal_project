@@ -12,33 +12,22 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 
 const RedisMonitoring = () => {
-    const { getRedisStats } = useContext(AdminContext);
+    const { getRedisStats, getRedisHistory } = useContext(AdminContext);
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [history, setHistory] = useState([]);
     const [lastRefresh, setLastRefresh] = useState(new Date());
-
-    // Simulated regional data (Upstash mock)
-    const [regionalData] = useState([
-        { name: 'Saturday', 'asia-northeast1': 0 },
-        { name: 'Sunday', 'asia-northeast1': 0 },
-        { name: 'Monday', 'asia-northeast1': 0 },
-        { name: 'Tuesday', 'asia-northeast1': 0 },
-        { name: 'Wednesday', 'asia-northeast1': 7 }
-    ]);
-
-    const [bandwidthData] = useState([
-        { name: 'Saturday', 'asia-northeast1': 0 },
-        { name: 'Sunday', 'asia-northeast1': 0 },
-        { name: 'Monday', 'asia-northeast1': 0 },
-        { name: 'Tuesday', 'asia-northeast1': 0 },
-        { name: 'Wednesday', 'asia-northeast1': 35 }
-    ]);
+    const [regionalData, setRegionalData] = useState([]);
+    const [bandwidthData, setBandwidthData] = useState([]);
 
     const fetchStats = async () => {
-        const data = await getRedisStats();
-        if (data && data !== null) {
+        const [data, historyData] = await Promise.all([
+            getRedisStats(),
+            getRedisHistory()
+        ]);
+
+        if (data) {
             setStats(data);
             setError(null);
             setLastRefresh(new Date());
@@ -61,6 +50,18 @@ const RedisMonitoring = () => {
         } else {
             setError("Unable to connect to Redis server. Please check your REDIS_URL environment variable.");
         }
+
+        if (historyData && historyData.length > 0) {
+            setRegionalData(historyData.map(h => ({
+                name: h.day,
+                'asia-northeast1': h.commands
+            })));
+            setBandwidthData(historyData.map(h => ({
+                name: h.day,
+                'asia-northeast1': Math.round(h.bandwidth)
+            })));
+        }
+
         setLoading(false);
     };
 

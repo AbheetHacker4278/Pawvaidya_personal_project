@@ -10,6 +10,7 @@ import appointmentModel from '../models/appointmentModel.js';
 import { PAYMENT_FAILED_TEMPLATE } from '../mailservice/paymentFailedTemplate.js';
 import subscriptionModel from '../models/subscriptionModel.js';
 import { SUBSCRIPTION_EXPIRY_TEMPLATE, GIFT_SUBSCRIPTION_EXPIRY_TEMPLATE } from '../mailservice/subscriptionTemplates.js';
+import { trackRedisMetrics } from './redisTracker.js';
 
 const initScheduler = () => {
     // Run every minute to check for expired incentives
@@ -58,6 +59,7 @@ const initScheduler = () => {
     // Run every 15 minutes for Service Heartbeat
     cron.schedule('*/15 * * * *', () => observeJob('Service Heartbeat', async () => {
         await performHeartbeatCheck();
+        await trackRedisMetrics();
     }));
 
     // Run daily at midnight to prune unverified users

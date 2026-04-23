@@ -863,6 +863,21 @@ const AdminContextProvider = (props) => {
         }
     };
 
+    const getRedisHistory = async () => {
+        try {
+            const { data } = await axios.get(backendurl + '/api/admin/redis-history', { headers: { atoken } });
+            if (data.success) {
+                return data.history;
+            } else {
+                toast.error(data.message);
+                return [];
+            }
+        } catch (error) {
+            toast.error(error.message || 'Failed to fetch Redis history');
+            return [];
+        }
+    };
+
     const value = {
         atoken, setatoken,
         backendurl, doctors,
@@ -907,7 +922,7 @@ const AdminContextProvider = (props) => {
         contentViolationCount, setContentViolationCount,
         adminLocation, setAdminLocation,
         subscriptions, loadingSubscriptions, getAllSubscriptions, revokeSubscription,
-        getRedisStats
+        getRedisStats, getRedisHistory
     }
 
     return (

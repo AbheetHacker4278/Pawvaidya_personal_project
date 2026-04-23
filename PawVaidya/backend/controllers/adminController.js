@@ -44,6 +44,8 @@ import petModel from '../models/petModel.js';
 import { Document, Packer, Paragraph, Table, TableRow, TableCell, WidthType, AlignmentType, HeadingLevel, TextRun, BorderStyle } from "docx";
 import { euclideanDistance } from '../utils/faceUtils.js';
 import redis from '../config/redis.js';
+import redisDailyMetricModel from '../models/redisDailyMetricModel.js';
+
 
 const execAsync = promisify(exec);
 
@@ -3983,5 +3985,30 @@ export const getRedisStats = async (req, res) => {
     } catch (error) {
         console.error("Critical Redis Stats Error:", error);
         res.status(200).json({ success: false, message: error.message });
+    }
+};
+
+// Get Redis Daily History (Admin Only)
+export const getRedisHistory = async (req, res) => {
+    try {
+        // Fetch last 7 days of history
+        const history = await redisDailyMetricModel.find({})
+            .sort({ date: -1 })
+            .limit(7);
+
+        // Map to a more chart-friendly format if needed
+        const formattedHistory = history.map(h => ({
+            date: h.date,
+            day: h.date.toLocaleDateString('en-US', { weekday: 'long' }),
+            commands: h.commands,
+            bandwidth: h.bandwidth,
+            totalCommandsAtSnapshot: h.totalCommandsAtSnapshot,
+            totalBandwidthAtSnapshot: h.totalBandwidthAtSnapshot
+        })).reverse(); // Return in chronological order
+
+        res.json({ success: true, history: formattedHistory });
+    } catch (error) {
+        console.error("Redis History Error:", error);
+        res.json({ success: false, message: error.message });
     }
 };

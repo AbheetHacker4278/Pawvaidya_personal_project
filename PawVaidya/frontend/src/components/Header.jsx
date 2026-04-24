@@ -34,7 +34,18 @@ const Header = () => {
             <div className="relative z-10 flex flex-col md:flex-row items-center gap-4 px-6 md:px-10 lg:px-14 py-5 md:py-7">
 
                 {/* ── Left ─────────────────────────────────────────────────────── */}
-                <div className="flex-1 flex flex-col gap-4 items-start">
+                <div className="flex-1 flex flex-col gap-4 items-start relative z-10">
+                    {/* Premium Ambient Background Glow for Subscribers */}
+                    {token && userdata && userdata?.subscription?.status === 'Active' && userdata.subscription.plan !== 'None' && (
+                        <div className="absolute -inset-10 -z-10 blur-3xl opacity-30 pointer-events-none"
+                            style={{
+                                background: userdata.subscription.plan === 'Platinum' ? 'radial-gradient(circle, #a855f7 0%, transparent 70%)' :
+                                    userdata.subscription.plan === 'Gold' ? 'radial-gradient(circle, #f59e0b 0%, transparent 70%)' :
+                                        'radial-gradient(circle, #94a3b8 0%, transparent 70%)'
+                            }}
+                        />
+                    )}
+
                     {/* Pill badge */}
                     <motion.div
                         initial={{ opacity: 0, x: -20 }}
@@ -43,59 +54,65 @@ const Header = () => {
                         className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/10 text-xs font-semibold text-[#fdf8f0] shadow-sm tracking-wide"
                         style={{ background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(8px)' }}
                     >
-                        <span className="w-2 h-2 rounded-full bg-amber-400" />
-                        {token && userdata && userdata?.subscription?.plan && userdata.subscription.plan !== 'None' ? (
-                            <span className="flex items-center gap-1.5">
-                                <Crown size={12} className="text-amber-400 fill-current" />
+                        {token && userdata && userdata?.subscription?.status === 'Active' && userdata.subscription.plan !== 'None' ? (
+                            <span className="flex items-center gap-1.5" style={{ color: userdata.subscription.plan === 'Platinum' ? '#d8b4fe' : userdata.subscription.plan === 'Gold' ? '#fde68a' : '#cbd5e1' }}>
+                                <Crown size={12} className="fill-current" />
                                 Premium {userdata.subscription.plan} Member
                             </span>
                         ) : (
-                            t('home.platformLabel', "India's #1 Veterinary Platform")
+                            <>
+                                <span className="w-2 h-2 rounded-full bg-amber-400" />
+                                {t('home.platformLabel', "India's #1 Veterinary Platform")}
+                            </>
                         )}
                     </motion.div>
 
                     {/* Headline Wrapper */}
                     <div className="flex flex-col gap-2">
-                        {token && userdata && userdata?.subscription?.plan && userdata.subscription.plan !== 'None' && (
-                            <motion.div
-                                initial={{ opacity: 0, scale: 0.8 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                className="inline-flex items-center gap-2 px-3 py-1 rounded-xl bg-gradient-to-r from-[#f59e0b]/90 to-[#b45309]/90 backdrop-blur-md border border-amber-300 shadow-xl shadow-amber-900/20 w-fit mb-1"
+                        {token && userdata && userdata?.subscription?.status === 'Active' && userdata.subscription.plan !== 'None' ? (
+                            <motion.h1
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.15, duration: 0.6 }}
+                                className="text-2xl md:text-3xl lg:text-4xl font-bold leading-[1.2] tracking-tight"
+                                style={{
+                                    background: userdata.subscription.plan === 'Platinum' ? 'linear-gradient(to right, #d8b4fe, #ffffff)' :
+                                        userdata.subscription.plan === 'Gold' ? 'linear-gradient(to right, #fde68a, #ffffff)' :
+                                            'linear-gradient(to right, #f8fafc, #cbd5e1)',
+                                    WebkitBackgroundClip: 'text',
+                                    WebkitTextFillColor: 'transparent',
+                                    dropShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                                }}
                             >
-                                <div className="p-1 bg-white/20 rounded-lg">
-                                    <Crown size={14} className="text-white fill-current" />
-                                </div>
-                                <span className="text-[10px] font-black text-white uppercase tracking-[0.15em]">
-                                    {userdata.subscription.plan} Member
-                                </span>
-                            </motion.div>
-                        )}
-                        <motion.h1
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.15, duration: 0.6 }}
-                            className="text-2xl md:text-3xl lg:text-4xl font-bold text-white leading-[1.2] tracking-tight"
-                        >
-                            {token && userdata ? (
                                 <div className="flex flex-col gap-1">
-                                    <span className="text-lg md:text-xl font-medium opacity-80 flex items-center gap-2">
-                                        Welcome back, {userdata.name}
-                                        {userdata?.subscription?.plan && userdata.subscription.plan !== 'None' && (
-                                            <motion.span
-                                                animate={{ opacity: [0.5, 1, 0.5] }}
-                                                transition={{ duration: 2, repeat: Infinity }}
-                                                className="text-amber-400"
-                                            >
-                                                ✨
-                                            </motion.span>
-                                        )}
+                                    <span className="text-xl md:text-2xl font-medium opacity-90 flex items-center gap-2" style={{ WebkitTextFillColor: 'initial', color: '#fff' }}>
+                                        VIP Access, {userdata.name}
+                                        <motion.span animate={{ opacity: [0.5, 1, 0.5] }} transition={{ duration: 2, repeat: Infinity }}>✨</motion.span>
                                     </span>
-                                    {t('home.bookAppointment', 'Book Appointment With Trusted Doctors')}
+                                    {userdata.subscription.plan === 'Platinum' ? "Your Personal Pet Caregiver Is Ready" :
+                                        userdata.subscription.plan === 'Gold' ? "Unlimited Priority Appointments" :
+                                            "Book Your Priority Appointment"}
                                 </div>
-                            ) : (
-                                t('home.bookAppointment', 'Book Appointment With Trusted Doctors')
-                            )}
-                        </motion.h1>
+                            </motion.h1>
+                        ) : (
+                            <motion.h1
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.15, duration: 0.6 }}
+                                className="text-2xl md:text-3xl lg:text-4xl font-bold text-white leading-[1.2] tracking-tight"
+                            >
+                                {token && userdata ? (
+                                    <div className="flex flex-col gap-1">
+                                        <span className="text-lg md:text-xl font-medium opacity-80">
+                                            Welcome back, {userdata.name}
+                                        </span>
+                                        {t('home.bookAppointment', 'Book Appointment With Trusted Doctors')}
+                                    </div>
+                                ) : (
+                                    t('home.bookAppointment', 'Book Appointment With Trusted Doctors')
+                                )}
+                            </motion.h1>
+                        )}
                     </div>
 
                     {/* Sub-text */}
@@ -107,7 +124,9 @@ const Header = () => {
                     >
                         <img className="w-16 h-auto object-contain drop-shadow-md flex-shrink-0" src={assets.group_profiles} alt="Trusted doctors" />
                         <p className="text-[#fdf8f0]/80 text-sm leading-relaxed max-w-xs font-medium">
-                            {t('home.trustedDoctorsDesc', 'Simply browse our trusted doctors from Gujarat, New Delhi, Haryana, Mumbai — schedule hassle-free.')}
+                            {token && userdata && userdata?.subscription?.status === 'Active' && userdata.subscription.plan !== 'None'
+                                ? "As a Premium member, enjoy hassle-free booking, priority doctor access, and exclusive discounts."
+                                : t('home.trustedDoctorsDesc', 'Simply browse our trusted doctors from Gujarat, New Delhi, Haryana, Mumbai — schedule hassle-free.')}
                         </p>
                     </motion.div>
 
@@ -136,9 +155,17 @@ const Header = () => {
                         whileTap={{ scale: 0.97 }}
                         onClick={() => navigate('/doctors')}
                         className="mt-1 flex items-center gap-2 px-6 py-2.5 rounded-full font-bold text-sm shadow-lg transition-all"
-                        style={{ background: `linear-gradient(135deg, ${B.amber}, #e8a020)`, color: '#fff' }}
+                        style={{
+                            background: (token && userdata && userdata?.subscription?.status === 'Active' && userdata.subscription.plan === 'Platinum')
+                                ? `linear-gradient(135deg, #a855f7, #6b21a8)`
+                                : `linear-gradient(135deg, ${B.amber}, #e8a020)`,
+                            color: '#fff',
+                            boxShadow: (token && userdata && userdata?.subscription?.status === 'Active') ? '0 8px 20px rgba(0,0,0,0.2)' : '0 4px 6px rgba(0,0,0,0.1)'
+                        }}
                     >
-                        {t('home.bookAppointmentBtn', 'Book Appointment')}
+                        {(token && userdata && userdata?.subscription?.status === 'Active' && userdata.subscription.plan !== 'None')
+                            ? "Book Priority Appointment"
+                            : t('home.bookAppointmentBtn', 'Book Appointment')}
                         <ArrowRight className="w-4 h-4" />
                     </motion.button>
                 </div>

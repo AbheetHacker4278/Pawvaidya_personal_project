@@ -1,5 +1,6 @@
 import doctorModel from "../models/doctorModel.js"
 import userModel from '../models/userModel.js';
+import systemConfigModel from '../models/systemConfigModel.js';
 import { transporter } from '../config/nodemailer.js';
 import argon2 from 'argon2'
 import jwt from 'jsonwebtoken'
@@ -450,6 +451,11 @@ export const appointmentComplete = async (req, res) => {
             return res.json({ success: false, message: 'Appointment not found' });
         }
 
+        // Safeguard: Prevent completing unpaid Razorpay appointments
+        if (appointmentData.paymentMethod === 'Razorpay' && !appointmentData.payment) {
+            return res.json({ success: false, message: 'Patient has not yet paid for this online booking. Cannot mark as completed.' });
+        }
+
         if (appointmentData.docId !== docId) {
             return res.json({ success: false, message: 'Unauthorized action' });
         }
@@ -775,14 +781,8 @@ export const doctorDashboard = async (req, res) => {
             return res.json({ success: false, message: "Doctor ID is required." });
         }
 
-        // Fetch only paid or Cash appointments for the given doctor ID
-        const appointments = await appointmentModel.find({
-            docId,
-            $or: [
-                { payment: true },
-                { paymentMethod: { $ne: 'Razorpay' } }
-            ]
-        }).populate('petId').lean()
+        // Fetch all appointments for the given doctor ID (including unpaid Razorpay)
+        const appointments = await appointmentModel.find({ docId }).populate('petId').lean()
 
         // Fetch current subscription status for each user
         const updatedAppointments = await Promise.all(appointments.map(async (appointment) => {
@@ -799,11 +799,22 @@ export const doctorDashboard = async (req, res) => {
         const completedAppointments = [];
         const latestAppointments = [];
 
+        // Fetch commission rate from system configuration
+        const systemConfig = await systemConfigModel.findOne() || { commissionRules: { defaultPercentage: 20 } };
+        const commissionPercentage = systemConfig.commissionRules?.defaultPercentage || 20;
+
         // Iterate through the appointments to calculate earnings and segregate data
         updatedAppointments.forEach((item) => {
-            // Calculate earnings for completed appointments
+            // Calculate earnings: Consider paid online appts (Razorpay/Wallet) or completed Cash appts. 
+            // Must include admin funded incentives as earnings.
+            if (item.isCompleted || item.payment) {
+                let amountForCommission = (item.docData?.fees || 0);
+                let commissionCut = Math.round(amountForCommission * (commissionPercentage / 100));
+
+                earnings += (item.amount || 0) + (item.incentiveAmount || 0) - commissionCut;
+            }
+
             if (item.isCompleted) {
-                earnings += item.amount || 0; // Default to 0 if `amount` is undefined
                 completedAppointments.push(item);
             }
 
@@ -845,7 +856,8 @@ export const doctorDashboard = async (req, res) => {
             totalRatings: doctor.totalRatings || 0,
             incentive: doctor.incentive,
             incentiveHistory: doctor.incentiveHistory || [],
-            attendanceHistory: attendanceHistory || []
+            attendanceHistory: attendanceHistory || [],
+            commissionPercentage // Sending for breakdown calculation
         };
 
         // Send the response with dashboard data
@@ -1803,6 +1815,7 @@ export const updateVideoStatus = async (req, res) => {
         }
 
         await appointment.save();
+        await deleteCache(`user_profile_${appointment.userId}`);
 
         res.json({ success: true, message: `Video consultation updated to ${status}.` });
 

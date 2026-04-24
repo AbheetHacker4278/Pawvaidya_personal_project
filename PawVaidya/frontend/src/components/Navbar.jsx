@@ -2,6 +2,9 @@ import React, { useContext, useEffect, useState, useRef } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next';
 import assets from '../assets/assets_frontend/assets';
+import PlatinumSVG from '../assets/assets_frontend/Platinum.svg';
+import GoldSVG from '../assets/assets_frontend/Gold.svg';
+import SilverSVG from '../assets/assets_frontend/Silver.svg';
 import { AppContext } from '../context/AppContext';
 import { toast } from 'react-toastify';
 import axios from 'axios';
@@ -53,11 +56,11 @@ const Navbar = () => {
     authLoading,
   } = useContext(AppContext);
 
-  const activePlan = userdata?.subscription?.status === 'Active' ? userdata.subscription.plan : 'None';
+  const activePlan = userdata?.subscription?.status === 'Active' ? userdata?.subscription?.plan : 'None';
   const brandedLogo =
-    activePlan === 'Gold' ? assets.gold_logo :
-      activePlan === 'Platinum' ? assets.platinum_logo :
-        activePlan === 'Silver' ? assets.silver_logo :
+    activePlan === 'Platinum' ? PlatinumSVG :
+      activePlan === 'Gold' ? GoldSVG :
+        activePlan === 'Silver' ? SilverSVG :
           null;
 
   const [showMenu, setShowMenu] = useState(false);

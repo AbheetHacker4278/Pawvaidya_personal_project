@@ -33,6 +33,7 @@ import systemConfigModel from '../models/systemConfigModel.js';
 import { getLocationFromIP, checkImpossibleTravel } from '../utils/fraudTracker.js';
 import supabaseService from '../services/supabaseService.js';
 import supabase from '../config/supabase.js';
+import { deleteCache } from '../utils/cacheUtils.js';
 import activityLogModel from '../models/activityLogModel.js';
 import deletionRequestModel from '../models/deletionRequestModel.js';
 import blacklistModel from '../models/blacklistModel.js';
@@ -3722,6 +3723,13 @@ export const revokeSubscription = async (req, res) => {
         };
 
         await user.save();
+
+        // Immediately bust the Redis profile cache so the user sees plan: None on next request
+        try {
+            await deleteCache(`user_profile_${userId}`);
+        } catch (cacheErr) {
+            console.warn('Cache invalidation failed after revoke:', cacheErr.message);
+        }
 
         // Update all related active subscriptions to 'Revoked' in history
         await subscriptionModel.updateMany(

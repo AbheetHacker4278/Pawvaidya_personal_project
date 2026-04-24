@@ -541,12 +541,35 @@ export const getprofile = async (req, res) => {
 
         const cachedProfile = await getCache(cacheKey);
         if (cachedProfile) {
-            return res.json({ success: true, userdata: cachedProfile, source: 'cache' });
+            // Re-validate subscription even from cache — prevents stale Platinum/Gold display
+            const cachedSub = cachedProfile.subscription;
+            const isCachedSubValid = cachedSub &&
+                cachedSub.plan !== 'None' &&
+                cachedSub.status === 'Active' &&
+                cachedSub.expiryDate &&
+                new Date(cachedSub.expiryDate) > new Date();
+
+            if (!isCachedSubValid && cachedSub?.plan && cachedSub.plan !== 'None') {
+                // Cached profile has stale/invalid subscription — bust the cache and re-fetch from DB
+                await deleteCache(cacheKey);
+            } else {
+                return res.json({ success: true, userdata: cachedProfile, source: 'cache' });
+            }
         }
 
         const userdata = await userModel.findById(userId).select('-password')
 
         // Prepare user data for localStorage
+        // Determine if subscription is genuinely active (status=Active AND not expired)
+        const sub = userdata.subscription;
+        const isSubActive = sub &&
+            sub.status === 'Active' &&
+            sub.expiryDate &&
+            new Date(sub.expiryDate) > new Date();
+        const subscriptionData = isSubActive
+            ? sub
+            : { plan: 'None', status: 'None', expiryDate: null };
+
         const userResponseData = {
             id: userdata._id,
             name: userdata.name,
@@ -569,8 +592,10 @@ export const getprofile = async (req, res) => {
             isFaceRegistered: userdata.isFaceRegistered || false,
             faceImage: userdata.faceImage || '',
             pawWallet: userdata.pawWallet || 0,
-            subscription: userdata.subscription || { plan: 'None' }
+            videoCallsUsed: userdata.videoCallsUsed || 0,
+            subscription: subscriptionData
         }
+
 
         // Cache for 30 minutes
         await setCache(cacheKey, userResponseData, 1800);
@@ -956,32 +981,27 @@ export const bookappointment = async (req, res) => {
         }
 
         // ─── Discount code handling ────────────────────────────────────────
+        // User always pays only the base doctor fee (fees). 
+        // Doctor incentives (bonus) are funded by the admin — NOT charged to the user.
         let finalFee = docData.fees;
 
-        // Add incentive amount if type is bonus and not expired
-        // Add incentive amount if type is bonus and not expired
+        // Calculate incentive amount (for recording purposes only — admin pays this, NOT the user)
+        let incentiveAmount = 0;
         if (docData.incentive &&
             docData.incentive.type === 'bonus' &&
             docData.incentive.value &&
             (!docData.incentive.expiryDate || new Date(docData.incentive.expiryDate) > new Date())
         ) {
-            let incentiveValue = 0;
             const incentiveString = String(docData.incentive.value).trim();
-
             if (incentiveString.includes('%')) {
-                // Percentage calculation
                 const percentage = parseFloat(incentiveString.replace('%', ''));
                 if (!isNaN(percentage)) {
-                    incentiveValue = (docData.fees * percentage) / 100;
+                    incentiveAmount = (docData.fees * percentage) / 100;
                 }
             } else {
-                // Fixed amount calculation
-                incentiveValue = Number(incentiveString);
+                incentiveAmount = Number(incentiveString);
             }
-
-            if (!isNaN(incentiveValue)) {
-                finalFee += incentiveValue;
-            }
+            if (isNaN(incentiveAmount)) incentiveAmount = 0;
         }
 
         // ─── Subscription Discount Handling ────────────────────────────────
@@ -1106,6 +1126,8 @@ export const bookappointment = async (req, res) => {
                 await userModel.findByIdAndUpdate(userId, {
                     $inc: { pawWallet: -walletDeduction }
                 });
+                // Invalidate profile cache so wallet balance updates immediately
+                await deleteCache(`user_profile_${userId}`);
             } else {
                 // Wallet partially covers fee
                 walletDeduction = userData.pawWallet;
@@ -1115,6 +1137,8 @@ export const bookappointment = async (req, res) => {
                 await userModel.findByIdAndUpdate(userId, {
                     pawWallet: 0
                 });
+                // Invalidate profile cache so wallet balance updates immediately
+                await deleteCache(`user_profile_${userId}`);
             }
         }
 
@@ -1137,7 +1161,9 @@ export const bookappointment = async (req, res) => {
             petId: isStray ? null : petId,
             isStray: isStray || false,
             strayDetails: isStray ? strayDetails : null,
-            subscriptionDiscount
+            subscriptionDiscount,
+            // Incentive is admin-funded — recorded here for transparency but NOT charged to user
+            ...(incentiveAmount > 0 && { incentiveAmount, incentivePaidByAdmin: true })
         };
 
         // Save appointment

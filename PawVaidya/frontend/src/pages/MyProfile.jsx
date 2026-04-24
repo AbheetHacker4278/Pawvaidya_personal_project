@@ -565,8 +565,8 @@ const MyProfile = () => {
               ) : (
                 <div className="relative group">
                   <div className="absolute -inset-1 bg-gradient-to-r from-[#9a6458] to-[#7b483d] rounded-[2.5rem] blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
-                  <div className={`relative w-40 h-40 rounded-[2.5rem] overflow-hidden border-4 border-white shadow-2xl bg-white ${userdata?.subscription?.plan && userdata.subscription.plan !== 'None' ? 'ring-4 ring-amber-400/50 ring-offset-2 animate-pulse' : ''}`}>
-                    {userdata?.subscription?.plan && userdata.subscription.plan !== 'None' && (
+                  <div className={`relative w-40 h-40 rounded-[2.5rem] overflow-hidden border-4 border-white shadow-2xl bg-white ${userdata?.subscription?.status === 'Active' && userdata.subscription.plan !== 'None' ? 'ring-4 ring-amber-400/50 ring-offset-2' : ''}`}>
+                    {userdata?.subscription?.status === 'Active' && userdata.subscription.plan !== 'None' && (
                       <motion.div
                         animate={{
                           boxShadow: [
@@ -586,13 +586,34 @@ const MyProfile = () => {
                       onError={(e) => (e.target.src = assets.profile_pic)}
                     />
                   </div>
+
+                  {/* Subscription SVG Badge */}
+                  {userdata?.subscription?.status === 'Active' && userdata.subscription.plan !== 'None' && (
+                    <motion.div
+                      initial={{ scale: 0, rotate: -15 }}
+                      animate={{ scale: 1, rotate: 0 }}
+                      className="absolute -top-5 -right-5 bg-white/80 p-2 rounded-[1.5rem] shadow-2xl border-2 border-white backdrop-blur-sm z-20 flex items-center justify-center transform hover:scale-110 transition-transform"
+                    >
+                      <img
+                        src={
+                          userdata.subscription.plan === 'Platinum' ? assets.platinum_logo :
+                            userdata.subscription.plan === 'Gold' ? assets.gold_logo :
+                              assets.silver_logo
+                        }
+                        alt={`${userdata.subscription.plan} Badge`}
+                        className="w-14 h-14 object-contain drop-shadow-md"
+                      />
+                    </motion.div>
+                  )}
+
+                  {/* Profile Completeness Trophy */}
                   {profileCompleteness === 100 && (
                     <motion.div
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
-                      className="absolute -top-3 -right-3 bg-yellow-400 p-2 rounded-full shadow-lg border-2 border-white"
+                      className="absolute -bottom-3 -left-3 bg-yellow-400 p-2 rounded-full shadow-lg border-2 border-white z-20"
                     >
-                      <Trophy size={20} className="text-white" />
+                      <Trophy size={18} className="text-white" />
                     </motion.div>
                   )}
                 </div>

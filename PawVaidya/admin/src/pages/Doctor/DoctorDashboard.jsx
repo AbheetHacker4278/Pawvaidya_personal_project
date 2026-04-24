@@ -16,6 +16,7 @@ const DoctorDashboard = () => {
   // State for daily earnings and reminders
   const [dailyEarnings, setDailyEarnings] = useState(0);
   const [reminders, setReminders] = useState([]);
+  const [breakdown, setBreakdown] = useState({ baseFees: 0, incentives: 0, discounts: 0, subscription: 0, netEarnings: 0 });
   const [activeNotifications, setActiveNotifications] = useState([]);
 
   // Animation variants
@@ -115,12 +116,44 @@ const DoctorDashboard = () => {
 
       // Calculate today's earnings
       const todayCompletedAppointments = dashdata.latestAppointments.filter(appointment => {
-        if (!appointment.isCompleted || appointment.cancelled || !appointment.slotDate) return false;
+        if (appointment.cancelled || !appointment.slotDate) return false;
+        if (!appointment.isCompleted && !appointment.payment) return false; // Accept completed or paid online
         const appointmentDate = parseSlotDate(appointment.slotDate);
         return appointmentDate.getTime() === today.getTime();
       });
 
       setTodayEarnings(todayCompletedAppointments);
+
+      // Calculate earnings breakdown
+      let bBase = 0, bInc = 0, bDisc = 0, bSub = 0, bComm = 0, bNet = 0;
+      const commissionPercentage = dashdata.commissionPercentage || 0;
+
+      todayCompletedAppointments.forEach(app => {
+        bBase += (app.docData?.fees || 0);
+        bInc += (app.incentiveAmount || 0);
+
+        let currentDisc = 0;
+        if (app.discountApplied && app.discountApplied.originalFee !== undefined) {
+          currentDisc += (app.discountApplied.originalFee - app.discountApplied.finalFee);
+        }
+        if (app.adminDiscountData && app.adminDiscountData.amount) {
+          currentDisc += app.adminDiscountData.amount;
+        }
+        bDisc += currentDisc;
+
+        if (app.subscriptionDiscount && app.subscriptionDiscount.amount) {
+          bSub += app.subscriptionDiscount.amount;
+        }
+
+        // Calculate commission dynamically
+        let amountForCommission = (app.docData?.fees || 0);
+        let commissionCut = Math.round(amountForCommission * (commissionPercentage / 100));
+        bComm += commissionCut;
+
+        // The net earned by the doctor for this appointment is what the user paid + what admin funded MINUS the platform commission
+        bNet += (app.amount || 0) + (app.incentiveAmount || 0) - commissionCut;
+      });
+      setBreakdown({ baseFees: bBase, incentives: bInc, discounts: bDisc, subscription: bSub, commission: bComm, netEarnings: bNet });
 
       // Calculate weekly earnings (last 7 days)
       const weekAgo = new Date(today);
@@ -660,6 +693,64 @@ const DoctorDashboard = () => {
         </div>
       </motion.div>
 
+      {/* Daily Earnings Breakdown Section */}
+      <motion.div
+        className='mt-8 bg-gradient-to-br from-white to-green-50 p-6 rounded-lg shadow-sm border border-green-100'
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.58 }}
+      >
+        <h3 className='text-lg font-semibold text-gray-800 mb-6 flex items-center gap-2'>
+          <Gift className="w-5 h-5 text-green-500" />
+          Today's Earnings Breakdown
+        </h3>
+        <div className='flex flex-col md:flex-row gap-6 lg:gap-12'>
+          <div className='flex-1 space-y-4'>
+            <div className='flex justify-between items-center text-sm font-medium'>
+              <span className='text-gray-600'>Base Doctor Fees {todayEarnings.length > 0 && <span className='text-xs text-gray-400'>({todayEarnings.length} bookings)</span>}</span>
+              <span className='text-gray-800 text-base'>₹{breakdown.baseFees}</span>
+            </div>
+            {breakdown.incentives > 0 && (
+              <div className='flex justify-between items-center text-sm font-medium'>
+                <span className='text-purple-600 font-semibold'>+ Admin Incentive Bonus {todayEarnings.filter(i => i.incentiveAmount > 0).length > 0 && <span className='text-xs opacity-75'>({todayEarnings.filter(i => i.incentiveAmount > 0).length} uses)</span>}</span>
+                <span className='text-purple-700 text-base'>₹{breakdown.incentives}</span>
+              </div>
+            )}
+            {breakdown.discounts > 0 && (
+              <div className='flex justify-between items-center text-sm font-medium'>
+                <span className='text-rose-500'>- Standard Discounts {todayEarnings.filter(i => ((i.discountApplied && i.discountApplied.originalFee !== undefined) || (i.adminDiscountData && i.adminDiscountData.amount))).length > 0 && <span className='text-xs opacity-75'>({todayEarnings.filter(i => ((i.discountApplied && i.discountApplied.originalFee !== undefined) || (i.adminDiscountData && i.adminDiscountData.amount))).length} uses)</span>}</span>
+                <span className='text-rose-600 text-base'>-₹{breakdown.discounts}</span>
+              </div>
+            )}
+            {breakdown.subscription > 0 && (
+              <div className='flex justify-between items-center text-sm font-medium'>
+                <span className='text-rose-500'>- Subscription Discounts {todayEarnings.filter(i => (i.subscriptionDiscount && i.subscriptionDiscount.amount)).length > 0 && <span className='text-xs opacity-75'>({todayEarnings.filter(i => (i.subscriptionDiscount && i.subscriptionDiscount.amount)).length} uses)</span>}</span>
+                <span className='text-rose-600 text-base'>-₹{breakdown.subscription}</span>
+              </div>
+            )}
+            <div className='flex justify-between items-center text-sm font-medium'>
+              <span className='text-red-500'>- Platform Commission ({dashdata.commissionPercentage}%) {todayEarnings.filter(i => (i.docData?.fees > 0)).length > 0 && <span className='text-xs opacity-75'>({todayEarnings.filter(i => (i.docData?.fees > 0)).length} applies)</span>}</span>
+              <span className='text-red-600 text-base'>-₹{breakdown.commission}</span>
+            </div>
+            <div className='w-full h-px bg-gray-200 my-2'></div>
+            <div className='flex justify-between items-center'>
+              <span className='text-gray-800 font-bold text-lg'>Net Earnings Received</span>
+              <span className='text-green-600 font-black text-2xl'>₹{breakdown.netEarnings}</span>
+            </div>
+            <p className='text-xs text-gray-500 italic mt-2'>
+              *Includes all successfully completed or digitally paid appointments for {new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}.
+            </p>
+          </div>
+
+          <div className='hidden md:flex flex-1 items-center justify-center border-l border-gray-200 pl-8'>
+            <div className='text-center space-y-2'>
+              <p className='text-sm text-gray-500 uppercase tracking-wider font-semibold'>Total Paid Appointments Today</p>
+              <p className='text-5xl font-black text-gray-800'>{todayEarnings.length}</p>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+
       {/* Search Bar */}
       <motion.div
         className='mt-6'
@@ -709,9 +800,9 @@ const DoctorDashboard = () => {
             />
             <p className='font-semibold text-green-800'>Latest Bookings 🦥</p>
           </motion.div>
-          <div className='pt-6 border border-t-0'>
+          <div className='pt-6 border border-t-0 max-h-96 overflow-y-auto custom-scrollbar'>
             <AnimatePresence>
-              {filteredAppointments.slice(0, 5).map((item, index) => (
+              {filteredAppointments.map((item, index) => (
                 <motion.div
                   className='flex items-center px-6 py-3 gap-3 hover:bg-gray-50 transition-colors duration-200 border-b border-gray-100 last:border-b-0'
                   key={index}
@@ -734,7 +825,12 @@ const DoctorDashboard = () => {
                     transition={{ type: "spring", stiffness: 300 }}
                   />
                   <div className='flex-1 text-sm'>
-                    <p className='text-gray-800 font-medium'>{item.userData.name}</p>
+                    <div className="flex items-center gap-2">
+                      <p className='text-gray-800 font-medium'>{item.userData.name}</p>
+                      {item.paymentMethod === 'Razorpay' && !item.payment && !item.cancelled && (
+                        <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[10px] font-bold rounded border border-amber-200">UNPAID</span>
+                      )}
+                    </div>
                     <p className='text-gray-600 '>Booking on {slotDateFormat(item.slotDate)}</p>
                   </div>
                   {item.cancelled
@@ -771,12 +867,18 @@ const DoctorDashboard = () => {
                           transition={{ type: "spring", stiffness: 400 }}
                         />
                         <motion.img
-                          onClick={() => completeAppointment(item._id)}
-                          className='w-10 cursor-pointer'
+                          onClick={() => {
+                            if (item.paymentMethod === 'Razorpay' && !item.payment) {
+                              alert("Patient has not yet paid for this online booking. Cannot mark as completed.");
+                              return;
+                            }
+                            completeAppointment(item._id);
+                          }}
+                          className={`w-10 ${item.paymentMethod === 'Razorpay' && !item.payment ? 'opacity-30 cursor-not-allowed grayscale' : 'cursor-pointer'}`}
                           src={assets.tick_icon}
                           alt=""
-                          whileHover={{ scale: 1.2, rotate: 5 }}
-                          whileTap={{ scale: 0.9 }}
+                          whileHover={item.paymentMethod === 'Razorpay' && !item.payment ? {} : { scale: 1.2, rotate: 5 }}
+                          whileTap={item.paymentMethod === 'Razorpay' && !item.payment ? {} : { scale: 0.9 }}
                           transition={{ type: "spring", stiffness: 400 }}
                         />
                       </motion.div>
@@ -807,9 +909,9 @@ const DoctorDashboard = () => {
             />
             <p className='font-semibold text-red-800'>Latest Cancelled 🦥</p>
           </motion.div>
-          <div className='pt-4 border border-t-0'>
+          <div className='pt-4 border border-t-0 max-h-96 overflow-y-auto custom-scrollbar'>
             <AnimatePresence>
-              {filteredCancelledAppointments.slice(0, 5).map((item, index) => (
+              {filteredCancelledAppointments.map((item, index) => (
                 <motion.div
                   className='flex items-center px-6 py-3 gap-3 hover:bg-gray-50 transition-colors duration-200 border-b border-gray-100 last:border-b-0'
                   key={index}
@@ -869,58 +971,79 @@ const DoctorDashboard = () => {
             />
             <p className='font-semibold text-blue-800'>Today's Earnings 💰</p>
           </motion.div>
-          <div className='pt-4 border border-t-0'>
+          <div className='pt-4 border border-t-0 max-h-96 overflow-y-auto custom-scrollbar'>
             <AnimatePresence>
               {todayEarnings.length > 0 ? (
-                todayEarnings.slice(0, 5).map((item, index) => (
-                  <motion.div
-                    className='flex items-center px-6 py-3 gap-3 hover:bg-gray-50 transition-colors duration-200 border-b border-gray-100 last:border-b-0'
-                    key={index}
-                    variants={listItemVariants}
-                    initial="hidden"
-                    animate="visible"
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ delay: index * 0.1 + 0.2 }}
-                    whileHover={{
-                      backgroundColor: "#f0f9ff",
-                      scale: 1.02,
-                      transition: { duration: 0.2 }
-                    }}
-                  >
-                    <motion.img
-                      className='rounded-full w-10 h-10 object-cover border-2 border-white shadow-sm'
-                      src={item.userData.image}
-                      alt=""
-                      whileHover={{ scale: 1.1, rotate: 5 }}
-                      transition={{ type: "spring", stiffness: 300 }}
-                    />
-                    <div className='flex-1 text-sm min-w-0'>
-                      <p className='text-gray-800 font-medium'>{item.userData.name}</p>
-                      <p className='text-gray-600'>Earned on {slotDateFormat(item.slotDate)}</p>
-                      {item.discountApplied && (
-                        <span
-                          className='inline-block mt-0.5 px-2 py-0.5 rounded-full text-xs font-bold'
-                          style={{ background: '#d1fae5', color: '#065f46' }}
-                        >
-                          🏷️ {item.discountApplied.code}
-                        </span>
-                      )}
-                    </div>
-                    <div className='text-right'>
-                      {item.discountApplied && (
-                        <p className='text-gray-400 line-through text-xs'>₹{item.discountApplied.originalFee}</p>
-                      )}
-                      <motion.p
-                        className='text-green-600 text-sm font-bold'
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ type: "spring", stiffness: 500 }}
-                      >
-                        ₹{item.amount}
-                      </motion.p>
-                    </div>
-                  </motion.div>
-                ))
+                todayEarnings.map((item, index) => {
+                  const commPct = dashdata.commissionPercentage || 0;
+                  const iBase = item.docData?.fees || 0;
+                  const iInc = item.incentiveAmount || 0;
+
+                  let iDisc = 0;
+                  if (item.discountApplied && item.discountApplied.originalFee !== undefined) {
+                    iDisc += (item.discountApplied.originalFee - item.discountApplied.finalFee);
+                  }
+                  if (item.adminDiscountData && item.adminDiscountData.amount) {
+                    iDisc += item.adminDiscountData.amount;
+                  }
+
+                  const iSub = item.subscriptionDiscount?.amount || 0;
+
+                  let amountForComm = iBase;
+                  const iComm = Math.round(amountForComm * (commPct / 100));
+
+                  const iNet = (item.amount || 0) + iInc - iComm;
+
+                  return (
+                    <motion.div
+                      className='flex flex-col px-6 py-4 gap-3 hover:bg-gray-50 transition-colors duration-200 border-b border-gray-100 last:border-b-0'
+                      key={index}
+                      variants={listItemVariants}
+                      initial="hidden"
+                      animate="visible"
+                      exit={{ opacity: 0, x: -20 }}
+                      transition={{ delay: index * 0.1 + 0.2 }}
+                      whileHover={{
+                        backgroundColor: "#f0f9ff",
+                        scale: 1.01,
+                        transition: { duration: 0.2 }
+                      }}
+                    >
+                      <div className='flex items-center gap-3 w-full'>
+                        <motion.img
+                          className='rounded-full w-10 h-10 object-cover border-2 border-white shadow-sm'
+                          src={item.userData.image}
+                          alt=""
+                          whileHover={{ scale: 1.1, rotate: 5 }}
+                          transition={{ type: "spring", stiffness: 300 }}
+                        />
+                        <div className='flex-1 text-sm min-w-0'>
+                          <div className="flex items-center gap-2">
+                            <p className='text-gray-800 font-medium'>{item.userData.name}</p>
+                            {item.paymentMethod === 'Razorpay' && !item.payment && (
+                              <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[10px] font-bold rounded border border-amber-200">PAYMENT PENDING</span>
+                            )}
+                          </div>
+                          <p className='text-gray-600'>Booking on {slotDateFormat(item.slotDate)}</p>
+                        </div>
+                        <div className='text-right'>
+                          <p className='text-green-600 font-bold text-lg'>₹{iNet}</p>
+                        </div>
+                      </div>
+
+                      {/* Mini Breakdown */}
+                      <div className='w-full pl-12 bg-[#f8fafc] rounded p-3 mt-1 space-y-1.5 border border-gray-100 text-xs'>
+                        <div className='flex justify-between text-gray-600'><span>Base Fee:</span> <span>₹{iBase}</span></div>
+                        {iInc > 0 && <div className='flex justify-between text-purple-600 font-medium'><span>+ Admin Incentive:</span> <span>₹{iInc}</span></div>}
+                        {iDisc > 0 && <div className='flex justify-between text-rose-500'><span>- Standard Discounts:</span> <span>-₹{iDisc} {item.discountApplied?.code && `(${item.discountApplied.code})`}</span></div>}
+                        {iSub > 0 && <div className='flex justify-between text-rose-500'><span>- Subscription Savings:</span> <span>-₹{iSub}</span></div>}
+                        <div className='flex justify-between text-red-500'><span>- Platform Commission ({commPct}%):</span> <span>-₹{iComm}</span></div>
+                        <div className='border-t border-gray-200 my-1'></div>
+                        <div className='flex justify-between font-bold text-gray-800'><span>Net Payout:</span> <span>₹{iNet}</span></div>
+                      </div>
+                    </motion.div>
+                  );
+                })
               ) : (
                 <motion.div
                   className='flex items-center justify-center px-6 py-8 text-gray-500'
@@ -957,7 +1080,12 @@ const DoctorDashboard = () => {
                     className='text-lg font-bold text-green-600'
                     whileHover={{ scale: 1.1 }}
                   >
-                    ₹{todayEarnings.reduce((total, item) => total + (item.amount || 0), 0)}
+                    ₹{todayEarnings.reduce((total, item) => {
+                      const commPct = dashdata.commissionPercentage || 0;
+                      let amtComm = (item.docData?.fees || 0);
+                      const cCut = Math.round(amtComm * (commPct / 100));
+                      return total + ((item.amount || 0) + (item.incentiveAmount || 0) - cCut);
+                    }, 0)}
                   </motion.span>
                 </div>
                 {todayEarnings.some(i => i.discountApplied) && (
@@ -990,58 +1118,79 @@ const DoctorDashboard = () => {
             />
             <p className='font-semibold text-purple-800'>Weekly Earnings 📊</p>
           </motion.div>
-          <div className='pt-4 border border-t-0'>
+          <div className='pt-4 border border-t-0 max-h-96 overflow-y-auto custom-scrollbar'>
             <AnimatePresence>
               {weeklyEarnings.length > 0 ? (
-                weeklyEarnings.slice(0, 5).map((item, index) => (
-                  <motion.div
-                    className='flex items-center px-6 py-3 gap-3 hover:bg-gray-50 transition-colors duration-200 border-b border-gray-100 last:border-b-0'
-                    key={index}
-                    variants={listItemVariants}
-                    initial="hidden"
-                    animate="visible"
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ delay: index * 0.1 + 0.3 }}
-                    whileHover={{
-                      backgroundColor: "#faf5ff",
-                      scale: 1.02,
-                      transition: { duration: 0.2 }
-                    }}
-                  >
-                    <motion.img
-                      className='rounded-full w-10 h-10 object-cover border-2 border-white shadow-sm'
-                      src={item.userData.image}
-                      alt=""
-                      whileHover={{ scale: 1.1, rotate: 5 }}
-                      transition={{ type: "spring", stiffness: 300 }}
-                    />
-                    <div className='flex-1 text-sm min-w-0'>
-                      <p className='text-gray-800 font-medium'>{item.userData.name}</p>
-                      <p className='text-gray-600'>Earned on {slotDateFormat(item.slotDate)}</p>
-                      {item.discountApplied && (
-                        <span
-                          className='inline-block mt-0.5 px-2 py-0.5 rounded-full text-xs font-bold'
-                          style={{ background: '#ede9fe', color: '#4c1d95' }}
-                        >
-                          🏷️ {item.discountApplied.code}
-                        </span>
-                      )}
-                    </div>
-                    <div className='text-right'>
-                      {item.discountApplied && (
-                        <p className='text-gray-400 line-through text-xs'>₹{item.discountApplied.originalFee}</p>
-                      )}
-                      <motion.p
-                        className='text-purple-600 text-sm font-bold'
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ type: "spring", stiffness: 500 }}
-                      >
-                        ₹{item.amount}
-                      </motion.p>
-                    </div>
-                  </motion.div>
-                ))
+                weeklyEarnings.map((item, index) => {
+                  const commPct = dashdata.commissionPercentage || 0;
+                  const iBase = item.docData?.fees || 0;
+                  const iInc = item.incentiveAmount || 0;
+
+                  let iDisc = 0;
+                  if (item.discountApplied && item.discountApplied.originalFee !== undefined) {
+                    iDisc += (item.discountApplied.originalFee - item.discountApplied.finalFee);
+                  }
+                  if (item.adminDiscountData && item.adminDiscountData.amount) {
+                    iDisc += item.adminDiscountData.amount;
+                  }
+
+                  const iSub = item.subscriptionDiscount?.amount || 0;
+
+                  let amountForComm = iBase;
+                  const iComm = Math.round(amountForComm * (commPct / 100));
+
+                  const iNet = (item.amount || 0) + iInc - iComm;
+
+                  return (
+                    <motion.div
+                      className='flex flex-col px-6 py-4 gap-3 hover:bg-gray-50 transition-colors duration-200 border-b border-gray-100 last:border-b-0'
+                      key={index}
+                      variants={listItemVariants}
+                      initial="hidden"
+                      animate="visible"
+                      exit={{ opacity: 0, x: -20 }}
+                      transition={{ delay: index * 0.1 + 0.3 }}
+                      whileHover={{
+                        backgroundColor: "#faf5ff",
+                        scale: 1.01,
+                        transition: { duration: 0.2 }
+                      }}
+                    >
+                      <div className='flex items-center gap-3 w-full'>
+                        <motion.img
+                          className='rounded-full w-10 h-10 object-cover border-2 border-white shadow-sm'
+                          src={item.userData.image}
+                          alt=""
+                          whileHover={{ scale: 1.1, rotate: 5 }}
+                          transition={{ type: "spring", stiffness: 300 }}
+                        />
+                        <div className='flex-1 text-sm min-w-0'>
+                          <div className="flex items-center gap-2">
+                            <p className='text-gray-800 font-medium'>{item.userData.name}</p>
+                            {item.paymentMethod === 'Razorpay' && !item.payment && (
+                              <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[10px] font-bold rounded border border-amber-200">PAYMENT PENDING</span>
+                            )}
+                          </div>
+                          <p className='text-gray-600'>Booking on {slotDateFormat(item.slotDate)}</p>
+                        </div>
+                        <div className='text-right'>
+                          <p className='text-purple-600 font-bold text-lg'>₹{iNet}</p>
+                        </div>
+                      </div>
+
+                      {/* Mini Breakdown */}
+                      <div className='w-full pl-12 bg-[#f8fafc] rounded p-3 mt-1 space-y-1.5 border border-gray-100 text-xs'>
+                        <div className='flex justify-between text-gray-600'><span>Base Fee:</span> <span>₹{iBase}</span></div>
+                        {iInc > 0 && <div className='flex justify-between text-purple-600 font-medium'><span>+ Admin Incentive:</span> <span>₹{iInc}</span></div>}
+                        {iDisc > 0 && <div className='flex justify-between text-rose-500'><span>- Standard Discounts:</span> <span>-₹{iDisc} {item.discountApplied?.code && `(${item.discountApplied.code})`}</span></div>}
+                        {iSub > 0 && <div className='flex justify-between text-rose-500'><span>- Subscription Savings:</span> <span>-₹{iSub}</span></div>}
+                        <div className='flex justify-between text-red-500'><span>- Platform Commission ({commPct}%):</span> <span>-₹{iComm}</span></div>
+                        <div className='border-t border-gray-200 my-1'></div>
+                        <div className='flex justify-between font-bold text-gray-800'><span>Net Payout:</span> <span>₹{iNet}</span></div>
+                      </div>
+                    </motion.div>
+                  );
+                })
               ) : (
                 <motion.div
                   className='flex items-center justify-center px-6 py-8 text-gray-500'
@@ -1078,7 +1227,13 @@ const DoctorDashboard = () => {
                     className='text-lg font-bold text-purple-600'
                     whileHover={{ scale: 1.1 }}
                   >
-                    ₹{weeklyEarnings.reduce((total, item) => total + (item.amount || 0), 0)}
+                    ₹{weeklyEarnings.reduce((total, item) => {
+                      const commPct = dashdata.commissionPercentage || 0;
+                      let amtComm = (item.amount || 0) + (item.adminDiscountData?.amount || 0);
+                      if (amtComm < 0) amtComm = 0;
+                      const cCut = Math.round(amtComm * (commPct / 100));
+                      return total + ((item.amount || 0) + (item.incentiveAmount || 0) - cCut);
+                    }, 0)}
                   </motion.span>
                 </div>
                 <div className='text-xs text-gray-500 mt-1'>

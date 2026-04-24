@@ -24,11 +24,16 @@ const Footer = () => {
     const navigate = useNavigate();
     const { userdata } = useContext(AppContext);
 
-    const activePlan = userdata?.subscription?.status === 'Active' ? userdata.subscription.plan : 'None';
+    // Directly import the requested SVGs just to guarantee the correct files are used
+    const PlatinumSVG = '/src/assets/assets_frontend/Platinum.svg';
+    const GoldSVG = '/src/assets/assets_frontend/Gold.svg';
+    const SilverSVG = '/src/assets/assets_frontend/Silver.svg';
+
+    const activePlan = userdata?.subscription?.status === 'Active' ? userdata?.subscription?.plan : 'None';
     const brandedLogo =
-        activePlan === 'Gold' ? assets.gold_logo :
-            activePlan === 'Platinum' ? assets.platinum_logo :
-                activePlan === 'Silver' ? assets.silver_logo :
+        activePlan === 'Platinum' ? PlatinumSVG :
+            activePlan === 'Gold' ? GoldSVG :
+                activePlan === 'Silver' ? SilverSVG :
                     null;
 
     const companyLinks = [

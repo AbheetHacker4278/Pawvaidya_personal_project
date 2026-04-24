@@ -4,6 +4,7 @@ import Razorpay from "razorpay";
 import crypto from "crypto";
 import { transporter } from "../config/nodemailer.js";
 import { SUBSCRIPTION_SUCCESS_TEMPLATE } from "../mailservice/subscriptionTemplates.js";
+import redis from "../config/redis.js";
 
 const razorpayInstance = new Razorpay({
     key_id: process.env.RAZORPAY_KEY_ID,
@@ -106,6 +107,9 @@ export const verifySubscriptionPayment = async (req, res) => {
             });
             await newSubscription.save();
 
+            // Invalidate the user profile cache so the frontend updates immediately
+            if (redis) await redis.del(`user_profile_${userId}`);
+
             // Send Success Email
             const user = await userModel.findById(userId);
             const mailOptions = {
@@ -181,6 +185,9 @@ export const subscribeViaWallet = async (req, res) => {
             paymentMethod: 'Wallet'
         });
         await newSubscription.save();
+
+        // Invalidate the user profile cache so the frontend updates immediately
+        if (redis) await redis.del(`user_profile_${userId}`);
 
         // Send Success Email
         const mailOptions = {

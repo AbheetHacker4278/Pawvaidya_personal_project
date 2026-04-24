@@ -162,19 +162,8 @@ const Appointments = () => {
 
   const calculateFinalFee = () => {
     if (!docInfo) return 0;
+    // User pays base fee only. Doctor incentive bonuses are admin-funded — not charged to user.
     let fee = docInfo.fees;
-
-    // Apply incentive if bonus
-    if (docInfo.incentive && docInfo.incentive.type === 'bonus' && docInfo.incentive.value && (!docInfo.incentive.expiryDate || new Date(docInfo.incentive.expiryDate) > new Date())) {
-      const valStr = String(docInfo.incentive.value).trim();
-      if (valStr.includes('%')) {
-        const perc = parseFloat(valStr.replace('%', ''));
-        if (!isNaN(perc)) fee += (docInfo.fees * perc) / 100;
-      } else {
-        const val = Number(valStr);
-        if (!isNaN(val)) fee += val;
-      }
-    }
 
     // Apply subscription discount if within limit
     let subDiscountAmount = 0;

@@ -61,7 +61,10 @@ const appointmentSchema = new mongoose.Schema({
         discountPercentage: Number,
         amount: Number,
         applied: { type: Boolean, default: false }
-    }
+    },
+    // Incentive amount funded by admin (not charged to user)
+    incentiveAmount: { type: Number, default: 0 },
+    incentivePaidByAdmin: { type: Boolean, default: false }
 })
 
 const appointmentModel = mongoose.models.appointment || mongoose.model("appointment", appointmentSchema)

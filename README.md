@@ -16,6 +16,7 @@
 graph TD
     A[User Portal - React/Vite] -->|REST/WebSockets| B[Backend API - Node.js/Express]
     C[Admin Panel - React/Vite] -->|REST/WebSockets| B
+    L[CS Portal - React/Vite] -->|REST/WebSockets| B
     B -->|Mongoose| D[(MongoDB Atlas)]
     B -->|Real-time| E[Socket.io Server]
     B -->|Asset Storage| F[Cloudinary]
@@ -72,6 +73,15 @@ graph TD
   - Pauses logins from unrecognized geolocations until manually approved via email token.
   - Enforces browser location permissions globally before rendering the login portal.
 
+### 🎧 Customer Service Portal
+> **Endpoint:** [Support Portal](https://customer-service-kx9x.onrender.com/)
+- **🆕 Real-time Ticket Queue**: Managed workflow for CS agents to handle incoming user complaints and requests.
+- **🆕 Biometric Authentication**: Multi-layered security using **Face-API.js** for agent identity verification during login and profile completion.
+- **🆕 DigiLocker Integration**: Official integration for fetching verified government documents (Aadhaar, ABHA, APAAR) to validate agent identities.
+- **🆕 Performance Metrics**: Comprehensive dashboard for agents to track resolved tickets, customer ratings, and automated performance rewards.
+- **🆕 Admin-Agent Chat**: Dedicated, secure real-time communication channel between platform administrators and support staff.
+- **🆕 Financial Insights**: specialized view for administrators to track support agent earnings, bonuses, and special incentives.
+
 ---
 
 ## 🛠️ Deep Tech Stack
@@ -121,6 +131,9 @@ graph TD
 
    # Admin
    cd admin && npm install && npm run dev
+
+   # CS Portal
+   cd cs-portal && npm install && npm run dev
    ```
 
 ---
@@ -131,13 +144,16 @@ graph TD
 PawVaidya/
 ├── admin/                  # React Admin Dashboard (Vite)
 │   ├── src/pages/Admin/    # AdminDeployments.jsx (New Monitor)
-│   └── src/components/     # ServiceHealthDashboard, ThermalMonitor
+│   └── src/pages/CS/       # FinancialCalculations, CS Management
+├── cs-portal/              # React Customer Service Portal (Vite)
+│   ├── src/pages/          # FaceVerify, TicketQueue, DigiLocker
+│   └── src/context/        # CSContext (State & Auth Management)
 ├── frontend/               # React User Portal (Vite)
 │   └── src/pages/          # Appointments, AI Chatbot (PawBot)
 ├── backend/                # Node.js REST & Web Socket API
-│   ├── controllers/        # renderController.js (Metrics Logic)
+│   ├── controllers/        # csAuthController, complaintController
 │   ├── middleware/         # Security Monitor (SQLi/XSS Detection)
-│   ├── routes/             # renderRoute.js (Deployment Hooks)
+│   ├── routes/             # csAuthRoute, complaintRoute
 │   └── server.js           # Express & Socket.io initialization
 └── docs/                   # SUPABASE_SETUP.md, DEPLOYMENT.md
 ```

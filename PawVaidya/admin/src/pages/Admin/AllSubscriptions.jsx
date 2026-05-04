@@ -5,7 +5,7 @@ import {
     TableHead, TableRow, Avatar, IconButton, Chip, TextField,
     InputAdornment, Grid, Card, CardContent, Tooltip, CircularProgress,
     Button, useTheme, Dialog, DialogTitle, DialogContent, DialogActions,
-    FormControlLabel, Switch, Divider
+    FormControlLabel, Switch, Divider, Autocomplete
 } from '@mui/material';
 import {
     Search as SearchIcon,
@@ -145,6 +145,7 @@ const AllSubscriptions = () => {
 
     useEffect(() => {
         getAllSubscriptions();
+        getallusers();
     }, []);
 
     useEffect(() => {
@@ -292,6 +293,21 @@ const AllSubscriptions = () => {
                         >
                             <GiftIcon className="group-hover:rotate-12 transition-transform" />
                             <span className="uppercase tracking-widest text-[11px]">Global Gift Drop</span>
+                        </button>
+                        <button
+                            onClick={() => {
+                                setSelectedUser(null);
+                                setGiftToAll(false);
+                                setGiftPlan('Silver');
+                                setGiftDuration(1);
+                                setGiftUnit('months');
+                                setGiftReason("");
+                                setOpenGiftDialog(true);
+                            }}
+                            className="group px-8 py-4 bg-white text-slate-900 font-black rounded-2xl flex items-center gap-3 border-2 border-slate-900 hover:bg-slate-50 transition-all duration-300 shadow-xl active:scale-95"
+                        >
+                            <PersonIcon className="group-hover:scale-110 transition-transform" />
+                            <span className="uppercase tracking-widest text-[11px]">Gift to Individual</span>
                         </button>
                     </div>
                 </div>
@@ -706,8 +722,42 @@ const AllSubscriptions = () => {
                         <Typography variant="body2" color="text.secondary" sx={{ mb: 3, fontWeight: 500 }}>
                             {giftToAll
                                 ? "This will grant a complimentary premium subscription to ALL registered users on the platform."
-                                : `You are gifting a complimentary subscription to ${selectedUser?.name}.`}
+                                : selectedUser 
+                                    ? `You are gifting a complimentary subscription to ${selectedUser.name}.`
+                                    : "Select a user to grant a complimentary premium subscription."}
                         </Typography>
+
+                        {!giftToAll && !selectedUser && (
+                            <Box sx={{ mb: 3 }}>
+                                <Typography variant="caption" fontWeight={900} color="#94a3b8" sx={{ textTransform: 'uppercase', mb: 1, display: 'block' }}>Search User</Typography>
+                                <Autocomplete
+                                    options={users || []}
+                                    getOptionLabel={(option) => `${option.name} (${option.email})`}
+                                    onChange={(event, newValue) => {
+                                        setSelectedUser(newValue ? { id: newValue._id, name: newValue.name } : null);
+                                    }}
+                                    renderInput={(params) => (
+                                        <TextField
+                                            {...params}
+                                            placeholder="Type name or email..."
+                                            variant="outlined"
+                                            sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
+                                        />
+                                    )}
+                                    renderOption={(props, option) => (
+                                        <li {...props}>
+                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                                                <Avatar src={option.image} sx={{ width: 32, height: 32, borderRadius: 1.5 }} />
+                                                <Box>
+                                                    <Typography variant="body2" fontWeight={800}>{option.name}</Typography>
+                                                    <Typography variant="caption" color="text.secondary">{option.email}</Typography>
+                                                </Box>
+                                            </Box>
+                                        </li>
+                                    )}
+                                />
+                            </Box>
+                        )}
 
                         <Grid container spacing={2} sx={{ mb: 3 }}>
                             <Grid item xs={12}>

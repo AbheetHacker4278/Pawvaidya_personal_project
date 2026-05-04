@@ -39,7 +39,10 @@ import PawWallet from './pages/PawWallet'
 import Subscription from './pages/Subscription'
 import VideoConsultation from './pages/VideoConsultation'
 import VideoCall from './pages/VideoCall'
-
+import SupportCenter from './pages/SupportCenter'
+import MyTickets from './pages/MyTickets'
+import TicketTracking from './pages/TicketTracking'
+import RateEmployee from './pages/RateEmployee'
 
 const App = () => {
   const location = useLocation();
@@ -103,6 +106,10 @@ const App = () => {
         <Route path='/subscription' element={<Subscription />} />
         <Route path='/video-consultation' element={<VideoConsultation />} />
         <Route path='/video-call/:appointmentId' element={<VideoCall />} />
+        <Route path='/support' element={token ? <SupportCenter /> : <Navigate to="/login" />} />
+        <Route path='/my-tickets' element={token ? <MyTickets /> : <Navigate to="/login" />} />
+        <Route path='/ticket-tracking/:id' element={token ? <TicketTracking /> : <Navigate to="/login" />} />
+        <Route path='/rate-cs/:ticketId' element={token ? <RateEmployee /> : <Navigate to="/login" />} />
       </Routes>
 
       {location.pathname != "/login-form" && location.pathname != "/login" && <Footer />}

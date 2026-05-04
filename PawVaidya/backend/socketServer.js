@@ -184,6 +184,12 @@ export const initializeSocket = (server) => {
     socket.on('direct-typing-stop', (data) => {
       socket.to(`user-${data.receiverId}`).emit('direct-typing-stop', { senderId: data.senderId });
     });
+
+    // CS Support Events
+    socket.on('join-cs-room', () => {
+      socket.join('cs-agents');
+      console.log(`Socket ${socket.id} joined cs-agents room`);
+    });
   });
 
   return io;

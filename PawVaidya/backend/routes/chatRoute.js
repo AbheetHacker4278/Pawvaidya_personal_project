@@ -22,12 +22,15 @@ chatRouter.post('/mark-read', markAsRead)
 chatRouter.get('/unread/:appointmentId/:userId', getUnreadCount)
 
 // Direct Chat Routes
-import { sendDirectMessage, getDirectMessages, getAdminConversations, markDirectMessagesRead, getAdminId } from '../controllers/directChatController.js'
+import { sendDirectMessage, getDirectMessages, getAdminConversations, getCSConversations, markDirectMessagesRead, getAdminId } from '../controllers/directChatController.js'
+import { uploadDirectChatFile } from '../controllers/fileUploadController.js'
 
 chatRouter.post('/direct/send', sendDirectMessage)
 chatRouter.get('/direct/history/:user1Id/:user2Id', getDirectMessages)
 chatRouter.post('/direct/admin-conversations', getAdminConversations)
+chatRouter.post('/direct/cs-conversations', getCSConversations)
 chatRouter.post('/direct/mark-read', markDirectMessagesRead)
 chatRouter.get('/direct/get-admin-id', getAdminId)
+chatRouter.post('/direct/upload-file', upload.single('file'), uploadDirectChatFile)
 
 export default chatRouter

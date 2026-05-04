@@ -56,6 +56,12 @@ import AdminChatbot from './components/AdminChatbot';
 import PaymentDetails from './pages/Admin/PaymentDetails';
 import AllSubscriptions from './pages/Admin/AllSubscriptions';
 import DoctorVideoCall from './pages/Doctor/DoctorVideoCall';
+import CSEmployees from './pages/CS/CSEmployees';
+import CSEmployeeDetail from './pages/CS/CSEmployeeDetail';
+import CSTicketsOverview from './pages/CS/CSTicketsOverview';
+import CSReports from './pages/CS/CSReports';
+import CSAgentChat from './pages/CS/CSAgentChat';
+import FinancialCalculations from './pages/CS/FinancialCalculations';
 
 const App = () => {
   const { atoken, adminProfile } = useContext(AdminContext)
@@ -158,6 +164,14 @@ const App = () => {
               <Route path='/security-monitoring' element={<SecurityMonitoring />} />
               <Route path='/admin-deployments' element={<AdminDeployments />} />
               <Route path='/redis-monitoring' element={<RedisMonitoring />} />
+              <Route path='/financial-calculations' element={<FinancialCalculations />} />
+
+              <Route path='/cs-employees' element={<CSEmployees />} />
+              <Route path='/cs-employee/:id' element={<CSEmployeeDetail />} />
+              <Route path='/cs-chat' element={<CSAgentChat />} />
+              <Route path='/cs-chat/:id' element={<CSAgentChat />} />
+              <Route path='/cs-tickets' element={<CSTicketsOverview />} />
+              <Route path='/cs-reports' element={<CSReports />} />
 
               <Route path='/doctor-dashboard' element={<DoctorDashboard />} />
               <Route path='/doctor-appointments' element={<DoctorAppointments />} />

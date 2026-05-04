@@ -1,6 +1,8 @@
 import { v2 as cloudinary } from 'cloudinary'
 import chatMessageModel from "../models/chatMessageModel.js"
 import appointmentModel from "../models/appointmentModel.js"
+import directMessageModel from "../models/directMessageModel.js"
+import { getIO } from "../socketServer.js"
 
 // Upload file for chat
 const uploadChatFile = async (req, res) => {
@@ -65,4 +67,50 @@ const uploadChatFile = async (req, res) => {
     }
 }
 
-export { uploadChatFile }
+// Upload file for Direct Chat (Admin <-> CS Agent)
+const uploadDirectChatFile = async (req, res) => {
+    try {
+        const { senderId, senderModel, receiverId, receiverModel, message } = req.body
+        const file = req.file
+
+        if (!file) return res.json({ success: false, message: "No file uploaded" })
+
+        // Determine file type
+        let fileType = 'file'
+        const mimeType = file.mimetype.toLowerCase()
+        if (mimeType.startsWith('image/')) fileType = 'image'
+        else if (mimeType.startsWith('video/')) fileType = 'video'
+
+        // Upload to Cloudinary
+        const uploadResult = await cloudinary.uploader.upload(file.path, {
+            resource_type: 'auto',
+            folder: 'direct_chat_files'
+        })
+
+        const newMessage = new directMessageModel({
+            senderId,
+            senderModel,
+            receiverId,
+            receiverModel,
+            message: message || '',
+            fileUrl: uploadResult.secure_url,
+            fileType,
+            fileName: file.originalname,
+            timestamp: new Date()
+        })
+
+        await newMessage.save()
+
+        // Socket emit
+        const io = getIO()
+        const messageData = newMessage.toObject()
+        io.to(`user-${receiverId}`).emit('receive-direct-message', messageData)
+
+        res.json({ success: true, message: "File sent", data: newMessage })
+    } catch (error) {
+        console.error('Error in uploadDirectChatFile:', error)
+        res.json({ success: false, message: error.message })
+    }
+}
+
+export { uploadChatFile, uploadDirectChatFile }

@@ -48,6 +48,24 @@ html {
   background: #555;
 }
 
+/* Custom scrollbar for timeline */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(27, 55, 38, 0.2);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(27, 55, 38, 0.4);
+}
+
 /* Navbar specific styles */
 .navbar-glass {
   backdrop-filter: var(--navbar-blur-light);

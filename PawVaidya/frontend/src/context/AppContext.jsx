@@ -380,7 +380,8 @@ const AppContextProvider = (props) => {
     const value = {
         doctors, getdoctorsdata,
         token, settoken,
-        backendurl, userdata,
+        backendurl, backendUrl: backendurl,
+        userdata,
         setuserdata,
         loaduserprofiledata,
         isLoggedin, setisLoggedin,

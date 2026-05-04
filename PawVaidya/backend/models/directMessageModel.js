@@ -2,9 +2,9 @@ import mongoose from "mongoose";
 
 const directMessageSchema = new mongoose.Schema({
     senderId: { type: mongoose.Schema.Types.ObjectId, required: true },
-    senderModel: { type: String, required: true, enum: ['Admin', 'Doctor'] },
+    senderModel: { type: String, required: true, enum: ['Admin', 'Doctor', 'CS_Employee'] },
     receiverId: { type: mongoose.Schema.Types.ObjectId, required: true },
-    receiverModel: { type: String, required: true, enum: ['Admin', 'Doctor'] },
+    receiverModel: { type: String, required: true, enum: ['Admin', 'Doctor', 'CS_Employee'] },
     message: { type: String, default: '' },
     fileUrl: { type: String, default: null },
     fileType: { type: String, enum: ['image', 'video', 'file', null], default: null },

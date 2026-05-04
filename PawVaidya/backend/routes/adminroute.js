@@ -149,4 +149,8 @@ adminRouter.get('/redis-stats', authAdmin, getRedisStats);
 adminRouter.get('/redis-history', authAdmin, getRedisHistory);
 adminRouter.get('/user-payment-details/:userId', authAdmin, getUserPaymentDetails);
 
+// Financial Calculations Route
+import { getFinancialCalculations } from '../controllers/adminFinanceController.js';
+adminRouter.get('/financial-calculations', authAdmin, getFinancialCalculations);
+
 export default adminRouter

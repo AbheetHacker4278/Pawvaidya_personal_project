@@ -1,6 +1,7 @@
 import directMessageModel from "../models/directMessageModel.js";
 import doctorModel from "../models/doctorModel.js";
 import adminModel from "../models/adminModel.js";
+import csEmployeeModel from "../models/csEmployeeModel.js";
 import { getIO } from "../socketServer.js";
 
 // Send a direct message
@@ -24,7 +25,8 @@ export const sendDirectMessage = async (req, res) => {
         // Emit socket event for real-time delivery
         const io = getIO();
         const room = `user-${receiverId}`;
-        io.to(room).emit('receive-direct-message', newMessage);
+        const messageData = newMessage.toObject();
+        io.to(room).emit('receive-direct-message', messageData);
 
         res.json({ success: true, message: "Message sent", data: newMessage });
     } catch (error) {
@@ -55,38 +57,74 @@ export const getDirectMessages = async (req, res) => {
 // Get list of doctors with last message (For Admin)
 export const getAdminConversations = async (req, res) => {
     try {
+        const { adminId } = req.body;
         const doctors = await doctorModel.find({}).select('_id name image available');
 
-        // Fetch last message for each doctor to show snippet/unread count
         const conversations = await Promise.all(doctors.map(async (doc) => {
             const lastMessage = await directMessageModel.findOne({
                 $or: [
-                    { senderId: doc._id },
-                    { receiverId: doc._id }
+                    { senderId: doc._id, receiverId: adminId },
+                    { senderId: adminId, receiverId: doc._id }
                 ]
             }).sort({ timestamp: -1 });
 
             const unreadCount = await directMessageModel.countDocuments({
                 senderId: doc._id,
-                receiverId: req.body.adminId, // Assuming adminId is passed or available
+                receiverId: adminId,
                 isRead: false
             });
 
             return {
-                ...doc.toObject(),
+                _id: doc._id,
+                name: doc.name,
+                image: doc.image,
+                available: doc.available,
                 lastMessage: lastMessage ? lastMessage.message || (lastMessage.fileType ? `Sent a ${lastMessage.fileType}` : '') : '',
                 lastMessageTime: lastMessage ? lastMessage.timestamp : null,
                 unreadCount
             };
         }));
 
-        // Sort by last message time
-        conversations.sort((a, b) => {
-            if (!a.lastMessageTime) return 1;
-            if (!b.lastMessageTime) return -1;
-            return new Date(b.lastMessageTime) - new Date(a.lastMessageTime);
-        });
+        conversations.sort((a, b) => (b.lastMessageTime || 0) - (a.lastMessageTime || 0));
+        res.json({ success: true, conversations });
+    } catch (error) {
+        console.error(error);
+        res.json({ success: false, message: error.message });
+    }
+};
 
+// Get list of CS Agents with last message (For Admin)
+export const getCSConversations = async (req, res) => {
+    try {
+        const { adminId } = req.body;
+        const agents = await csEmployeeModel.find({}).select('_id name profilePic status');
+
+        const conversations = await Promise.all(agents.map(async (agent) => {
+            const lastMessage = await directMessageModel.findOne({
+                $or: [
+                    { senderId: agent._id, receiverId: adminId },
+                    { senderId: adminId, receiverId: agent._id }
+                ]
+            }).sort({ timestamp: -1 });
+
+            const unreadCount = await directMessageModel.countDocuments({
+                senderId: agent._id,
+                receiverId: adminId,
+                isRead: false
+            });
+
+            return {
+                _id: agent._id,
+                name: agent.name,
+                image: agent.profilePic,
+                available: agent.status === 'active',
+                lastMessage: lastMessage ? lastMessage.message || (lastMessage.fileType ? `Sent a ${lastMessage.fileType}` : '') : '',
+                lastMessageTime: lastMessage ? lastMessage.timestamp : null,
+                unreadCount
+            };
+        }));
+
+        conversations.sort((a, b) => (b.lastMessageTime || 0) - (a.lastMessageTime || 0));
         res.json({ success: true, conversations });
     } catch (error) {
         console.error(error);
@@ -111,7 +149,7 @@ export const markDirectMessagesRead = async (req, res) => {
     }
 };
 
-// Get Admin ID (For Doctor to initiate chat)
+// Get Admin ID (For Doctor/CS to initiate chat)
 export const getAdminId = async (req, res) => {
     try {
         const admin = await adminModel.findOne({});

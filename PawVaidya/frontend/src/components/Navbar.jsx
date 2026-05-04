@@ -504,6 +504,7 @@ const Navbar = () => {
                         { icon: <Calendar className="w-[18px] h-[18px]" />, label: t('navbar.myAppointments'), action: () => { navigate('/my-appointments'); setIsDropdownOpen(false); } },
                         { icon: <Calendar className="w-[18px] h-[18px]" />, label: 'PawPlan / Subscription', action: () => { navigate('/subscription'); setIsDropdownOpen(false); } },
                         { icon: <Wallet className="w-[18px] h-[18px]" />, label: 'Paw Wallet', action: () => { navigate('/paw-wallet'); setIsDropdownOpen(false); } },
+                        { icon: <AlertCircle className="w-[18px] h-[18px]" />, label: 'Support Tickets', action: () => { navigate('/my-tickets'); setIsDropdownOpen(false); } },
                         { icon: <Bell className="w-[18px] h-[18px]" />, label: t('navbar.notifications'), badge: unreadMessages, action: () => { navigate('/messages'); setIsDropdownOpen(false); } },
                         { icon: <AlertCircle className="w-[18px] h-[18px]" />, label: t('navbar.reportIssue'), action: () => { navigate('/report-issue'); setIsDropdownOpen(false); } },
                       ].map(({ icon, label, badge, action }) => (

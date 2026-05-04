@@ -146,6 +146,7 @@ const Sidebar = ({ isOpen }) => {
             <div className="flex flex-col">
               <SectionHeader label="Insights" isOpen={isOpen} />
               <SidebarItem to="/admin-dashboard" icon={LayoutDashboard} label="Dashboard" subtext="Overview & Stats" isOpen={isOpen} onClick={() => logNavigation('Dashboard')} />
+              <SidebarItem to="/financial-calculations" icon={BarChart3} label="Financials" subtext="Treasury & Loss" isOpen={isOpen} onClick={() => logNavigation('Financials')} />
               {adminProfile?.role === 'master' && (
                 <SidebarItem to="/admin-deployments" icon={Server} label="Deployments" subtext="Render Status" isOpen={isOpen} onClick={() => logNavigation('Deployments')} />
               )}
@@ -218,6 +219,20 @@ const Sidebar = ({ isOpen }) => {
               )}
               {adminProfile?.role === 'master' && hasPerm('chat') && (
                 <SidebarItem to="/doctor-chat" icon={MessageSquare} label="Doctor Chat" subtext="Internal Comms" isOpen={isOpen} onClick={() => logNavigation('Doctor Chat')} />
+              )}
+
+              <SectionHeader label="Support Service" isOpen={isOpen} />
+              {adminProfile?.role === 'master' && (
+                <SidebarItem to="/cs-employees" icon={Users} label="CS Agents" subtext="Manage Staff" isOpen={isOpen} onClick={() => logNavigation('CS Employees')} />
+              )}
+              {adminProfile?.role === 'master' && (
+                <SidebarItem to="/cs-chat" icon={MessageSquare} label="Agent Chat" subtext="Direct Comms" isOpen={isOpen} onClick={() => logNavigation('CS Agent Chat')} />
+              )}
+              {adminProfile?.role === 'master' && (
+                <SidebarItem to="/cs-tickets" icon={LayoutDashboard} label="CS Tickets" subtext="Global View" isOpen={isOpen} onClick={() => logNavigation('CS Tickets')} />
+              )}
+              {adminProfile?.role === 'master' && (
+                <SidebarItem to="/cs-reports" icon={Activity} label="CS Reports" subtext="Agent Metrics" isOpen={isOpen} onClick={() => logNavigation('CS Reports')} />
               )}
 
               <SectionHeader label="Settings" isOpen={isOpen} />

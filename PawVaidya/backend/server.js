@@ -20,11 +20,16 @@ import botRouter from './routes/botRoute.js';
 import roomRouter from './routes/roomRoute.js';
 import renderRouter from './routes/renderRoute.js';
 import subscriptionRouter from './routes/subscriptionRoute.js';
+import csAuthRouter from './routes/csAuthRoute.js';
+import complaintRouter from './routes/complaintRoute.js';
+import csAdminRouter from './routes/csAdminRoute.js';
 
 import cookieParser from 'cookie-parser';
 import { initializeSocket } from './socketServer.js';
 import initScheduler from './utils/scheduler.js';
 import { initHealthScheduler } from './schedulers/healthScheduler.js';
+import { initCSScheduler } from './schedulers/csScheduler.js';
+import { initCSAssignmentScheduler } from './schedulers/csAssignmentScheduler.js';
 import telemetryMiddleware from './middleware/telemetryMiddleware.js';
 import maintenanceMiddleware from './middleware/maintenanceMiddleware.js';
 import securityMonitor from './middleware/securityMonitor.js';
@@ -42,6 +47,8 @@ connectCloudnairy()
 // Initialize Schedulers
 initScheduler();
 initHealthScheduler();
+initCSScheduler();
+initCSAssignmentScheduler();
 
 // Initialize Socket.io
 initializeSocket(server);
@@ -49,7 +56,7 @@ initializeSocket(server);
 //middleware
 const allowedorigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
-  : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'https://pawvaidya-79qq.onrender.com', 'https://pawvaidya-admin-uy9o.onrender.com'];
+  : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'http://localhost:5176', 'https://pawvaidya-79qq.onrender.com', 'https://pawvaidya-admin-uy9o.onrender.com'];
 
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
@@ -140,6 +147,21 @@ try {
   app.use('/api/bot', botRouter);
 } catch (error) {
   console.error("Failed to use botRouter:", error.message);
+}
+try {
+  app.use('/api/cs', csAuthRouter);
+} catch (error) {
+  console.error("Failed to use csAuthRouter:", error.message);
+}
+try {
+  app.use('/api/complaint', complaintRouter);
+} catch (error) {
+  console.error("Failed to use complaintRouter:", error.message);
+}
+try {
+  app.use('/api/cs-admin', csAdminRouter);
+} catch (error) {
+  console.error("Failed to use csAdminRouter:", error.message);
 }
 
 // Pet report feature disabled

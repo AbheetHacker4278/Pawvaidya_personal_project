@@ -57,6 +57,7 @@ import PetsIcon from '@mui/icons-material/Pets';
 import CreditCardIcon from '@mui/icons-material/CreditCard';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import VideoCallIcon from '@mui/icons-material/VideoCall';
+import FaceIcon from '@mui/icons-material/Face';
 
 import { assets } from '../../assets/assets_admin/assets';
 
@@ -632,6 +633,22 @@ const TotalUsers = () => {
                                                         color: user.subscription.plan === 'Platinum' ? '#7e22ce' : '#b45309',
                                                         borderRadius: 1.5,
                                                         border: '1px solid rgba(0,0,0,0.05)'
+                                                    }}
+                                                />
+                                            )}
+                                            {user.isFaceRegistered && (
+                                                <Chip
+                                                    icon={<FaceIcon style={{ fontSize: '0.8rem' }} />}
+                                                    label="Face ID"
+                                                    size="small"
+                                                    sx={{
+                                                        height: 20,
+                                                        fontSize: '0.65rem',
+                                                        fontWeight: 800,
+                                                        bgcolor: '#e0e7ff',
+                                                        color: '#4338ca',
+                                                        borderRadius: 1.5,
+                                                        '& .MuiChip-icon': { color: 'inherit' }
                                                     }}
                                                 />
                                             )}

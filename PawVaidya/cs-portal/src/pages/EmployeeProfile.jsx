@@ -12,7 +12,7 @@ const EmployeeProfile = () => {
     const [showFaceModal, setShowFaceModal] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [selectedDoc, setSelectedDoc] = useState(null);
-    
+
     // Form states
     const [name, setName] = useState('');
     const [phone, setPhone] = useState('');
@@ -71,7 +71,7 @@ const EmployeeProfile = () => {
         e.preventDefault();
         try {
             setUploading(true);
-            const { data } = await axios.post(`${backendUrl}/api/cs/update-profile`, 
+            const { data } = await axios.post(`${backendUrl}/api/cs/update-profile`,
                 { name, phone, bio },
                 { headers: { cstoken } }
             );
@@ -149,7 +149,7 @@ const EmployeeProfile = () => {
     const handleFaceCapture = async (descriptor, imageData) => {
         try {
             setUploading(true);
-            const { data } = await axios.post(`${backendUrl}/api/cs/re-register-face`, 
+            const { data } = await axios.post(`${backendUrl}/api/cs/re-register-face`,
                 { faceDescriptor: descriptor, faceImage: imageData },
                 { headers: { cstoken } }
             );
@@ -172,7 +172,7 @@ const EmployeeProfile = () => {
     const getDocIcon = (type) => {
         switch (type) {
             case 'qualification': return <FaGraduationCap className="text-blue-500" />;
-            case 'aadhar': 
+            case 'aadhar':
             case 'pan': return <FaIdCard className="text-emerald-500" />;
             case 'passport': return <FaPassport className="text-purple-500" />;
             default: return <FaFileAlt className="text-slate-400" />;
@@ -187,7 +187,7 @@ const EmployeeProfile = () => {
                 <div className="flex justify-between items-center border-b border-slate-200 pb-4 mb-4">
                     <h2 className="text-xl font-bold">My Profile</h2>
                     {!isEditing && (
-                        <button 
+                        <button
                             onClick={() => setIsEditing(true)}
                             className="text-xs font-bold text-primary hover:underline uppercase tracking-widest"
                         >
@@ -314,8 +314,8 @@ const EmployeeProfile = () => {
                             <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Upload New Document</h4>
                             <div>
                                 <label className="block text-[10px] text-slate-400 uppercase font-bold mb-1">Document Type</label>
-                                <select 
-                                    value={docType} 
+                                <select
+                                    value={docType}
                                     onChange={e => setDocType(e.target.value)}
                                     className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white"
                                 >
@@ -328,16 +328,16 @@ const EmployeeProfile = () => {
                             </div>
                             <div>
                                 <label className="block text-[10px] text-slate-400 uppercase font-bold mb-1">Select File (Image or PDF)</label>
-                                <input 
-                                    type="file" 
+                                <input
+                                    type="file"
                                     ref={docInputRef}
                                     onChange={e => setDocFile(e.target.files[0])}
                                     accept="image/*,.pdf"
                                     className="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-white hover:file:bg-primary/90"
                                 />
                             </div>
-                            <button 
-                                type="submit" 
+                            <button
+                                type="submit"
                                 disabled={uploading || !docFile}
                                 className="w-full flex items-center justify-center space-x-2 bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-bold transition-all disabled:opacity-50"
                             >
@@ -364,13 +364,13 @@ const EmployeeProfile = () => {
                                             </div>
                                         </div>
                                         <div className="flex items-center space-x-2">
-                                            <button 
+                                            <button
                                                 onClick={() => setSelectedDoc(doc)}
                                                 className="text-[10px] font-bold text-primary hover:underline uppercase"
                                             >
                                                 View
                                             </button>
-                                            <button 
+                                            <button
                                                 onClick={() => handleDocDelete(doc._id)}
                                                 className="text-slate-300 hover:text-red-500 transition-colors"
                                             >
@@ -398,7 +398,7 @@ const EmployeeProfile = () => {
                 <h3 className="text-lg font-bold border-b border-slate-200 pb-4 mb-4 flex items-center">
                     <FaUserShield className="mr-2 text-primary" /> Security & Biometrics
                 </h3>
-                
+
                 <div className="flex flex-col md:flex-row items-center md:space-x-8 space-y-6 md:space-y-0">
                     <div className="w-40 h-40 bg-slate-100 rounded-lg overflow-hidden border-2 border-slate-200 flex items-center justify-center relative group">
                         {employee.registeredFaceImage ? (
@@ -418,11 +418,11 @@ const EmployeeProfile = () => {
                         <div className="p-4 bg-primary/5 border border-primary/10 rounded-lg">
                             <h4 className="text-primary font-bold text-sm mb-1">About Biometric Verification</h4>
                             <p className="text-xs text-slate-600 leading-relaxed">
-                                We use face recognition to ensure secure access to the support portal. Your master scan is compared with your daily login scan to verify identity. 
+                                We use face recognition to ensure secure access to the support portal. Your master scan is compared with your daily login scan to verify identity.
                                 If your appearance changes significantly or the master scan is unclear, please update it.
                             </p>
                         </div>
-                        <button 
+                        <button
                             onClick={() => setShowFaceModal(true)}
                             className="flex items-center justify-center space-x-2 bg-slate-800 hover:bg-slate-900 text-white px-4 py-2.5 rounded-lg text-sm font-bold transition-all shadow-sm w-full md:w-auto"
                         >
@@ -437,7 +437,7 @@ const EmployeeProfile = () => {
             {showFaceModal && (
                 <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden relative">
-                        <button 
+                        <button
                             onClick={() => setShowFaceModal(false)}
                             className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 z-10"
                         >
@@ -448,8 +448,8 @@ const EmployeeProfile = () => {
                             <p className="text-sm text-slate-500 mb-6">
                                 Please look directly into the camera. Ensure your face is well-lit and clearly visible.
                             </p>
-                            <FaceCamera 
-                                onCapture={handleFaceCapture} 
+                            <FaceCamera
+                                onCapture={handleFaceCapture}
                                 buttonText="Scan & Save Biometrics"
                                 loadingText="Initializing Secure Camera..."
                             />
@@ -478,18 +478,18 @@ const EmployeeProfile = () => {
                         </div>
                         <div className="flex-1 bg-slate-100 overflow-hidden">
                             {selectedDoc.docUrl.toLowerCase().endsWith('.pdf') ? (
-                                <object 
-                                    data={selectedDoc.docUrl} 
-                                    type="application/pdf" 
+                                <object
+                                    data={selectedDoc.docUrl}
+                                    type="application/pdf"
                                     className="w-full h-full"
                                 >
                                     <div className="flex flex-col items-center justify-center h-full p-8 text-center">
                                         <FaFilePdf size={48} className="text-slate-300 mb-4" />
                                         <p className="text-slate-600 mb-4 font-medium">Unable to display PDF directly in this browser.</p>
-                                        <a 
-                                            href={selectedDoc.docUrl} 
-                                            target="_blank" 
-                                            rel="noopener noreferrer" 
+                                        <a
+                                            href={selectedDoc.docUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
                                             className="bg-primary text-white px-6 py-2 rounded-lg font-bold shadow-md hover:bg-primary/90 transition-all text-sm"
                                         >
                                             Open Document in New Tab

@@ -308,7 +308,7 @@ export const uploadCSDocument = async (req, res) => {
             return res.json({ success: false, message: 'Missing required fields or file.' });
         }
 
-        const uploadRes = await cloudinary.uploader.upload(docFile.path, { 
+        const uploadRes = await cloudinary.uploader.upload(docFile.path, {
             resource_type: 'image',
             folder: 'cs_docs',
             access_mode: 'public'
@@ -316,21 +316,21 @@ export const uploadCSDocument = async (req, res) => {
 
         const updatedEmployee = await CSEmployee.findByIdAndUpdate(
             employeeId,
-            { 
-                $push: { 
-                    documents: { 
-                        docType, 
-                        docUrl: uploadRes.secure_url 
-                    } 
-                } 
+            {
+                $push: {
+                    documents: {
+                        docType,
+                        docUrl: uploadRes.secure_url
+                    }
+                }
             },
             { new: true }
         ).select('-password -plainPassword -faceDescriptor');
 
-        return res.json({ 
-            success: true, 
-            message: 'Document uploaded successfully.', 
-            employee: updatedEmployee 
+        return res.json({
+            success: true,
+            message: 'Document uploaded successfully.',
+            employee: updatedEmployee
         });
     } catch (error) {
         console.error('uploadCSDocument error:', error);

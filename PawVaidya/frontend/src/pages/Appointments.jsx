@@ -161,7 +161,7 @@ const Appointments = () => {
   };
 
   const calculateFinalFee = () => {
-    if (!docInfo) return 0;
+    if (!docInfo) return { finalFee: 0, subDiscountAmount: 0, couponDiscount: 0 };
     // User pays base fee only. Doctor incentive bonuses are admin-funded — not charged to user.
     let fee = docInfo.fees;
 
@@ -177,13 +177,17 @@ const Appointments = () => {
       fee -= subDiscountAmount;
     }
 
+    let couponDiscount = 0;
     if (appliedDoctorCoupon) {
-      fee -= appliedDoctorCoupon.discountAmount;
+      couponDiscount += (appliedDoctorCoupon.discountAmount || 0);
     }
     if (appliedAdminCoupon) {
-      fee -= (appliedAdminCoupon.amount || appliedAdminCoupon.discountAmount);
+      couponDiscount += (appliedAdminCoupon.amount || appliedAdminCoupon.discountAmount || 0);
     }
-    return { finalFee: Math.max(0, fee), subDiscountAmount };
+
+    fee -= couponDiscount;
+
+    return { finalFee: Math.max(0, fee), subDiscountAmount, couponDiscount };
   };
 
   // Check if user has any active appointments and ban status
@@ -1926,7 +1930,7 @@ const Appointments = () => {
                         {(appliedAdminCoupon || appliedDoctorCoupon) && (
                           <div className="flex justify-between text-sm text-emerald-600">
                             <span className="font-medium">Coupon Savings</span>
-                            <span className="font-bold">-₹{(appliedAdminCoupon?.amount || 0) + (appliedDoctorCoupon?.discountAmount || 0)}</span>
+                            <span className="font-bold">-₹{calculateFinalFee().couponDiscount}</span>
                           </div>
                         )}
 
@@ -2091,7 +2095,7 @@ const Appointments = () => {
                       style={{ background: 'linear-gradient(135deg, #10b981, #059669)', boxShadow: '0 8px 24px rgba(16,185,129,0.3)' }}
                     >
                       <Shield className="w-5 h-5" />
-                      {useWallet ? `Pay Remaining ₹${Math.max(0, (appliedAdminCoupon || appliedDoctorCoupon ? (appliedAdminCoupon ? (appliedDoctorCoupon ? (docInfo.fees - appliedDoctorCoupon.discountAmount - appliedAdminCoupon.amount) : (docInfo.fees - appliedAdminCoupon.amount)) : (docInfo.fees - appliedDoctorCoupon.discountAmount)) : docInfo.fees) - userdata.pawWallet)} Online` : "Pay Online Now"}
+                      {useWallet ? `Pay Remaining ₹${Math.max(0, calculateFinalFee().finalFee - userdata.pawWallet)} Online` : "Pay Online Now"}
                     </button>
                     <button
                       onClick={() => bookappointment("Cash")}
@@ -2099,7 +2103,7 @@ const Appointments = () => {
                       style={{ border: '2px solid #d4a76a', color: '#c8860a', background: 'rgba(255,255,255,0.7)' }}
                     >
                       <CheckCircle className="w-5 h-5" />
-                      {useWallet ? `Pay Remaining ₹${Math.max(0, (appliedAdminCoupon || appliedDoctorCoupon ? (appliedAdminCoupon ? (appliedDoctorCoupon ? (docInfo.fees - appliedDoctorCoupon.discountAmount - appliedAdminCoupon.amount) : (docInfo.fees - appliedAdminCoupon.amount)) : (docInfo.fees - appliedAdminCoupon.amount)) : docInfo.fees) - userdata.pawWallet)} at Clinic` : "Pay Cash at Clinic"}
+                      {useWallet ? `Pay Remaining ₹${Math.max(0, calculateFinalFee().finalFee - userdata.pawWallet)} at Clinic` : "Pay Cash at Clinic"}
                     </button>
                   </>
                 )}

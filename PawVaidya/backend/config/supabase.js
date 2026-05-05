@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import dotenv from 'dotenv'
+import WebSocket from 'ws'
 dotenv.config()
 
 const supabaseUrl = process.env.SUPABASE_URL
@@ -9,6 +10,10 @@ if (!supabaseUrl || !supabaseKey) {
     console.error('Missing Supabase environment variables')
 }
 
-const supabase = createClient(supabaseUrl, supabaseKey)
+const supabase = createClient(supabaseUrl, supabaseKey, {
+  realtime: {
+    transport: WebSocket,
+  },
+})
 
 export default supabase

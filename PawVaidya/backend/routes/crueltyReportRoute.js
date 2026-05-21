@@ -3,7 +3,7 @@ import { submitReport, getAllReports, updateReportStatus, trackReport } from '..
 import upload from '../middleware/multer.js';
 import authAdmin from '../middleware/authAdmin.js';
 
-import authUser from '../middleware/authUser.js';
+import authUser from '../middleware/authuser.js';
 
 const crueltyReportRouter = express.Router();
 

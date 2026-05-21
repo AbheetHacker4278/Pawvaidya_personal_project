@@ -1,64 +1,33 @@
 import React, { useState, useEffect, useRef, useContext } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, X, Minimize2, Maximize2, RotateCcw, Sparkles } from 'lucide-react';
+import { Send, X, Minimize2, Maximize2, RotateCcw, Sparkles, Zap } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
 
 // ─── Premium SVG Paw Icon ─────────────────────────────────────────────────────
 const PawIcon = ({ size = 28, color = 'white' }) => (
   <svg width={size} height={size} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-    {/* Toe beans */}
     <ellipse cx="16" cy="14" rx="6" ry="8" fill={color} opacity="0.95" />
     <ellipse cx="32" cy="9" rx="6" ry="8" fill={color} opacity="0.95" />
     <ellipse cx="48" cy="14" rx="6" ry="8" fill={color} opacity="0.95" />
     <ellipse cx="8" cy="30" rx="5" ry="7" fill={color} opacity="0.95" />
-    {/* Main pad */}
     <ellipse cx="32" cy="42" rx="18" ry="16" fill={color} opacity="0.95" />
   </svg>
 );
 
-// ─── System prompt (prepended to every request) ───────────────────────────────
-const SYSTEM_PROMPT = `You are PawBot, the official AI assistant for PawVaidya — a veterinary consultancy platform for pet owners in India.
-
-PERSONALITY: Friendly, warm, professional. Use emojis occasionally 🐾. Keep responses concise (2-4 sentences max). Be proactive and helpful.
-
-PAWVAIDYA FEATURES:
-1. Find Doctors (/doctors) — Browse vets by speciality & location. Specialities: Small Animal Vet, Avian Vet, Marine Vet, Exotic Vet, Large Animal Vet, Military Vet.
-2. Book Appointments (/appointment/:docId) — Choose date/time slots, payment supported.
-3. My Appointments (/my-appointments) — View upcoming, completed, cancelled appointments.
-4. My Profile (/my-profile) — Update personal info, pet details (name, type, breed, age), profile picture.
-5. Community Blogs (/community-blogs) — Read/write pet care articles, like, comment, share.
-6. Quick Chats (/quick-chats) — Real-time messaging with doctors.
-7. Live Streams (/live-streams) — Watch live vet sessions and Q&A.
-8. FAQ (/faq), About (/about), Contact (/contact).
-
-NAVIGATION: When user wants to go somewhere, end your reply with [NAVIGATE:/path]. Examples:
-- "show doctors" → [NAVIGATE:/doctors]
-- "my appointments" → [NAVIGATE:/my-appointments]
-- "blogs" → [NAVIGATE:/community-blogs]
-- "my profile" → [NAVIGATE:/my-profile]
-- "home" → [NAVIGATE:/]
-- "faq" → [NAVIGATE:/faq]
-- "contact" → [NAVIGATE:/contact]
-- "about" → [NAVIGATE:/about]
-- "quick chats" → [NAVIGATE:/quick-chats]
-- "live streams" → [NAVIGATE:/live-streams]
-
-VETERINARY KNOWLEDGE: Answer questions about pet illnesses, nutrition, vaccinations, emergency signs, general care for dogs, cats, birds, fish, reptiles, etc.
-
-RULES: Never make up doctor names. For emergencies, urgently recommend visiting a vet. Encourage booking appointments for medical concerns. Do NOT use markdown ## headers in responses. Keep it conversational.`;
-
-// ─── Quick suggestion chips ───────────────────────────────────────────────────
-const QUICK_CHIPS = [
-  { label: '🔍 Find Doctors', msg: 'Show me available doctors' },
-  { label: '📅 My Appointments', msg: 'Take me to my appointments' },
-  { label: '📝 Community Blogs', msg: 'Open community blogs' },
-  { label: '🐾 Pet Care Tips', msg: 'Give me general pet care tips' },
+// ─── Agentic quick chips (personalized per login state) ───────────────────────
+const getQuickChips = (isLoggedIn) => [
+  ...(isLoggedIn ? [
+    { label: '📅 My Appointments', msg: 'Show my upcoming appointments' },
+    { label: '🐾 My Pets', msg: 'List my registered pets' },
+    { label: '💰 PawPoints', msg: 'Check my PawPoints balance' },
+    { label: '🏆 Subscription', msg: 'What is my subscription status?' },
+  ] : []),
+  { label: '🔍 Find a Vet', msg: 'Show me available vets' },
   { label: '🚨 Emergency Signs', msg: 'What are emergency signs in pets?' },
   { label: '💉 Vaccinations', msg: 'Tell me about pet vaccination schedules' },
-  { label: '📞 Contact Support', msg: 'How do I contact PawVaidya support?' },
-  { label: '❓ How to Book', msg: 'How do I book an appointment?' },
+  { label: '📝 Community Blogs', msg: 'Open community blogs' },
 ];
 
 // ─── Render bold **text** ─────────────────────────────────────────────────────
@@ -83,6 +52,26 @@ const TypingDots = () => (
   </div>
 );
 
+// ─── Agent Status Banner ──────────────────────────────────────────────────────
+const AgentStatus = ({ status }) => {
+  if (!status) return null;
+  return (
+    <motion.div
+      initial={{ opacity: 0, height: 0 }}
+      animate={{ opacity: 1, height: 'auto' }}
+      exit={{ opacity: 0, height: 0 }}
+      className="flex items-center gap-2 px-4 py-2 bg-indigo-50 border-t border-indigo-100"
+    >
+      <motion.div
+        animate={{ rotate: 360 }}
+        transition={{ duration: 1.2, repeat: Infinity, ease: 'linear' }}
+        className="w-3.5 h-3.5 rounded-full border-2 border-indigo-400 border-t-transparent flex-shrink-0"
+      />
+      <span className="text-xs text-indigo-600 font-medium">{status}</span>
+    </motion.div>
+  );
+};
+
 // ─── Main component ───────────────────────────────────────────────────────────
 const AnimalHealthChatbot = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -90,6 +79,7 @@ const AnimalHealthChatbot = () => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [agentStatus, setAgentStatus] = useState(null);
   const [showChips, setShowChips] = useState(true);
   const [showPopup, setShowPopup] = useState(false);
   const bottomRef = useRef(null);
@@ -108,8 +98,8 @@ const AnimalHealthChatbot = () => {
   useEffect(() => {
     if (isOpen && messages.length === 0) {
       const greeting = userdata?.name
-        ? `Hey ${userdata.name}! 👋 I'm **PawBot**, your PawVaidya assistant. I can help you find doctors, book appointments, answer pet health questions, and guide you through the platform. What can I help you with? 🐾`
-        : `Hey there! 👋 I'm **PawBot**, your PawVaidya assistant. I can help you find doctors, book appointments, answer pet health questions, and guide you through the platform. What can I help you with? 🐾`;
+        ? `Hey **${userdata.name}**! 👋 I'm **PawBot**, your AI assistant for PawVaidya.\n\nI can fetch your **real appointment data**, check your **pet profiles**, look up **vets**, check your **PawPoints**, and much more — just ask! 🐾`
+        : `Hey there! 👋 I'm **PawBot**, your PawVaidya AI assistant.\n\nI can help you find vets, answer pet health questions, guide you through the platform, and more. Log in to unlock personalized features! 🐾`;
       setMessages([{ role: 'bot', text: greeting, ts: Date.now() }]);
     }
   }, [isOpen]);
@@ -135,13 +125,16 @@ const AnimalHealthChatbot = () => {
     return text;
   };
 
-  // ── Build conversation history for Gemini ────────────────────────────────
-  const buildPrompt = (userMsg) => {
-    // Build a full conversation string with system context prepended
-    const history = messages
-      .map(m => `${m.role === 'user' ? 'User' : 'PawBot'}: ${m.text}`)
-      .join('\n');
-    return `${SYSTEM_PROMPT}\n\n${history ? `Conversation so far:\n${history}\n\n` : ''}User: ${userMsg}\nPawBot:`;
+  // ── Detect what tool the agent is likely using ────────────────────────────
+  const getStatusFromMessage = (msg) => {
+    const m = msg.toLowerCase();
+    if (m.includes('appointment')) return '🔍 Looking up your appointments…';
+    if (m.includes('pet')) return '🐾 Fetching your pet profiles…';
+    if (m.includes('vet') || m.includes('doctor')) return '👨‍⚕️ Searching available vets…';
+    if (m.includes('pawpoint') || m.includes('balance') || m.includes('wallet')) return '💰 Checking your PawPoints…';
+    if (m.includes('subscription') || m.includes('plan')) return '🏆 Fetching subscription details…';
+    if (m.includes('cancel')) return '🚫 Processing cancellation…';
+    return '🤔 Agent is thinking…';
   };
 
   // ── Send message ──────────────────────────────────────────────────────────
@@ -151,15 +144,28 @@ const AnimalHealthChatbot = () => {
 
     setInput('');
     setShowChips(false);
-    setMessages(prev => [...prev, { role: 'user', text: trimmed, ts: Date.now() }]);
+    const newMsg = { role: 'user', text: trimmed, ts: Date.now() };
+    setMessages(prev => [...prev, newMsg]);
     setIsLoading(true);
+    setAgentStatus(getStatusFromMessage(trimmed));
 
     try {
-      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/bot/query-frontend`, {
-        message: trimmed,
-        history: messages,
-        systemPrompt: SYSTEM_PROMPT
-      });
+      // Build history in the format the backend expects
+      const history = messages.map(m => ({
+        role: m.role === 'user' ? 'user' : 'assistant',
+        content: m.text,
+      }));
+
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) headers['token'] = token; // authUser middleware reads this
+
+      const response = await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/api/bot/query-frontend`,
+        { message: trimmed, history },
+        { headers }
+      );
+
+      setAgentStatus(null);
 
       if (response.data.success) {
         const cleaned = processNavigation(response.data.response);
@@ -169,6 +175,7 @@ const AnimalHealthChatbot = () => {
       }
     } catch (err) {
       console.error('PawBot error:', err);
+      setAgentStatus(null);
       setMessages(prev => [...prev, {
         role: 'bot',
         text: `Sorry, I ran into an issue 🐾 (${err?.response?.data?.message || err?.message || 'Unknown error'}). Please try again.`,
@@ -187,10 +194,9 @@ const AnimalHealthChatbot = () => {
   const resetChat = () => {
     setMessages([]);
     setShowChips(true);
-    // Re-trigger welcome
     const greeting = userdata?.name
-      ? `Hey ${userdata.name}! 👋 I'm **PawBot**, your PawVaidya assistant. What can I help you with? 🐾`
-      : `Hey there! 👋 I'm **PawBot**, your PawVaidya assistant. What can I help you with? 🐾`;
+      ? `Hey **${userdata.name}**! 👋 I'm **PawBot**, your PawVaidya AI assistant. What can I help you with? 🐾`
+      : `Hey there! 👋 I'm **PawBot**, your PawVaidya AI assistant. What can I help you with? 🐾`;
     setMessages([{ role: 'bot', text: greeting, ts: Date.now() }]);
   };
 
@@ -199,6 +205,8 @@ const AnimalHealthChatbot = () => {
     setShowPopup(false);
     setIsMinimized(false);
   };
+
+  const quickChips = getQuickChips(!!token);
 
   return (
     <div className="fixed bottom-28 md:bottom-5 right-5 z-[9999] flex flex-col items-end gap-3">
@@ -211,15 +219,19 @@ const AnimalHealthChatbot = () => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.9 }}
             onClick={toggleOpen}
-            className="cursor-pointer bg-white rounded-2xl shadow-2xl border border-indigo-100 px-4 py-3 max-w-[220px] text-sm"
+            className="cursor-pointer bg-white rounded-2xl shadow-2xl border border-indigo-100 px-4 py-3 max-w-[240px] text-sm"
           >
             <div className="flex items-center gap-2 mb-1">
               <span className="text-lg">🐾</span>
               <span className="font-bold text-indigo-700">PawBot</span>
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse ml-auto" />
+              <div className="ml-auto flex items-center gap-1">
+                <Zap className="w-3 h-3 text-amber-500" />
+                <span className="text-[10px] text-amber-600 font-semibold">AI Agent</span>
+              </div>
             </div>
             <p className="text-gray-600 text-xs leading-relaxed">
-              {userdata?.name ? `Hi ${userdata.name}! ` : 'Hi there! '}Need help finding a vet or navigating PawVaidya? 👋
+              {userdata?.name ? `Hi ${userdata.name}! ` : 'Hi there! '}
+              {token ? 'Ask me about your appointments, pets & more! 🐾' : 'Need help finding a vet or navigating PawVaidya? 👋'}
             </p>
           </motion.div>
         )}
@@ -233,8 +245,8 @@ const AnimalHealthChatbot = () => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-            className="w-[370px] bg-white rounded-3xl shadow-2xl border border-gray-100 flex flex-col overflow-hidden"
-            style={{ maxHeight: isMinimized ? 'auto' : '580px' }}
+            className="w-[380px] bg-white rounded-3xl shadow-2xl border border-gray-100 flex flex-col overflow-hidden"
+            style={{ maxHeight: isMinimized ? 'auto' : '600px' }}
           >
             {/* Header */}
             <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-5 py-4 flex items-center gap-3 flex-shrink-0">
@@ -245,8 +257,16 @@ const AnimalHealthChatbot = () => {
                 <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-400 border-2 border-indigo-600" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-bold text-white text-sm">PawBot</p>
-                <p className="text-indigo-200 text-xs">PawVaidya AI Assistant · Online</p>
+                <div className="flex items-center gap-2">
+                  <p className="font-bold text-white text-sm">PawBot</p>
+                  <span className="flex items-center gap-1 bg-white/15 rounded-full px-2 py-0.5">
+                    <Zap className="w-2.5 h-2.5 text-amber-300" />
+                    <span className="text-[10px] text-white/90 font-semibold">AI Agent</span>
+                  </span>
+                </div>
+                <p className="text-indigo-200 text-xs">
+                  {token ? `Logged in as ${userdata?.name || 'User'} · Personalized` : 'PawVaidya Assistant · Online'}
+                </p>
               </div>
               <div className="flex items-center gap-1.5">
                 <button onClick={resetChat} title="Reset chat"
@@ -315,7 +335,7 @@ const AnimalHealthChatbot = () => {
                   {showChips && !isLoading && messages.length <= 1 && (
                     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
                       className="flex flex-wrap gap-2 pt-1">
-                      {QUICK_CHIPS.map((chip, i) => (
+                      {quickChips.map((chip, i) => (
                         <button key={i} onClick={() => sendMessage(chip.msg)}
                           className="text-xs bg-white border border-indigo-100 text-indigo-700 px-3 py-1.5 rounded-full hover:bg-indigo-50 hover:border-indigo-300 transition-all shadow-sm font-medium">
                           {chip.label}
@@ -327,6 +347,11 @@ const AnimalHealthChatbot = () => {
                   <div ref={bottomRef} />
                 </div>
 
+                {/* Agent Status Banner */}
+                <AnimatePresence>
+                  {isLoading && agentStatus && <AgentStatus status={agentStatus} />}
+                </AnimatePresence>
+
                 {/* Input */}
                 <div className="px-4 py-3 border-t border-gray-100 bg-white flex-shrink-0">
                   <div className="flex items-center gap-2 bg-gray-50 rounded-2xl border border-gray-200 px-4 py-2 focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-100 transition-all">
@@ -336,7 +361,7 @@ const AnimalHealthChatbot = () => {
                       value={input}
                       onChange={e => setInput(e.target.value)}
                       onKeyDown={handleKeyDown}
-                      placeholder="Ask me anything about PawVaidya…"
+                      placeholder={token ? "Ask about your appointments, pets…" : "Ask anything about PawVaidya…"}
                       className="flex-1 bg-transparent text-sm text-gray-700 placeholder-gray-400 outline-none"
                       disabled={isLoading}
                     />
@@ -350,7 +375,7 @@ const AnimalHealthChatbot = () => {
                     </motion.button>
                   </div>
                   <p className="text-center text-gray-400 text-[10px] mt-2 flex items-center justify-center gap-1">
-                    <Sparkles className="w-3 h-3" /> Powered by Gemini AI
+                    <Sparkles className="w-3 h-3" /> Powered by NVIDIA NIM · Gemma 3-27B
                   </p>
                 </div>
               </>

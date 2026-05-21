@@ -32,33 +32,34 @@ import {
   X,
   Crown,
   Video,
+  Gift,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import AnimalHealthChatbot from "../components/AnimalHealthChatbot";
 import FaceAuth from "../components/FaceAuth";
 import PetIDCard from "../components/PetIDCard";
 
-// ─── Stable sub-components ──────────────────────────────────────────────────
+// ─── Stable sub-components with Golden Touch ──────────────────────────────────
 
 const InfoItem = ({ icon, label, value, editComponent, isEdit }) => {
   const Icon = icon;
   return (
     <motion.div
-      className="flex items-start p-4 hover:bg-white/40 rounded-2xl transition-all duration-300 group border border-transparent hover:border-white/50"
-      initial={{ opacity: 0, x: -10 }}
-      animate={{ opacity: 1, x: 0 }}
-      whileHover={{ x: 5 }}
+      className="flex items-start p-4 bg-white/50 backdrop-blur-sm rounded-2xl border border-white/80 hover:border-amber-500/30 hover:bg-white/80 transition-all duration-300 group shadow-sm hover:shadow-md"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ scale: 1.01, y: -2 }}
     >
-      <div className="p-3 rounded-xl bg-white/80 shadow-sm mr-4 group-hover:scale-110 group-hover:bg-[#9a6458] group-hover:text-white transition-all duration-300">
-        <Icon size={20} className="text-[#9a6458] group-hover:text-white" />
+      <div className="p-3 rounded-xl bg-white shadow-sm mr-4 group-hover:scale-110 group-hover:bg-gradient-to-br group-hover:from-amber-400 group-hover:to-amber-600 group-hover:text-white transition-all duration-300 group-hover:shadow-[0_0_15px_rgba(212,175,55,0.4)] border border-neutral-100">
+        <Icon size={18} className="text-[#9a6458] group-hover:text-white transition-colors duration-300" />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-xs text-[#9a6458] font-black uppercase tracking-widest mb-1 opacity-70">{label}</p>
+        <p className="text-[10px] text-amber-800/80 font-black uppercase tracking-widest mb-0.5">{label}</p>
         <div className="mt-1">
           {isEdit ? (
             editComponent
           ) : (
-            <p className="font-bold break-words text-gray-800 text-base">
+            <p className="font-bold break-words text-[#5A4035] text-sm leading-relaxed">
               {value || label + " " + "Not provided"}
             </p>
           )}
@@ -72,9 +73,9 @@ const SaveButton = ({ isEdit, isSaving, onSave, onEdit }) => {
   const { t } = useTranslation();
   return (
     <motion.button
-      whileHover={{ scale: 1.05, boxShadow: "0 10px 20px rgba(154, 100, 88, 0.3)" }}
+      whileHover={{ scale: 1.05, boxShadow: "0 10px 25px rgba(212, 175, 55, 0.3)" }}
       whileTap={{ scale: 0.95 }}
-      className={`bg-gradient-to-r from-[#9a6458] to-[#7b483d] text-white px-6 py-2.5 rounded-xl hover:from-[#7b483d] hover:to-[#9a6458] transition-all duration-300 flex items-center shadow-lg ${isSaving ? "opacity-75 cursor-not-allowed" : ""
+      className={`relative overflow-hidden bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 text-white px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-wider flex items-center shadow-md border border-amber-400/40 royal-shimmer ${isSaving ? "opacity-75 cursor-not-allowed" : ""
         }`}
       onClick={() => {
         if (isEdit && !isSaving) {
@@ -92,21 +93,22 @@ const SaveButton = ({ isEdit, isSaving, onSave, onEdit }) => {
             <motion.div
               animate={{ rotate: 360 }}
               transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+              className="mr-2"
             >
-              <Loader2 className="mr-2" size={18} />
+              <Loader2 size={16} />
             </motion.div>
-            {t('profile.saving')}
+            {t("profile.saving")}
           </>
         ) : (
           <>
-            <Save className="mr-2" size={18} />
-            {t('profile.saveChanges')}
+            <Save className="mr-2" size={16} />
+            {t("profile.saveChanges")}
           </>
         )
       ) : (
         <>
-          <Edit className="mr-2" size={18} />
-          {t('profile.editProfile')}
+          <Edit className="mr-2" size={16} />
+          {t("profile.editProfile")}
         </>
       )}
     </motion.button>
@@ -122,25 +124,34 @@ const LoadingOverlay = ({ isSaving }) => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm"
+        className="fixed inset-0 bg-neutral-900/60 flex items-center justify-center z-[150] backdrop-blur-md"
       >
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.8, opacity: 0 }}
-          className="bg-white p-8 rounded-2xl shadow-2xl flex flex-col items-center max-w-sm mx-4 border-2 border-[#9a6458]/20"
+          className="bg-[#fdfbf7] border border-amber-500/20 p-8 rounded-[2.5rem] shadow-[0_25px_50px_rgba(122,90,72,0.15)] flex flex-col items-center max-w-sm mx-4 relative overflow-hidden text-center luxury-noise-bg"
         >
+          {/* Decorative Sparkles */}
+          <div className="absolute top-4 left-4 text-amber-500/20 animate-gold-float">
+            <Sparkles size={24} />
+          </div>
+          <div className="absolute bottom-4 right-4 text-amber-500/20 animate-gold-float [animation-delay:2s]">
+            <Sparkles size={18} />
+          </div>
+
           <motion.div
             animate={{ rotate: 360 }}
-            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+            className="p-4 bg-amber-500/5 rounded-full border border-amber-500/20 mb-6"
           >
-            <Loader2 size={48} className="text-[#9a6458] mb-4" />
+            <Loader2 size={36} className="text-amber-500" />
           </motion.div>
-          <h3 className="text-xl font-bold text-[#9a6458]">
-            {t('profile.updatingProfile')}
+          <h3 className="text-2xl font-black text-[#5A4035] tracking-tight uppercase">
+            {t("profile.updatingProfile")}
           </h3>
-          <p className="text-gray-600 mt-2 text-center">
-            {t('profile.saveChangesSub')}
+          <p className="text-neutral-500 text-sm mt-3 leading-relaxed">
+            {t("profile.saveChangesSub")}
           </p>
         </motion.div>
       </motion.div>
@@ -158,33 +169,33 @@ const DeletionRequestModal = ({ onClose, onSubmit, isSubmitting }) => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-[110] p-4"
+        className="fixed inset-0 bg-neutral-950/70 backdrop-blur-md flex items-center justify-center z-[160] p-4"
         onClick={onClose}
       >
         <motion.div
           initial={{ scale: 0.9, opacity: 0, y: 20 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.9, opacity: 0, y: 20 }}
-          className="bg-white rounded-[2rem] shadow-2xl p-8 max-w-md w-full border border-red-100 overflow-hidden relative"
+          className="bg-[#fdfbf7] rounded-[2.5rem] shadow-2xl p-8 max-w-md w-full border border-red-500/20 overflow-hidden relative luxury-noise-bg"
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="absolute top-0 right-0 w-32 h-32 bg-red-50 rounded-full -mr-16 -mt-16 opacity-50"></div>
+          <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/5 rounded-full -mr-16 -mt-16"></div>
           <div className="relative z-10">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="p-3 bg-red-100 rounded-2xl text-red-600">
+            <div className="flex items-center gap-4 mb-6">
+              <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-600">
                 <AlertCircle size={24} />
               </div>
               <div>
-                <h3 className="text-xl font-black text-gray-900 uppercase tracking-tighter">{t('profile.deleteAccount')}</h3>
-                <p className="text-xs text-red-500 font-bold uppercase tracking-widest">{t('profile.permanentAction')}</p>
+                <h3 className="text-xl font-black text-[#5A4035] uppercase tracking-tight">{t("profile.deleteAccount")}</h3>
+                <p className="text-[10px] text-red-500 font-black uppercase tracking-widest">{t("profile.permanentAction")}</p>
               </div>
             </div>
-            <p className="text-gray-600 text-sm mb-6 leading-relaxed">
-              {t('profile.deleteWarning')}
+            <p className="text-neutral-500 text-sm mb-6 leading-relaxed">
+              {t("profile.deleteWarning")}
             </p>
             <textarea
-              className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl p-4 text-sm focus:ring-4 focus:ring-red-100 focus:border-red-200 outline-none transition-all mb-6 resize-none min-h-[120px]"
-              placeholder={t('profile.deleteReasonPlaceholder')}
+              className="w-full bg-white border border-neutral-200 rounded-2xl p-4 text-sm text-neutral-800 focus:ring-2 focus:ring-red-500/10 focus:border-red-500/30 outline-none transition-all mb-6 resize-none min-h-[120px] shadow-inner"
+              placeholder={t("profile.deleteReasonPlaceholder")}
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               disabled={isSubmitting}
@@ -194,10 +205,10 @@ const DeletionRequestModal = ({ onClose, onSubmit, isSubmitting }) => {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={onClose}
-                className="flex-1 py-3 px-4 rounded-xl border-2 border-gray-100 text-gray-500 font-bold text-sm hover:bg-gray-50 transition-all"
+                className="flex-1 py-3 px-4 rounded-xl border border-neutral-200 text-neutral-500 font-bold text-sm hover:bg-neutral-50 transition-all"
                 disabled={isSubmitting}
               >
-                {t('common.cancel')}
+                {t("common.cancel")}
               </motion.button>
               <motion.button
                 whileHover={{ scale: 1.02 }}
@@ -205,14 +216,14 @@ const DeletionRequestModal = ({ onClose, onSubmit, isSubmitting }) => {
                 onClick={() => onSubmit(reason)}
                 disabled={isSubmitting || !reason.trim()}
                 className={`flex-1 py-3 px-4 rounded-xl font-bold text-sm text-white shadow-lg transition-all flex items-center justify-center ${isSubmitting || !reason.trim()
-                  ? "bg-gray-300 cursor-not-allowed"
-                  : "bg-gradient-to-r from-red-500 to-red-600 shadow-red-200 hover:shadow-red-300"
+                  ? "bg-neutral-200 text-neutral-400 cursor-not-allowed"
+                  : "bg-gradient-to-r from-red-500 to-red-600 shadow-red-200 hover:from-red-600 hover:to-red-700"
                   }`}
               >
                 {isSubmitting ? (
                   <Loader2 className="animate-spin" size={18} />
                 ) : (
-                  t('profile.submitRequest')
+                  t("profile.submitRequest")
                 )}
               </motion.button>
             </div>
@@ -229,7 +240,7 @@ const MyProfile = () => {
   // Initialize Gemini
   const apikey2 = import.meta.env.VITE_API_KEY_GEMINI_2;
   const genAI = new GoogleGenerativeAI(apikey2);
-  const model = genAI.getGenerativeModel({ model: 'gemini-3-flash-preview' });
+  const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
 
   const prompt =
     import.meta.env.VITE_PROMPT ||
@@ -247,7 +258,7 @@ const MyProfile = () => {
 
   const [isEdit, setIsEdit] = useState(false);
   const [image, setImage] = useState(null);
-  const [dailyQuote, setDailyQuote] = useState(t('common.loading'));
+  const [dailyQuote, setDailyQuote] = useState(t("common.loading"));
   const [isSaving, setIsSaving] = useState(false);
   const [isRefreshingTip, setIsRefreshingTip] = useState(false);
   const [nextAppointment, setNextAppointment] = useState(null);
@@ -287,12 +298,10 @@ const MyProfile = () => {
 
   useEffect(() => {
     if (userdata) {
-      const basicFields = [
-        'name', 'email', 'phone', 'gender', 'dob', 'image', 'full_address'
-      ];
+      const basicFields = ["name", "email", "phone", "gender", "dob", "image", "full_address"];
 
-      const basicCompleted = basicFields.filter(field => {
-        if (field === 'full_address') return userdata.full_address && userdata.full_address.length > 5;
+      const basicCompleted = basicFields.filter((field) => {
+        if (field === "full_address") return userdata.full_address && userdata.full_address.length > 5;
         return !!userdata[field];
       }).length;
 
@@ -305,13 +314,13 @@ const MyProfile = () => {
 
   useEffect(() => {
     if (token && getUserAppointments) {
-      getUserAppointments().then(appts => {
+      getUserAppointments().then((appts) => {
         if (appts && appts.length > 0) {
           const upcoming = appts
-            .filter(a => !a.cancelled && !a.isCompleted)
+            .filter((a) => !a.cancelled && !a.isCompleted)
             .sort((a, b) => {
-              const dateA = a.slotDate.split('_').reverse().join('-');
-              const dateB = b.slotDate.split('_').reverse().join('-');
+              const dateA = a.slotDate.split("_").reverse().join("-");
+              const dateB = b.slotDate.split("_").reverse().join("-");
               return new Date(dateA) - new Date(dateB);
             });
           if (upcoming.length > 0) {
@@ -323,8 +332,8 @@ const MyProfile = () => {
   }, [token, getUserAppointments]);
 
   const TIP_REFRESH_INTERVAL = 10 * 60 * 60 * 1000;
-  const TIP_STORAGE_KEY = 'petHealthTip';
-  const TIP_TIMESTAMP_KEY = 'petHealthTipTimestamp';
+  const TIP_STORAGE_KEY = "petHealthTip";
+  const TIP_TIMESTAMP_KEY = "petHealthTipTimestamp";
 
   useEffect(() => {
     if (userdata && !isEdit) {
@@ -433,19 +442,13 @@ const MyProfile = () => {
         breed: userToSave.breed,
         category: userToSave.category,
         pet_age: userToSave.pet_age,
-      }).forEach(([key, value]) =>
-        formdata.append(key, value?.trim?.() || "")
-      );
+      }).forEach(([key, value]) => formdata.append(key, value?.trim?.() || ""));
 
       formdata.append("address", JSON.stringify(normalized));
       if (userToSave.id) formdata.append("userId", userToSave.id);
       if (image) formdata.append("image", image);
 
-      const { data } = await axios.post(
-        `${backendurl}/api/user/update-profile`,
-        formdata,
-        { headers: { token } }
-      );
+      const { data } = await axios.post(`${backendurl}/api/user/update-profile`, formdata, { headers: { token } });
 
       if (data.success) {
         await loaduserprofiledata();
@@ -464,35 +467,41 @@ const MyProfile = () => {
     }
   };
 
-  const setupDailyContentGeneration = useCallback(async (isManualRefresh = false) => {
-    try {
-      if (isManualRefresh) setIsRefreshingTip(true);
-      if (!apikey2) { setDailyQuote("Daily tip unavailable"); return; }
-
-      const cachedTip = localStorage.getItem(TIP_STORAGE_KEY);
-      const cachedTimestamp = localStorage.getItem(TIP_TIMESTAMP_KEY);
-      const currentTime = Date.now();
-
-      if (!isManualRefresh && cachedTip && cachedTimestamp) {
-        const timeSinceLastUpdate = currentTime - parseInt(cachedTimestamp);
-        if (timeSinceLastUpdate < TIP_REFRESH_INTERVAL) {
-          setDailyQuote(cachedTip);
+  const setupDailyContentGeneration = useCallback(
+    async (isManualRefresh = false) => {
+      try {
+        if (isManualRefresh) setIsRefreshingTip(true);
+        if (!apikey2) {
+          setDailyQuote("Daily tip unavailable");
           return;
         }
-      }
 
-      const result = await model.generateContent(prompt);
-      const newTip = result.response.text() || "No content available.";
-      localStorage.setItem(TIP_STORAGE_KEY, newTip);
-      localStorage.setItem(TIP_TIMESTAMP_KEY, currentTime.toString());
-      setDailyQuote(newTip);
-    } catch (error) {
-      console.error("Error generating tip:", error);
-      setDailyQuote("Regular check-ups and a balanced diet keep your pet healthy and happy!");
-    } finally {
-      if (isManualRefresh) setTimeout(() => setIsRefreshingTip(false), 500);
-    }
-  }, [apikey2, model, prompt, TIP_REFRESH_INTERVAL]);
+        const cachedTip = localStorage.getItem(TIP_STORAGE_KEY);
+        const cachedTimestamp = localStorage.getItem(TIP_TIMESTAMP_KEY);
+        const currentTime = Date.now();
+
+        if (!isManualRefresh && cachedTip && cachedTimestamp) {
+          const timeSinceLastUpdate = currentTime - parseInt(cachedTimestamp);
+          if (timeSinceLastUpdate < TIP_REFRESH_INTERVAL) {
+            setDailyQuote(cachedTip);
+            return;
+          }
+        }
+
+        const result = await model.generateContent(prompt);
+        const newTip = result.response.text() || "No content available.";
+        localStorage.setItem(TIP_STORAGE_KEY, newTip);
+        localStorage.setItem(TIP_TIMESTAMP_KEY, currentTime.toString());
+        setDailyQuote(newTip);
+      } catch (error) {
+        console.error("Error generating tip:", error);
+        setDailyQuote("Regular check-ups and a balanced diet keep your pet healthy and happy!");
+      } finally {
+        if (isManualRefresh) setTimeout(() => setIsRefreshingTip(false), 500);
+      }
+    },
+    [apikey2, model, prompt, TIP_REFRESH_INTERVAL]
+  );
 
   useEffect(() => {
     setupDailyContentGeneration();
@@ -503,7 +512,9 @@ const MyProfile = () => {
     try {
       const date = new Date(dateString);
       return date.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
-    } catch { return dateString; }
+    } catch {
+      return dateString;
+    }
   };
 
   const handleCancelEdit = () => {
@@ -515,8 +526,15 @@ const MyProfile = () => {
 
   if (!editedData) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f2e4c7]">
-        <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}>
+      <div className="min-h-screen flex items-center justify-center bg-[#f2e4c7] relative overflow-hidden">
+        {/* Glowing sparkles in background */}
+        <div className="absolute top-20 left-20 text-[#9a6458]/20 animate-gold-float">
+          <Sparkles size={40} />
+        </div>
+        <div className="absolute bottom-20 right-20 text-[#9a6458]/20 animate-gold-float [animation-delay:2s]">
+          <Sparkles size={60} />
+        </div>
+        <motion.div animate={{ rotate: 360 }} transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }} className="p-4 bg-[#9a6458]/5 rounded-full border border-amber-500/20 shadow-xl">
           <Loader2 size={48} className="text-[#9a6458]" />
         </motion.div>
       </div>
@@ -526,82 +544,74 @@ const MyProfile = () => {
   const normalized = normalizeAddress(editedData.address);
 
   return (
-    <div className="max-w-6xl mx-auto p-4 min-h-screen bg-[#f2e4c7]">
+    <div className="max-w-6xl mx-auto p-4 min-h-screen bg-[#f2e4c7] relative">
       <LoadingOverlay isSaving={isSaving} />
 
-      {/* Header & Stats Container */}
+      {/* ─── HEADER & STATS CONTAINER (Aesthetic Light Cream & Gold Premium Panel) ─── */}
       <motion.div
-        initial={{ opacity: 0, y: -20 }}
+        initial={{ opacity: 0, y: -30 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="backdrop-blur-md shadow-xl rounded-[2.5rem] mb-8 overflow-hidden border border-[rgba(122,90,72,0.12)] bg-[rgba(122, 90, 72, 0.08)]"
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        className="luxury-noise-bg gold-shimmer bg-[#fdfbf7]/90 border border-amber-500/20 shadow-[0_15px_45px_rgba(122,90,72,0.1)] rounded-[3rem] mb-8 overflow-hidden relative"
       >
-        <div className="p-8">
-          <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
+        {/* Floating background decorations */}
+        <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-b from-amber-500/5 to-transparent rounded-full blur-3xl pointer-events-none"></div>
+        <div className="absolute -left-10 -bottom-10 w-60 h-60 bg-amber-500/5 rounded-full blur-2xl pointer-events-none"></div>
+
+        <div className="p-8 md:p-10 relative z-10">
+          <div className="flex flex-col md:flex-row items-center md:items-start gap-8 md:gap-10">
             {/* Avatar Section */}
-            <motion.div
-              className="flex-shrink-0"
-              whileHover={{ scale: 1.05 }}
-              transition={{ type: "spring", stiffness: 300 }}
-            >
+            <motion.div className="flex-shrink-0 relative" whileHover={{ scale: 1.05 }} transition={{ type: "spring", stiffness: 300, damping: 15 }}>
               {isEdit ? (
                 <label htmlFor="image" className="cursor-pointer block">
-                  <motion.div
-                    className="relative w-40 h-40 rounded-[2.5rem] overflow-hidden border-4 border-white shadow-2xl"
-                    whileHover={{ scale: 1.02 }}
-                  >
+                  <motion.div className="relative w-40 h-40 rounded-[2.5rem] overflow-hidden border-4 border-amber-500/40 shadow-2xl bg-white group" whileHover={{ scale: 1.02 }}>
                     <img
                       className="w-full h-full object-cover"
                       src={image ? URL.createObjectURL(image) : editedData.image}
                       alt="Profile"
                       onError={(e) => (e.target.src = assets.profile_pic)}
                     />
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-sm opacity-0 hover:opacity-100 transition-opacity">
-                      <Upload className="w-10 h-10 text-white" />
+                    <div className="absolute inset-0 bg-neutral-900/40 flex items-center justify-center backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <Upload className="w-10 h-10 text-amber-500 animate-bounce" />
                     </div>
                   </motion.div>
                   <input onChange={handleImageChange} type="file" id="image" accept="image/*" hidden />
                 </label>
               ) : (
                 <div className="relative group">
-                  <div className="absolute -inset-1 bg-gradient-to-r from-[#9a6458] to-[#7b483d] rounded-[2.5rem] blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
-                  <div className={`relative w-40 h-40 rounded-[2.5rem] overflow-hidden border-4 border-white shadow-2xl bg-white ${userdata?.subscription?.status === 'Active' && userdata.subscription.plan !== 'None' ? 'ring-4 ring-amber-400/50 ring-offset-2' : ''}`}>
-                    {userdata?.subscription?.status === 'Active' && userdata.subscription.plan !== 'None' && (
-                      <motion.div
-                        animate={{
-                          boxShadow: [
-                            "0 0 20px rgba(251, 191, 36, 0.4)",
-                            "0 0 40px rgba(251, 191, 36, 0.7)",
-                            "0 0 20px rgba(251, 191, 36, 0.4)"
-                          ]
-                        }}
-                        transition={{ duration: 2, repeat: Infinity }}
-                        className="absolute inset-0 rounded-[2.5rem] pointer-events-none"
-                      />
-                    )}
+                  {/* Outer Glowing Rings */}
+                  <div className="absolute -inset-1.5 bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 rounded-[2.7rem] blur-md opacity-35 group-hover:opacity-60 transition duration-1000 group-hover:duration-200"></div>
+                  {userdata?.subscription?.status === "Active" && userdata.subscription.plan !== "None" && (
+                    <div className="absolute -inset-1 rounded-[2.6rem] border border-amber-400/40 animate-pulse-gold pointer-events-none"></div>
+                  )}
+
+                  <div className="relative w-40 h-40 rounded-[2.5rem] overflow-hidden border-4 border-white shadow-xl bg-white">
                     <img
                       src={editedData.image}
                       alt="Profile"
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                       onError={(e) => (e.target.src = assets.profile_pic)}
                     />
                   </div>
 
-                  {/* Subscription SVG Badge */}
-                  {userdata?.subscription?.status === 'Active' && userdata.subscription.plan !== 'None' && (
+                  {/* Premium Subscription Badge */}
+                  {userdata?.subscription?.status === "Active" && userdata.subscription.plan !== "None" && (
                     <motion.div
-                      initial={{ scale: 0, rotate: -15 }}
+                      initial={{ scale: 0, rotate: -20 }}
                       animate={{ scale: 1, rotate: 0 }}
-                      className="absolute -top-5 -right-5 bg-white/80 p-2 rounded-[1.5rem] shadow-2xl border-2 border-white backdrop-blur-sm z-20 flex items-center justify-center transform hover:scale-110 transition-transform"
+                      whileHover={{ scale: 1.15, rotate: 5 }}
+                      className="absolute -top-4 -right-4 bg-[#fdfbf7] p-2.5 rounded-[1.5rem] shadow-xl border-2 border-amber-500/20 backdrop-blur-md z-20 flex items-center justify-center transform transition-transform"
                     >
                       <img
                         src={
-                          userdata.subscription.plan === 'Platinum' ? assets.platinum_logo :
-                            userdata.subscription.plan === 'Gold' ? assets.gold_logo :
-                              assets.silver_logo
+                          userdata.subscription.plan === "Platinum"
+                            ? assets.platinum_logo
+                            : userdata.subscription.plan === "Gold"
+                              ? assets.gold_logo
+                              : assets.silver_logo
                         }
                         alt={`${userdata.subscription.plan} Badge`}
-                        className="w-14 h-14 object-contain drop-shadow-md"
+                        className="w-12 h-12 object-contain filter drop-shadow-[0_2px_5px_rgba(212,175,55,0.2)]"
                       />
                     </motion.div>
                   )}
@@ -611,25 +621,26 @@ const MyProfile = () => {
                     <motion.div
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
-                      className="absolute -bottom-3 -left-3 bg-yellow-400 p-2 rounded-full shadow-lg border-2 border-white z-20"
+                      whileHover={{ scale: 1.2 }}
+                      className="absolute -bottom-2 -left-2 bg-gradient-to-br from-amber-400 to-amber-600 p-2.5 rounded-full shadow-lg border-2 border-white z-20"
                     >
-                      <Trophy size={18} className="text-white" />
+                      <Trophy size={16} className="text-white" />
                     </motion.div>
                   )}
                 </div>
               )}
 
-              {/* Mobile Completeness */}
-              <div className="mt-4 md:hidden w-full">
-                <div className="flex justify-between items-center mb-1">
-                  <span className="text-[10px] font-black text-[#5A4035]/60 uppercase tracking-widest">{t('profile.profileCompleteness')}</span>
+              {/* Mobile Profile Completeness */}
+              <div className="mt-5 md:hidden w-full">
+                <div className="flex justify-between items-center mb-1.5">
+                  <span className="text-[9px] font-black text-[#5A4035]/60 uppercase tracking-[0.2em]">Profile Progress</span>
                   <span className="text-xs font-black text-[#5A4035]">{profileCompleteness}%</span>
                 </div>
-                <div className="w-full bg-white/50 rounded-full h-1.5 overflow-hidden">
+                <div className="w-full bg-neutral-200 rounded-full h-1.5 overflow-hidden border border-white/50 shadow-inner">
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${profileCompleteness}%` }}
-                    className="bg-gradient-to-r from-[#9a6458] to-[#7b483d] h-full"
+                    className="bg-gradient-to-r from-amber-500 to-yellow-400 h-full shadow-[0_0_8px_rgba(212,175,55,0.3)]"
                   />
                 </div>
               </div>
@@ -637,70 +648,96 @@ const MyProfile = () => {
 
             {/* Header Content Area */}
             <div className="flex-1 space-y-4 w-full text-center md:text-left">
-              <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-                <div className="space-y-2">
-                  <h1 className="text-4xl md:text-5xl font-black text-[#5A4035] tracking-tight">
-                    {isEdit ? (
-                      <input
-                        type="text"
-                        className="bg-white/80 border-2 border-[#5A4035]/20 rounded-2xl p-2 px-4 focus:ring-4 focus:ring-[#5A4035]/10 outline-none w-full md:max-w-md text-3xl font-black"
-                        value={editedData.name || ""}
-                        onChange={(e) => handleInputChange("name", e.target.value)}
-                        placeholder="Enter your name"
-                      />
-                    ) : (
-                      <div className="flex flex-col md:flex-row md:items-center gap-3">
-                        <span>{userdata.name}</span>
-                        {userdata?.subscription?.plan && userdata.subscription.plan !== 'None' && (
+              <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
+                <div className="space-y-3">
+                  <div className="flex flex-col md:flex-row md:items-baseline md:gap-4 flex-wrap justify-center md:justify-start">
+                    <h1 className="text-3xl md:text-5xl font-black text-[#5A4035] tracking-tight leading-none mb-1 md:mb-0">
+                      {isEdit ? (
+                        <input
+                          type="text"
+                          className="bg-white border-2 border-amber-500/30 text-amber-600 rounded-2xl p-2 px-4 focus:ring-4 focus:ring-amber-500/10 focus:border-amber-500/50 outline-none w-full md:max-w-md text-2xl md:text-3xl font-black shadow-inner"
+                          value={editedData.name || ""}
+                          onChange={(e) => handleInputChange("name", e.target.value)}
+                          placeholder="Enter your name"
+                        />
+                      ) : (
+                        <span className="gold-text-premium font-black tracking-tight leading-none">{userdata.name}</span>
+                      )}
+                    </h1>
+
+                    {!isEdit && (
+                      <div className="flex flex-wrap items-center gap-2 mt-2 md:mt-0 justify-center md:justify-start select-none">
+                        {userdata?.subscription?.plan && userdata.subscription.plan !== "None" && (
                           <motion.div
                             initial={{ opacity: 0, scale: 0.8 }}
                             animate={{ opacity: 1, scale: 1 }}
-                            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-amber-400 to-amber-600 text-white text-[10px] font-black uppercase tracking-wider shadow-lg shadow-amber-200/50 border border-amber-300"
+                            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-amber-500/10 via-yellow-500/5 to-amber-600/10 text-[#9a6458] text-[10px] font-black uppercase tracking-widest shadow-inner border border-amber-500/20 whitespace-nowrap"
                           >
-                            <Crown size={12} className="fill-current" />
-                            Premium {userdata.subscription.plan}
+                            <Crown size={11} className="text-[#9a6458] fill-current" />
+                            {userdata.subscription.plan} Member
+                          </motion.div>
+                        )}
+                        {userdata?.pawCode && (
+                          <motion.div
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => {
+                              navigator.clipboard.writeText(userdata.pawCode);
+                              toast.success("Your permanent Paw Code copied to clipboard!");
+                            }}
+                            className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#FCF6E8] hover:bg-[#F5ECD2] text-[#5A4035] text-[10px] font-black uppercase tracking-widest shadow-sm hover:shadow border border-amber-500/30 border-dashed whitespace-nowrap transition-all"
+                            title="Click to copy your referral Paw Code!"
+                          >
+                            <Gift size={11} className="text-amber-600" />
+                            <span>Paw Code:</span>
+                            <span className="font-mono font-bold text-amber-700 tracking-wider bg-amber-50/50 px-1.5 py-0.5 rounded border border-amber-200/40">{userdata.pawCode}</span>
                           </motion.div>
                         )}
                       </div>
                     )}
-                  </h1>
-                  <div className="hidden md:block">
-                    <div className="flex items-center gap-4 mb-2">
-                      <span className="text-[10px] font-black text-amber-700/40 uppercase tracking-[0.2em]">{t('profile.profileCompleteness')}</span>
-                      <span className="px-2 py-0.5 bg-amber-100 text-amber-700 text-[10px] font-black rounded-lg">{profileCompleteness}%</span>
+                  </div>
+
+                  {/* Desktop Profile Completeness */}
+                  <div className="hidden md:block pt-1">
+                    <div className="flex items-center gap-3 mb-1.5">
+                      <span className="text-[10px] font-black text-amber-800/60 uppercase tracking-[0.25em]">Profile Completeness</span>
+                      <span className="px-2 py-0.5 bg-amber-500/10 text-amber-800 text-[9px] font-black rounded-lg border border-amber-500/20">{profileCompleteness}%</span>
                     </div>
-                    <div className="w-64 h-2.5 bg-white/50 rounded-full overflow-hidden border border-white/20 shadow-inner">
+                    <div className="w-64 h-2 bg-neutral-200/50 rounded-full overflow-hidden border border-white shadow-inner">
                       <motion.div
                         initial={{ width: 0 }}
                         animate={{ width: `${profileCompleteness}%` }}
                         transition={{ duration: 1.2, ease: "circOut" }}
                         className="h-full bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-600 relative"
                       >
-                        <div className="absolute inset-0 bg-[linear-gradient(45deg,rgba(255,255,255,0.2)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.2)_50%,rgba(255,255,255,0.2)_75%,transparent_75%,transparent)] bg-[length:20px_20px] animate-[scroll_2s_linear_infinite]"></div>
+                        <div className="absolute inset-0 bg-[linear-gradient(45deg,rgba(255,255,255,0.15)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.15)_50%,rgba(255,255,255,0.15)_75%,transparent_75%,transparent)] bg-[length:20px_20px] animate-[scroll_2s_linear_infinite]"></div>
                       </motion.div>
                     </div>
                   </div>
                 </div>
 
                 <div className="flex flex-wrap gap-3 justify-center md:justify-end items-center">
-                  <div className="flex items-center bg-white/80 border border-white px-4 py-2.5 rounded-2xl shadow-sm">
-                    <Mail size={16} className="text-amber-600 mr-2" />
-                    <span className="text-sm font-bold text-gray-600">{userdata.email}</span>
+                  <div className="flex items-center bg-white border border-neutral-100 px-4 py-2.5 rounded-2xl shadow-sm backdrop-blur-sm">
+                    <Mail size={15} className="text-[#9a6458] mr-2" />
+                    <span className="text-xs font-bold text-neutral-600">{userdata.email}</span>
                   </div>
                   {userPets && userPets.length > 0 && (
                     <motion.button
                       whileHover={{ scale: 1.05, y: -2 }}
                       whileTap={{ scale: 0.95 }}
                       onClick={() => setSelectedPetForID(userPets[0])}
-                      className="bg-gradient-to-r from-yellow-400 to-amber-500 text-white px-5 py-2.5 rounded-2xl shadow-lg flex items-center text-xs font-black uppercase tracking-wider border border-yellow-300"
+                      className="bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 text-white px-5 py-2.5 rounded-2xl shadow-md flex items-center text-xs font-black uppercase tracking-wider border border-amber-400/40 royal-shimmer"
                     >
-                      <Star className="w-4 h-4 mr-2 fill-current" /> {t('profile.premiumPetID')}
+                      <Star className="w-3.5 h-3.5 mr-1.5 fill-current text-yellow-300" /> {t("profile.premiumPetID")}
                     </motion.button>
                   )}
                 </div>
               </div>
 
-              <div className="flex flex-wrap gap-4 justify-center md:justify-start pt-2">
+              {/* Action Buttons */}
+              <div className="flex flex-wrap gap-4 justify-center md:justify-start pt-3">
                 {!editedData.isBanned ? (
                   <>
                     <SaveButton isEdit={isEdit} isSaving={isSaving} onSave={updateUserProfileData} onEdit={() => setIsEdit(true)} />
@@ -709,7 +746,7 @@ const MyProfile = () => {
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={handleCancelEdit}
-                        className="border-2 border-[#9a6458] text-[#9a6458] px-6 py-2.5 rounded-xl hover:bg-white/50 backdrop-blur-sm transition-all font-bold shadow-md"
+                        className="border border-[#9a6458]/30 text-[#9a6458] hover:text-[#7b483d] px-6 py-3 rounded-2xl bg-white/50 hover:bg-white font-black text-xs uppercase tracking-wider transition-all shadow-sm"
                         disabled={isSaving}
                         type="button"
                       >
@@ -718,8 +755,8 @@ const MyProfile = () => {
                     )}
                   </>
                 ) : (
-                  <div className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-red-50 text-red-600 font-bold border border-red-200 shadow-sm">
-                    <AlertCircle size={18} />
+                  <div className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-red-500/10 text-red-500 font-bold border border-red-500/20 shadow-sm text-xs uppercase tracking-wider">
+                    <AlertCircle size={16} />
                     Profile Locked
                   </div>
                 )}
@@ -727,143 +764,60 @@ const MyProfile = () => {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={toggleEdit}
-                  className="px-6 py-2.5 bg-[#5A4035] text-white rounded-2xl text-sm font-black flex items-center shadow-xl hover:bg-[#48332a] transition-all border border-white/10 md:hidden"
+                  className="px-6 py-2.5 bg-amber-500 text-white rounded-2xl text-xs font-black uppercase tracking-wider flex items-center shadow-xl hover:bg-amber-400 transition-all border border-amber-300 md:hidden"
                 >
-                  <Edit size={16} className="mr-2" /> {isEdit ? t('profile.cancel') : t('profile.editProfile')}
+                  <Edit size={14} className="mr-2" /> {isEdit ? t("profile.cancel") : t("profile.editProfile")}
                 </motion.button>
               </div>
             </div>
           </div>
 
+          {/* Quick Metrics Grid */}
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.15 }}
-            className="mt-10 grid grid-cols-2 md:grid-cols-4 gap-4"
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="mt-10 grid grid-cols-2 md:grid-cols-5 gap-4"
           >
             {[
-              { icon: Activity, label: "Status", value: editedData.isBanned ? "Restricted" : "Verified", color: "blue" },
-              { icon: PawPrint, label: "Total Pets", value: `${userPets?.length || 0} Pets`, color: "green" },
-              { icon: Zap, label: "Paw Wallet", value: `₹${userdata.pawWallet || 0}`, color: "purple" },
+              { icon: Activity, label: "Status", value: editedData.isBanned ? "Restricted" : "Verified", color: "text-emerald-600", bg: "bg-emerald-500/5", border: "border-emerald-500/20" },
+              { icon: PawPrint, label: "Total Pets", value: `${userPets?.length || 0} Pets`, color: "text-amber-700", bg: "bg-amber-500/5", border: "border-amber-500/20" },
+              { icon: Zap, label: "Paw Wallet", value: `₹${userdata.pawWallet || 0}`, color: "text-[#9a6458]", bg: "bg-yellow-500/5", border: "border-yellow-500/20" },
+              { icon: Trophy, label: "PawPoints", value: `${userdata.pawpoints || 0} PTS`, color: "text-yellow-600", bg: "bg-amber-500/5", border: "border-amber-500/20" },
               {
                 icon: Video,
                 label: "Video Calls",
-                value: userdata?.subscription?.plan === 'Platinum' || userdata?.subscription?.plan === 'Gold'
-                  ? `${Math.max(0, (userdata.subscription.plan === 'Platinum' ? 25 : 10) - (userdata.videoCallsUsed || 0))} Left`
-                  : "Upgrade",
-                color: "rose"
-              }
+                value:
+                  userdata?.subscription?.plan === "Platinum" || userdata?.subscription?.plan === "Gold"
+                    ? `${Math.max(0, (userdata.subscription.plan === "Gold" ? 10 : 25) - (userdata.videoCallsUsed || 0))} Left`
+                    : "Upgrade Plan",
+                color: "text-rose-600",
+                bg: "bg-rose-500/5",
+                border: "border-rose-500/20",
+              },
             ].map((stat, i) => (
-              <div key={i} className="bg-white/60 backdrop-blur-md p-4 rounded-[2rem] border border-white/50 shadow-sm hover:shadow-md transition-all">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className={`p-2 rounded-xl bg-${stat.color}-100 text-${stat.color}-600`}>
-                    <stat.icon size={18} />
-                  </div>
-                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{stat.label}</span>
+              <motion.div
+                key={i}
+                whileHover={{ scale: 1.03, y: -2, borderColor: "rgba(212,175,55,0.4)" }}
+                className="bg-white/80 border border-amber-500/10 p-4 rounded-[2rem] shadow-sm hover:shadow-md transition-all duration-300 relative group overflow-hidden"
+              >
+                <div className="absolute top-0 right-0 p-3 opacity-5 group-hover:opacity-10 transition-opacity duration-300">
+                  <stat.icon size={44} className={stat.color} />
                 </div>
-                <p className="text-lg font-black text-gray-800">{stat.value}</p>
-              </div>
+                <div className="flex items-center gap-3 mb-2.5">
+                  <div className={`p-2 rounded-xl ${stat.bg} ${stat.color} border ${stat.border}`}>
+                    <stat.icon size={16} />
+                  </div>
+                  <span className="text-[10px] font-black text-neutral-400 uppercase tracking-widest">{stat.label}</span>
+                </div>
+                <p className="text-base font-black text-[#5A4035] group-hover:text-amber-600 transition-colors duration-300">{stat.value}</p>
+              </motion.div>
             ))}
-          </motion.div>
-
-          {/* Biometric Integration */}
-          <AnimatePresence>
-            {!userdata.isFaceRegistered ? (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="mt-8 p-6 rounded-[2rem] bg-emerald-50 border-2 border-emerald-100 flex flex-col md:flex-row items-center justify-between gap-4"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-emerald-500 rounded-2xl text-white shadow-lg shadow-emerald-200">
-                    <Shield size={24} />
-                  </div>
-                  <div>
-                    <h4 className="text-base font-black text-emerald-900 leading-tight">Biometric Security Required</h4>
-                    <p className="text-xs text-emerald-700/80 mt-1">Setup face authentication to protect your account and pet data.</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setShowFaceAuth(true)}
-                  className="w-full md:w-auto px-8 py-3 bg-emerald-600 text-white rounded-2xl font-black text-sm hover:bg-emerald-500 transition-all shadow-xl"
-                >
-                  Setup Now
-                </button>
-              </motion.div>
-            ) : (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="mt-8 p-6 rounded-[2rem] bg-blue-50 border-2 border-blue-100 flex flex-col md:flex-row items-center justify-between gap-4"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-blue-500 rounded-2xl text-white shadow-lg shadow-blue-200">
-                    <ShieldCheck size={24} />
-                  </div>
-                  <div>
-                    <h4 className="text-base font-black text-blue-900 leading-tight">Biometric Shield Active</h4>
-                    <p className="text-xs text-blue-700/80 mt-1">Your identity is verified via biometric authentication.</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setShowFaceAuth(true)}
-                  className="w-full md:w-auto px-8 py-3 bg-blue-600 text-white rounded-2xl font-black text-sm hover:bg-blue-500 transition-all shadow-xl"
-                >
-                  Update Scan
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Subscription Section */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className={`mt-8 p-6 rounded-[2rem] border-2 flex flex-col md:flex-row items-center justify-between gap-4 overflow-hidden relative ${userdata?.subscription?.plan && userdata.subscription.plan !== 'None'
-              ? 'bg-amber-50 border-amber-100'
-              : 'bg-gray-50 border-gray-100'
-              }`}
-          >
-            {userdata?.subscription?.plan && userdata.subscription.plan !== 'None' && (
-              <div className="absolute top-0 right-0 w-32 h-32 bg-amber-200/20 rounded-full -mr-16 -mt-16 blur-2xl"></div>
-            )}
-
-            <div className="flex items-center gap-4 relative z-10">
-              <div className={`p-4 rounded-2xl shadow-lg ${userdata.subscription?.plan === 'Platinum' ? 'bg-purple-600 text-white' :
-                userdata.subscription?.plan === 'Gold' ? 'bg-amber-500 text-white' :
-                  userdata.subscription?.plan === 'Silver' ? 'bg-slate-500 text-white' :
-                    'bg-gray-400 text-white'
-                }`}>
-                <CreditCard size={28} />
-              </div>
-              <div>
-                <h4 className="text-lg font-black text-gray-900 leading-tight">
-                  {userdata?.subscription?.plan && userdata.subscription.plan !== 'None' ? `${userdata.subscription.plan} Membership` : 'Basic Access'}
-                </h4>
-                {userdata?.subscription?.plan && userdata.subscription.plan !== 'None' ? (
-                  <div className="flex items-center gap-2 mt-1">
-                    <Clock size={14} className="text-amber-600" />
-                    <span className="text-xs font-bold text-amber-700">Expires: {formatDate(userdata.subscription.expiryDate)}</span>
-                  </div>
-                ) : (
-                  <p className="text-xs text-gray-500 mt-1">Upgrade to unlock premium features and priority care.</p>
-                )}
-              </div>
-            </div>
-
-            <button
-              onClick={() => navigate('/subscription')}
-              className={`w-full md:w-auto px-8 py-3 rounded-2xl font-black text-sm transition-all shadow-xl relative z-10 ${userdata.subscription?.plan !== 'None'
-                ? 'bg-white text-amber-600 hover:bg-amber-50 border border-amber-200'
-                : 'bg-primary text-white hover:bg-primary/90'
-                }`}
-            >
-              {userdata.subscription?.plan !== 'None' ? 'Manage Plan' : 'View Plans'}
-            </button>
           </motion.div>
         </div>
       </motion.div>
 
+      {/* ─── MODAL CONTROLLERS ─── */}
       <AnimatePresence>
         {selectedPetForID && (
           <PetIDCard pet={selectedPetForID} ownerName={userdata.name} phone={userdata.phone} onClose={() => setSelectedPetForID(null)} />
@@ -873,36 +827,121 @@ const MyProfile = () => {
         )}
       </AnimatePresence>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start relative z-10">
         <div className="lg:col-span-8 space-y-8">
+          {/* ─── ACCOUNT INFORMATION CARD (Cream & Gold Premium Form) ─── */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
+            initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white/40 backdrop-blur-xl shadow-2xl rounded-[3rem] overflow-hidden border border-white/60 p-2"
+            transition={{ duration: 0.5 }}
+            className="bg-white/50 backdrop-blur-xl shadow-[0_15px_40px_rgba(122,90,72,0.1)] rounded-[3rem] overflow-hidden border border-white p-3"
           >
-            <div className="p-6 bg-gradient-to-r from-[#9a6458] to-[#7b483d] text-white flex items-center justify-between rounded-[2.5rem] shadow-lg mb-4">
+            {/* Header Plate */}
+            <div className="p-6 bg-gradient-to-r from-[#9a6458] to-[#7b483d] text-white flex items-center justify-between rounded-[2.5rem] shadow-lg mb-6 border border-amber-500/10">
               <div className="flex items-center gap-4">
-                <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-md text-white"> <User size={24} /> </div>
-                <h2 className="text-xl font-black uppercase tracking-tighter">Account Information</h2>
+                <div className="p-3 bg-white/25 rounded-2xl text-white">
+                  <User size={20} className="animate-pulse" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-black uppercase tracking-tighter text-white leading-none">Account Information</h2>
+                  <p className="text-[9px] text-amber-100/80 uppercase tracking-widest mt-1">Manage secure profile specifics</p>
+                </div>
               </div>
-              <Sparkles className="text-yellow-400" size={20} />
+              <Sparkles className="text-yellow-300 animate-gold-float" size={18} />
             </div>
 
-            <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-              <InfoItem icon={Phone} label="Contact" value={editedData.phone} isEdit={isEdit} editComponent={<input type="text" className="bg-white/80 border-2 border-white rounded-2xl p-3 w-full outline-none" value={editedData.phone || ""} onChange={(e) => handlePhoneChange(e.target.value)} />} />
-              <InfoItem icon={Mail} label="Email" value={editedData.email} isEdit={isEdit} editComponent={<p className="font-bold px-3 py-3 bg-gray-50/50 rounded-2xl border border-dashed border-gray-300">{editedData.email}</p>} />
-              <InfoItem icon={User} label="Gender" value={editedData.gender} isEdit={isEdit} editComponent={<select className="bg-white/80 border-2 border-white rounded-2xl p-3 w-full outline-none" value={editedData.gender || ""} onChange={(e) => handleInputChange("gender", e.target.value)}><option value="">Select Gender</option><option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other</option></select>} />
-              <InfoItem icon={Calendar} label="Birthday" value={formatDate(editedData.dob)} isEdit={isEdit} editComponent={<input type="date" className="bg-white/80 border-2 border-white rounded-2xl p-3 w-full outline-none" value={editedData.dob || ""} onChange={(e) => handleInputChange("dob", e.target.value)} />} />
+            <div className="p-3 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <InfoItem
+                icon={Phone}
+                label="Contact"
+                value={editedData.phone}
+                isEdit={isEdit}
+                editComponent={
+                  <input
+                    type="text"
+                    className="bg-white border border-amber-500/20 focus:border-amber-500/50 rounded-2xl p-3 w-full outline-none text-sm text-neutral-800 font-bold transition-all shadow-inner focus:ring-4 focus:ring-amber-500/5"
+                    value={editedData.phone || ""}
+                    onChange={(e) => handlePhoneChange(e.target.value)}
+                  />
+                }
+              />
+              <InfoItem
+                icon={Mail}
+                label="Email"
+                value={editedData.email}
+                isEdit={isEdit}
+                editComponent={
+                  <p className="font-bold px-4 py-3 bg-neutral-100 rounded-2xl border border-dashed border-neutral-300 text-neutral-500 text-sm">
+                    {editedData.email}
+                  </p>
+                }
+              />
+              <InfoItem
+                icon={User}
+                label="Gender"
+                value={editedData.gender}
+                isEdit={isEdit}
+                editComponent={
+                  <select
+                    className="bg-white border border-amber-500/20 focus:border-amber-500/50 rounded-2xl p-3 w-full outline-none text-sm text-neutral-800 font-bold transition-all shadow-inner focus:ring-4 focus:ring-amber-500/5"
+                    value={editedData.gender || ""}
+                    onChange={(e) => handleInputChange("gender", e.target.value)}
+                  >
+                    <option value="">Select Gender</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                  </select>
+                }
+              />
+              <InfoItem
+                icon={Calendar}
+                label="Birthday"
+                value={formatDate(editedData.dob)}
+                isEdit={isEdit}
+                editComponent={
+                  <input
+                    type="date"
+                    className="bg-white border border-amber-500/20 focus:border-amber-500/50 rounded-2xl p-3 w-full outline-none text-sm text-neutral-800 font-bold transition-all shadow-inner focus:ring-4 focus:ring-amber-500/5"
+                    value={editedData.dob || ""}
+                    onChange={(e) => handleInputChange("dob", e.target.value)}
+                  />
+                }
+              />
               <div className="md:col-span-2">
-                <InfoItem icon={MapPin} label="Address" value={`${normalized.LOCATION}, ${normalized.LINE}`} isEdit={isEdit} editComponent={<div className="grid grid-cols-2 gap-3"><input type="text" className="bg-white/80 border-2 border-white rounded-2xl p-3 outline-none" value={normalized.LOCATION} placeholder="State" onChange={(e) => handleAddressChange("LOCATION", e.target.value)} /><input type="text" className="bg-white/80 border-2 border-white rounded-2xl p-3 outline-none" value={normalized.LINE} placeholder="District" onChange={(e) => handleAddressChange("LINE", e.target.value)} /></div>} />
+                <InfoItem
+                  icon={MapPin}
+                  label="Address"
+                  value={`${normalized.LOCATION}, ${normalized.LINE}`}
+                  isEdit={isEdit}
+                  editComponent={
+                    <div className="grid grid-cols-2 gap-3">
+                      <input
+                        type="text"
+                        className="bg-white border border-amber-500/20 focus:border-amber-500/50 rounded-2xl p-3 outline-none text-sm text-neutral-800 font-bold transition-all shadow-inner focus:ring-4 focus:ring-amber-500/5"
+                        value={normalized.LOCATION}
+                        placeholder="State"
+                        onChange={(e) => handleAddressChange("LOCATION", e.target.value)}
+                      />
+                      <input
+                        type="text"
+                        className="bg-white border border-amber-500/20 focus:border-amber-500/50 rounded-2xl p-3 outline-none text-sm text-neutral-800 font-bold transition-all shadow-inner focus:ring-4 focus:ring-amber-500/5"
+                        value={normalized.LINE}
+                        placeholder="District"
+                        onChange={(e) => handleAddressChange("LINE", e.target.value)}
+                      />
+                    </div>
+                  }
+                />
               </div>
             </div>
           </motion.div>
 
+          {/* ─── MY PET FAMILY SECTION (Luxury passports / ID cards) ─── */}
           <div className="space-y-6">
-            <h3 className="text-2xl font-black text-[#5A4035] uppercase tracking-tighter flex items-center gap-3 px-6">
-              <PawPrint size={28} className="text-[#9a6458]" /> {t('profile.myPetFamily')}
-              <span className="bg-[#9a6458]/10 text-[#9a6458] text-xs px-2 py-1 rounded-lg ml-2">{userPets?.length || 0}</span>
+            <h3 className="text-2xl font-black text-[#5A4035] uppercase tracking-tighter flex items-center gap-3 px-4">
+              <PawPrint size={24} className="text-[#9a6458]" /> {t("profile.myPetFamily")}
+              <span className="bg-amber-500/10 text-amber-800 text-xs px-2.5 py-1 rounded-xl border border-amber-500/20 ml-2">{userPets?.length || 0}</span>
             </h3>
 
             {userPets && userPets.length > 0 ? (
@@ -910,146 +949,356 @@ const MyProfile = () => {
                 {userPets.map((pet, index) => (
                   <motion.div
                     key={pet._id || index}
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.1 * index }}
-                    className="bg-white/60 backdrop-blur-xl shadow-xl rounded-[2.5rem] border border-white/80 p-6 relative group overflow-hidden"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.1 * index }}
+                    whileHover={{ y: -5 }}
+                    className="bg-white/70 backdrop-blur-lg shadow-md hover:shadow-[0_20px_40px_rgba(122,90,72,0.12)] rounded-[2.5rem] border border-white/80 p-6 relative group overflow-hidden transition-all duration-300 gold-shimmer"
                   >
-                    <div className="flex items-center gap-5 mb-6">
-                      <div className="w-16 h-16 rounded-3xl overflow-hidden border-2 border-[#9a6458]/20 shadow-lg bg-white shrink-0">
-                        <img src={pet.image || assets.upload_area} alt={pet.name} className="w-full h-full object-cover" />
+                    {/* Tiny decorative gold frame internally */}
+                    <div className="absolute inset-2 border border-[#9a6458]/5 rounded-[2rem] pointer-events-none"></div>
+
+                    <div className="flex items-center gap-5 mb-6 relative z-10">
+                      <div className="w-24 h-24 rounded-[1.8rem] overflow-hidden border-2 border-[#9a6458]/15 shadow-lg bg-amber-50/40 shrink-0 relative group">
+                        <img src={pet.image || assets.upload_area} alt={pet.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                       </div>
-                      <div className="flex-1">
-                        <h4 className="text-xl font-black text-[#5A4035] truncate">{pet.name}</h4>
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className="px-2 py-0.5 bg-amber-100 text-amber-700 text-[9px] font-black rounded uppercase tracking-wider">{pet.type}</span>
-                          {pet.isVerified && <ShieldCheck size={14} className="text-blue-500" />}
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-xl font-black text-[#5A4035] truncate flex items-center gap-1.5 leading-tight">
+                          {pet.name}
+                        </h4>
+                        <div className="flex items-center gap-2 mt-1.5">
+                          <span className="px-2.5 py-0.5 bg-amber-100/60 text-[#9a6458] text-[9px] font-black rounded-lg uppercase tracking-wider border border-[#9a6458]/10">{pet.type}</span>
+                          {pet.isVerified && (
+                            <div className="flex items-center text-blue-600 gap-0.5 font-bold text-[10px]">
+                              <ShieldCheck size={13} className="fill-blue-100" /> Verified
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-3 mb-6">
-                      <div className="bg-white/40 p-3 rounded-2xl border border-white/50">
-                        <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Breed</p>
-                        <p className="text-xs font-bold text-gray-800 truncate">{pet.breed || "N/A"}</p>
+
+                    <div className="grid grid-cols-2 gap-3 mb-6 relative z-10">
+                      <div className="bg-white/60 p-3 rounded-2xl border border-neutral-100 shadow-inner">
+                        <p className="text-[8px] font-black text-neutral-400 uppercase tracking-widest mb-0.5">Breed</p>
+                        <p className="text-xs font-bold text-[#5A4035] truncate">{pet.breed || "N/A"}</p>
                       </div>
-                      <div className="bg-white/40 p-3 rounded-2xl border border-white/50">
-                        <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Age / Sex</p>
-                        <p className="text-xs font-bold text-gray-800">{pet.age}Y • {pet.gender}</p>
+                      <div className="bg-white/60 p-3 rounded-2xl border border-neutral-100 shadow-inner">
+                        <p className="text-[8px] font-black text-neutral-400 uppercase tracking-widest mb-0.5">Age / Sex</p>
+                        <p className="text-xs font-bold text-[#5A4035]">{pet.age}Y • {pet.gender}</p>
                       </div>
                     </div>
+
                     <motion.button
-                      whileHover={{ scale: 1.02 }}
+                      whileHover={{ scale: 1.02, boxShadow: "0 10px 20px rgba(212,175,55,0.2)" }}
                       whileTap={{ scale: 0.98 }}
                       onClick={() => setSelectedPetForID(pet)}
-                      className="w-full py-3 bg-gradient-to-r from-amber-400 to-yellow-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg hover:shadow-amber-200 transition-all border border-amber-300"
+                      className="w-full py-3 bg-[#5A4035] hover:bg-[#4a3229] text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-md border border-amber-500/20 relative z-10 royal-shimmer"
                     >
-                      <CreditCard size={14} /> {t('profile.officialPetID')}
+                      <CreditCard size={13} className="text-amber-100" /> {t("profile.officialPetID")}
                     </motion.button>
                   </motion.div>
                 ))}
               </div>
             ) : (
-              <div className="bg-white/40 backdrop-blur-md rounded-[2.5rem] border-2 border-dashed border-[#9a6458]/20 p-12 text-center">
-                <PawPrint size={48} className="text-[#9a6458]/20 mx-auto mb-4" />
-                <p className="text-[#5A4035]/60 font-bold">No pets registered yet.</p>
+              <div className="bg-white/40 backdrop-blur-md rounded-[2.5rem] border-2 border-dashed border-[#9a6458]/20 p-12 text-center shadow-inner">
+                <PawPrint size={44} className="text-[#9a6458]/15 mx-auto mb-4 animate-bounce" />
+                <p className="text-[#5A4035]/60 font-black text-sm uppercase tracking-wide">No pets registered yet.</p>
               </div>
             )}
           </div>
         </div>
 
+        {/* ─── RIGHT HAND COLUMN (Widgets & Security Modules) ─── */}
         <div className="lg:col-span-4 space-y-8">
-          {userdata?.subscription?.plan && (userdata.subscription.plan === 'Gold' || userdata.subscription.plan === 'Platinum') && (
+          {/* Biometric Integration Card */}
+          <AnimatePresence>
+            {!userdata.isFaceRegistered ? (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="p-6 rounded-[2.5rem] bg-gradient-to-br from-amber-50/70 to-amber-100/50 border border-amber-200/60 shadow-md relative overflow-hidden group gold-shimmer"
+              >
+                <div className="absolute top-0 right-0 p-6 opacity-5 rotate-12">
+                  <Shield size={100} className="text-amber-600" />
+                </div>
+                <div className="flex items-center gap-4 mb-4 relative z-10">
+                  <div className="p-3 bg-gradient-to-br from-amber-500 to-amber-600 rounded-2xl text-white shadow-lg shadow-amber-200/50 animate-pulse-gold">
+                    <Shield size={22} />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-black text-amber-900 uppercase tracking-tight leading-tight">Biometric Shield</h4>
+                    <p className="text-[10px] text-amber-700/80 mt-0.5 font-bold uppercase tracking-wide">Security Inactive</p>
+                  </div>
+                </div>
+                <p className="text-xs text-amber-800/80 mb-5 leading-relaxed relative z-10">
+                  Setup face authentication to guarantee protection of your pet health vault and transactional history.
+                </p>
+                <motion.button
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => setShowFaceAuth(true)}
+                  className="w-full py-3 bg-gradient-to-r from-[#9a6458] to-[#7b483d] text-white rounded-2xl font-black text-xs uppercase tracking-wider transition-all shadow-md royal-shimmer"
+                >
+                  Setup Biometrics
+                </motion.button>
+              </motion.div>
+            ) : (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="p-6 rounded-[2.5rem] bg-gradient-to-br from-blue-50/60 to-blue-100/40 border border-blue-200/60 shadow-md relative overflow-hidden group gold-shimmer"
+              >
+                <div className="absolute top-0 right-0 p-6 opacity-5 rotate-12">
+                  <ShieldCheck size={100} className="text-blue-500" />
+                </div>
+                <div className="flex items-center gap-4 mb-4 relative z-10">
+                  <div className="p-3 bg-blue-500/10 border border-blue-200/20 rounded-2xl text-blue-600">
+                    <ShieldCheck size={22} className="animate-pulse" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-black text-blue-900 uppercase tracking-tight leading-tight">Biometric Shield</h4>
+                    <p className="text-[10px] text-blue-600 mt-0.5 font-black uppercase tracking-wider">Active & Encrypted</p>
+                  </div>
+                </div>
+                <p className="text-xs text-blue-800/80 mb-5 leading-relaxed relative z-10">
+                  Your profile and diagnostic reports are fully secured via active on-device biometric scanning.
+                </p>
+                <motion.button
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => setShowFaceAuth(true)}
+                  className="w-full py-3 bg-white text-blue-600 border border-blue-200 rounded-2xl font-black text-xs uppercase tracking-wider hover:bg-neutral-50 transition-all shadow-sm"
+                >
+                  Update Face Scan
+                </motion.button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* ─── SUBSCRIPTION MEMBERSHIP CARD (Luxury Ivory Card design) ─── */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="p-6 rounded-[2.5rem] bg-gradient-to-br from-white/95 via-amber-50/20 to-[#fbf9f4] border border-amber-500/25 shadow-xl relative overflow-hidden group"
+          >
+            {/* Glossy diagonal sheet */}
+            <div className="absolute inset-0 bg-gradient-to-tr from-amber-500/5 via-white/0 to-amber-500/5 pointer-events-none"></div>
+
+            <div className="flex flex-col gap-6 relative z-10">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className={`p-3 rounded-2xl shadow-md ${userdata.subscription?.plan === "Platinum"
+                    ? "bg-purple-600 text-white"
+                    : userdata.subscription?.plan === "Gold"
+                      ? "bg-amber-500 text-white animate-pulse"
+                      : userdata.subscription?.plan === "Silver"
+                        ? "bg-slate-500 text-white"
+                        : "bg-[#9a6458] text-white"
+                    }`}>
+                    <CreditCard size={20} />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-black uppercase tracking-tight leading-none text-[#5A4035]">
+                      {userdata?.subscription?.plan && userdata.subscription.plan !== "None" ? `${userdata.subscription.plan} Membership` : "Basic Access"}
+                    </h4>
+                    <p className="text-[9px] text-[#9a6458] uppercase tracking-widest mt-1">Tier Level Access</p>
+                  </div>
+                </div>
+
+                {/* Simulated Gold Chip detailing */}
+                {userdata?.subscription?.plan && userdata.subscription.plan !== "None" && (
+                  <div className="w-8 h-6 rounded-lg bg-gradient-to-br from-yellow-300 via-amber-400 to-yellow-600 border border-amber-200/40 shadow-sm flex items-center justify-center opacity-80">
+                    <div className="grid grid-cols-3 gap-0.5 w-full h-full p-1 opacity-45">
+                      <div className="border-r border-b border-black"></div>
+                      <div className="border-r border-b border-black"></div>
+                      <div className="border-b border-black"></div>
+                      <div className="border-r border-black"></div>
+                      <div className="border-r border-black"></div>
+                      <div></div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div>
+                {userdata?.subscription?.plan && userdata.subscription.plan !== "None" ? (
+                  <div className="space-y-1.5">
+                    <p className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider">Expiry Information</p>
+                    <div className="flex items-center gap-1.5">
+                      <Clock size={13} className="text-[#9a6458]" />
+                      <span className="text-xs font-black text-amber-700">{formatDate(userdata.subscription.expiryDate)}</span>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-xs text-neutral-500 leading-relaxed">
+                    Upgrade to high-tier subscriptions to unlock VIP consults, zero processing fees, and priority live queues.
+                  </p>
+                )}
+              </div>
+
+              <button
+                onClick={() => navigate("/subscription")}
+                className="w-full py-3 bg-[#5A4035] hover:bg-[#4a3229] text-white rounded-2xl font-black text-xs uppercase tracking-wider transition-all shadow-md royal-shimmer"
+              >
+                {userdata.subscription?.plan !== "None" ? "Manage Membership" : "View Premium Plans"}
+              </button>
+            </div>
+          </motion.div>
+
+          {/* ─── VIDEO ALLOWANCE WIDGET ─── */}
+          {userdata?.subscription?.plan && (userdata.subscription.plan === "Gold" || userdata.subscription.plan === "Platinum") && (
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.1 }}
-              className="bg-white/40 backdrop-blur-xl p-6 rounded-[3rem] shadow-2xl border border-white/60 relative overflow-hidden"
+              className="bg-white/50 border border-amber-500/20 p-6 rounded-[2.5rem] shadow-xl relative overflow-hidden"
             >
-              <div className="absolute top-0 right-0 p-8 opacity-10 rotate-12"> <Video size={100} className="text-[#9a6458]" /> </div>
+              <div className="absolute -top-6 -right-6 opacity-5 rotate-12 text-[#9a6458]">
+                <Video size={100} />
+              </div>
               <div className="relative z-10 text-center">
                 <div className="flex items-center gap-3 mb-4 justify-center">
-                  <div className="p-2 bg-[#9a6458]/10 rounded-xl text-[#9a6458]"> <Video size={20} /> </div>
-                  <span className="text-xs font-black uppercase tracking-[0.2em] text-[#5A4035]">Video Consultations</span>
+                  <div className="p-2 bg-[#9a6458]/10 rounded-xl text-[#9a6458]">
+                    <Video size={16} />
+                  </div>
+                  <span className="text-xs font-black uppercase tracking-widest text-[#5A4035]">Video Consultations</span>
                 </div>
 
-                <div className="text-4xl font-black text-[#5A4035] mb-2">
-                  {Math.max(0, (userdata.subscription.plan === 'Gold' ? 10 : 25) - (userdata.videoCallsUsed || 0))}
-                  <span className="text-sm font-bold text-[#5A4035]/40 ml-1">LEFT</span>
+                <div className="text-4xl font-black text-[#5A4035] mb-2 tracking-tight">
+                  {Math.max(0, (userdata.subscription.plan === "Gold" ? 10 : 25) - (userdata.videoCallsUsed || 0))}
+                  <span className="text-xs font-black text-neutral-400 ml-1.5 uppercase tracking-widest">Left</span>
                 </div>
 
-                <div className="w-full bg-[#9a6458]/10 rounded-full h-2.5 overflow-hidden mb-2">
+                <div className="w-full bg-[#5A4035]/10 rounded-full h-2.5 overflow-hidden mb-3 p-0.5 border border-[#5A4035]/5">
                   <motion.div
                     initial={{ width: 0 }}
-                    animate={{ width: `${((userdata.videoCallsUsed || 0) / (userdata.subscription.plan === 'Gold' ? 10 : 25)) * 100}%` }}
-                    className="bg-gradient-to-r from-[#9a6458] to-[#7b483d] h-full"
+                    animate={{ width: `${((userdata.videoCallsUsed || 0) / (userdata.subscription.plan === "Gold" ? 10 : 25)) * 100}%` }}
+                    className="bg-gradient-to-r from-amber-500 to-yellow-400 h-full rounded-full"
                   />
                 </div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-[#5A4035]/40">
-                  Total allowance: {userdata.subscription.plan === 'Gold' ? 10 : 25} credits
+                <p className="text-[9px] font-black uppercase tracking-widest text-[#5A4035]/40">
+                  Allowance: {userdata.subscription.plan === "Gold" ? 10 : 25} Monthly Credits
                 </p>
               </div>
             </motion.div>
           )}
 
+          {/* ─── UPCOMING APPOINTMENT WIDGET (PawVaidya Copper-Gold design) ─── */}
           {nextAppointment && (
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="bg-gradient-to-br from-[#9a6458] to-[#7b483d] p-6 rounded-[3rem] shadow-2xl text-white relative overflow-hidden"
+              className="bg-gradient-to-br from-[#9a6458] to-[#7b483d] border border-amber-500/20 p-6 rounded-[2.5rem] shadow-xl text-white relative overflow-hidden"
             >
-              <div className="absolute top-0 right-0 p-8 opacity-10 rotate-12"> <Calendar size={120} /> </div>
+              <div className="absolute top-0 right-0 p-8 opacity-10 rotate-12 text-white">
+                <Calendar size={120} />
+              </div>
               <div className="relative z-10">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="p-2 bg-white/20 rounded-xl backdrop-blur-md text-white"> <Clock size={20} /> </div>
-                  <span className="text-xs font-black uppercase tracking-[0.2em]">{t('profile.nextAppointment')}</span>
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="p-2 bg-white/20 rounded-xl text-white">
+                    <Clock size={16} />
+                  </div>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-amber-100">{t("profile.nextAppointment")}</span>
                 </div>
-                <h4 className="text-2xl font-black mb-1">Dr. {nextAppointment.docData.name}</h4>
-                <p className="text-white/70 text-sm mb-6 flex items-center gap-2"> <Calendar size={14} /> {nextAppointment.slotDate.replace(/_/g, ' ')} • {nextAppointment.slotTime} </p>
-                <motion.button onClick={() => navigate('/my-appointments')} className="w-full py-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl text-sm font-black transition-all"> Manage Bookings </motion.button>
+                <h4 className="text-xl font-black mb-1.5 text-white">Dr. {nextAppointment.docData.name}</h4>
+                <p className="text-amber-100/90 text-xs mb-6 flex items-center gap-1.5 font-bold">
+                  <Calendar size={13} className="text-amber-300" />
+                  {nextAppointment.slotDate.replace(/_/g, " ")} • {nextAppointment.slotTime}
+                </p>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => navigate("/my-appointments")}
+                  className="w-full py-3 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-2xl text-xs font-black uppercase tracking-wider transition-all royal-shimmer"
+                >
+                  Manage Bookings
+                </motion.button>
               </div>
             </motion.div>
           )}
 
+          {/* ─── HEALTH TIP CARD (Powered by Gemini AI) ─── */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
+            initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white/60 backdrop-blur-xl p-8 rounded-[3rem] border border-white shadow-xl relative overflow-hidden"
+            className="bg-white/60 backdrop-blur-xl p-8 rounded-[2.5rem] border border-white shadow-xl relative overflow-hidden"
           >
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-amber-100 rounded-xl text-amber-600"> <Heart size={20} fill="#d97706" /> </div>
-                <h3 className="font-black text-[#5A4035] uppercase tracking-tighter">Health Tip</h3>
+                <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-xl text-amber-500">
+                  <Heart size={18} fill="#d97706" className="animate-pulse" />
+                </div>
+                <div>
+                  <h3 className="font-black text-[#5A4035] uppercase tracking-tight leading-none">Pet Health Tip</h3>
+                  <p className="text-[8px] text-[#9a6458]/70 uppercase tracking-widest mt-1">Smart advice</p>
+                </div>
               </div>
-              <motion.button onClick={() => setupDailyContentGeneration(true)} disabled={isRefreshingTip} className="p-2 bg-gray-100 rounded-xl text-gray-400 hover:text-[#9a6458] transition-colors">
-                <RefreshCw size={16} className={isRefreshingTip ? "animate-spin" : ""} />
+              <motion.button
+                whileHover={{ scale: 1.1, rotate: 15 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={() => setupDailyContentGeneration(true)}
+                disabled={isRefreshingTip}
+                className="p-2 bg-white rounded-xl text-neutral-400 hover:text-amber-500 hover:shadow-md transition-all border border-neutral-100"
+              >
+                <RefreshCw size={15} className={isRefreshingTip ? "animate-spin" : ""} />
               </motion.button>
             </div>
             <AnimatePresence mode="wait">
-              <motion.div key={dailyQuote} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="bg-white/50 p-5 rounded-2xl border border-white/50 italic text-[#5A4035] text-sm leading-relaxed"> "{dailyQuote}" </motion.div>
+              <motion.div
+                key={dailyQuote}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="bg-white/70 p-5 rounded-2xl border border-amber-500/10 italic text-[#5A4035] text-xs leading-relaxed font-bold shadow-inner"
+              >
+                "{dailyQuote}"
+              </motion.div>
             </AnimatePresence>
-            <p className="text-center text-[9px] font-black text-[#5A4035]/30 uppercase tracking-[0.2em] mt-6">Powered by Gemini AI</p>
+            <p className="text-center text-[8px] font-black text-[#5A4035]/30 uppercase tracking-[0.25em] mt-5">Powered by Gemini AI</p>
           </motion.div>
 
+          {/* ─── BAN DETAILS / APPEAL ZONE ─── */}
           {editedData.isBanned && (
-            <div className="bg-red-50/50 backdrop-blur-sm p-6 rounded-[3rem] border border-red-100 shadow-sm">
-              <h4 className="text-xs font-black text-red-600 uppercase tracking-widest mb-4 flex items-center gap-2"> <AlertCircle size={14} /> Account Restricted </h4>
-              <div className="bg-white p-4 rounded-2xl border border-red-100 mb-4">
-                <div className="flex justify-between items-center mb-1">
-                  <span className="text-[10px] font-black text-gray-400">Unban Attempts</span>
-                  <span className="text-xs font-black text-red-600">{userdata.unbanAttempts || 0}/3</span>
+            <div className="bg-red-500/5 backdrop-blur-sm p-6 rounded-[2.5rem] border border-red-500/20 shadow-md">
+              <h4 className="text-xs font-black text-red-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                <AlertCircle size={15} /> Account Restricted
+              </h4>
+              <div className="bg-[#fdfbf7] p-4 rounded-2xl border border-red-500/10 mb-4">
+                <div className="flex justify-between items-center mb-1.5">
+                  <span className="text-[9px] font-black text-[#5A4035]/60 uppercase tracking-wider">Unban Appeal Attempts</span>
+                  <span className="text-xs font-black text-red-600">
+                    {userdata.unbanAttempts || 0}/3
+                  </span>
                 </div>
-                <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
-                  <div className="bg-red-500 h-full" style={{ width: `${((userdata.unbanAttempts || 0) / 3) * 100}%` }} />
+                <div className="w-full bg-neutral-200 h-1.5 rounded-full overflow-hidden p-0.5 border border-white shadow-inner">
+                  <div className="bg-red-500 h-full rounded-full" style={{ width: `${((userdata.unbanAttempts || 0) / 3) * 100}%` }} />
                 </div>
               </div>
-              <button onClick={() => setShowDeleteModal(true)} disabled={userdata.unbanAttempts >= 3} className="w-full py-3 bg-red-600 text-white rounded-2xl font-black text-xs shadow-lg disabled:opacity-50"> Request Appeal </button>
+              <button
+                onClick={() => setShowDeleteModal(true)}
+                disabled={userdata.unbanAttempts >= 3}
+                className="w-full py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-2xl font-black text-xs uppercase tracking-wider shadow-lg hover:from-red-600 hover:to-red-700 transition-all disabled:opacity-40"
+              >
+                Request Support Appeal
+              </button>
             </div>
           )}
 
-          <div className="bg-red-50/50 backdrop-blur-sm p-6 rounded-[3rem] border border-red-100 shadow-sm">
-            <h4 className="text-xs font-black text-red-600 uppercase tracking-widest mb-4 flex items-center gap-2"> <AlertCircle size={14} /> Danger Zone </h4>
-            <p className="text-[10px] text-gray-500 mb-4 px-2">Permanently delete your account and all associated data.</p>
-            <button onClick={() => setShowDeleteModal(true)} className="w-full py-3 bg-white text-red-600 font-black text-xs rounded-2xl border border-red-100 hover:bg-red-600 hover:text-white transition-all shadow-sm"> Request Account Deletion </button>
+          {/* ─── DANGER ZONE ─── */}
+          <div className="bg-red-500/5 backdrop-blur-sm p-6 rounded-[2.5rem] border border-red-500/10 shadow-sm">
+            <h4 className="text-xs font-black text-red-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+              <AlertCircle size={14} /> Danger Zone
+            </h4>
+            <p className="text-[10px] text-neutral-500 mb-4 px-1 leading-relaxed">
+              Permanently close and delete your diagnostic history, wallet funds, and linked biometric data.
+            </p>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setShowDeleteModal(true)}
+              className="w-full py-3 bg-white hover:bg-red-600 text-red-600 hover:text-white font-black text-xs uppercase tracking-wider rounded-2xl border border-red-200 hover:border-red-600 transition-all shadow-sm"
+            >
+              Request Account Deletion
+            </motion.button>
           </div>
         </div>
       </div>

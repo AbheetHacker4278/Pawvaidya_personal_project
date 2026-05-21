@@ -5,6 +5,7 @@ import { DoctorContext } from '../context/DoctorContext';
 import { assets } from '../assets/assets_admin/assets';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, Search, User, LogOut, ChevronDown, Bell, Settings, Home, MessageSquare } from 'lucide-react';
+import EmergencyAlertBell from './EmergencyAlertBell';
 
 const Navbar = ({ toggleSidebar }) => {
   const { atoken, setatoken, getAdminProfile, adminProfile } = useContext(AdminContext);
@@ -115,11 +116,15 @@ const Navbar = ({ toggleSidebar }) => {
         )}
 
         <div className="flex items-center gap-2">
-          {/* Notifications */}
-          <button className="relative p-2 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-emerald-600 transition-all">
-            <Bell className="w-5 h-5" />
-            <span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full border-2 border-white" />
-          </button>
+          {/* Emergency Alert Bell for Doctors | Static bell for Admins */}
+          {dtoken ? (
+            <EmergencyAlertBell />
+          ) : (
+            <button className="relative p-2 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-emerald-600 transition-all">
+              <Bell className="w-5 h-5" />
+              <span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full border-2 border-white" />
+            </button>
+          )}
 
           <div className="h-6 w-px bg-slate-200 mx-1 hidden sm:block" />
 

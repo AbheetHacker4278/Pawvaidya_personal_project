@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
+import { toast } from 'react-toastify';
 import { DoctorContext } from '../../context/DoctorContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -6,7 +7,7 @@ import {
     ChevronRight, ChevronLeft, Stethoscope,
     History, Shield, Clipboard, Hash, FileText,
     ExternalLink, Download, Clock, PawPrint,
-    X
+    X, Plus
 } from 'lucide-react';
 
 const THEME = {
@@ -20,7 +21,7 @@ const THEME = {
 };
 
 const PatientRecords = () => {
-    const { appointments, getAppointments, getPetReports, dtoken } = useContext(DoctorContext);
+    const { appointments, getAppointments, getPetReports, addVisitNote, addVaccination, dtoken } = useContext(DoctorContext);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedPatient, setSelectedPatient] = useState(null);
     const [patientReports, setPatientReports] = useState([]);
@@ -169,28 +170,37 @@ const PatientRecords = () => {
                                             />
                                             <p className="mt-4 font-bold" style={{ color: THEME.muted }}>Fetching medical records...</p>
                                         </div>
-                                    ) : patientReports.length === 0 ? (
-                                        <div className="text-center py-20">
-                                            <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                                                <FileText className="w-10 h-10 text-gray-300" />
-                                            </div>
-                                            <h3 className="text-xl font-bold" style={{ color: THEME.primary }}>No Reports Found</h3>
-                                            <p style={{ color: THEME.muted }}>This patient has no pet health records yet.</p>
-                                        </div>
                                     ) : (
                                         <div className="space-y-10">
-                                            {/* Report Selection (if multiple pets) */}
-                                            {patientReports.length > 1 && (
-                                                <div className="flex flex-wrap gap-3">
-                                                    {patientReports.map(rep => (
+                                            {/* Report Selection Tabs or Initialize Button */}
+                                            {patientReports.length > 0 ? (
+                                                <div className="flex flex-wrap gap-3 mb-10">
+                                                    {patientReports.map((report) => (
                                                         <button
-                                                            key={rep._id}
-                                                            onClick={() => setSelectedReport(rep)}
-                                                            className={`px-4 py-2 rounded-xl text-sm font-bold transition-all border-2 ${selectedReport?._id === rep._id ? 'bg-amber-600 border-amber-600 text-white shadow-lg shadow-amber-200' : 'bg-white border-amber-200 text-amber-800 hover:border-amber-400'}`}
+                                                            key={report._id}
+                                                            onClick={() => setSelectedReport(report)}
+                                                            className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${selectedReport?._id === report._id ? 'bg-[#5A4035] text-white shadow-lg' : 'bg-white border-2 border-amber-50 text-[#5A4035] hover:bg-amber-50'}`}
                                                         >
-                                                            {rep.petName}
+                                                            {report.petName} ({new Date(report.createdAt).toLocaleDateString()})
                                                         </button>
                                                     ))}
+                                                </div>
+                                            ) : (
+                                                <div className="bg-amber-50/50 p-12 rounded-[2.5rem] border-2 border-dashed border-[#e8d5b0] text-center mb-10">
+                                                    <Clipboard className="mx-auto w-12 h-12 text-amber-200 mb-4" />
+                                                    <p className="font-bold text-[#5A4035]/60 mb-6">No clinical history exists for this pet.</p>
+                                                    <button 
+                                                        onClick={async () => {
+                                                            const success = await createPetReport({
+                                                                userId: selectedPatient.id,
+                                                                petName: selectedPatient.name,
+                                                            });
+                                                            if (success) handlePatientClick(selectedPatient);
+                                                        }}
+                                                        className="px-8 py-3 bg-[#5A4035] text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-[#3d2b21] transition-all shadow-xl"
+                                                    >
+                                                        Initialize Medical Passport
+                                                    </button>
                                                 </div>
                                             )}
 
@@ -263,6 +273,80 @@ const PatientRecords = () => {
                                                         </div>
                                                     </section>
 
+                                                    {/* Doctor Actions */}
+                                                    <section className="bg-white p-8 rounded-[2rem] border-2 border-[#e8d5b0] shadow-xl">
+                                                        <h4 className="text-xl font-black mb-6 flex items-center gap-2" style={{ color: THEME.primary }}>
+                                                            <Plus className="w-6 h-6 text-amber-600" /> Update Medical Passport
+                                                        </h4>
+                                                        
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                                                            {/* Add Visit Note Form */}
+                                                            <div className="space-y-4">
+                                                                <label className="block text-xs font-black uppercase tracking-widest text-gray-400">Add Consultation Note</label>
+                                                                <textarea 
+                                                                    id={`note-${selectedReport._id}`}
+                                                                    className="w-full p-4 rounded-2xl border-2 border-amber-50 focus:border-amber-200 outline-none transition-all text-sm min-h-[100px] bg-amber-50/20"
+                                                                    placeholder="Describe today's symptoms, diagnosis, or advice..."
+                                                                />
+                                                                <button 
+                                                                    onClick={async () => {
+                                                                        const noteInput = document.getElementById(`note-${selectedReport._id}`);
+                                                                        if (!noteInput.value.trim()) return toast.error("Note cannot be empty");
+                                                                        const success = await addVisitNote({
+                                                                            reportId: selectedReport._id,
+                                                                            notes: noteInput.value.trim()
+                                                                        });
+                                                                        if (success) {
+                                                                            noteInput.value = "";
+                                                                            handlePatientClick(selectedPatient);
+                                                                        }
+                                                                    }}
+                                                                    className="w-full py-3 bg-[#5A4035] text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-[#3d2b21] transition-all"
+                                                                >
+                                                                    Save Note
+                                                                </button>
+                                                            </div>
+
+                                                            {/* Add Vaccination Form */}
+                                                            <div className="space-y-4">
+                                                                <label className="block text-xs font-black uppercase tracking-widest text-gray-400">Add Immunization</label>
+                                                                <div className="space-y-3">
+                                                                    <input 
+                                                                        id={`vac-name-${selectedReport._id}`}
+                                                                        type="text" 
+                                                                        placeholder="Vaccine Name (e.g. DHPP, Rabies)"
+                                                                        className="w-full p-3 rounded-xl border-2 border-amber-50 focus:border-amber-200 outline-none text-sm bg-amber-50/20"
+                                                                    />
+                                                                    <input 
+                                                                        id={`vac-date-${selectedReport._id}`}
+                                                                        type="date" 
+                                                                        className="w-full p-3 rounded-xl border-2 border-amber-50 focus:border-amber-200 outline-none text-sm bg-amber-50/20"
+                                                                    />
+                                                                </div>
+                                                                <button 
+                                                                    onClick={async () => {
+                                                                        const nameInput = document.getElementById(`vac-name-${selectedReport._id}`);
+                                                                        const dateInput = document.getElementById(`vac-date-${selectedReport._id}`);
+                                                                        if (!nameInput.value.trim() || !dateInput.value) return toast.error("Fill all vaccination fields");
+                                                                        const success = await addVaccination({
+                                                                            reportId: selectedReport._id,
+                                                                            vaccinationName: nameInput.value.trim(),
+                                                                            vaccinationDate: dateInput.value
+                                                                        });
+                                                                        if (success) {
+                                                                            nameInput.value = "";
+                                                                            dateInput.value = "";
+                                                                            handlePatientClick(selectedPatient);
+                                                                        }
+                                                                    }}
+                                                                    className="w-full py-3 border-2 border-[#5A4035] text-[#5A4035] rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-amber-50 transition-all"
+                                                                >
+                                                                    Add Vaccination
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </section>
+
                                                     {/* Vaccinations & Lab Results */}
                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                                                         <section>
@@ -281,6 +365,9 @@ const PatientRecords = () => {
                                                                         <span className="text-[10px] font-black text-emerald-600">{new Date(vac.date).toLocaleDateString()}</span>
                                                                     </div>
                                                                 ))}
+                                                                {(!selectedReport.vaccinations || selectedReport.vaccinations.length === 0) && (
+                                                                    <p className="text-xs italic" style={{ color: THEME.muted }}>No immunizations recorded.</p>
+                                                                )}
                                                             </div>
                                                         </section>
 

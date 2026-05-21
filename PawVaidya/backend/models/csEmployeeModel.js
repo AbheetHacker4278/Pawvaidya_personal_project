@@ -33,6 +33,12 @@ const csEmployeeSchema = new mongoose.Schema({
     totalTicketsResolved: { type: Number, default: 0 },
     overallRating: { type: Number, default: 0 },
     fiveStarCount: { type: Number, default: 0 },
+    avgHandleTime: { type: Number, default: 0 }, // in seconds
+
+    // Gamification
+    xpPoints: { type: Number, default: 0 },
+    level: { type: Number, default: 1 },
+    rank: { type: String, default: 'Bronze' },
 
     adminIncentive: {
         amount: { type: Number, default: 0 },
@@ -41,6 +47,14 @@ const csEmployeeSchema = new mongoose.Schema({
 
     isOnline: { type: Boolean, default: false },
     activeTicketsCount: { type: Number, default: 0 },
+
+    // Break History
+    breakHistory: [{
+        date: { type: Date, default: Date.now },
+        duration: { type: Number, required: true }, // duration in seconds
+        startTime: { type: Date, required: true },
+        endTime: { type: Date, required: true }
+    }],
 
     // Rewards/Compensation granted by admin
     rewards: [{

@@ -12,7 +12,8 @@ import { logActivity } from '../utils/activityLogger.js';
 export const banUser = async (req, res) => {
     try {
         const { userId, userType, banDuration, banReason, banIp, ipAddress } = req.body;
-        const adminId = req.adminId; // From authAdmin middleware
+        const actorId = req.adminId || req.employeeId;
+        const actorType = req.adminId ? 'admin' : 'cs_employee';
 
         if (!userId || !userType || !banDuration || !banReason) {
             return res.json({
@@ -82,7 +83,7 @@ export const banUser = async (req, res) => {
         user.isBanned = true;
         user.banReason = banReason;
         user.bannedAt = new Date();
-        user.bannedBy = adminId;
+        user.bannedBy = actorId;
         user.unbanAt = unbanAt;
         user.unbanRequestAttempts = 0; // Reset unban request attempts
 
@@ -96,7 +97,7 @@ export const banUser = async (req, res) => {
                 { ipAddress },
                 {
                     reason: banReason,
-                    bannedBy: adminId,
+                    bannedBy: actorId,
                     bannedAt: new Date(),
                     expiresAt,
                     isActive: true,
@@ -110,8 +111,8 @@ export const banUser = async (req, res) => {
 
         // Log the ban activity
         await logActivity(
-            adminId,
-            'admin',
+            actorId,
+            actorType,
             'ban_user',
             `Banned ${userType}: ${user.email} for ${banDuration}. Reason: ${banReason}`,
             req,
@@ -160,7 +161,8 @@ export const banUser = async (req, res) => {
 export const unbanUser = async (req, res) => {
     try {
         const { userId, userType, unbanReason } = req.body;
-        const adminId = req.adminId; // From authAdmin middleware
+        const actorId = req.adminId || req.employeeId;
+        const actorType = req.adminId ? 'admin' : 'cs_employee';
 
         if (!userId || !userType) {
             return res.json({
@@ -207,10 +209,10 @@ export const unbanUser = async (req, res) => {
 
         // Log the unban activity
         await logActivity(
-            adminId,
-            'admin',
+            actorId,
+            actorType,
             'unban_user',
-            `Unbanned ${userType}: ${user.email}. Reason: ${unbanReason || 'Unbanned by admin'}`,
+            `Unbanned ${userType}: ${user.email}. Reason: ${unbanReason || 'Unbanned by actor'}`,
             req,
             {
                 userId: userId,

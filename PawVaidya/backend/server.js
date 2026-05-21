@@ -1,4 +1,5 @@
 import express from 'express';
+// Triggering restart for gamification sync...
 import cors from 'cors';
 import http from 'http';
 import 'dotenv/config'
@@ -23,6 +24,13 @@ import subscriptionRouter from './routes/subscriptionRoute.js';
 import csAuthRouter from './routes/csAuthRoute.js';
 import complaintRouter from './routes/complaintRoute.js';
 import csAdminRouter from './routes/csAdminRoute.js';
+import emergencyRouter from './routes/emergencyRoute.js';
+import misbehaviorRouter from './routes/misbehaviorRoute.js';
+import crueltyReportRouter from './routes/crueltyReportRoute.js';
+import gamificationRouter from './routes/csGamificationRoute.js';
+import mlPredictionRouter from './routes/mlPredictionRoute.js';
+import animalDiseaseRouter from './routes/animalDiseaseRoute.js';
+
 
 import cookieParser from 'cookie-parser';
 import { initializeSocket } from './socketServer.js';
@@ -162,6 +170,40 @@ try {
   app.use('/api/cs-admin', csAdminRouter);
 } catch (error) {
   console.error("Failed to use csAdminRouter:", error.message);
+}
+try {
+  app.use('/api/emergency', emergencyRouter);
+} catch (error) {
+  console.error("Failed to use emergencyRouter:", error.message);
+}
+try {
+  app.use('/api/misbehavior', misbehaviorRouter);
+} catch (error) {
+  console.error("Failed to use misbehaviorRouter:", error.message);
+}
+
+try {
+  app.use('/api/cruelty-report', crueltyReportRouter);
+} catch (error) {
+  console.error("Failed to use crueltyReportRouter:", error.message);
+}
+
+try {
+  app.use('/api/cs-gamification', gamificationRouter);
+} catch (error) {
+  console.error("Failed to use gamificationRouter:", error.message);
+}
+
+try {
+  app.use('/api/ml-prediction', mlPredictionRouter);
+} catch (error) {
+  console.error("Failed to use mlPredictionRouter:", error.message);
+}
+
+try {
+  app.use('/api/disease-predictor', animalDiseaseRouter);
+} catch (error) {
+  console.error("Failed to use animalDiseaseRouter:", error.message);
 }
 
 // Pet report feature disabled

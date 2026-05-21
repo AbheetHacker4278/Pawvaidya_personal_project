@@ -6,6 +6,7 @@ import { getServiceHealth } from '../controllers/serviceHealthController.js';
 import { initializeAdmin, getAdminProfile, updateAdminProfile, updateAdminPassword } from '../controllers/adminProfileController.js';
 import { createPoll, getAllPolls, togglePollStatus, deletePoll, voteInPoll } from '../controllers/pollController.js';
 import upload from '../middleware/multer.js';
+import { getPetHealthCardByPetId } from '../controllers/petReportController.js';
 import authAdmin from '../middleware/authAdmin.js';
 import securityMonitor from '../middleware/securityMonitor.js';
 import changeavailablity from '../controllers/doctorController.js';
@@ -148,6 +149,7 @@ adminRouter.post('/gift-subscription', authAdmin, giftSubscription);
 adminRouter.get('/redis-stats', authAdmin, getRedisStats);
 adminRouter.get('/redis-history', authAdmin, getRedisHistory);
 adminRouter.get('/user-payment-details/:userId', authAdmin, getUserPaymentDetails);
+adminRouter.get('/pet-health/:petId', authAdmin, getPetHealthCardByPetId);
 
 // Financial Calculations Route
 import { getFinancialCalculations } from '../controllers/adminFinanceController.js';

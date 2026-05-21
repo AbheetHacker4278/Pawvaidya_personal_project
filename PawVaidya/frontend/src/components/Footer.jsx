@@ -43,6 +43,7 @@ const Footer = () => {
         { label: t('footer.privacyPolicy'), path: '/privacy-policy' },
         { label: t('footer.faqs'), path: '/faqs' },
         { label: t('footer.reportIssue'), path: '/report-issue' },
+        { label: 'Report Cruelty', path: '/report-cruelty' },
     ];
 
     const socialLinks = [

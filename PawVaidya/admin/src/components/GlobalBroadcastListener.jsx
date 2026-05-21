@@ -46,6 +46,13 @@ const GlobalBroadcastListener = () => {
         });
 
         socket.on('emergency-alert', (data) => {
+            // For doctors, we only show this if they are currently on the emergency desk 
+            // to avoid distracting them elsewhere. Non-doctors (admins) see it everywhere.
+            if (dtoken && window.location.pathname !== '/doctor-emergencies') {
+                console.log('GlobalBroadcastListener: Doctor not on emergency route, suppressing alert.');
+                return;
+            }
+
             console.log('Received emergency alert in admin:', data);
             toast.error(
                 <div className="flex flex-col gap-1">

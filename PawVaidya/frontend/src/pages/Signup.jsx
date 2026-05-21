@@ -5,7 +5,7 @@ import { AppContext } from "../context/AppContext";
 import axios from "axios";
 import { toast } from "react-toastify";
 import image from "../assets/New/image.png";
-import { User, Mail, Lock, MapPin, Building } from 'lucide-react';
+import { User, Mail, Lock, MapPin, Building, Gift } from 'lucide-react';
 
 const Signup = () => {
   const { backendurl, token, settoken, setisLoggedin } = useContext(AppContext);
@@ -16,6 +16,7 @@ const Signup = () => {
     password: "",
     state: "",
     district: "",
+    referralCode: "",
     terms: false,
   });
   const [isVisible, setIsVisible] = useState(false);
@@ -38,7 +39,7 @@ const Signup = () => {
   const onSubmitHandler = async (e) => {
     e.preventDefault();
 
-    const { name, email, password, state, district, terms } = formData;
+    const { name, email, password, state, district, referralCode, terms } = formData;
 
     if (!terms) {
       toast.error("You must accept the terms and conditions");
@@ -62,6 +63,7 @@ const Signup = () => {
         email,
         state,
         district,
+        referralCode,
       });
       if (data.success) {
         setisLoggedin(true);
@@ -183,6 +185,18 @@ const Signup = () => {
                 onChange={handleInputChange}
                 required
                 icon={<Building size={20} />}
+              />
+            </div>
+
+            <div className={`transform transition-all duration-500 delay-850 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
+              }`}>
+              <FormInput
+                type="text"
+                name="referralCode"
+                placeholder="Referral Paw Code (Optional)"
+                value={formData.referralCode}
+                onChange={handleInputChange}
+                icon={<Gift size={20} />}
               />
             </div>
 

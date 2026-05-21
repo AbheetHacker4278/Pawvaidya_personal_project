@@ -2,6 +2,8 @@ import React, { useContext, useEffect, useState } from 'react';
 import { AdminContext } from '../../context/AdminContext';
 import BanUserDialog from '../../components/BanUserDialog';
 import { motion, AnimatePresence } from 'framer-motion';
+import PetHealthCard from '../../components/PetHealthCard';
+import { Activity, X } from 'lucide-react';
 import {
     Card,
     Typography,
@@ -58,6 +60,7 @@ import CreditCardIcon from '@mui/icons-material/CreditCard';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import VideoCallIcon from '@mui/icons-material/VideoCall';
 import FaceIcon from '@mui/icons-material/Face';
+import StarIcon from '@mui/icons-material/Star';
 
 import { assets } from '../../assets/assets_admin/assets';
 
@@ -93,6 +96,30 @@ const TotalUsers = () => {
     const [userDetailsLoading, setUserDetailsLoading] = useState(false);
     const [activityLogs, setActivityLogs] = useState([]);
     const [logsLoading, setLogsLoading] = useState(false);
+
+    // Health Card States
+    const [healthCardOpen, setHealthCardOpen] = useState(false);
+    const [healthCardData, setHealthCardData] = useState(null);
+    const [healthCardLoading, setHealthCardLoading] = useState(false);
+
+    const fetchPetHealthCard = async (petId) => {
+        try {
+            setHealthCardLoading(true);
+            setHealthCardOpen(true);
+            const { data } = await axios.get(backendurl + `/api/admin/pet-health/${petId}`, { headers: { atoken } });
+            if (data.success) {
+                setHealthCardData(data);
+            } else {
+                toast.error(data.message);
+                setHealthCardOpen(false);
+            }
+        } catch (error) {
+            toast.error("Failed to load health passport");
+            setHealthCardOpen(false);
+        } finally {
+            setHealthCardLoading(false);
+        }
+    };
     const [detailsTab, setDetailsTab] = useState(0);
     const [highlightedPetId, setHighlightedPetId] = useState(null);
 
@@ -668,9 +695,10 @@ const TotalUsers = () => {
                                             { label: 'EVENTS', val: dashdata?.userAppointments?.find(ap => ap.userId === user._id)?.totalAppointments || 0, icon: <CalendarTodayIcon />, color: '#6366f1', bg: '#f5f7ff' },
                                             { label: 'WALLET', val: formatCurrency(user.pawWallet), icon: <AccountBalanceWalletIcon />, color: '#f59e0b', bg: '#fffbf0' },
                                             { label: 'CALLS', val: user.subscription?.plan === 'Platinum' || user.subscription?.plan === 'Gold' ? `${Math.max(0, (user.subscription.plan === 'Platinum' ? 25 : 10) - (user.videoCallsUsed || 0))}` : "—", icon: <VideoCallIcon />, color: '#0ea5e9', bg: '#f0f9ff' },
-                                            { label: 'PETS', val: user.pets?.length || 0, icon: <PetsIcon />, color: '#ef4444', bg: '#fff5f5' }
+                                            { label: 'PETS', val: user.pets?.length || 0, icon: <PetsIcon />, color: '#ef4444', bg: '#fff5f5' },
+                                            { label: 'POINTS', val: user.pawpoints || 0, icon: <StarIcon />, color: '#10b981', bg: '#ecfdf5' }
                                         ].map((stat, i) => (
-                                            <Grid item xs={6} key={i}>
+                                            <Grid item xs={6} sm={stat.label === 'POINTS' ? 12 : 6} key={i}>
                                                 <Box sx={{
                                                     p: 2,
                                                     bgcolor: stat.bg,
@@ -1063,10 +1091,26 @@ const TotalUsers = () => {
                                                                     size="small"
                                                                     variant="outlined"
                                                                     startIcon={<CreditCardIcon />}
-                                                                    sx={{ borderRadius: 2, fontWeight: 700, fontSize: '0.7rem' }}
+                                                                    sx={{ borderRadius: 2, fontWeight: 700, fontSize: '0.7rem', mb: 1 }}
                                                                     onClick={() => window.open(pet.image, '_blank')}
                                                                 >
                                                                     View Identity Link
+                                                                </Button>
+                                                                <Button
+                                                                    fullWidth
+                                                                    size="small"
+                                                                    variant="contained"
+                                                                    startIcon={<Activity size={14} />}
+                                                                    sx={{
+                                                                        borderRadius: 2,
+                                                                        fontWeight: 800,
+                                                                        fontSize: '0.7rem',
+                                                                        bgcolor: '#4f46e5',
+                                                                        '&:hover': { bgcolor: '#4338ca' }
+                                                                    }}
+                                                                    onClick={() => fetchPetHealthCard(pet._id)}
+                                                                >
+                                                                    Health Passport
                                                                 </Button>
                                                             </Box>
                                                         </Box>
@@ -1144,6 +1188,50 @@ const TotalUsers = () => {
                 <DialogActions sx={{ p: 4, pt: 1 }}>
                     <Button onClick={handleDetailsDialogClose} variant="contained" disableElevation sx={{ borderRadius: 3, px: 6, fontWeight: 800 }}>Done</Button>
                 </DialogActions>
+            </Dialog>
+
+            {/* Pet Health Passport Dialog */}
+            <Dialog
+                open={healthCardOpen}
+                onClose={() => setHealthCardOpen(false)}
+                maxWidth="md"
+                fullWidth
+                PaperProps={{
+                    sx: {
+                        borderRadius: 6,
+                        overflow: 'hidden',
+                        bgcolor: '#f8fafc'
+                    }
+                }}
+            >
+                <DialogContent sx={{ p: 0 }}>
+                    {healthCardLoading ? (
+                        <Box sx={{ py: 20, textAlign: 'center' }}>
+                            <CircularProgress />
+                            <Typography variant="body2" sx={{ mt: 2, fontWeight: 700, color: '#64748b' }}>
+                                Accessing Secure Medical Records...
+                            </Typography>
+                        </Box>
+                    ) : (
+                        <Box sx={{ position: 'relative' }}>
+                            <IconButton
+                                onClick={() => setHealthCardOpen(false)}
+                                sx={{
+                                    position: 'absolute',
+                                    right: 20,
+                                    top: 20,
+                                    zIndex: 50,
+                                    bgcolor: 'rgba(0,0,0,0.1)',
+                                    color: 'white',
+                                    '&:hover': { bgcolor: 'rgba(0,0,0,0.2)' }
+                                }}
+                            >
+                                <X />
+                            </IconButton>
+                            <PetHealthCard data={healthCardData} />
+                        </Box>
+                    )}
+                </DialogContent>
             </Dialog>
 
             {/* Email Dialog */}

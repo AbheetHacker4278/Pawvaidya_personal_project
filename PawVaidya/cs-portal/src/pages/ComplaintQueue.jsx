@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { CSContext } from '../context/CSContext';
 
 const ComplaintQueue = () => {
-    const { cstoken, backendUrl, employee } = useContext(CSContext);
+    const { cstoken, backendUrl, employee, isBreakActive } = useContext(CSContext);
     const [queue, setQueue] = useState([]);
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
@@ -74,6 +74,25 @@ const ComplaintQueue = () => {
     };
 
     if (loading) return <div className="text-center p-12">Loading queue...</div>;
+
+    if (isBreakActive) {
+        return (
+            <div className="bg-white shadow rounded-lg p-12 text-center space-y-6 animate-in fade-in duration-500">
+                <div className="w-24 h-24 bg-amber-50 rounded-full flex items-center justify-center mx-auto text-amber-500 mb-4 animate-pulse">
+                    <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <h2 className="text-2xl font-black text-slate-800">You are currently on break</h2>
+                <p className="text-slate-500 max-w-md mx-auto">All assigned tickets and incoming requests are hidden while your break timer is active to ensure you rest properly.</p>
+                <div className="flex justify-center gap-4">
+                    <div className="px-4 py-2 bg-slate-100 rounded-xl text-xs font-bold text-slate-500 uppercase tracking-widest">
+                        Tickets Hidden: {queue.length}
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="bg-white shadow rounded-lg px-4 py-5 sm:p-6 text-slate-800">

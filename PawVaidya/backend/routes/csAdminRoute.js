@@ -10,7 +10,9 @@ import {
     generateEmployeeReport,
     getAllReports,
     setIncentive,
-    resendReportEmail
+    resendReportEmail,
+    getEmployeeShiftLogs,
+    getAllEarlyExits
 } from '../controllers/csAdminController.js';
 import authAdmin from '../middleware/authAdmin.js';
 
@@ -28,5 +30,7 @@ router.post('/generate-report/:id', authAdmin, generateEmployeeReport);
 router.get('/reports', authAdmin, getAllReports);
 router.post('/set-incentive/:id', authAdmin, setIncentive);
 router.post('/resend-report/:id', authAdmin, resendReportEmail);
+router.get('/employee/:id/shift-logs', authAdmin, getEmployeeShiftLogs);
+router.get('/early-exits', authAdmin, getAllEarlyExits);
 
 export default router;

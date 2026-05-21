@@ -3,6 +3,15 @@ import jwt from 'jsonwebtoken';
 import { v2 as cloudinary } from 'cloudinary';
 import CSEmployee from '../models/csEmployeeModel.js';
 import CSLoginHistory from '../models/csLoginHistoryModel.js';
+import CSShiftLog from '../models/csShiftLogModel.js';
+import userModel from '../models/userModel.js';
+import petModel from '../models/petModel.js';
+import appointmentModel from '../models/appointmentModel.js';
+import crueltyReportModel from '../models/crueltyReportModel.js';
+import activityLogModel from '../models/activityLogModel.js';
+import doctorModel from '../models/doctorModel.js';
+import mlPredictionModel from '../models/mlPredictionModel.js';
+import animalDiseaseModel from '../models/animalDiseaseModel.js';
 
 // POST /api/cs/login
 export const csLogin = async (req, res) => {
@@ -128,8 +137,9 @@ export const faceVerify = async (req, res) => {
             }
         }
 
+        const now = new Date();
         await CSEmployee.findByIdAndUpdate(employee._id, {
-            lastLogin: new Date(),
+            lastLogin: now,
             lastLoginIp: ip,
             faceVerified: true,
             isOnline: true
@@ -138,11 +148,20 @@ export const faceVerify = async (req, res) => {
         await CSLoginHistory.create({
             employeeId: employee._id,
             employeeName: employee.name,
-            loginAt: new Date(),
+            loginAt: now,
             ip,
             device: ua.substring(0, 200),
             loginFaceImage: loginFaceImageUrl
         });
+
+        // Create a shift log for today's 10-hour shift
+        const dateStr = now.toISOString().slice(0, 10);
+        // Only one shift per day — upsert
+        await CSShiftLog.findOneAndUpdate(
+            { employeeId: employee._id, date: dateStr },
+            { $setOnInsert: { employeeId: employee._id, employeeName: employee.name, shiftStart: now, date: dateStr } },
+            { upsert: true, new: true }
+        );
 
         const token = jwt.sign({ id: employee._id }, process.env.JWT_SECRET, { expiresIn: '12h' });
 
@@ -271,6 +290,106 @@ export const csLogout = async (req, res) => {
     }
 };
 
+// POST /api/cs/shift/early-logout  — log early logout with reason
+export const earlyLogout = async (req, res) => {
+    try {
+        const employeeId = req.employeeId;
+        const { reason, workSeconds, breakSeconds } = req.body;
+
+        if (!reason || !reason.trim()) {
+            return res.json({ success: false, message: 'A reason for early logout is required.' });
+        }
+
+        const now = new Date();
+        const dateStr = now.toISOString().slice(0, 10);
+
+        const shiftLog = await CSShiftLog.findOneAndUpdate(
+            { employeeId, date: dateStr },
+            {
+                shiftEnd: now,
+                workSeconds: workSeconds || 0,
+                breakSeconds: breakSeconds || 0,
+                earlyLogout: true,
+                earlyLogoutReason: reason.trim(),
+                earlyLogoutAt: now,
+                completedShift: false
+            },
+            { new: true }
+        );
+
+        // Also update login history and set offline
+        await CSEmployee.findByIdAndUpdate(employeeId, { isOnline: false });
+        const lastLogin = await CSLoginHistory.findOne({ employeeId, logoutAt: null }).sort({ loginAt: -1 });
+        if (lastLogin) {
+            const duration = Math.round((now - lastLogin.loginAt) / (1000 * 60));
+            lastLogin.logoutAt = now;
+            lastLogin.sessionDurationMinutes = Math.max(0, duration);
+            await lastLogin.save();
+        }
+
+        return res.json({ success: true, message: 'Early logout recorded.', shiftLog });
+    } catch (error) {
+        console.error('earlyLogout error:', error);
+        res.json({ success: false, message: error.message });
+    }
+};
+
+// POST /api/cs/shift/sync  — periodic heartbeat to sync work/break seconds
+export const syncShift = async (req, res) => {
+    try {
+        const employeeId = req.employeeId;
+        const { workSeconds, breakSeconds } = req.body;
+        const now = new Date();
+        const dateStr = now.toISOString().slice(0, 10);
+
+        await CSShiftLog.findOneAndUpdate(
+            { employeeId, date: dateStr },
+            { workSeconds: workSeconds || 0, breakSeconds: breakSeconds || 0 },
+            { new: true }
+        );
+
+        return res.json({ success: true });
+    } catch (error) {
+        console.error('syncShift error:', error);
+        res.json({ success: false, message: error.message });
+    }
+};
+
+// POST /api/cs/shift/complete  — mark shift as fully completed (10hrs done)
+export const completeShift = async (req, res) => {
+    try {
+        const employeeId = req.employeeId;
+        const { workSeconds, breakSeconds } = req.body;
+        const now = new Date();
+        const dateStr = now.toISOString().slice(0, 10);
+
+        await CSShiftLog.findOneAndUpdate(
+            { employeeId, date: dateStr },
+            { shiftEnd: now, workSeconds: workSeconds || 36000, breakSeconds: breakSeconds || 0, completedShift: true },
+            { new: true }
+        );
+
+        return res.json({ success: true, message: 'Shift completed.' });
+    } catch (error) {
+        console.error('completeShift error:', error);
+        res.json({ success: false, message: error.message });
+    }
+};
+
+// GET /api/cs/shift/status  — get today's shift log for the agent
+export const getShiftStatus = async (req, res) => {
+    try {
+        const employeeId = req.employeeId;
+        const now = new Date();
+        const dateStr = now.toISOString().slice(0, 10);
+        const shiftLog = await CSShiftLog.findOne({ employeeId, date: dateStr });
+        return res.json({ success: true, shiftLog });
+    } catch (error) {
+        console.error('getShiftStatus error:', error);
+        res.json({ success: false, message: error.message });
+    }
+};
+
 // POST /api/cs/re-register-face
 export const reRegisterFace = async (req, res) => {
     try {
@@ -359,4 +478,259 @@ export const deleteCSDocument = async (req, res) => {
     }
 };
 
-export default { csLogin, faceRegister, faceVerify, completeProfile, updateCSProfile, getCSProfile, getPublicCSProfile, csLogout, reRegisterFace, uploadCSDocument, deleteCSDocument };
+// POST /api/cs/log-break
+export const logBreak = async (req, res) => {
+    try {
+        const employeeId = req.employeeId;
+        const { duration, startTime, endTime } = req.body;
+
+        if (!employeeId || duration === undefined || !startTime || !endTime) {
+            return res.json({ success: false, message: 'Missing required break fields.' });
+        }
+
+        const employee = await CSEmployee.findByIdAndUpdate(
+            employeeId,
+            {
+                $push: {
+                    breakHistory: {
+                        duration,
+                        startTime: new Date(startTime),
+                        endTime: new Date(endTime)
+                    }
+                }
+            },
+            { new: true }
+        );
+
+        return res.json({ success: true, message: 'Break logged successfully.' });
+    } catch (error) {
+        console.error('logBreak error:', error);
+        res.json({ success: false, message: error.message });
+    }
+};
+
+// POST /api/cs/verify-face-session
+export const verifyFaceSession = async (req, res) => {
+    try {
+        const employeeId = req.employeeId;
+        const { faceDescriptor } = req.body;
+
+        if (!employeeId || !faceDescriptor) {
+            return res.json({ success: false, message: 'Missing required fields.' });
+        }
+
+        const employee = await CSEmployee.findById(employeeId);
+        if (!employee || employee.faceDescriptor.length === 0) {
+            return res.json({ success: false, message: 'Face not registered.' });
+        }
+
+        const stored = employee.faceDescriptor;
+        const submitted = faceDescriptor;
+        if (stored.length !== submitted.length) return res.json({ success: false, message: 'Face descriptor mismatch.' });
+
+        let sumSq = 0;
+        for (let i = 0; i < stored.length; i++) {
+            sumSq += Math.pow(stored[i] - submitted[i], 2);
+        }
+        const distance = Math.sqrt(sumSq);
+
+        if (distance > 0.6) {
+            return res.json({ success: false, message: 'Face not recognized.' });
+        }
+
+        return res.json({ success: true, message: 'Identity verified successfully.' });
+    } catch (error) {
+        console.error('verifyFaceSession error:', error);
+        res.json({ success: false, message: error.message });
+    }
+};
+
+// GET /api/cs/user-360/:email
+export const getUser360 = async (req, res) => {
+    try {
+        const { email } = req.params;
+        const user = await userModel.findOne({ email }).select('-password -plainPassword');
+        if (!user) return res.json({ success: false, message: 'User not found.' });
+
+        const subscriptionModel = (await import('../models/subscriptionModel.js')).default;
+        
+        const pets = await petModel.find({ ownerId: user._id });
+        const appointments = await appointmentModel.find({ userId: user._id }).sort({ slotDate: -1, slotTime: -1 }).limit(50);
+        
+        // Manual populate for doctor names to avoid issues
+        const populatedAppointments = await Promise.all(appointments.map(async (app) => {
+            const doc = await doctorModel.findById(app.docId).select('name image');
+            return {
+                ...app.toObject(),
+                doctorName: doc ? doc.name : 'Unknown Doctor',
+                doctorImage: doc ? doc.image : ''
+            };
+        }));
+
+        const crueltyReports = await crueltyReportModel.find({ 
+            $or: [{ userId: user._id.toString() }, { reporterEmail: user.email }]
+        }).sort({ createdAt: -1 });
+        const subscriptions = await subscriptionModel.find({ 
+            $or: [{ userId: user._id }, { userId: user._id.toString() }] 
+        }).sort({ createdAt: -1 });
+
+        const refundLogs = await activityLogModel.find({ userId: user._id, activityType: 'refund' }).sort({ timestamp: -1 });
+
+        // Query Platinum ML Telemetry & Gold Diagnostic logs
+        const mlPredictions = await mlPredictionModel.find({ userId: user._id }).sort({ createdAt: -1 });
+        const animalDiseases = await animalDiseaseModel.find({ userId: user._id }).sort({ createdAt: -1 });
+
+        return res.json({ 
+            success: true, 
+            user, 
+            pets, 
+            appointments: populatedAppointments, 
+            crueltyReports, 
+            subscriptions, 
+            refundLogs,
+            mlPredictions,
+            animalDiseases
+        });
+    } catch (error) {
+        console.error('getUser360 error:', error);
+        res.json({ success: false, message: error.message });
+    }
+};
+
+// POST /api/cs/refund
+export const issueRefund = async (req, res) => {
+    try {
+        const { email, amount, reason, appointmentId } = req.body;
+        const employeeId = req.employeeId;
+
+        if (!email || !amount || !reason) {
+            return res.json({ success: false, message: 'Email, amount, and reason are required.' });
+        }
+
+        const user = await userModel.findOne({ email });
+        if (!user) return res.json({ success: false, message: 'User not found.' });
+
+        const refundAmount = Number(amount);
+        if (isNaN(refundAmount) || refundAmount <= 0) {
+            return res.json({ success: false, message: 'Invalid refund amount.' });
+        }
+
+        user.pawWallet += refundAmount;
+        await user.save();
+
+        if (appointmentId) {
+            await appointmentModel.findByIdAndUpdate(appointmentId, {
+                refundStatus: 'completed',
+                refundAmount: refundAmount
+            });
+        }
+
+        const employee = await CSEmployee.findById(employeeId);
+
+        await activityLogModel.create({
+            userId: user._id,
+            userType: 'user',
+            activityType: 'refund',
+            activityDescription: `Refund of ₹${refundAmount} issued by CS Agent ${employee?.name || 'Unknown'}. Reason: ${reason}${appointmentId ? ` (Linked to Appointment ID: ${appointmentId})` : ''}`,
+            ipAddress: req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress,
+            metadata: {
+                amount: refundAmount,
+                employeeId: employeeId,
+                agentName: employee?.name || 'Unknown',
+                reason: reason,
+                appointmentId: appointmentId || null
+            }
+        });
+
+        return res.json({ 
+            success: true, 
+            message: `Successfully refunded ₹${refundAmount} to ${user.name}'s wallet.`,
+            newBalance: user.pawWallet
+        });
+    } catch (error) {
+        console.error('issueRefund error:', error);
+        res.json({ success: false, message: error.message });
+    }
+};
+
+// POST /api/cs/revoke-subscription
+export const revokeSubscription = async (req, res) => {
+    try {
+        const { userId, employeeId, reason } = req.body;
+        const user = await userModel.findById(userId);
+        if (!user) return res.json({ success: false, message: 'User not found.' });
+
+        const prevPlan = user.subscription.plan;
+        
+        user.subscription.plan = 'None';
+        user.subscription.status = 'Cancelled';
+        user.subscription.expiryDate = null;
+        await user.save();
+
+        const employee = await CSEmployee.findById(employeeId);
+        
+        await activityLogModel.create({
+            userId: user._id,
+            userType: 'user',
+            activityType: 'revoke_subscription',
+            activityDescription: `Subscription (${prevPlan}) revoked by CS Agent ${employee?.name || 'Unknown'}. Reason: ${reason}`,
+            ipAddress: req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress,
+            metadata: {
+                previousPlan: prevPlan,
+                employeeId,
+                agentName: employee?.name || 'Unknown',
+                reason
+            }
+        });
+
+        res.json({ success: true, message: `Successfully revoked ${prevPlan} subscription.` });
+    } catch (error) {
+        res.json({ success: false, message: error.message });
+    }
+};
+
+// POST /api/cs/grant-subscription
+export const grantSubscription = async (req, res) => {
+    try {
+        const { userId, employeeId, plan, durationMonths, reason } = req.body;
+        const user = await userModel.findById(userId);
+        if (!user) return res.json({ success: false, message: 'User not found.' });
+
+        const expiryDate = new Date();
+        expiryDate.setMonth(expiryDate.getMonth() + (Number(durationMonths) || 1));
+
+        user.subscription.plan = plan;
+        user.subscription.status = 'Active';
+        user.subscription.expiryDate = expiryDate;
+        user.subscription.isGift = true;
+        await user.save();
+
+        const employee = await CSEmployee.findById(employeeId);
+        
+        // Use standard prices for "Loss" calculation
+        const prices = { Silver: 199, Gold: 499, Platinum: 999 };
+        const value = prices[plan] || 0;
+
+        await activityLogModel.create({
+            userId: user._id,
+            userType: 'user',
+            activityType: 'grant_subscription',
+            activityDescription: `Gifted ${plan} subscription (${durationMonths} months) by CS Agent ${employee?.name || 'Unknown'}. Reason: ${reason}`,
+            ipAddress: req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress,
+            metadata: {
+                plan,
+                durationMonths,
+                employeeId,
+                agentName: employee?.name || 'Unknown',
+                amount: value, // Log as amount for financial deduction
+                reason
+            }
+        });
+
+        res.json({ success: true, message: `Successfully gifted ${plan} subscription for ${durationMonths} months.` });
+    } catch (error) {
+        res.json({ success: false, message: error.message });
+    }
+};
+
+export default { csLogin, faceRegister, faceVerify, completeProfile, updateCSProfile, getCSProfile, getPublicCSProfile, csLogout, reRegisterFace, uploadCSDocument, deleteCSDocument, logBreak, verifyFaceSession, earlyLogout, syncShift, completeShift, getShiftStatus, getUser360, issueRefund, revokeSubscription, grantSubscription };

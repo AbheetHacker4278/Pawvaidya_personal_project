@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import doctorModel from "../models/doctorModel.js"
 import userModel from '../models/userModel.js';
 import systemConfigModel from '../models/systemConfigModel.js';
@@ -600,7 +601,7 @@ export const appointmentComplete = async (req, res) => {
 
 export const appointmentCancel = async (req, res) => {
     try {
-        const { docId, appointmentId } = req.body;
+        const { docId, appointmentId, reason } = req.body;
         const appointmentData = await appointmentModel.findById(appointmentId);
 
         if (!appointmentData) {
@@ -621,15 +622,30 @@ export const appointmentCancel = async (req, res) => {
             .filter(time => time !== appointmentData.slotTime);
 
         await doctorModel.findByIdAndUpdate(docId, { slots_booked });
-        await appointmentModel.findByIdAndUpdate(appointmentId, { cancelled: true });
+        await appointmentModel.findByIdAndUpdate(appointmentId, { 
+            cancelled: true, 
+            cancelledBy: 'doctor', 
+            cancelReason: reason || 'Unexpectedly high patient load'
+        });
 
         // Refund to Paw Wallet if paid
         let refundMessage = '';
         if (appointmentData.payment) {
-            await userModel.findByIdAndUpdate(appointmentData.userId, {
-                $inc: { pawWallet: appointmentData.amount }
-            });
-            refundMessage = `<p><strong>Refund Notice:</strong> An amount of ₹${appointmentData.amount} has been refunded to your Paw Wallet.</p>`;
+            const refundAmount = appointmentData.amount + (appointmentData.walletDeduction || 0);
+            const pawpointsToRefund = (appointmentData.pawpointsUsed || 0) - 50; // Refund used points, deduct the 50 points rewarded
+
+            let userUpdate = {};
+            if (refundAmount > 0) userUpdate.pawWallet = refundAmount;
+            if (pawpointsToRefund !== 0) userUpdate.pawpoints = pawpointsToRefund;
+
+            if (Object.keys(userUpdate).length > 0) {
+                await userModel.findByIdAndUpdate(appointmentData.userId, {
+                    $inc: userUpdate
+                });
+                await deleteCache(`user_profile_${appointmentData.userId}`);
+            }
+            
+            refundMessage = `<p><strong>Refund Notice:</strong> An amount of ₹${refundAmount} has been refunded to your Paw Wallet.</p>`;
         }
 
         // Restore coupon usage if applied
@@ -811,7 +827,7 @@ export const doctorDashboard = async (req, res) => {
                 let amountForCommission = (item.docData?.fees || 0);
                 let commissionCut = Math.round(amountForCommission * (commissionPercentage / 100));
 
-                earnings += (item.amount || 0) + (item.incentiveAmount || 0) - commissionCut;
+                earnings += (item.amount || 0) + (item.walletDeduction || 0) + (item.incentiveAmount || 0) - commissionCut;
             }
 
             if (item.isCompleted) {
@@ -880,12 +896,28 @@ export const doctorProfile = async (req, res) => {
             return res.json({ success: true, profileData: cachedProfile, source: 'cache' });
         }
 
-        const profileData = await doctorModel.findById(docId).select('-password')
+        const profileData = await doctorModel.findById(docId).select('-password');
+
+        // Fetch emergency availability data if it exists
+        let emergencyProfile = null;
+        try {
+            const emergencyAvailability = await mongoose.model('emergencyDoctorAvailability').findOne({ docId });
+            if (emergencyAvailability) {
+                emergencyProfile = emergencyAvailability;
+            }
+        } catch (err) {
+            console.error("Error fetching emergency profile:", err.message);
+        }
+
+        const finalProfile = {
+            ...profileData.toObject(),
+            emergencyProfile
+        };
 
         // Cache for 30 minutes
-        await setCache(cacheKey, profileData, 1800);
+        await setCache(cacheKey, finalProfile, 1800);
 
-        res.json({ success: true, profileData })
+        res.json({ success: true, profileData: finalProfile });
 
     } catch (error) {
         console.log(error)
@@ -1389,13 +1421,19 @@ export const getDailyEarnings = async (req, res) => {
             };
         }
 
+        const systemConfig = await systemConfigModel.findOne() || { commissionRules: { defaultPercentage: 20 } };
+        const commissionPercentage = systemConfig.commissionRules?.defaultPercentage || 20;
+
         const appointments = await appointmentModel.find(query);
 
         // Group earnings by date
         const dailyEarnings = {};
         appointments.forEach(appointment => {
             const dateKey = appointment.slotDate;
-            dailyEarnings[dateKey] = (dailyEarnings[dateKey] || 0) + (appointment.amount || 0);
+            const originalFee = appointment.docData?.fees || 0;
+            const commissionCut = Math.round(originalFee * (commissionPercentage / 100));
+            const netEarnings = (appointment.amount || 0) + (appointment.walletDeduction || 0) - commissionCut;
+            dailyEarnings[dateKey] = (dailyEarnings[dateKey] || 0) + Math.max(0, netEarnings);
         });
 
         res.json({

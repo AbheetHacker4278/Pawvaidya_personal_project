@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Html5Qrcode } from 'html5-qrcode';
 import { X, Camera, AlertCircle } from 'lucide-react';
 
-const QrScanner = ({ isOpen, onClose, onScanSuccess }) => {
+const QrScanner = ({ isOpen = true, onClose, onScanSuccess, inline = false }) => {
     const [error, setError] = useState('');
     const [isScanning, setIsScanning] = useState(false);
     const [cameras, setCameras] = useState([]);
@@ -16,19 +16,16 @@ const QrScanner = ({ isOpen, onClose, onScanSuccess }) => {
             Html5Qrcode.getCameras().then(devices => {
                 if (devices && devices.length) {
                     setCameras(devices);
-                    // Default to the first camera, but if there's a back camera, it usually appears later in list or has 'back' in label. 
-                    // Let's just pick the last one or first one, user can change it.
                     let defaultCam = devices[0].id;
                     const backCam = devices.find(d => d.label.toLowerCase().includes('back'));
                     if (backCam) defaultCam = backCam.id;
                     setSelectedCamera(defaultCam);
                 } else {
-                    // Start default if no device list (might still work)
                     startScanner();
                 }
             }).catch(err => {
                 console.error("Error getting cameras", err);
-                startScanner(); // fallback
+                startScanner();
             });
         }
         return () => stopScanner();
@@ -42,11 +39,10 @@ const QrScanner = ({ isOpen, onClose, onScanSuccess }) => {
 
     const startScanner = async () => {
         try {
-            await stopScanner(); // Stop existing if any
+            await stopScanner();
             setError('');
             setIsScanning(true);
 
-            // Small delay to let the DOM render
             await new Promise(r => setTimeout(r, 300));
 
             const html5QrCode = new Html5Qrcode('qr-reader');
@@ -69,14 +65,18 @@ const QrScanner = ({ isOpen, onClose, onScanSuccess }) => {
                 (decodedText) => {
                     try {
                         const parsed = JSON.parse(decodedText);
-                        if (parsed.qrToken) {
+                        // Relaxing the check slightly to allow raw strings if needed, 
+                        // but keeping the logic for structured data
+                        if (parsed.qrToken || typeof decodedText === 'string') {
                             stopScanner();
-                            onScanSuccess(parsed);
+                            onScanSuccess(decodedText); // Pass raw text back, let parent handle parsing
                         } else {
                             setError('Invalid QR code format');
                         }
                     } catch {
-                        setError('Could not parse QR code data');
+                        // If not JSON, still return raw text if it's a valid scan
+                        stopScanner();
+                        onScanSuccess(decodedText);
                     }
                 },
                 () => { /* Ignore scan failures */ }
@@ -99,10 +99,38 @@ const QrScanner = ({ isOpen, onClose, onScanSuccess }) => {
 
     const handleClose = () => {
         stopScanner();
-        onClose();
+        if (onClose) onClose();
     };
 
     if (!isOpen) return null;
+
+    if (inline) {
+        return (
+            <div className="w-full h-full relative">
+                <div id="qr-reader" className="w-full h-full rounded-2xl overflow-hidden" />
+                {cameras.length > 1 && (
+                    <div className="absolute top-2 right-2 z-10">
+                        <select
+                            value={selectedCamera}
+                            onChange={(e) => setSelectedCamera(e.target.value)}
+                            className="bg-black/50 text-white text-[10px] px-2 py-1 rounded-lg border border-white/20 outline-none"
+                        >
+                            {cameras.map(camera => (
+                                <option key={camera.id} value={camera.id} className="bg-gray-800">
+                                    {camera.label?.substring(0, 15) || 'Cam'}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                )}
+                {error && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-red-900/80 p-4 text-center">
+                        <p className="text-white text-xs font-bold">{error}</p>
+                    </div>
+                )}
+            </div>
+        );
+    }
 
     return (
         <motion.div

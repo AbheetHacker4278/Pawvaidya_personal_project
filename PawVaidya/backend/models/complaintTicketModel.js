@@ -53,6 +53,10 @@ const complaintTicketSchema = new mongoose.Schema({
     internalNotes: { type: String, default: '' },
 
     priority: { type: String, enum: ['low', 'medium', 'high', 'urgent'], default: 'medium' },
+    
+    // Performance Tracking
+    resolvedAt: { type: Date, default: null },
+    handleTime: { type: Number, default: 0 }, // resolution time in seconds
 }, { timestamps: true });
 
 const ComplaintTicket = mongoose.models.complaintTicket || mongoose.model('complaintTicket', complaintTicketSchema);

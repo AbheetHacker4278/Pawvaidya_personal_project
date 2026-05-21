@@ -45,6 +45,7 @@ const Appointments = () => {
   const [activeCoupons, setActiveCoupons] = useState([]);
   const [adminCoupons, setAdminCoupons] = useState([]);
   const [useWallet, setUseWallet] = useState(false);
+  const [usePawpoints, setUsePawpoints] = useState(false);
   const [selectedPetId, setSelectedPetId] = useState('');
   const [isStray, setIsStray] = useState(false);
   const [strayType, setStrayType] = useState('Unknown');
@@ -188,6 +189,17 @@ const Appointments = () => {
     fee -= couponDiscount;
 
     return { finalFee: Math.max(0, fee), subDiscountAmount, couponDiscount };
+  };
+
+  const getRemainingAmount = () => {
+    let fee = calculateFinalFee().finalFee;
+    if (useWallet && userdata?.pawWallet) {
+      fee -= userdata.pawWallet;
+    }
+    if (usePawpoints && userdata?.pawpoints) {
+      fee -= (userdata.pawpoints * 0.5);
+    }
+    return Math.max(0, fee);
   };
 
   // Check if user has any active appointments and ban status
@@ -532,7 +544,7 @@ const Appointments = () => {
     setShowPaymentModal(true);
   }
 
-  const bookappointment = async (paymentMethod, forceUseWallet = useWallet) => {
+  const bookappointment = async (paymentMethod, forceUseWallet = useWallet, forceUsePawpoints = usePawpoints) => {
     setShowPaymentModal(false);
     setIsLoading(true);
     try {
@@ -556,6 +568,7 @@ const Appointments = () => {
         slotTime,
         paymentMethod,
         useWallet: forceUseWallet,
+        usePawpoints: forceUsePawpoints,
         petId: isStray ? null : selectedPetId,
         isStray,
         strayDetails: isStray ? { petType: strayType || 'Unknown' } : null
@@ -2079,13 +2092,54 @@ const Appointments = () => {
                 )}
 
                 {/* Main Action Buttons */}
-                {useWallet && userdata.pawWallet >= calculateFinalFee().finalFee ? (
+
+
+                {/* Pawpoints Toggle — hidden for stray appointments */}
+                {!isStray && userdata && userdata.pawpoints > 0 && (
+                  <div
+                    className="p-4 rounded-2xl border-2 transition-all cursor-pointer"
+                    style={{
+                      borderColor: usePawpoints ? '#c8860a' : '#e8d5b0',
+                      background: usePawpoints ? 'rgba(200,134,10,0.05)' : 'white'
+                    }}
+                    onClick={() => setUsePawpoints(!usePawpoints)}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <motion.div
+                          animate={usePawpoints ? { rotate: [0, 15, 0] } : {}}
+                          className="p-1.5 rounded-lg bg-amber-100 text-amber-600"
+                        >
+                          <Star className="w-4 h-4 fill-amber-500" />
+                        </motion.div>
+                        <span className="font-bold text-sm" style={{ color: '#3d2b1f' }}>Pawpoints (1 pt = ₹0.5)</span>
+                      </div>
+                      <div className={`w-10 h-5 rounded-full relative transition-colors duration-300 ${usePawpoints ? 'bg-[#c8860a]' : 'bg-gray-200'}`}>
+                        <motion.div
+                          animate={{ x: usePawpoints ? 20 : 2 }}
+                          className="absolute top-1 w-3 h-3 bg-white rounded-full shadow-sm"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-end">
+                      <p className="text-xs font-medium text-gray-500">Available: {userdata.pawpoints} pts (₹{userdata.pawpoints * 0.5})</p>
+                      {usePawpoints && (
+                        <p className="text-xs font-bold text-amber-600">
+                          -{((useWallet ? calculateFinalFee().finalFee - userdata.pawWallet : calculateFinalFee().finalFee) <= (userdata.pawpoints * 0.5)) ? 'Full remaining amount covered' : `₹${userdata.pawpoints * 0.5} deducted`}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Main Action Buttons */}
+                {getRemainingAmount() === 0 ? (
                   <button
-                    onClick={() => bookappointment("Wallet", true)}
+                    onClick={() => bookappointment((usePawpoints && !useWallet) ? "Pawpoints" : "Wallet", useWallet, usePawpoints)}
                     className="w-full flex justify-center items-center gap-2 py-4 rounded-xl font-extrabold text-white transition-all shadow-lg active:scale-95"
                     style={{ background: 'linear-gradient(135deg, #c8860a, #e8a020)' }}
                   >
-                    Pay FULL Amount via Wallet
+                    Pay FULL Amount using Credits
                   </button>
                 ) : (
                   <>
@@ -2095,7 +2149,7 @@ const Appointments = () => {
                       style={{ background: 'linear-gradient(135deg, #10b981, #059669)', boxShadow: '0 8px 24px rgba(16,185,129,0.3)' }}
                     >
                       <Shield className="w-5 h-5" />
-                      {useWallet ? `Pay Remaining ₹${Math.max(0, calculateFinalFee().finalFee - userdata.pawWallet)} Online` : "Pay Online Now"}
+                      {(useWallet || usePawpoints) ? `Pay Remaining ₹${getRemainingAmount()} Online` : "Pay Online Now"}
                     </button>
                     <button
                       onClick={() => bookappointment("Cash")}
@@ -2103,7 +2157,7 @@ const Appointments = () => {
                       style={{ border: '2px solid #d4a76a', color: '#c8860a', background: 'rgba(255,255,255,0.7)' }}
                     >
                       <CheckCircle className="w-5 h-5" />
-                      {useWallet ? `Pay Remaining ₹${Math.max(0, calculateFinalFee().finalFee - userdata.pawWallet)} at Clinic` : "Pay Cash at Clinic"}
+                      {(useWallet || usePawpoints) ? `Pay Remaining ₹${getRemainingAmount()} at Clinic` : "Pay Cash at Clinic"}
                     </button>
                   </>
                 )}

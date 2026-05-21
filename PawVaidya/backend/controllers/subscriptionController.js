@@ -14,18 +14,18 @@ const razorpayInstance = new Razorpay({
 // Subscription Plan Details
 const SUBSCRIPTION_PLANS = {
     Silver: {
-        price: 199,
-        features: ["Priority Booking", "10% Appointment Discount", "Basic Support"],
+        price: 650,
+        features: ["Priority Booking", "10% Appointment Discount", "Unlimited Free Emergency Bookings", "Basic Support"],
         billingCycle: "Monthly"
     },
     Gold: {
-        price: 499,
-        features: ["Unlimited Appointments", "20% Appointment Discount", "Free Video Consultation", "Standard Support"],
+        price: 450,
+        features: ["Unlimited Appointments", "20% Appointment Discount", "Free Video Consultation", "Unlimited Free Emergency Bookings", "Standard Support"],
         billingCycle: "Monthly"
     },
     Platinum: {
-        price: 999,
-        features: ["Everything in Gold", "30% Appointment Discount", "Personal Pet Caregiver", "24/7 Priority Emergency Support"],
+        price: 250,
+        features: ["Everything in Gold", "30% Appointment Discount", "Personal Pet Caregiver", "Unlimited Free Emergency Bookings", "24/7 Priority Support"],
         billingCycle: "Monthly"
     }
 };

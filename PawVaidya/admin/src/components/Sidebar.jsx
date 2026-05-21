@@ -10,7 +10,7 @@ import {
   Stethoscope, Trophy, Radio, MessageSquare, Mail,
   AlertTriangle, Trash2, ShieldCheck, Database,
   Clock, BookOpen, ClipboardList, Tag, Tv, Search, Star,
-  Menu, X, ChevronRight, Bell, ShieldAlert, BarChart3, Server, Activity
+  Menu, X, ChevronRight, Bell, ShieldAlert, BarChart3, Server, Activity, Scan
 } from 'lucide-react';
 
 const SidebarItem = ({ to, icon: Icon, label, isOpen, onClick, subtext, badge }) => {
@@ -179,6 +179,9 @@ const Sidebar = ({ isOpen }) => {
               {(hasPerm('users') || adminProfile?.role === 'master') && (
                 <SidebarItem to="/all-subscriptions" icon={Star} label="All Subscriptions" subtext="Membership Monitor" isOpen={isOpen} onClick={() => logNavigation('All Subscriptions')} />
               )}
+              {(hasPerm('users') || adminProfile?.role === 'master') && (
+                <SidebarItem to="/emergency-dashboard" icon={ShieldAlert} label="Emergency Panel" subtext="Ecosystem Analytics" isOpen={isOpen} onClick={() => logNavigation('Emergency Panel')} />
+              )}
               {adminProfile?.role === 'master' && (
                 <SidebarItem to="/media-registry" icon={Database} label="Media Registry" subtext="Cloud Assets" isOpen={isOpen} onClick={() => logNavigation('Media Registry')} />
               )}
@@ -232,6 +235,12 @@ const Sidebar = ({ isOpen }) => {
                 <SidebarItem to="/cs-tickets" icon={LayoutDashboard} label="CS Tickets" subtext="Global View" isOpen={isOpen} onClick={() => logNavigation('CS Tickets')} />
               )}
               {adminProfile?.role === 'master' && (
+                <SidebarItem to="/misbehavior-reports" icon={ShieldAlert} label="Complaints" subtext="User Misbehavior" isOpen={isOpen} onClick={() => logNavigation('Misbehavior Reports')} />
+              )}
+              {adminProfile?.role === 'master' && (
+                <SidebarItem to="/cruelty-reports" icon={AlertTriangle} label="Cruelty Reports" subtext="Animal Abuse Logs" isOpen={isOpen} onClick={() => logNavigation('Cruelty Reports')} />
+              )}
+              {adminProfile?.role === 'master' && (
                 <SidebarItem to="/cs-reports" icon={Activity} label="CS Reports" subtext="Agent Metrics" isOpen={isOpen} onClick={() => logNavigation('CS Reports')} />
               )}
 
@@ -249,10 +258,12 @@ const Sidebar = ({ isOpen }) => {
               <SectionHeader label="Core" isOpen={isOpen} />
               <SidebarItem to="/doctor-dashboard" icon={LayoutDashboard} label="Dashboard" subtext="Daily Statistics" isOpen={isOpen} />
               <SidebarItem to="/doctor-profile" icon={User} label="My Profile" subtext="Personal Info" isOpen={isOpen} />
+              <SidebarItem to="/doctor-emergencies" icon={ShieldAlert} label="Emergency Desk" subtext="Live Life-Support" isOpen={isOpen} />
 
               <SectionHeader label="Practice" isOpen={isOpen} />
               <SidebarItem to="/doctor-appointments" icon={Calendar} label="Appointments" subtext="Client Schedule" isOpen={isOpen} />
               <SidebarItem to="/doctor-schedule" icon={Clock} label="My Schedule" subtext="Consultation Hours" isOpen={isOpen} />
+              <SidebarItem to="/doctor-scanner" icon={Scan} label="Health Scanner" subtext="Scan Pet QR" isOpen={isOpen} />
               <SidebarItem to="/patient-records" icon={ClipboardList} label="Patient Records" subtext="Medical History" isOpen={isOpen} />
 
               <SectionHeader label="Growth" isOpen={isOpen} />

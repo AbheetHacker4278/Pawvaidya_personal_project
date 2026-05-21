@@ -34,6 +34,8 @@ graph TD
 ### 🐶 For Pet Owners (User Portal)
 > **Endpoint:** [Live Portal](https://pawvaidya-79qq.onrender.com/)
 - **AI-Powered Diagnostics**: Integrated **Gemini AI** chatbot (PawBot) for instant pet health guidance and symptom checking.
+- **🆕 🥇 Gold Plan - Animal Disease Predictor**: Comprehensive multi-symptom severity analysis (severity scales 1 to 5) matching `animal-disease-predictor` repository standards, complete with dynamic Random Forest matching probabilities, clinical progression chronicles, and automated printable PDF health sheets.
+- **🆕 💎 Platinum Plan - ML Animal Health Predictor**: Live physical vital signs tracker (Temperature °C, Pulse bpm, Respiratory Rate) checking against species physiological baselines, integrated with generative veterinary AI health advisory letters.
 - **Smart Appointment Booking**: Easy scheduling with specialized vets (Small Animal, Avian, Exotic, etc.) featuring real-time slot availability.
 - **Video Consultations**: Crystal-clear video calls powered by **ZegoCloud** for remote diagnosis.
 - **🆕 Multi-Pet Management**: Create and manage multiple pet profiles per user with specialized data fields (breed, gender, official age).
@@ -75,6 +77,8 @@ graph TD
 
 ### 🎧 Customer Service Portal
 > **Endpoint:** [Support Portal](https://customer-service-kx9x.onrender.com/)
+- **🆕 Premium Diagnostic Telemetry Logs (Customer 360)**: Tabbed support tracking panel inside `/customer-360` allowing agents to review a user's Gold disease predictions (severity levels, timelines, confidence gauges) and Platinum biological logs (vitals grids, LLM advice sheets) with perfect dark glass-morphism styling.
+- **🆕 🧪 Developer Quick-Login Bypass Suite**: A dev-only expandable drawer on the login page coupled with backend `/api/cs/dev-list` and `/api/cs/dev-login` bypass routes for instant visual testing and automated QA.
 - **🆕 Real-time Ticket Queue**: Managed workflow for CS agents to handle incoming user complaints and requests.
 - **🆕 Biometric Authentication**: Multi-layered security using **Face-API.js** for agent identity verification during login and profile completion.
 - **🆕 DigiLocker Integration**: Official integration for fetching verified government documents (Aadhaar, ABHA, APAAR) to validate agent identities.

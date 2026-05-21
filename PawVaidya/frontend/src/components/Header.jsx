@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import assets from '../assets/assets_frontend/assets';
 import { AppContext } from '../context/AppContext';
 import docimage1 from '../assets/New/Doctorfront1.png';
-import { ArrowRight, Star, Shield, Clock, Crown } from 'lucide-react';
+import { ArrowRight, Star, Shield, Clock, Crown, ShieldAlert } from 'lucide-react';
 
 // ─── Brand palette ────────────────────────────────────────────────────────────
 const B = {
@@ -146,41 +146,64 @@ const Header = () => {
                         ))}
                     </motion.div>
 
-                    {/* CTA Button */}
-                    <motion.button
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.5, duration: 0.5 }}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.97 }}
-                        onClick={() => navigate('/doctors')}
-                        className="mt-1 flex items-center gap-2 px-6 py-2.5 rounded-full font-bold text-sm shadow-lg transition-all"
-                        style={{
-                            background: (token && userdata && userdata?.subscription?.status === 'Active' && userdata.subscription.plan === 'Platinum')
-                                ? `linear-gradient(135deg, #a855f7, #6b21a8)`
-                                : `linear-gradient(135deg, ${B.amber}, #e8a020)`,
-                            color: '#fff',
-                            boxShadow: (token && userdata && userdata?.subscription?.status === 'Active') ? '0 8px 20px rgba(0,0,0,0.2)' : '0 4px 6px rgba(0,0,0,0.1)'
-                        }}
-                    >
-                        {(token && userdata && userdata?.subscription?.status === 'Active' && userdata.subscription.plan !== 'None')
-                            ? "Book Priority Appointment"
-                            : t('home.bookAppointmentBtn', 'Book Appointment')}
-                        <ArrowRight className="w-4 h-4" />
-                    </motion.button>
-                </div>
+                    {/* CTA Buttons */}
+                    <div className="flex flex-col items-start gap-4 mt-2 relative z-30">
+                        <div className="flex flex-wrap items-center gap-3">
+                            <motion.button
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.5, duration: 0.5 }}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.97 }}
+                            onClick={() => navigate('/doctors')}
+                            className="flex items-center gap-2 px-6 py-2.5 rounded-full font-bold text-sm shadow-lg transition-all"
+                            style={{
+                                background: (token && userdata && userdata?.subscription?.status === 'Active' && userdata.subscription.plan === 'Platinum')
+                                    ? `linear-gradient(135deg, #a855f7, #6b21a8)`
+                                    : `linear-gradient(135deg, ${B.amber}, #e8a020)`,
+                                color: '#fff',
+                                boxShadow: (token && userdata && userdata?.subscription?.status === 'Active') ? '0 8px 20px rgba(0,0,0,0.2)' : '0 4px 6px rgba(0,0,0,0.1)'
+                            }}
+                        >
+                            {(token && userdata && userdata?.subscription?.status === 'Active' && userdata.subscription.plan !== 'None')
+                                ? "Book Priority Appointment"
+                                : t('home.bookAppointmentBtn', 'Book Appointment')}
+                            <ArrowRight className="w-4 h-4" />
+                        </motion.button>
 
-                {/* ── Center/Bottom Stats (Integrated seamlessly) ────────────────── */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.7, duration: 0.5 }}
-                    className="hidden lg:flex md:absolute bottom-6 left-[45%] -translate-x-1/2 flex-col items-center justify-center px-6 py-4 rounded-2xl border border-white/10 shadow-2xl z-20"
-                    style={{ background: 'rgba(58,35,22,0.6)', backdropFilter: 'blur(16px)' }}
-                >
-                    <p className="text-white font-bold text-xl">{t('home.totalVets', '500+ Vets')}</p>
-                    <p className="text-[#fdf8f0]/80 text-xs tracking-wide uppercase mt-1">{t('home.cityCoverage', 'Across 100+ cities')}</p>
-                </motion.div>
+                        <motion.button
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.6, duration: 0.5 }}
+                            whileHover={{ scale: 1.05, boxShadow: '0 0 20px rgba(220, 38, 38, 0.4)' }}
+                            whileTap={{ scale: 0.97 }}
+                            onClick={() => navigate('/my-appointments', { state: { tab: 'emergency' } })}
+                            className="flex items-center gap-2 px-6 py-2.5 rounded-full font-bold text-sm shadow-lg transition-all bg-red-600 text-white relative overflow-hidden group"
+                        >
+                            <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500 skew-x-12" />
+                            <motion.div
+                                animate={{ scale: [1, 1.2, 1] }}
+                                transition={{ repeat: Infinity, duration: 1.5 }}
+                                className="w-2 h-2 rounded-full bg-white shadow-[0_0_8px_white]"
+                            />
+                            Emergency Booking
+                        </motion.button>
+                        </div>
+
+                        <motion.button
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.7, duration: 0.5 }}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.97 }}
+                            onClick={() => navigate('/report-cruelty')}
+                            className="flex items-center gap-2 px-6 py-2.5 rounded-full font-bold text-sm shadow-lg transition-all bg-emerald-600 hover:bg-emerald-500 text-white"
+                        >
+                            <ShieldAlert className="w-4 h-4" />
+                            Report Cruelty
+                        </motion.button>
+                    </div>
+                </div>
 
                 {/* ── Right: Doctor Image ───────────────────────────────────────── */}
                 <motion.div
@@ -189,6 +212,18 @@ const Header = () => {
                     transition={{ delay: 0.2, duration: 0.8, ease: 'easeOut' }}
                     className="relative flex-shrink-0 w-full md:w-[40%] flex justify-end items-end"
                 >
+                    {/* ── Center/Bottom Stats (Integrated seamlessly) ────────────────── */}
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.7, duration: 0.5 }}
+                        className="hidden lg:flex absolute bottom-8 -left-12 flex-col items-center justify-center px-6 py-4 rounded-2xl border border-white/10 shadow-2xl z-30"
+                        style={{ background: 'rgba(58,35,22,0.8)', backdropFilter: 'blur(16px)' }}
+                    >
+                        <p className="text-white font-bold text-xl">{t('home.totalVets', '500+ Vets')}</p>
+                        <p className="text-[#fdf8f0]/80 text-xs tracking-wide uppercase mt-1">{t('home.cityCoverage', 'Across 100+ cities')}</p>
+                    </motion.div>
+
                     <motion.img
                         initial={{ y: 0 }}
                         animate={{ y: [0, -8, 0] }}

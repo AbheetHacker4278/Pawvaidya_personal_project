@@ -13,6 +13,12 @@ const visitNoteSchema = new mongoose.Schema({
   notes: { type: String }
 }, { _id: true })
 
+const attachmentSchema = new mongoose.Schema({
+  url: { type: String },
+  type: { type: String },
+  filename: { type: String }
+}, { _id: true })
+
 const petReportSchema = new mongoose.Schema({
   userId: { type: String, required: true },
   doctorId: { type: String },
@@ -29,7 +35,7 @@ const petReportSchema = new mongoose.Schema({
   veterinarian: { type: String },
   vaccinations: [vaccinationSchema],
   visitNotes: [visitNoteSchema],
-  attachments: [{ url: String, type: String, filename: String }],
+  attachments: [attachmentSchema],
   isDeleted: { type: Boolean, default: false },
 }, { timestamps: true })
 

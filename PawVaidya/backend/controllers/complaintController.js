@@ -125,20 +125,19 @@ export const rateEmployee = async (req, res) => {
             const newTotal = employee.totalRatings + 1;
             const newAvg = ((employee.averageRating * employee.totalRatings) + rating) / newTotal;
 
-            const updateObj = { averageRating: newAvg, totalRatings: newTotal };
-            // Increment 5-star count if applicable
-            if (rating === 5) {
-                updateObj.$inc = { fiveStarCount: 1 };
-                // Actually if I use findByIdAndUpdate with $inc I can't mix it with direct assignment easily in some versions of mongoose
-                // Better approach:
-                await CSEmployee.findByIdAndUpdate(employee._id, {
-                    averageRating: newAvg,
-                    totalRatings: newTotal,
-                    $inc: { fiveStarCount: (rating === 5 ? 1 : 0) }
-                });
-            } else {
-                await CSEmployee.findByIdAndUpdate(employee._id, { averageRating: newAvg, totalRatings: newTotal });
-            }
+            // XP Logic for Rating
+            let bonusXP = 0;
+            if (rating === 5) bonusXP = 30;
+            else if (rating === 4) bonusXP = 15;
+
+            await CSEmployee.findByIdAndUpdate(employee._id, {
+                averageRating: newAvg,
+                totalRatings: newTotal,
+                $inc: { 
+                    fiveStarCount: (rating === 5 ? 1 : 0),
+                    xpPoints: bonusXP
+                }
+            });
         }
 
         return res.json({ success: true, message: 'Thank you for your feedback!' });
@@ -283,25 +282,51 @@ export const closeTicket = async (req, res) => {
         if (!ticket) return res.json({ success: false, message: 'Ticket not found.' });
         if (ticket.isClosed) return res.json({ success: false, message: 'Ticket is already closed.' });
 
+        const resolvedAt = new Date();
+        const handleTime = Math.floor((resolvedAt - ticket.createdAt) / 1000); // seconds
+
         await ComplaintTicket.findByIdAndUpdate(id, {
-            status: 'closed',
+            status: 'resolved',
             isClosed: true,
-            closedAt: new Date(),
+            closedAt: resolvedAt,
+            resolvedAt: resolvedAt,
+            handleTime: handleTime,
             closedBy: employeeId,
             $push: {
                 timeline: {
                     event: 'closed',
                     message: closingNote || 'Ticket closed by Customer Service Employee.',
                     by: 'employee',
-                    timestamp: new Date()
+                    timestamp: resolvedAt
                 }
             }
         });
 
-        // Increment employee resolved count
-        await CSEmployee.findByIdAndUpdate(employeeId, { $inc: { totalTicketsResolved: 1 } });
+        // Calculate XP based on priority
+        let xpReward = 50;
+        if (ticket.priority === 'urgent') xpReward = 100;
+        else if (ticket.priority === 'high') xpReward = 75;
 
-        return res.json({ success: true, message: 'Ticket closed successfully. The user can now rate your support.' });
+        // Update employee stats
+        const agent = await CSEmployee.findById(employeeId);
+        if (agent) {
+            const newTotalResolved = agent.totalTicketsResolved + 1;
+            const newAvgHandleTime = ((agent.avgHandleTime * agent.totalTicketsResolved) + handleTime) / newTotalResolved;
+            
+            // Level calculation (example: 1000 XP per level)
+            const newXP = agent.xpPoints + xpReward;
+            const newLevel = Math.floor(newXP / 1000) + 1;
+
+            await CSEmployee.findByIdAndUpdate(employeeId, {
+                totalTicketsResolved: newTotalResolved,
+                avgHandleTime: newAvgHandleTime,
+                xpPoints: newXP,
+                level: newLevel,
+                $inc: { activeTicketsCount: -1 }
+            });
+        }
+
+        return res.json({ success: true, message: 'Ticket resolved. XP Reward: ' + xpReward });
     } catch (error) {
         console.error('closeTicket error:', error);
         res.json({ success: false, message: error.message });

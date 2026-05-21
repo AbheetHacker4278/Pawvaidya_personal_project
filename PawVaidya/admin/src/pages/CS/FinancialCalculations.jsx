@@ -95,7 +95,7 @@ const FinancialCalculations = () => {
             </div>
 
             {/* Summary Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-6">
                 <SummaryCard 
                     title="Total Treasury" 
                     amount={summary.totalEarnings} 
@@ -118,18 +118,25 @@ const FinancialCalculations = () => {
                     subtitle="Membership Revenue"
                 />
                 <SummaryCard 
-                    title="Promotional Loss" 
+                    title="Coupon Loss" 
                     amount={summary.adminCouponLoss} 
                     icon={<TrendingDown className="text-rose-500" />} 
                     color="rose"
                     subtitle="Loss via Active Coupons"
                 />
                 <SummaryCard 
-                    title="Gifted Subs Loss" 
-                    amount={summary.giftedSubscriptionLoss} 
-                    icon={<Gift className="text-amber-500" />} 
-                    color="amber"
-                    subtitle="Value of Free Memberships"
+                    title="CS Refunds" 
+                    amount={summary.csRefundLoss} 
+                    icon={<ArrowUpRight className="text-rose-600 rotate-180" />} 
+                    color="rose"
+                    subtitle="Loss via CS Agent Refunds"
+                />
+                <SummaryCard 
+                    title="CS Gifted Loss" 
+                    amount={summary.csManualGiftLoss} 
+                    icon={<Gift className="text-purple-500" />} 
+                    color="purple"
+                    subtitle="Loss via Manual Grants"
                 />
             </div>
 
@@ -256,6 +263,12 @@ const FinancialCalculations = () => {
                         >
                             Subscription Ledger
                         </button>
+                        <button 
+                            onClick={() => setActiveTab('manual')}
+                            className={`px-8 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${activeTab === 'manual' ? 'bg-white text-rose-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                        >
+                            CS Manual Audits
+                        </button>
                     </div>
                 </div>
 
@@ -354,7 +367,7 @@ const FinancialCalculations = () => {
                                 </tr>
                             </tfoot>
                         </table>
-                    ) : (
+                    ) : activeTab === 'subscriptions' ? (
                         <table className="w-full text-left border-collapse">
                             <thead className="bg-slate-50/50">
                                 <tr>
@@ -423,6 +436,53 @@ const FinancialCalculations = () => {
                                     </td>
                                 </tr>
                             </tfoot>
+                        </table>
+                    ) : (
+                        <table className="w-full text-left border-collapse">
+                            <thead className="bg-slate-50/50">
+                                <tr>
+                                    <th className="px-10 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-100">Audit Description</th>
+                                    <th className="px-10 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-100">Agent</th>
+                                    <th className="px-10 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-100">Loss Amount</th>
+                                    <th className="px-10 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-100">Reason / Note</th>
+                                    <th className="px-10 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-100">Timestamp</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-50">
+                                {(financeData?.manualDeductions || []).filter(log => 
+                                    log.activityDescription.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                    log.metadata?.agentName?.toLowerCase().includes(searchTerm.toLowerCase())
+                                ).map((log, idx) => (
+                                    <tr key={idx} className="hover:bg-slate-50/30 transition-all group">
+                                        <td className="px-10 py-8">
+                                            <div className="flex items-center gap-4">
+                                                <div className={`w-10 h-10 ${log.activityType === 'refund' ? 'bg-rose-50 text-rose-500' : 'bg-purple-50 text-purple-500'} rounded-xl flex items-center justify-center shadow-sm`}>
+                                                    {log.activityType === 'refund' ? <TrendingDown size={18} /> : <Gift size={18} />}
+                                                </div>
+                                                <p className="font-bold text-slate-700 text-sm max-w-xs">{log.activityDescription}</p>
+                                            </div>
+                                        </td>
+                                        <td className="px-10 py-8">
+                                            <p className="text-xs font-black text-slate-800 uppercase">{log.metadata?.agentName || 'Unknown'}</p>
+                                            <p className="text-[10px] font-bold text-slate-400 mt-0.5">ID: {log.metadata?.employeeId?.substring(0, 8)}</p>
+                                        </td>
+                                        <td className="px-10 py-8">
+                                            <p className="text-sm font-black text-rose-600 tracking-tight">-₹{Number(log.metadata?.amount || 0).toLocaleString()}</p>
+                                        </td>
+                                        <td className="px-10 py-8">
+                                            <p className="text-xs font-medium text-slate-500 bg-slate-50 p-3 rounded-xl border border-slate-100 italic">
+                                                "{log.metadata?.reason || 'No specific reason logged'}"
+                                            </p>
+                                        </td>
+                                        <td className="px-10 py-8">
+                                            <p className="text-[10px] font-black text-slate-500 tracking-tight leading-relaxed">
+                                                {new Date(log.timestamp).toLocaleDateString()}<br/>
+                                                {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                            </p>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
                         </table>
                     )}
                 </div>

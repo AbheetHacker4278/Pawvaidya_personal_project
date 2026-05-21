@@ -190,7 +190,29 @@ export const initializeSocket = (server) => {
       socket.join('cs-agents');
       console.log(`Socket ${socket.id} joined cs-agents room`);
     });
+
+    // Emergency Appointment Events
+    socket.on('register-doctor-emergency', (data) => {
+      const { docId, district } = data;
+      if (docId) {
+        socket.join(`doctor-${docId}`);
+        console.log(`Doctor ${docId} registered for emergency direct notifications`);
+      }
+      if (district) {
+        const cleanDistrict = district.trim().toUpperCase();
+        socket.join(`emergency-district-${cleanDistrict}`);
+        console.log(`Doctor socket registered to emergency district room: emergency-district-${cleanDistrict}`);
+      }
+    });
+
+    socket.on('register-user-emergency', (userId) => {
+      if (userId) {
+        socket.join(`user-emergency-${userId}`);
+        console.log(`User ${userId} registered for emergency status notifications`);
+      }
+    });
   });
+
 
   return io;
 };

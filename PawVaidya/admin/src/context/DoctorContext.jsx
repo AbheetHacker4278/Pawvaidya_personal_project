@@ -222,6 +222,73 @@ const DoctorContextProvider = (props) => {
         }
     }
 
+    const uploadMedicalDocument = async (reportId, files) => {
+        try {
+            const formData = new FormData();
+            for (let i = 0; i < files.length; i++) {
+                formData.append('images', files[i]); // Backend expects 'images' field for files
+            }
+            const { data } = await axios.post(backendurl + `/api/doctor/pet-report/attachment/${reportId}`, formData, { 
+                headers: { 
+                    dtoken,
+                    'Content-Type': 'multipart/form-data'
+                } 
+            });
+            if (data.success) {
+                toast.success("Documents uploaded successfully");
+                return data.report;
+            } else {
+                toast.error(data.message);
+            }
+        } catch (error) {
+            toast.error(error.message);
+            console.log(error);
+        }
+    }
+
+    const addVaccination = async (vacData) => {
+        try {
+            const { data } = await axios.post(backendurl + '/api/doctor/add-vaccination', vacData, { headers: { dtoken } })
+            if (data.success) {
+                toast.success(data.message)
+                return data.report
+            } else {
+                toast.error(data.message)
+            }
+        } catch (error) {
+            toast.error(error.message)
+            console.log(error)
+        }
+    }
+
+    const getPetHealthCard = async (qrToken) => {
+        try {
+            const { data } = await axios.get(backendurl + `/api/doctor/pet-health/${qrToken}`, { headers: { dtoken } })
+            if (data.success) {
+                return data
+            } else {
+                toast.error(data.message)
+            }
+        } catch (error) {
+            toast.error(error.message)
+            console.log(error)
+        }
+    }
+
+    const getPetHealthCardById = async (petId) => {
+        try {
+            const { data } = await axios.get(backendurl + `/api/doctor/pet-health-id/${petId}`, { headers: { dtoken } })
+            if (data.success) {
+                return data
+            } else {
+                toast.error(data.message)
+            }
+        } catch (error) {
+            toast.error(error.message)
+            console.log(error)
+        }
+    }
+
     const updateVideoStatus = async (updateData) => {
         try {
             const { data } = await axios.post(backendurl + '/api/doctor/update-video-status', updateData, { headers: { dtoken } })
@@ -280,7 +347,7 @@ const DoctorContextProvider = (props) => {
         completeAppointment, cancelAppointment, getdashdata, dashdata, setdashdata,
         getProfileData, profileData, setProfileData,
         createReminder, getDoctorReminders, updateReminder, deleteReminder, getDailyEarnings,
-        getPetReports, createPetReport, addVisitNote, updateVideoStatus,
+        getPetReports, createPetReport, addVisitNote, uploadMedicalDocument, addVaccination, getPetHealthCard, getPetHealthCardById, updateVideoStatus,
         videoSlots, getVideoSlots, addVideoSlot
     }
 

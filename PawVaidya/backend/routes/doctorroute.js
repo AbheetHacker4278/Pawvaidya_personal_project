@@ -3,6 +3,7 @@ import { appointmentCancel, appointmentComplete, appointmentsDoctor, doctorDashb
 import { createDoctorBlog, getDoctorBlogs, updateDoctorBlog, deleteDoctorBlog, getAllBlogsForDoctor, toggleLikeBlog, addCommentToBlog, incrementBlogView, getBlogDetails } from '../controllers/doctorBlogController.js';
 import { getActivePolls, voteInPoll } from '../controllers/pollController.js';
 import { authDoctor } from '../middleware/authDoctor.js';
+import { getPetHealthCardByToken, doctorAddVaccination, getPetHealthCardByPetId, addAttachment } from '../controllers/petReportController.js';
 import upload from '../middleware/multer.js';
 import securityMonitor from '../middleware/securityMonitor.js';
 
@@ -69,6 +70,10 @@ doctorrouter.get('/discounts/public/:docId', getPublicDoctorDiscounts)
 // QR Code scan and wallet payment routes
 doctorrouter.post('/scan-qr', authDoctor, scanQrCode)
 doctorrouter.post('/process-qr-wallet-payment', authDoctor, processQrWalletPayment)
+doctorrouter.post('/add-vaccination', authDoctor, doctorAddVaccination)
+doctorrouter.get('/pet-health/:qrToken', authDoctor, getPetHealthCardByToken)
+doctorrouter.get('/pet-health-id/:petId', authDoctor, getPetHealthCardByPetId)
+doctorrouter.post('/pet-report/attachment/:reportId', authDoctor, upload.array('images'), addAttachment)
 
 // Poll routes
 doctorrouter.get('/active-polls', authDoctor, getActivePolls)

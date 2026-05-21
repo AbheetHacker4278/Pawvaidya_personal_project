@@ -46,6 +46,7 @@ import { Document, Packer, Paragraph, Table, TableRow, TableCell, WidthType, Ali
 import { euclideanDistance } from '../utils/faceUtils.js';
 import redis from '../config/redis.js';
 import redisDailyMetricModel from '../models/redisDailyMetricModel.js';
+import emergencyRequestModel from '../models/emergencyRequestModel.js';
 
 
 const execAsync = promisify(exec);
@@ -1394,18 +1395,26 @@ export const admindashboard = async (req, res) => {
                     totalEarnings: {
                         $sum: {
                             $subtract: [
-                                { $multiply: [{ $add: [{ $ifNull: ["$amount", 0] }, { $ifNull: ["$adminDiscountApplied.amount", 0] }] }, commissionRate] },
+                                { $multiply: [{ $add: [{ $ifNull: ["$amount", 0] }, { $ifNull: ["$walletDeduction", 0] }, { $ifNull: ["$pawpointsDeduction", 0] }, { $ifNull: ["$adminDiscountApplied.amount", 0] }] }, commissionRate] },
                                 { $ifNull: ["$adminDiscountApplied.amount", 0] }
+                            ]
+                        }
+                    },
+                    totalDoctorsEarnings: {
+                        $sum: {
+                            $subtract: [
+                                { $multiply: [{ $add: [{ $ifNull: ["$amount", 0] }, { $ifNull: ["$walletDeduction", 0] }, { $ifNull: ["$pawpointsDeduction", 0] }, { $ifNull: ["$adminDiscountApplied.amount", 0] }] }, doctorShareRate] },
+                                { $ifNull: ["$pawpointsDeduction", 0] }
                             ]
                         }
                     },
                     monthlyRevenue: {
                         $push: {
                             amount: {
-                                $subtract: [
-                                    { $multiply: [{ $add: [{ $ifNull: ["$amount", 0] }, { $ifNull: ["$adminDiscountApplied.amount", 0] }] }, commissionRate] },
-                                    { $ifNull: ["$adminDiscountApplied.amount", 0] }
-                                ]
+                                        $subtract: [
+                                            { $multiply: [{ $add: [{ $ifNull: ["$amount", 0] }, { $ifNull: ["$walletDeduction", 0] }, { $ifNull: ["$pawpointsDeduction", 0] }, { $ifNull: ["$adminDiscountApplied.amount", 0] }] }, commissionRate] },
+                                            { $ifNull: ["$adminDiscountApplied.amount", 0] }
+                                        ]
                             },
                             date: "$date"
                         }
@@ -1439,7 +1448,12 @@ export const admindashboard = async (req, res) => {
                         $sum: {
                             $cond: [
                                 { $gte: ["$date", startOfDay] },
-                                { $multiply: [{ $add: [{ $ifNull: ["$amount", 0] }, { $ifNull: ["$adminDiscountApplied.amount", 0] }] }, doctorShareRate] },
+                                {
+                                    $subtract: [
+                                        { $multiply: [{ $add: [{ $ifNull: ["$amount", 0] }, { $ifNull: ["$walletDeduction", 0] }, { $ifNull: ["$pawpointsDeduction", 0] }, { $ifNull: ["$adminDiscountApplied.amount", 0] }] }, doctorShareRate] },
+                                        { $ifNull: ["$pawpointsDeduction", 0] }
+                                    ]
+                                },
                                 0
                             ]
                         }
@@ -1448,12 +1462,24 @@ export const admindashboard = async (req, res) => {
                         $sum: {
                             $cond: [
                                 { $gte: ["$date", startOfWeek] },
-                                { $multiply: [{ $add: [{ $ifNull: ["$amount", 0] }, { $ifNull: ["$adminDiscountApplied.amount", 0] }] }, doctorShareRate] },
+                                {
+                                    $subtract: [
+                                        { $multiply: [{ $add: [{ $ifNull: ["$amount", 0] }, { $ifNull: ["$walletDeduction", 0] }, { $ifNull: ["$pawpointsDeduction", 0] }, { $ifNull: ["$adminDiscountApplied.amount", 0] }] }, doctorShareRate] },
+                                        { $ifNull: ["$pawpointsDeduction", 0] }
+                                    ]
+                                },
                                 0
                             ]
                         }
                     },
-                    monthly: { $sum: { $multiply: [{ $add: [{ $ifNull: ["$amount", 0] }, { $ifNull: ["$adminDiscountApplied.amount", 0] }] }, doctorShareRate] } }
+                    monthly: {
+                        $sum: {
+                            $subtract: [
+                                { $multiply: [{ $add: [{ $ifNull: ["$amount", 0] }, { $ifNull: ["$walletDeduction", 0] }, { $ifNull: ["$pawpointsDeduction", 0] }, { $ifNull: ["$adminDiscountApplied.amount", 0] }] }, doctorShareRate] },
+                                { $ifNull: ["$pawpointsDeduction", 0] }
+                            ]
+                        }
+                    }
                 }
             }
         ]);
@@ -1464,10 +1490,14 @@ export const admindashboard = async (req, res) => {
             doctorBreakdown.monthly = Math.round(granularAgg[0].monthly);
         }
 
+        const totalEarnings = Math.round(revenueAgg[0]?.totalEarnings || 0);
+        const totalDoctorsEarnings = Math.round(revenueAgg[0]?.totalDoctorsEarnings || 0);
+        const totalGrossRevenue = totalEarnings + totalDoctorsEarnings;
+
         const revenueInsights = {
-            totalEarnings: Math.round(revenueAgg[0]?.totalEarnings || 0),
-            totalGrossRevenue: Math.round((revenueAgg[0]?.totalEarnings || 0) / (commissionRate || 1)),
-            totalDoctorsEarnings: Math.round((revenueAgg[0]?.totalEarnings || 0) * (doctorShareRate / (commissionRate || 1))),
+            totalEarnings,
+            totalGrossRevenue,
+            totalDoctorsEarnings,
             doctorBreakdown,
             commissionPercentage: config.commissionRules?.defaultPercentage,
             monthlyGrowth: await appointmentModel.aggregate([
@@ -3536,7 +3566,7 @@ export const getUserPaymentDetails = async (req, res) => {
         }
 
         // Fetch user info
-        const user = await userModel.findById(userId).select('name email image phone');
+        const user = await userModel.findById(userId).select('name email image phone pawWallet pawpoints subscription gender dob full_address pet_type pet_age breed isAccountverified lastLogin');
         if (!user) {
             return res.json({ success: false, message: "User not found" });
         }
@@ -3583,6 +3613,10 @@ export const getUserPaymentDetails = async (req, res) => {
         const completedCount = paymentRecords.filter(r => r.isCompleted).length;
         const pendingCount = paymentRecords.filter(r => !r.cancelled && !r.isCompleted).length;
 
+        // Fetch pet count and emergency booking count
+        const petCount = await petModel.countDocuments({ ownerId: userId });
+        const emergencyCount = await emergencyRequestModel.countDocuments({ userId });
+
         res.json({
             success: true,
             user,
@@ -3594,7 +3628,9 @@ export const getUserPaymentDetails = async (req, res) => {
                 totalDiscountSaved,
                 cancelledCount,
                 completedCount,
-                pendingCount
+                pendingCount,
+                petCount,
+                emergencyCount
             },
             paymentRecords
         });

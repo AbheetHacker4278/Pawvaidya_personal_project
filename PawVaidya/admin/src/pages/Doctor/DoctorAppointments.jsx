@@ -158,7 +158,15 @@ const DoctorAppointments = () => {
   };
 
   // ─── QR Scan Handler ────────────────────────────
-  const handleQrScanSuccess = async (qrData) => {
+  const handleQrScanSuccess = async (decodedText) => {
+    let qrData;
+    try {
+      qrData = typeof decodedText === 'string' ? JSON.parse(decodedText) : decodedText;
+    } catch (e) {
+      toast.error("Invalid QR Code format");
+      return;
+    }
+
     setShowQrScanner(false);
     setQrLoading(true);
     setScannedQrToken(qrData.qrToken);

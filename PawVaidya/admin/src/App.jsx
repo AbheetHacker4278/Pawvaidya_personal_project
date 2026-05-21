@@ -55,6 +55,7 @@ import AdminDeployments from './pages/Admin/AdminDeployments';
 import AdminChatbot from './components/AdminChatbot';
 import PaymentDetails from './pages/Admin/PaymentDetails';
 import AllSubscriptions from './pages/Admin/AllSubscriptions';
+import EmergencyDashboard from './pages/Admin/EmergencyDashboard';
 import DoctorVideoCall from './pages/Doctor/DoctorVideoCall';
 import CSEmployees from './pages/CS/CSEmployees';
 import CSEmployeeDetail from './pages/CS/CSEmployeeDetail';
@@ -62,6 +63,10 @@ import CSTicketsOverview from './pages/CS/CSTicketsOverview';
 import CSReports from './pages/CS/CSReports';
 import CSAgentChat from './pages/CS/CSAgentChat';
 import FinancialCalculations from './pages/CS/FinancialCalculations';
+import DoctorEmergencies from './pages/Doctor/DoctorEmergencies';
+import DoctorScanner from './pages/Doctor/DoctorScanner';
+import MisbehaviorReports from './pages/MisbehaviorReports';
+import CrueltyReports from './pages/Admin/CrueltyReports';
 
 const App = () => {
   const { atoken, adminProfile } = useContext(AdminContext)
@@ -144,6 +149,7 @@ const App = () => {
               <Route path='/total-users' element={<TotalUsers />} />
               <Route path='/payment-details' element={<PaymentDetails />} />
               <Route path='/all-subscriptions' element={<AllSubscriptions />} />
+              <Route path='/emergency-dashboard' element={<EmergencyDashboard />} />
               <Route path='/admin-messages' element={<AdminMessages />} />
               <Route path='/all-reports' element={<AllReports />} />
               <Route path='/unban-requests' element={<UnbanRequests />} />
@@ -172,7 +178,8 @@ const App = () => {
               <Route path='/cs-chat/:id' element={<CSAgentChat />} />
               <Route path='/cs-tickets' element={<CSTicketsOverview />} />
               <Route path='/cs-reports' element={<CSReports />} />
-
+              <Route path='/misbehavior-reports' element={<MisbehaviorReports />} />
+              <Route path='/cruelty-reports' element={<CrueltyReports />} />
               <Route path='/doctor-dashboard' element={<DoctorDashboard />} />
               <Route path='/doctor-appointments' element={<DoctorAppointments />} />
               <Route path='/doctor-profile' element={<DoctorProfile />} />
@@ -183,8 +190,10 @@ const App = () => {
               <Route path='/doctor-chat' element={<DoctorChat />} />
               <Route path='/admin-chat' element={<AdminChat />} />
               <Route path='/doctor-watch-admin-stream' element={<DoctorWatchAdminStream />} />
+              <Route path='/doctor-scanner' element={<DoctorScanner />} />
               <Route path='/patient-records' element={<PatientRecords />} />
               <Route path='/doctor-video-call/:appointmentId' element={<DoctorVideoCall />} />
+              <Route path='/doctor-emergencies' element={<DoctorEmergencies />} />
             </Routes>
           </div>
         </main>

@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
@@ -8,9 +8,20 @@ const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
-
     const navigate = useNavigate();
     const { backendUrl, setCSToken } = useContext(CSContext);
+
+    useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const bypassToken = urlParams.get('bypass-token');
+        if (bypassToken) {
+            localStorage.setItem('cstoken', bypassToken);
+            localStorage.setItem('cs_isBypassed', 'true');
+            setCSToken(bypassToken);
+            toast.success(`⚡ Bypass success via Admin!`);
+            navigate('/customer-360');
+        }
+    }, [navigate, setCSToken]);
 
     const handleLogin = async (e) => {
         e.preventDefault();

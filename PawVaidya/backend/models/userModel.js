@@ -23,6 +23,9 @@ const userSchema = new mongoose.Schema({
     resetOtp: { type: Number, default: '' },
     resetOtpExpireAt: { type: Number, default: 0 },
     pawWallet: { type: Number, default: 0 },
+    pawpoints: { type: Number, default: 0 },
+    pawCode: { type: String, unique: true },
+    referredBy: { type: String, default: "" },
     // Login/Logout tracking
     lastLogin: { type: Date, default: null },
     lastLogout: { type: Date, default: null },
@@ -58,7 +61,8 @@ const userSchema = new mongoose.Schema({
         razorpaySubscriptionId: { type: String, default: null },
         isGift: { type: Boolean, default: false }
     },
-    videoCallsUsed: { type: Number, default: 0 }
+    videoCallsUsed: { type: Number, default: 0 },
+    emergencyPaymentStatus: { type: String, enum: ['No Dues', 'Pending Due Payment'], default: 'No Dues' }
 }, { timestamps: true })
 
 const userModel = mongoose.models.user || mongoose.model('user', userSchema);

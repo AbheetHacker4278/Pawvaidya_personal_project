@@ -1,58 +1,35 @@
-import axios from "axios";
+import { runAgentLoop } from "../services/agentOrchestrator.js";
+import { createUserToolImpls, getUserAgentSystemPrompt } from "../services/tools/userTools.js";
 
-const NVIDIA_API_URL = "https://integrate.api.nvidia.com/v1/chat/completions";
-
+/**
+ * User Agent — Agentic chatbot for pet owners.
+ * Requires authUser middleware → req.body.userId must be set.
+ */
 export const queryFrontendBot = async (req, res) => {
     try {
-        const { message, history, systemPrompt } = req.body;
-        const apiKey = process.env.NVIDIA_NIM_API_KEY;
+        const { message, history } = req.body;
+        const userId = req.body.userId;
 
-        if (!apiKey) {
-            return res.status(500).json({ success: false, message: "NVIDIA NIM API Key is missing" });
-        }
+        if (!message) return res.status(400).json({ success: false, message: "Message is required." });
 
-        // Standard OpenAI/NVIDIA APIs expect System -> User -> Assistant -> User...
-        let messages = [{ role: "system", content: systemPrompt }];
+        const systemPrompt = getUserAgentSystemPrompt();
+        const toolImpls = userId ? createUserToolImpls(userId) : {};
 
-        let chatHistory = (history || []).map(m => ({
-            role: m.role === 'bot' ? 'assistant' : 'user',
-            content: m.text
-        }));
+        const response = await runAgentLoop({
+            systemPrompt,
+            toolImpls,
+            userMessage: message,
+            history: history || [],
+            maxIterations: 5,
+        });
 
-        // NVIDIA NIM requires alternating User/Assistant. 
-        // We ensure the first message in history is User if it's not empty, or skip it if it's a Bot greeting.
-        if (chatHistory.length > 0 && chatHistory[0].role === 'assistant') {
-            chatHistory.shift(); // Remove the initial bot greeting to ensure we start with User
-        }
-
-        messages.push(...chatHistory);
-        messages.push({ role: "user", content: message });
-
-        const headers = {
-            "Authorization": `Bearer ${apiKey}`,
-            "Content-Type": "application/json"
-        };
-
-        const payload = {
-            model: "google/gemma-3-27b-it",
-            messages: messages,
-            max_tokens: 512,
-            temperature: 0.2,
-            top_p: 0.7
-        };
-
-        console.log("NVIDIA Frontend Bot Request:", JSON.stringify(payload, null, 2));
-
-        const response = await axios.post(NVIDIA_API_URL, payload, { headers });
-        const botResponse = response.data.choices[0].message.content;
-        res.json({ success: true, response: botResponse });
-
+        res.json({ success: true, response });
     } catch (error) {
-        console.error("FrontendBot Proxy Error Full:", error.response?.data || error.message);
+        console.error("User Agent Error:", error.response?.data || error.message);
         const detail = error.response?.data?.detail || error.response?.data?.message || error.message;
-        res.status(400).json({
+        res.status(500).json({
             success: false,
-            message: `I'm having trouble connecting to my brain. (${detail})`
+            message: `PawBot is currently unavailable. Please try again shortly. (${detail})`,
         });
     }
 };

@@ -4,14 +4,21 @@ import assets from '../../assets/assets_admin/assets';
 import { AppContext } from '../../context/AppContext';
 import { DoctorContext } from '../../context/DoctorContext';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Gift, Calendar, Award, ShieldCheck } from 'lucide-react';
+import { Gift, Calendar, Award, ShieldCheck, ShieldAlert, Activity, CheckCircle, XCircle, Clock, AlertTriangle, ChevronRight } from 'lucide-react';
 import DoctorCalendar from '../../components/DoctorCalendar';
 import AnalogClock from '../../components/AnalogClock';
 import DoctorPollCard from '../../components/DoctorPollCard';
+import axios from 'axios';
+import { useNavigate } from 'react-router';
 
 const DoctorDashboard = () => {
   const { dtoken, dashdata, getdashdata, cancelAppointment, completeAppointment, getDoctorReminders } = useContext(DoctorContext);
   const { slotDateFormat } = useContext(AppContext);
+  const navigate = useNavigate();
+
+  // Emergency stats state
+  const [emergencyStats, setEmergencyStats] = useState(null);
+  const [loadingEmergency, setLoadingEmergency] = useState(false);
 
   // State for daily earnings and reminders
   const [dailyEarnings, setDailyEarnings] = useState(0);
@@ -90,8 +97,53 @@ const DoctorDashboard = () => {
   useEffect(() => {
     if (dtoken) {
       getdashdata();
+      fetchEmergencyStats();
     }
   }, [dtoken]);
+
+  // Fetch emergency request stats for this doctor
+  const fetchEmergencyStats = async () => {
+    try {
+      setLoadingEmergency(true);
+      const { data } = await axios.get(
+        (import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000') + '/api/emergency/requests',
+        { headers: { dtoken } }
+      );
+      if (data.success) {
+        const reqs = data.requests;
+
+        // Earnings: sum of `amount` for Completed cases assigned to this doctor
+        const completedReqs = reqs.filter(r => r.status === 'Completed');
+        const totalEarnings = completedReqs.reduce((sum, r) => sum + (r.amount || 0), 0);
+
+        // Breakdown by tier
+        const earningsByTier = { Platinum: 0, Gold: 0, Silver: 0, 'Non-Sub': 0 };
+        completedReqs.forEach(r => {
+          const plan = (r.userId?.subscription?.plan || '').toLowerCase();
+          const amt = r.amount || 0;
+          if (plan.includes('platinum'))    earningsByTier['Platinum'] += amt;
+          else if (plan.includes('gold'))   earningsByTier['Gold']     += amt;
+          else if (plan.includes('silver')) earningsByTier['Silver']   += amt;
+          else                              earningsByTier['Non-Sub']  += amt;
+        });
+
+        setEmergencyStats({
+          total: reqs.length,
+          pending: reqs.filter(r => ['Pending', 'Waiting for Doctor Approval'].includes(r.status)).length,
+          approved: reqs.filter(r => ['Approved', 'Payment Pending'].includes(r.status)).length,
+          completed: completedReqs.length,
+          rejected: reqs.filter(r => r.status === 'Rejected').length,
+          cancelled: reqs.filter(r => r.status === 'Cancelled').length,
+          totalEarnings,
+          earningsByTier,
+        });
+      }
+    } catch (err) {
+      console.error('Emergency stats fetch error:', err.message);
+    } finally {
+      setLoadingEmergency(false);
+    }
+  };
 
   useEffect(() => {
     if (dashdata) {
@@ -474,8 +526,179 @@ const DoctorDashboard = () => {
         </motion.div>
       </motion.div>
 
+      {/* ─── EMERGENCY DESK STATS SECTION ───────────────────────────────────── */}
+      <motion.div
+        className="mt-6 bg-gradient-to-br from-rose-600 via-red-600 to-amber-600 rounded-2xl p-6 shadow-xl shadow-rose-200/50 relative overflow-hidden"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.45 }}
+      >
+        {/* Background decoration */}
+        <div className="absolute right-0 top-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4 pointer-events-none" />
+        <div className="absolute left-0 bottom-0 w-48 h-48 bg-white/5 rounded-full blur-2xl translate-y-1/2 -translate-x-1/4 pointer-events-none" />
+
+        {/* Header */}
+        <div className="flex items-center justify-between mb-5 relative z-10">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-white/15 rounded-xl border border-white/20 backdrop-blur-sm">
+              <ShieldAlert className="w-5 h-5 text-yellow-200 animate-pulse" />
+            </div>
+            <div>
+              <h3 className="text-white font-black text-sm uppercase tracking-widest">Emergency Desk Overview</h3>
+              <p className="text-amber-100 text-[10px] font-bold mt-0.5">Your real-time emergency service stats</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={fetchEmergencyStats}
+              disabled={loadingEmergency}
+              className="flex items-center gap-1.5 text-[10px] font-black bg-white/15 hover:bg-white/25 text-white border border-white/20 rounded-xl px-3 py-1.5 transition-all active:scale-95 backdrop-blur-sm"
+            >
+              <Activity className={`w-3 h-3 ${loadingEmergency ? 'animate-spin' : ''}`} />
+              Refresh
+            </button>
+            <button
+              onClick={() => navigate('/doctor-emergencies')}
+              className="flex items-center gap-1.5 text-[10px] font-black bg-white text-rose-700 hover:bg-rose-50 rounded-xl px-3 py-1.5 transition-all active:scale-95 shadow-md"
+            >
+              Open Desk <ChevronRight className="w-3 h-3" />
+            </button>
+          </div>
+        </div>
+
+        {/* Stats Cards Grid */}
+        {loadingEmergency ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 relative z-10">
+            {[1,2,3,4,5].map(i => (
+              <div key={i} className="bg-white/10 rounded-2xl h-20 animate-pulse" />
+            ))}
+          </div>
+        ) : emergencyStats ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 relative z-10">
+            {/* Pending */}
+            <motion.div
+              whileHover={{ scale: 1.04, y: -2 }}
+              onClick={() => navigate('/doctor-emergencies')}
+              className="bg-white/15 hover:bg-white/25 backdrop-blur-md border border-white/20 rounded-2xl p-4 cursor-pointer transition-all"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <Clock className="w-4 h-4 text-yellow-200" />
+                <span className="text-[9px] font-black text-yellow-200 bg-yellow-200/20 rounded-full px-2 py-0.5 uppercase">Pending</span>
+              </div>
+              <p className="text-3xl font-black text-white">{emergencyStats.pending}</p>
+              <p className="text-[10px] text-amber-100 font-bold mt-0.5">Awaiting Action</p>
+            </motion.div>
+
+            {/* Active / Approved */}
+            <motion.div
+              whileHover={{ scale: 1.04, y: -2 }}
+              onClick={() => navigate('/doctor-emergencies')}
+              className="bg-white/15 hover:bg-white/25 backdrop-blur-md border border-white/20 rounded-2xl p-4 cursor-pointer transition-all"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <Activity className="w-4 h-4 text-blue-200" />
+                <span className="text-[9px] font-black text-blue-200 bg-blue-200/20 rounded-full px-2 py-0.5 uppercase">Active</span>
+              </div>
+              <p className="text-3xl font-black text-white">{emergencyStats.approved}</p>
+              <p className="text-[10px] text-amber-100 font-bold mt-0.5">In Session</p>
+            </motion.div>
+
+            {/* Completed */}
+            <motion.div
+              whileHover={{ scale: 1.04, y: -2 }}
+              onClick={() => navigate('/doctor-emergencies')}
+              className="bg-white/15 hover:bg-white/25 backdrop-blur-md border border-white/20 rounded-2xl p-4 cursor-pointer transition-all"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <CheckCircle className="w-4 h-4 text-emerald-200" />
+                <span className="text-[9px] font-black text-emerald-200 bg-emerald-200/20 rounded-full px-2 py-0.5 uppercase">Done</span>
+              </div>
+              <p className="text-3xl font-black text-white">{emergencyStats.completed}</p>
+              <p className="text-[10px] text-amber-100 font-bold mt-0.5">Completed</p>
+            </motion.div>
+
+            {/* Rejected */}
+            <motion.div
+              whileHover={{ scale: 1.04, y: -2 }}
+              onClick={() => navigate('/doctor-emergencies')}
+              className="bg-white/15 hover:bg-white/25 backdrop-blur-md border border-white/20 rounded-2xl p-4 cursor-pointer transition-all"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <XCircle className="w-4 h-4 text-rose-200" />
+                <span className="text-[9px] font-black text-rose-200 bg-rose-200/20 rounded-full px-2 py-0.5 uppercase">Rejected</span>
+              </div>
+              <p className="text-3xl font-black text-white">{emergencyStats.rejected}</p>
+              <p className="text-[10px] text-amber-100 font-bold mt-0.5">Declined</p>
+            </motion.div>
+
+            {/* Total */}
+            <motion.div
+              whileHover={{ scale: 1.04, y: -2 }}
+              onClick={() => navigate('/doctor-emergencies')}
+              className="bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/30 rounded-2xl p-4 cursor-pointer transition-all"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <ShieldAlert className="w-4 h-4 text-white" />
+                <span className="text-[9px] font-black text-white bg-white/20 rounded-full px-2 py-0.5 uppercase">Total</span>
+              </div>
+              <p className="text-3xl font-black text-white">{emergencyStats.total}</p>
+              <p className="text-[10px] text-amber-100 font-bold mt-0.5">All Time</p>
+            </motion.div>
+          </div>
+        ) : (
+          <div className="relative z-10 text-center py-6">
+            <AlertTriangle className="w-8 h-8 text-yellow-200 mx-auto mb-2 opacity-70" />
+            <p className="text-white/70 text-xs font-bold">Could not load emergency statistics</p>
+          </div>
+        )}
+      </motion.div>
+
+      {/* ─── EMERGENCY EARNINGS BREAKDOWN ──────────────────────────────────── */}
+      {emergencyStats && emergencyStats.completed > 0 && (
+        <motion.div
+          className="mt-4 bg-white border border-emerald-100 rounded-2xl p-6 shadow-sm"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+        >
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center gap-2">
+              <div className="p-2 bg-emerald-50 rounded-xl">
+                <CheckCircle className="w-4 h-4 text-emerald-600" />
+              </div>
+              <div>
+                <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest">Emergency Earnings</h3>
+                <p className="text-[10px] text-slate-400 font-bold">Revenue from completed emergency consultations</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-2xl font-black text-emerald-600">₹{emergencyStats.totalEarnings}</p>
+              <p className="text-[10px] text-slate-400 font-bold">{emergencyStats.completed} cases closed</p>
+            </div>
+          </div>
+
+          {/* Tier breakdown */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[
+              { label: '💎 Platinum', key: 'Platinum', color: 'bg-indigo-50 border-indigo-100 text-indigo-700', rate: '₹200/case' },
+              { label: '🥇 Gold',     key: 'Gold',     color: 'bg-amber-50  border-amber-100  text-amber-700',  rate: '₹300/case' },
+              { label: '🥈 Silver',   key: 'Silver',   color: 'bg-slate-50  border-slate-200  text-slate-700',  rate: '₹400/case' },
+              { label: '👤 Non-Sub',  key: 'Non-Sub',  color: 'bg-rose-50   border-rose-100   text-rose-700',   rate: '₹500/case' },
+            ].map(({ label, key, color, rate }) => (
+              <div key={key} className={`border rounded-xl p-3 ${color}`}>
+                <p className="text-xs font-black">{label}</p>
+                <p className="text-lg font-black mt-1">₹{emergencyStats.earningsByTier?.[key] || 0}</p>
+                <p className="text-[9px] font-bold opacity-70 mt-0.5">{rate}</p>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+      )}
+
       {/* Doctor Polls Section */}
       <DoctorPollCard />
+
+
 
       {/* Badge History Section */}
       {dashdata.incentiveHistory && dashdata.incentiveHistory.some(item => item.type === 'badge') && (

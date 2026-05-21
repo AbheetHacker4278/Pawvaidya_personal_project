@@ -24,6 +24,8 @@ const appointmentSchema = new mongoose.Schema({
     payment: { type: Boolean, default: false },
     paymentMethod: { type: String, default: "Cash" },
     walletDeduction: { type: Number, default: 0 },
+    pawpointsDeduction: { type: Number, default: 0 },
+    pawpointsUsed: { type: Number, default: 0 },
     isCompleted: { type: Boolean, default: false },
     discountApplied: {
         type: {
@@ -62,6 +64,10 @@ const appointmentSchema = new mongoose.Schema({
         amount: Number,
         applied: { type: Boolean, default: false }
     },
+    cancelledBy: { type: String, enum: ['user', 'doctor', 'cs', 'admin', 'none'], default: 'none' },
+    cancelReason: { type: String, default: '' },
+    refundStatus: { type: String, enum: ['none', 'pending', 'completed'], default: 'none' },
+    refundAmount: { type: Number, default: 0 },
     // Incentive amount funded by admin (not charged to user)
     incentiveAmount: { type: Number, default: 0 },
     incentivePaidByAdmin: { type: Boolean, default: false }

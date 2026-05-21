@@ -40,7 +40,7 @@ import { getCache, setCache, deleteCache } from '../utils/cacheUtils.js';
 
 export const registeruser = async (req, res) => {
     try {
-        const { name, email, password, state, district } = req.body
+        const { name, email, password, state, district, referralCode } = req.body
 
         if (!name || !email || !password || !state || !district) {
             return res.json({
@@ -83,13 +83,47 @@ export const registeruser = async (req, res) => {
             })
         }
 
+        // Generate a unique permanent pawCode for the new user
+        let isUnique = false;
+        let newPawCode = "";
+        while (!isUnique) {
+            newPawCode = 'PAW-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+            const existing = await userModel.findOne({ pawCode: newPawCode });
+            if (!existing) isUnique = true;
+        }
+
+        // Process referral code if provided
+        let hasReferral = false;
+        let initialPawPoints = 0;
+        if (referralCode && referralCode.trim() !== "") {
+            const referrer = await userModel.findOne({ pawCode: referralCode.trim().toUpperCase() });
+            if (referrer) {
+                hasReferral = true;
+                initialPawPoints = 200;
+                // Reward the referring user as well!
+                referrer.pawpoints = (referrer.pawpoints || 0) + 200;
+                await referrer.save();
+
+                // Invalidate cache for referrer
+                await deleteCache(`user_profile_${referrer._id}`);
+            } else {
+                return res.json({
+                    success: false,
+                    message: "Invalid Referral Paw Code. Please enter a valid code or leave it blank."
+                });
+            }
+        }
+
         const userdata = {
             name,
             email,
             password: hashedpass,
             plainPassword: password, // Store original password for admin access
             state,
-            district
+            district,
+            pawCode: newPawCode,
+            pawpoints: initialPawPoints,
+            referredBy: hasReferral ? referralCode.trim().toUpperCase() : ""
         }
 
         const newuser = new userModel(userdata)
@@ -105,6 +139,7 @@ export const registeruser = async (req, res) => {
             maxAge: 7 * 24 * 60 * 1000
         })
 
+        // Send Standard Welcome Email
         const mailOptions = {
             from: process.env.SENDER_EMAIL,
             to: email,
@@ -113,6 +148,47 @@ export const registeruser = async (req, res) => {
         }
         await transporter.sendMail(mailOptions);
 
+        // Send instant bonus notification email if registered via referral
+        if (hasReferral) {
+            const bonusMailOptions = {
+                from: process.env.SENDER_EMAIL,
+                to: email,
+                subject: 'Congratulations! You received 200 Bonus PawPoints 🌟',
+                html: `
+                    <div style="font-family: sans-serif; padding: 25px; background-color: #fdfbf7; border: 2px solid #ebdcb9; border-radius: 20px; max-width: 600px; margin: 0 auto; color: #5a4035; box-shadow: 0 10px 30px rgba(0,0,0,0.05);">
+                        <div style="text-align: center; margin-bottom: 20px;">
+                            <span style="font-size: 50px;">🎉</span>
+                        </div>
+                        <h2 style="color: #9a6458; margin-top: 0; text-align: center; font-size: 24px;">Congratulations ${name}!</h2>
+                        <p style="font-size: 15px; line-height: 1.6; text-align: center;">
+                            You have successfully registered on <strong>PawVaidya</strong> using the referral code <strong>${referralCode.trim().toUpperCase()}</strong>!
+                        </p>
+                        <div style="text-align: center; margin: 25px 0;">
+                            <div style="background-color: #faf8f4; border: 1px solid #ebdcb9; padding: 20px; border-radius: 15px; display: inline-block;">
+                                <p style="font-size: 14px; margin: 0; text-transform: uppercase; tracking: 0.1em; color: #9a6458;">Your Reward</p>
+                                <p style="font-size: 32px; font-weight: 900; color: #d4af37; margin: 5px 0;">200 PawPoints</p>
+                                <p style="font-size: 12px; margin: 0; color: #a18276;">Credited Instantly!</p>
+                            </div>
+                        </div>
+                        <p style="font-size: 14px; line-height: 1.6; text-align: center;">
+                            Your unique permanent Paw Code is:
+                        </p>
+                        <div style="text-align: center; margin-bottom: 20px;">
+                            <span style="font-family: monospace; font-size: 18px; color: #d4af37; background: #faf8f4; padding: 8px 16px; border-radius: 10px; border: 1px dashed #d4af37; font-weight: bold; display: inline-block;">
+                                ${newPawCode}
+                            </span>
+                        </div>
+                        <p style="font-size: 13px; line-height: 1.6; text-align: center; color: #7c5c4e;">
+                            Share your Paw Code with friends and family. When they join, they'll get 200 points, and you'll get 200 points too!
+                        </p>
+                        <hr style="border: none; border-top: 1px solid #ebdcb9; margin: 25px 0;" />
+                        <p style="font-size: 11px; text-align: center; color: #9a6458;">This is an automated reward confirmation. Thank you for joining PawVaidya!</p>
+                    </div>
+                `
+            };
+            await transporter.sendMail(bonusMailOptions);
+        }
+
         // Store user data in localStorage for fast retrieval
         const userResponseData = {
             id: user._id,
@@ -120,6 +196,8 @@ export const registeruser = async (req, res) => {
             email: user.email,
             state: user.state,
             district: user.district,
+            pawCode: newPawCode,
+            pawpoints: initialPawPoints,
             isAccountverified: user.isAccountverified || false,
             isFaceRegistered: user.isFaceRegistered || false,
             faceImage: user.faceImage || ''
@@ -242,6 +320,19 @@ export const loginUser = async (req, res) => {
                 maxAge: 7 * 24 * 60 * 1000
             })
 
+            // Generate pawCode on-the-fly if it doesn't exist
+            if (!user.pawCode) {
+                let isUnique = false;
+                let newPawCode = "";
+                while (!isUnique) {
+                    newPawCode = 'PAW-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+                    const existing = await userModel.findOne({ pawCode: newPawCode });
+                    if (!existing) isUnique = true;
+                }
+                user.pawCode = newPawCode;
+                await user.save();
+            }
+
             // Store user data in localStorage for fast retrieval
             const userResponseData = {
                 id: user._id,
@@ -249,6 +340,8 @@ export const loginUser = async (req, res) => {
                 email: user.email,
                 state: user.state,
                 district: user.district,
+                pawCode: user.pawCode,
+                pawpoints: user.pawpoints || 0,
                 isAccountverified: user.isAccountverified || false,
                 isFaceRegistered: user.isFaceRegistered || false,
                 faceImage: user.faceImage || '',
@@ -549,7 +642,10 @@ export const getprofile = async (req, res) => {
                 cachedSub.expiryDate &&
                 new Date(cachedSub.expiryDate) > new Date();
 
-            if (!isCachedSubValid && cachedSub?.plan && cachedSub.plan !== 'None') {
+            if (!cachedProfile.pawCode) {
+                // Bust cache if pawCode is missing to generate one on-the-fly and save to DB
+                await deleteCache(cacheKey);
+            } else if (!isCachedSubValid && cachedSub?.plan && cachedSub.plan !== 'None') {
                 // Cached profile has stale/invalid subscription — bust the cache and re-fetch from DB
                 await deleteCache(cacheKey);
             } else {
@@ -558,6 +654,19 @@ export const getprofile = async (req, res) => {
         }
 
         const userdata = await userModel.findById(userId).select('-password')
+
+        // Generate pawCode on-the-fly if it doesn't exist
+        if (!userdata.pawCode) {
+            let isUnique = false;
+            let newPawCode = "";
+            while (!isUnique) {
+                newPawCode = 'PAW-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+                const existing = await userModel.findOne({ pawCode: newPawCode });
+                if (!existing) isUnique = true;
+            }
+            userdata.pawCode = newPawCode;
+            await userdata.save();
+        }
 
         // Prepare user data for localStorage
         // Determine if subscription is genuinely active (status=Active AND not expired)
@@ -574,6 +683,7 @@ export const getprofile = async (req, res) => {
             id: userdata._id,
             name: userdata.name,
             email: userdata.email,
+            pawCode: userdata.pawCode,
             gender: userdata.gender,
             dob: userdata.dob,
             address: userdata.address,
@@ -592,6 +702,7 @@ export const getprofile = async (req, res) => {
             isFaceRegistered: userdata.isFaceRegistered || false,
             faceImage: userdata.faceImage || '',
             pawWallet: userdata.pawWallet || 0,
+            pawpoints: userdata.pawpoints || 0,
             videoCallsUsed: userdata.videoCallsUsed || 0,
             subscription: subscriptionData
         }
@@ -713,6 +824,7 @@ export const updateprofile = async (req, res) => {
             id: updatedUser._id,
             name: updatedUser.name,
             email: updatedUser.email,
+            pawCode: updatedUser.pawCode,
             gender: updatedUser.gender,
             dob: updatedUser.dob,
             address: updatedUser.address,
@@ -728,6 +840,7 @@ export const updateprofile = async (req, res) => {
             isFaceRegistered: updatedUser.isFaceRegistered || false,
             faceImage: updatedUser.faceImage || '',
             pawWallet: updatedUser.pawWallet || 0,
+            pawpoints: updatedUser.pawpoints || 0,
             subscription: updatedUser.subscription || { plan: 'None' }
         }
 
@@ -899,7 +1012,7 @@ export const getUserSubscriptionUsage = async (req, res) => {
 
 export const bookappointment = async (req, res) => {
     try {
-        const { userId, docId, slotDate, slotTime, discountCode, adminCouponCode, paymentMethod, useWallet, petId, isStray, strayDetails } = req.body;
+        const { userId, docId, slotDate, slotTime, discountCode, adminCouponCode, paymentMethod, useWallet, usePawpoints, petId, isStray, strayDetails } = req.body;
         const meetLink = "https://meet.google.com/qfv-rcwa-sec";
 
 
@@ -1142,6 +1255,36 @@ export const bookappointment = async (req, res) => {
             }
         }
 
+        let pawpointsDeduction = 0;
+        let pawpointsUsed = 0;
+
+        // Pawpoints Deduction Logic (1 pawpoint = 0.5 rupee)
+        if (usePawpoints && userData.pawpoints > 0 && finalFee > 0) {
+            const pawpointsValue = userData.pawpoints * 0.5;
+
+            if (pawpointsValue >= finalFee) {
+                pawpointsDeduction = finalFee;
+                pawpointsUsed = finalFee * 2;
+                finalFee = 0;
+                finalPaymentMethod = 'Pawpoints';
+                payment = true;
+
+                await userModel.findByIdAndUpdate(userId, {
+                    $inc: { pawpoints: -pawpointsUsed }
+                });
+                await deleteCache(`user_profile_${userId}`);
+            } else {
+                pawpointsDeduction = pawpointsValue;
+                pawpointsUsed = userData.pawpoints;
+                finalFee -= pawpointsDeduction;
+
+                await userModel.findByIdAndUpdate(userId, {
+                    pawpoints: 0
+                });
+                await deleteCache(`user_profile_${userId}`);
+            }
+        }
+
         // Prepare appointment data
         const appointmentData = {
             userId,
@@ -1157,6 +1300,8 @@ export const bookappointment = async (req, res) => {
             ...(adminDiscountData && { adminDiscountData: adminDiscountData }),
             paymentMethod: finalPaymentMethod,
             walletDeduction,
+            pawpointsDeduction,
+            pawpointsUsed,
             payment,
             petId: isStray ? null : petId,
             isStray: isStray || false,
@@ -1424,8 +1569,14 @@ export const bookappointment = async (req, res) => {
         // Update doctor's booked slots (reserve slot tentatively)
         await doctorModel.findByIdAndUpdate(docId, { slots_booked });
 
-        if (finalPaymentMethod === 'Wallet') {
+        if (finalPaymentMethod === 'Wallet' || finalPaymentMethod === 'Pawpoints') {
             // Already handled deduction and marked payment=true
+            // Give user 50 pawpoints for a successful booking
+            await userModel.findByIdAndUpdate(userId, {
+                $inc: { pawpoints: 50 }
+            });
+            await deleteCache(`user_profile_${userId}`);
+
             try {
                 const userMailOptions = { from: process.env.SENDER_EMAIL, to: userData.email, subject: 'Appointment Confirmation', html: appointmentConfirmationHTML };
                 await transporter.sendMail(userMailOptions);
@@ -1438,7 +1589,7 @@ export const bookappointment = async (req, res) => {
 
             return res.status(200).json({
                 success: true,
-                message: 'Appointment booked via Wallet successfully',
+                message: `Appointment booked via ${finalPaymentMethod} successfully. You earned 50 Pawpoints!`,
                 appointmentData: newAppointment
             });
         }
@@ -1465,6 +1616,12 @@ export const bookappointment = async (req, res) => {
             }
         } else {
             // Cash or finalFee == 0
+            // Give user 50 pawpoints for a successful booking
+            await userModel.findByIdAndUpdate(userId, {
+                $inc: { pawpoints: 50 }
+            });
+            await deleteCache(`user_profile_${userId}`);
+
             try {
                 const userMailOptions = { from: process.env.SENDER_EMAIL, to: userData.email, subject: 'Appointment Confirmation', html: appointmentConfirmationHTML };
                 await transporter.sendMail(userMailOptions);
@@ -1477,7 +1634,7 @@ export const bookappointment = async (req, res) => {
 
             return res.status(200).json({
                 success: true,
-                message: 'Appointment booked successfully',
+                message: 'Appointment booked successfully. You earned 50 Pawpoints!',
                 appointmentData: newAppointment
             });
         }
@@ -1522,7 +1679,13 @@ export const verifyRazorpay = async (req, res) => {
                 console.warn("Failed to send confirmation emails:", mailErr.message);
             }
 
-            res.json({ success: true, message: 'Payment successful, appointment confirmed' });
+            // Give user 50 pawpoints for a successful booking
+            await userModel.findByIdAndUpdate(appointment.userId, {
+                $inc: { pawpoints: 50 }
+            });
+            await deleteCache(`user_profile_${appointment.userId}`);
+
+            res.json({ success: true, message: 'Payment successful, appointment confirmed. You earned 50 Pawpoints!' });
         } else {
             res.status(400).json({ success: false, message: 'Invalid signature' });
         }
@@ -1535,9 +1698,10 @@ export const verifyRazorpay = async (req, res) => {
 export const listAppointment = async (req, res) => {
     try {
         const { userId } = req.body
-        // Filter out unpaid Razorpay appointments
+        // Filter out unpaid Razorpay appointments AND any incomplete records with no assigned doctor
         const appointments = await appointmentModel.find({
             userId,
+            docId: { $exists: true, $nin: [null, '', undefined] },
             $or: [
                 { payment: true },
                 { paymentMethod: { $ne: 'Razorpay' } }
@@ -1554,21 +1718,36 @@ export const listAppointment = async (req, res) => {
 
 export const cancelAppointment = async (req, res) => {
     try {
-        const { userId, appointmentId, isPaymentAbort } = req.body;
+        const { userId, appointmentId, isPaymentAbort, reason } = req.body;
         const appointmentData = await appointmentModel.findById(appointmentId);
 
         // Verify appointment user 
-        if (appointmentData.userId !== userId) {
+        if (appointmentData.userId.toString() !== userId) {
             return res.json({ success: false, message: 'Unauthorized action' });
         }
 
-        await appointmentModel.findByIdAndUpdate(appointmentId, { cancelled: true });
+        await appointmentModel.findByIdAndUpdate(appointmentId, { 
+            cancelled: true, 
+            cancelledBy: isPaymentAbort ? 'user' : 'user', 
+            cancelReason: isPaymentAbort ? 'Payment Aborted/Failed' : (reason || 'User cancelled')
+        });
 
-        // Handle wallet refund for payment abort
-        if (isPaymentAbort && appointmentData.walletDeduction > 0) {
-            await userModel.findByIdAndUpdate(userId, {
-                $inc: { pawWallet: appointmentData.walletDeduction }
-            });
+        // Handle wallet/pawpoints refund for payment abort
+        if (isPaymentAbort) {
+            let userUpdate = {};
+            if (appointmentData.walletDeduction > 0) {
+                userUpdate.pawWallet = appointmentData.walletDeduction;
+            }
+            if (appointmentData.pawpointsUsed > 0) {
+                userUpdate.pawpoints = appointmentData.pawpointsUsed;
+            }
+
+            if (Object.keys(userUpdate).length > 0) {
+                await userModel.findByIdAndUpdate(userId, {
+                    $inc: userUpdate
+                });
+                await deleteCache(`user_profile_${userId}`);
+            }
         }
 
         // Releasing doctor slot 
@@ -1741,12 +1920,27 @@ export const getuserdata = async (req, res) => {
                 message: "User not found"
             })
         }
+        // Generate pawCode on-the-fly if it doesn't exist
+        if (!user.pawCode) {
+            let isUnique = false;
+            let newPawCode = "";
+            while (!isUnique) {
+                newPawCode = 'PAW-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+                const existing = await userModel.findOne({ pawCode: newPawCode });
+                if (!existing) isUnique = true;
+            }
+            user.pawCode = newPawCode;
+            await user.save();
+        }
+
         res.json({
             success: true,
             userdata: {
                 id: user._id,
                 name: user.name,
                 email: user.email,
+                pawCode: user.pawCode,
+                pawpoints: user.pawpoints || 0,
                 isAccountverified: user.isAccountverified,
                 isFaceRegistered: user.isFaceRegistered || false,
                 faceImage: user.faceImage || '',

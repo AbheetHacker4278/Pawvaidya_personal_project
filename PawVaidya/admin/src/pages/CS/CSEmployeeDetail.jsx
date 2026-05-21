@@ -3,13 +3,14 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import { AdminContext } from '../../context/AdminContext';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaTrophy, FaCalendarCheck, FaStar, FaHistory, FaUserShield, FaClock, FaImage, FaSignOutAlt, FaFileAlt, FaFileDownload, FaIdCard, FaGraduationCap, FaPassport, FaTimes, FaShieldAlt, FaCheckCircle, FaHospital, FaCar } from 'react-icons/fa';
+import { FaTrophy, FaCalendarCheck, FaStar, FaHistory, FaUserShield, FaClock, FaImage, FaSignOutAlt, FaFileAlt, FaFileDownload, FaIdCard, FaGraduationCap, FaPassport, FaTimes, FaShieldAlt, FaCheckCircle, FaHospital, FaCar, FaCoffee, FaExclamationTriangle, FaChartBar, FaUndo } from 'react-icons/fa';
 
 const CSEmployeeDetail = () => {
     const { id } = useParams();
     const { atoken, backendurl } = useContext(AdminContext);
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [shiftData, setShiftData] = useState({ shiftLogs: [], summary: null });
 
     const [rewardAmount, setRewardAmount] = useState('');
     const [rewardReason, setRewardReason] = useState('');
@@ -45,8 +46,22 @@ const CSEmployeeDetail = () => {
         }
     };
 
+    const fetchShiftLogs = async () => {
+        try {
+            const { data } = await axios.get(`${backendurl}/api/cs-admin/employee/${id}/shift-logs?days=30`, {
+                headers: { atoken }
+            });
+            if (data.success) {
+                setShiftData({ shiftLogs: data.shiftLogs, summary: data.summary });
+            }
+        } catch (error) {
+            console.warn('Shift logs fetch failed:', error.message);
+        }
+    };
+
     useEffect(() => {
         fetchStats();
+        fetchShiftLogs();
     }, [id, atoken]);
 
     const handleGrantReward = async (e) => {
@@ -115,6 +130,19 @@ const CSEmployeeDetail = () => {
     );
 
     const { employee, metrics, recentReviews, loginHistory } = stats;
+    const breakHistory = employee.breakHistory || [];
+
+    const renderTime = (dateStr) => {
+        if (!dateStr) return '-';
+        const d = new Date(dateStr);
+        return isNaN(d.getTime()) ? '-' : d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    };
+
+    const renderDate = (dateStr) => {
+        if (!dateStr) return '-';
+        const d = new Date(dateStr);
+        return isNaN(d.getTime()) ? '-' : d.toLocaleDateString();
+    };
 
     return (
         <div className="p-6 space-y-6">
@@ -124,6 +152,18 @@ const CSEmployeeDetail = () => {
                     <div>
                         <div className="flex items-center">
                             <h1 className="text-2xl font-bold text-gray-800">{employee.name}</h1>
+                            <div className="flex items-center gap-2 ml-4">
+                                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest border shadow-sm
+                                    ${employee.rank === 'Diamond' ? 'bg-blue-50 text-blue-700 border-blue-100' : 
+                                      employee.rank === 'Platinum' ? 'bg-slate-50 text-slate-700 border-slate-200' :
+                                      employee.rank === 'Gold' ? 'bg-amber-50 text-amber-600 border-amber-100' :
+                                      'bg-orange-50 text-orange-700 border-orange-100'}`}>
+                                    {employee.rank || 'Bronze'} Agent
+                                </span>
+                                <span className="bg-indigo-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full">
+                                    LVL {employee.level || 1}
+                                </span>
+                            </div>
                             {employee.faceVerified && (
                                 <span className="ml-3 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-indigo-50 text-indigo-700 border border-indigo-200">
                                     <FaCheckCircle className="mr-1" /> Biometric Verified
@@ -146,26 +186,109 @@ const CSEmployeeDetail = () => {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center">
                     <div className="text-yellow-400 mb-2"><FaStar size={32} /></div>
                     <span className="text-3xl font-black text-gray-800">{metrics.avgRating.toFixed(1)}</span>
                     <span className="text-sm text-gray-500 mt-1">Average Rating ({metrics.totalRatings} total)</span>
                 </div>
+                <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center relative overflow-hidden">
+                    <div className="text-indigo-500 mb-2"><FaTrophy size={32} /></div>
+                    <span className="text-3xl font-black text-gray-800">{employee.xpPoints || 0}</span>
+                    <span className="text-sm text-gray-500 mt-1">Total Experience (XP)</span>
+                    <div className="absolute bottom-0 left-0 w-full h-1 bg-slate-100">
+                        <div className="bg-indigo-500 h-full transition-all duration-500" style={{ width: `${((employee.xpPoints || 0) % 1000) / 10}%` }}></div>
+                    </div>
+                </div>
                 <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center">
                     <div className="text-emerald-500 mb-2"><FaCalendarCheck size={32} /></div>
                     <span className="text-3xl font-black text-gray-800">{metrics.resolvedTickets}</span>
-                    <span className="text-sm text-gray-500 mt-1">Tickets Resolved</span>
-                    {metrics.resolvedTickets === 0 && (
-                        <p className="text-[10px] text-amber-600 font-bold mt-2 uppercase tracking-wider bg-amber-50 px-2 py-0.5 rounded">No Query Resolved History</p>
-                    )}
+                    <span className="text-sm text-gray-500 mt-1 text-center">Tickets Solved</span>
                 </div>
                 <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center">
-                    <div className="text-blue-500 mb-2"><FaHistory size={32} /></div>
-                    <span className="text-3xl font-black text-gray-800">{loginHistory.length}</span>
-                    <span className="text-sm text-gray-500 mt-1">Logins (Past 30 Days)</span>
+                    <div className="text-slate-400 mb-2"><FaClock size={32} /></div>
+                    <span className="text-3xl font-black text-gray-800">
+                        {employee.avgHandleTime ? `${Math.round(employee.avgHandleTime / 60)}m` : '0m'}
+                    </span>
+                    <span className="text-sm text-gray-500 mt-1 text-center">Avg Handle Time</span>
+                </div>
+                <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center">
+                    <div className="text-rose-500 mb-2"><FaUndo size={32} /></div>
+                    <span className="text-3xl font-black text-gray-800">₹{metrics.totalRefundAmountProcessed || 0}</span>
+                    <span className="text-sm text-gray-500 mt-1 text-center">Total Refunds</span>
+                </div>
+                <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center">
+                    <div className="text-purple-500 mb-2"><FaStar size={32} /></div>
+                    <span className="text-3xl font-black text-gray-800">₹{metrics.totalGiftedAmount || 0}</span>
+                    <span className="text-sm text-gray-500 mt-1 text-center">Gifts Issued</span>
                 </div>
             </div>
+
+            {/* Refund Logs Section */}
+            {stats.refundLogs && stats.refundLogs.length > 0 && (
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+                    <h3 className="text-lg font-bold text-gray-800 mb-4 border-b pb-2 flex items-center">
+                        <FaUndo className="mr-2 text-rose-500" /> Wallet Refund History (Processed by Agent)
+                    </h3>
+                    <div className="space-y-3">
+                        {stats.refundLogs.map(log => (
+                            <div key={log._id || log.id} className="p-4 bg-rose-50 rounded-xl border border-rose-100 flex justify-between items-center">
+                                <div>
+                                    <p className="text-sm font-bold text-rose-800 mb-1">{log.activityDescription}</p>
+                                    <div className="flex flex-wrap gap-2 mt-1">
+                                        <p className="text-xs text-rose-600/70">Processed on: {new Date(log.timestamp).toLocaleString()}</p>
+                                        {log.metadata?.reason && (
+                                            <p className="text-[10px] font-bold text-rose-700 bg-rose-200/50 px-2 py-0.5 rounded uppercase tracking-tighter">Reason: {log.metadata.reason}</p>
+                                        )}
+                                    </div>
+                                </div>
+                                {log.metadata?.amount && (
+                                    <div className="text-right">
+                                        <p className="font-black text-rose-600">+₹{log.metadata.amount}</p>
+                                        <p className="text-[10px] font-bold text-rose-400 uppercase tracking-tight">Added to Wallet</p>
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Subscription Adjustment Logs Section */}
+            {stats.subscriptionLogs && stats.subscriptionLogs.length > 0 && (
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mt-6">
+                    <h3 className="text-lg font-bold text-gray-800 mb-4 border-b pb-2 flex items-center">
+                        <FaStar className="mr-2 text-purple-500" /> Subscription Manual Adjustments
+                    </h3>
+                    <div className="space-y-3">
+                        {stats.subscriptionLogs.map(log => (
+                            <div key={log._id || log.id} className={`p-4 rounded-xl border flex justify-between items-center ${
+                                log.activityType === 'grant_subscription' ? 'bg-emerald-50 border-emerald-100' : 'bg-amber-50 border-amber-100'
+                            }`}>
+                                <div>
+                                    <p className={`text-sm font-bold mb-1 ${
+                                        log.activityType === 'grant_subscription' ? 'text-emerald-800' : 'text-amber-800'
+                                    }`}>{log.activityDescription}</p>
+                                    <div className="flex flex-wrap gap-2 mt-1">
+                                        <p className="text-xs opacity-70">Timestamp: {new Date(log.timestamp).toLocaleString()}</p>
+                                        {log.metadata?.reason && (
+                                            <p className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-tighter ${
+                                                log.activityType === 'grant_subscription' ? 'bg-emerald-200/50 text-emerald-700' : 'bg-amber-200/50 text-amber-700'
+                                            }`}>Reason: {log.metadata.reason}</p>
+                                        )}
+                                    </div>
+                                </div>
+                                {log.activityType === 'grant_subscription' && log.metadata?.amount && (
+                                    <div className="text-right">
+                                        <p className="font-black text-emerald-600">Cost: ₹{log.metadata.amount}</p>
+                                        <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-tight">Gifted to User</p>
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
@@ -239,6 +362,165 @@ const CSEmployeeDetail = () => {
                         </table>
                         {loginHistory.length === 0 && <p className="text-gray-500 text-sm italic text-center py-4">No login history available.</p>}
                     </div>
+                </div>
+
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 md:col-span-2">
+                    <h3 className="text-lg font-bold text-gray-800 mb-4 border-b pb-2 flex items-center">
+                        <FaShieldAlt className="mr-2 text-indigo-500" /> Quality Assurance (QA) Scores
+                    </h3>
+                    <div className="space-y-4">
+                        {stats.recentQA && stats.recentQA.length > 0 ? stats.recentQA.map((qa, idx) => (
+                            <div key={idx} className="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                                <div className="flex justify-between items-start mb-3">
+                                    <div>
+                                        <p className="text-sm font-black text-slate-800">Score: {qa.score}%</p>
+                                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Reviewed on: {new Date(qa.createdAt).toLocaleDateString()}</p>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        {Object.entries(qa.kpis || {}).map(([key, val]) => (
+                                            <div key={key} className="bg-white px-2 py-1 rounded border text-[9px] font-bold text-slate-500 uppercase tracking-tighter">
+                                                {key}: {val}/10
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                                {qa.feedback && (
+                                    <p className="text-xs text-slate-600 italic border-l-2 border-indigo-400 pl-3 py-1">"{qa.feedback}"</p>
+                                )}
+                            </div>
+                        )) : (
+                            <p className="text-sm text-slate-400 italic text-center py-4">No QA scores recorded yet.</p>
+                        )}
+                    </div>
+                </div>
+
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 md:col-span-2">
+                    <h3 className="text-lg font-bold text-gray-800 mb-4 border-b pb-2 flex items-center">
+                        <FaCoffee className="mr-2 text-amber-500" /> Daily Break History
+                    </h3>
+                    <div className="overflow-x-auto max-h-80">
+                        <table className="w-full text-sm">
+                            <thead>
+                                <tr className="text-gray-400 text-xs uppercase text-left border-b sticky top-0 bg-white">
+                                    <th className="pb-2 font-semibold">Date</th>
+                                    <th className="pb-2 font-semibold">Start Time</th>
+                                    <th className="pb-2 font-semibold">End Time</th>
+                                    <th className="pb-2 font-semibold">Duration</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-50">
+                                {breakHistory.slice().reverse().map((b, idx) => (
+                                    <tr key={idx} className="hover:bg-gray-50 transition-colors">
+                                        <td className="py-3 text-gray-700 font-medium">
+                                            {renderDate(b.date)}
+                                        </td>
+                                        <td className="py-3 text-gray-600">
+                                            {renderTime(b.startTime)}
+                                        </td>
+                                        <td className="py-3 text-gray-600">
+                                            {renderTime(b.endTime)}
+                                        </td>
+                                        <td className="py-3 text-gray-500 italic font-bold">
+                                            {Math.round(b.duration / 60)} mins
+                                            {b.duration >= 1800 && <span className="ml-2 text-[10px] text-red-500 bg-red-50 px-1 py-0.5 rounded">MAX LIMIT REACHED</span>}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                        {breakHistory.length === 0 && <p className="text-gray-500 text-sm italic text-center py-4">No break history available.</p>}
+                    </div>
+                </div>
+            </div>
+
+            {/* ── Shift & Working Duration Section ── */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+                <h3 className="text-lg font-bold text-gray-800 mb-4 border-b pb-2 flex items-center">
+                    <FaChartBar className="mr-2 text-indigo-500" /> Shift Working Duration (Last 30 Days)
+                </h3>
+
+                {/* Summary cards */}
+                {shiftData.summary && (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+                        <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4 text-center">
+                            <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider mb-1">Total Hours Worked</p>
+                            <p className="text-2xl font-black text-indigo-700">{shiftData.summary.totalWorkHours}h</p>
+                        </div>
+                        <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 text-center">
+                            <p className="text-[10px] font-bold text-amber-400 uppercase tracking-wider mb-1">Total Break Time</p>
+                            <p className="text-2xl font-black text-amber-700">{Math.round(shiftData.summary.totalBreakSeconds / 60)}m</p>
+                        </div>
+                        <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4 text-center">
+                            <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider mb-1">Full Shifts Completed</p>
+                            <p className="text-2xl font-black text-emerald-700">{shiftData.summary.completedDays}/{shiftData.summary.totalDays}</p>
+                        </div>
+                        <div className="bg-red-50 border border-red-100 rounded-xl p-4 text-center">
+                            <p className="text-[10px] font-bold text-red-400 uppercase tracking-wider mb-1">Early Logouts</p>
+                            <p className="text-2xl font-black text-red-700">{shiftData.summary.earlyLogoutCount}</p>
+                        </div>
+                    </div>
+                )}
+
+                {/* Shift logs table */}
+                <div className="overflow-x-auto max-h-96">
+                    <table className="w-full text-sm">
+                        <thead>
+                            <tr className="text-gray-400 text-xs uppercase text-left border-b sticky top-0 bg-white">
+                                <th className="pb-2 font-semibold">Date</th>
+                                <th className="pb-2 font-semibold">Shift Start</th>
+                                <th className="pb-2 font-semibold">Shift End</th>
+                                <th className="pb-2 font-semibold">Worked</th>
+                                <th className="pb-2 font-semibold">Break</th>
+                                <th className="pb-2 font-semibold">Status</th>
+                                <th className="pb-2 font-semibold">Early Logout Reason</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-50">
+                            {shiftData.shiftLogs.map((log, idx) => {
+                                const wH = Math.floor((log.workSeconds || 0) / 3600);
+                                const wM = Math.floor(((log.workSeconds || 0) % 3600) / 60);
+                                const bM = Math.round((log.breakSeconds || 0) / 60);
+                                return (
+                                    <tr key={idx} className={`hover:bg-gray-50 transition-colors ${log.earlyLogout ? 'bg-red-50/30' : ''}`}>
+                                        <td className="py-3 font-medium text-gray-700">{log.date}</td>
+                                        <td className="py-3 text-gray-600">
+                                            {log.shiftStart ? new Date(log.shiftStart).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}
+                                        </td>
+                                        <td className="py-3 text-gray-600">
+                                            {log.shiftEnd ? new Date(log.shiftEnd).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : (
+                                                <span className="text-emerald-500 font-bold flex items-center gap-1"><span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>Active</span>
+                                            )}
+                                        </td>
+                                        <td className="py-3 font-bold text-gray-700">{wH}h {wM}m</td>
+                                        <td className="py-3 text-amber-600">{bM}m</td>
+                                        <td className="py-3">
+                                            {log.completedShift ? (
+                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700">
+                                                    <FaCheckCircle className="text-[8px]" /> Complete
+                                                </span>
+                                            ) : log.earlyLogout ? (
+                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-700">
+                                                    <FaExclamationTriangle className="text-[8px]" /> Early Exit
+                                                </span>
+                                            ) : (
+                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700">
+                                                    <FaClock className="text-[8px]" /> In Progress
+                                                </span>
+                                            )}
+                                        </td>
+                                        <td className="py-3 text-xs text-gray-500 italic max-w-xs">
+                                            {log.earlyLogout && log.earlyLogoutReason ? (
+                                                <span className="text-red-600 font-medium">{log.earlyLogoutReason}</span>
+                                            ) : '-'}
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                    {shiftData.shiftLogs.length === 0 && (
+                        <p className="text-gray-400 text-sm italic text-center py-8">No shift records found for this agent.</p>
+                    )}
                 </div>
             </div>
 

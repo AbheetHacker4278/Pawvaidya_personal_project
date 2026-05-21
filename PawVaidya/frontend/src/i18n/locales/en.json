@@ -280,7 +280,8 @@
     "report": "Report",
     "cancel": "Cancel",
     "bookAgain": "Book Again",
-    "rateDoctor": "Rate Doctor"
+    "rateDoctor": "Rate Doctor",
+    "emergency": "Emergency Booking"
   },
   "chatbot": {
     "welcome": "Welcome to PawVaidya!",

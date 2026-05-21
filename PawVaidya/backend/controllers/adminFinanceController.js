@@ -98,19 +98,35 @@ const getFinancialCalculations = async (req, res) => {
                 timestamp: sub.createdAt
             }));
 
+        // 5. CS Manual Deductions (Refunds + Gifted Subscriptions)
+        const activityLogModel = (await import('../models/activityLogModel.js')).default;
+        const manualDeductionLogs = await activityLogModel.find({ 
+            activityType: { $in: ['refund', 'grant_subscription'] } 
+        });
+        
+        let totalCSManualDeduction = 0;
+        manualDeductionLogs.forEach(log => {
+            if (log.metadata && log.metadata.amount) {
+                totalCSManualDeduction += Number(log.metadata.amount) || 0;
+            }
+        });
+
         res.json({
             success: true,
             data: {
                 summary: {
-                    totalEarnings: totalBookingEarnings + totalSubscriptionEarnings,
+                    totalEarnings: (totalBookingEarnings + totalSubscriptionEarnings) - totalCSManualDeduction,
                     bookingEarnings: totalBookingEarnings,
                     subscriptionEarnings: totalSubscriptionEarnings,
-                    totalLoss: totalGiftedLoss + adminCouponLossSoFar,
-                    giftedSubscriptionLoss: totalGiftedLoss,
-                    adminCouponLoss: adminCouponLossSoFar
+                    totalLoss: totalGiftedLoss + adminCouponLossSoFar + totalCSManualDeduction,
+                    giftedSubscriptionLoss: totalGiftedLoss + (totalCSManualDeduction - (manualDeductionLogs.filter(l => l.activityType === 'refund').reduce((acc, l) => acc + (l.metadata.amount || 0), 0))),
+                    adminCouponLoss: adminCouponLossSoFar,
+                    csRefundLoss: manualDeductionLogs.filter(l => l.activityType === 'refund').reduce((acc, l) => acc + (l.metadata.amount || 0), 0),
+                    csManualGiftLoss: manualDeductionLogs.filter(l => l.activityType === 'grant_subscription').reduce((acc, l) => acc + (l.metadata.amount || 0), 0)
                 },
                 breakdown: bookingBreakdown,
                 subscriptionBreakdown: subscriptionBreakdown,
+                manualDeductions: manualDeductionLogs.sort((a, b) => b.timestamp - a.timestamp),
                 discounts: {
                     activeAdminCount: activeAdminDiscountsCount,
                     activeDoctorCount: activeDoctorDiscountsCount,

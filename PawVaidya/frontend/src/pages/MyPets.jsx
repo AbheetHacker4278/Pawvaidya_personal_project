@@ -306,8 +306,15 @@ const DetailCard = ({ report, onClose, setActiveAttachment }) => (
                         <h4 className="flex items-center gap-2 text-lg font-black text-[#5A4035] mb-6"><Search className="text-blue-500" /> Diagnostic Results</h4>
                         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
                             {report.attachments.map((file, i) => (
-                                <div key={i} onClick={() => setActiveAttachment(file)} className="aspect-square rounded-2xl border-2 border-amber-50 cursor-pointer overflow-hidden group relative shadow-md">
-                                    <img src={file.url} className="w-full h-full object-cover transition-transform group-hover:scale-110" />
+                                <div key={i} onClick={() => setActiveAttachment(file)} className="aspect-square rounded-2xl border-2 border-amber-50 cursor-pointer overflow-hidden group relative shadow-md bg-white">
+                                    {file.url.toLowerCase().endsWith('.pdf') || file.type === 'raw' ? (
+                                        <div className="w-full h-full flex flex-col items-center justify-center p-4">
+                                            <FileText size={32} className="text-amber-200 group-hover:text-amber-500 transition-colors" />
+                                            <p className="text-[8px] mt-2 text-gray-400 text-center truncate w-full font-bold uppercase">{file.filename || 'PDF Report'}</p>
+                                        </div>
+                                    ) : (
+                                        <img src={file.url} className="w-full h-full object-cover transition-transform group-hover:scale-110" alt="Thumbnail" />
+                                    )}
                                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white"><Search size={20} /></div>
                                 </div>
                             ))}
@@ -333,7 +340,15 @@ const AttachmentModal = ({ attachment, onClose }) => (
                 </div>
             </div>
             <div className="flex-1 overflow-auto bg-gray-100 p-8 flex items-center justify-center">
-                <img src={attachment.url} className="max-w-full rounded-2xl shadow-xl" />
+                {attachment.url.toLowerCase().endsWith('.pdf') || attachment.type === 'raw' ? (
+                    <iframe 
+                        src={`${attachment.url}#view=FitH`} 
+                        className="w-full h-full min-h-[600px] rounded-2xl shadow-xl"
+                        title="Document Viewer"
+                    />
+                ) : (
+                    <img src={attachment.url} className="max-w-full rounded-2xl shadow-xl" alt="Medical Document" />
+                )}
             </div>
         </motion.div>
     </motion.div>

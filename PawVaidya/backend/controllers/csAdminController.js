@@ -5,6 +5,7 @@ import CSLoginHistory from '../models/csLoginHistoryModel.js';
 import CSRating from '../models/csRatingModel.js';
 import CSReport from '../models/csReportModel.js';
 import ComplaintTicket from '../models/complaintTicketModel.js';
+import CSShiftLog from '../models/csShiftLogModel.js';
 import { transporter } from '../config/nodemailer.js';
 
 
@@ -36,7 +37,7 @@ export const createEmployee = async (req, res) => {
                 from: `"PawVaidya Support" <${process.env.SENDER_EMAIL}>`,
                 to: email,
                 subject: 'Welcome to PawVaidya Customer Service Team',
-                html: `<div style="font-family:Inter,sans-serif;padding:32px;background:#f9fafb;"><div style="max-width:560px;margin:0 auto;background:white;border-radius:16px;overflow:hidden;border:1px solid #e5e7eb;"><div style="background:linear-gradient(135deg,#0f4c81,#1a6bb5);padding:32px;text-align:center;color:white;"><h1 style="margin:0;font-size:24px;">Welcome to the Team!</h1><p style="margin:8px 0 0;opacity:.9;">PawVaidya Customer Service</p></div><div style="padding:32px;"><p>Hi <strong>${name}</strong>,</p><p>Your Customer Service account has been created successfully.</p><ul><li><strong>Email:</strong> ${email}</li><li><strong>Temporary Password:</strong> ${password}</li><li><strong>Profile Deadline:</strong> ${deadline.toDateString()}</li></ul><p style="color:#DC2626;font-weight:600;">⚠️ You must complete your profile and register your face within 2 days or your account will be suspended.</p><p>Login at: <a href="http://localhost:5175">http://localhost:5175</a></p><p>Best regards,<br/>PawVaidya Admin</p></div></div></div>`
+                html: `<div style="font-family:Inter,sans-serif;padding:32px;background:#f9fafb;"><div style="max-width:560px;margin:0 auto;background:white;border-radius:16px;overflow:hidden;border:1px solid #e5e7eb;"><div style="background:linear-gradient(135deg,#0f4c81,#1a6bb5);padding:32px;text-align:center;color:white;"><h1 style="margin:0;font-size:24px;">Welcome to the Team!</h1><p style="margin:8px 0 0;opacity:.9;">PawVaidya Customer Service</p></div><div style="padding:32px;"><p>Hi <strong>${name}</strong>,</p><p>Your Customer Service account has been created successfully.</p><ul><li><strong>Email:</strong> ${email}</li><li><strong>Temporary Password:</strong> ${password}</li><li><strong>Profile Deadline:</strong> ${deadline.toDateString()}</li></ul><p>Login at: <a href="http://localhost:5175">http://localhost:5175</a></p><p>Best regards,<br/>PawVaidya Admin</p></div></div></div>`
             });
         } catch (emailErr) {
             console.warn('Welcome email failed:', emailErr.message);
@@ -96,12 +97,30 @@ export const getEmployeeStats = async (req, res) => {
             createdAt: r.createdAt
         }));
 
+        const CSQAScore = (await import('../models/csQAScoreModel.js')).default;
+        const recentQA = await CSQAScore.find({ employeeId: id }).sort({ createdAt: -1 }).limit(10);
+
         const stats = {
             employee,
             metrics,
             recentReviews,
-            loginHistory
+            loginHistory,
+            recentQA
         };
+
+        const activityLogModel = (await import('../models/activityLogModel.js')).default;
+        const refundLogs = await activityLogModel.find({ 'metadata.employeeId': id, activityType: 'refund' }).sort({ timestamp: -1 });
+        const subscriptionLogs = await activityLogModel.find({ 
+            'metadata.employeeId': id, 
+            activityType: { $in: ['grant_subscription', 'revoke_subscription'] } 
+        }).sort({ timestamp: -1 });
+
+        stats.refundLogs = refundLogs;
+        stats.subscriptionLogs = subscriptionLogs;
+        stats.metrics.totalRefundAmountProcessed = refundLogs.reduce((acc, log) => acc + (Number(log.metadata?.amount) || 0), 0);
+        stats.metrics.totalGiftedAmount = subscriptionLogs.filter(l => l.activityType === 'grant_subscription').reduce((acc, log) => acc + (Number(log.metadata?.amount) || 0), 0);
+        stats.metrics.refundTransactions = refundLogs.length;
+        stats.metrics.subscriptionAdjustments = subscriptionLogs.length;
 
         return res.json({ success: true, stats });
     } catch (error) {
@@ -353,5 +372,58 @@ export const resendReportEmail = async (req, res) => {
         return res.json({ success: true, message: 'Report email resent successfully.' });
     } catch (error) {
         res.json({ success: false, message: `Email failed: ${error.message}` });
+    }
+};
+
+// GET /api/cs-admin/employee/:id/shift-logs  — admin view shift logs for an agent
+export const getEmployeeShiftLogs = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { days = 30 } = req.query;
+        const since = new Date(Date.now() - Number(days) * 24 * 60 * 60 * 1000);
+        const shiftLogs = await CSShiftLog.find({ employeeId: id, shiftStart: { $gte: since } }).sort({ shiftStart: -1 });
+
+        // Summary stats
+        const totalWorkSeconds = shiftLogs.reduce((acc, s) => acc + (s.workSeconds || 0), 0);
+        const totalBreakSeconds = shiftLogs.reduce((acc, s) => acc + (s.breakSeconds || 0), 0);
+        const completedDays = shiftLogs.filter(s => s.completedShift).length;
+        const earlyLogoutCount = shiftLogs.filter(s => s.earlyLogout).length;
+
+        return res.json({
+            success: true,
+            shiftLogs,
+            summary: {
+                totalWorkSeconds,
+                totalBreakSeconds,
+                totalWorkHours: parseFloat((totalWorkSeconds / 3600).toFixed(2)),
+                completedDays,
+                earlyLogoutCount,
+                totalDays: shiftLogs.length
+            }
+        });
+    } catch (error) {
+        console.error('getEmployeeShiftLogs error:', error);
+        res.json({ success: false, message: error.message });
+    }
+};
+
+// GET /api/cs-admin/early-exits
+export const getAllEarlyExits = async (req, res) => {
+    try {
+        const { days = 30 } = req.query;
+        const since = new Date(Date.now() - Number(days) * 24 * 60 * 60 * 1000);
+        
+        // Find shift logs that have earlyLogout set to true
+        const earlyExits = await CSShiftLog.find({
+            shiftStart: { $gte: since },
+            earlyLogout: true
+        })
+        .populate('employeeId', 'name email profilePic status')
+        .sort({ shiftStart: -1 });
+
+        res.json({ success: true, earlyExits });
+    } catch (error) {
+        console.error("Error in getAllEarlyExits:", error);
+        res.json({ success: false, message: error.message });
     }
 };

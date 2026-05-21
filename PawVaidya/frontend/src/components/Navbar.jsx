@@ -10,7 +10,7 @@ import { toast } from 'react-toastify';
 import axios from 'axios';
 import LanguageSwitcher from './LanguageSwitcher';
 import LocationRefreshButton from './LocationRefreshButton';
-import { MapPin, Bell, User, Calendar, LogOut, ChevronDown, X, Menu, AlertCircle, AlertTriangle, Wallet, Home, Stethoscope, Info, Phone, BookOpen, PawPrint, BarChart3, Radio, Video, MoreHorizontal } from 'lucide-react';
+import { MapPin, Bell, User, Calendar, LogOut, ChevronDown, X, Menu, AlertCircle, AlertTriangle, Wallet, Home, Stethoscope, Info, Phone, BookOpen, PawPrint, BarChart3, Radio, Video, MoreHorizontal, Star, Sparkles, Award } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // ─── Brand palette ────────────────────────────────────────────────────────────
@@ -41,6 +41,8 @@ const SECONDARY_LINKS = [
   { to: '/polls', labelKey: 'navbar.communityPolls', icon: BarChart3 },
   { to: '/live-streams', labelKey: 'navbar.live', icon: Radio, live: true },
   { to: '/video-consultation', label: 'Video Consultation', icon: Video },
+  { to: '/ml-prediction', label: 'AI Health Predictor 🌟', icon: Sparkles },
+  { to: '/disease-predictor', label: 'Gold Disease Predictor 👑', icon: Award },
 ];
 
 // All nav links for mobile
@@ -501,9 +503,12 @@ const Navbar = () => {
                     <div className="py-2 px-1.5">
                       {[
                         { icon: <User className="w-[18px] h-[18px]" />, label: t('navbar.myProfile'), action: () => { navigate('/my-profile'); setIsDropdownOpen(false); } },
+                        { icon: <Sparkles className="w-[18px] h-[18px] text-amber-500" />, label: 'AI Health Predictor 🌟', action: () => { navigate('/ml-prediction'); setIsDropdownOpen(false); } },
+                        { icon: <Award className="w-[18px] h-[18px] text-[#b8860b]" />, label: 'Animal Disease Predictor 👑', action: () => { navigate('/disease-predictor'); setIsDropdownOpen(false); } },
                         { icon: <Calendar className="w-[18px] h-[18px]" />, label: t('navbar.myAppointments'), action: () => { navigate('/my-appointments'); setIsDropdownOpen(false); } },
                         { icon: <Calendar className="w-[18px] h-[18px]" />, label: 'PawPlan / Subscription', action: () => { navigate('/subscription'); setIsDropdownOpen(false); } },
                         { icon: <Wallet className="w-[18px] h-[18px]" />, label: 'Paw Wallet', action: () => { navigate('/paw-wallet'); setIsDropdownOpen(false); } },
+                        { icon: <Star className="w-[18px] h-[18px]" />, label: `Pawpoints: ${userdata.pawpoints || 0}`, action: () => {} },
                         { icon: <AlertCircle className="w-[18px] h-[18px]" />, label: 'Support Tickets', action: () => { navigate('/my-tickets'); setIsDropdownOpen(false); } },
                         { icon: <Bell className="w-[18px] h-[18px]" />, label: t('navbar.notifications'), badge: unreadMessages, action: () => { navigate('/messages'); setIsDropdownOpen(false); } },
                         { icon: <AlertCircle className="w-[18px] h-[18px]" />, label: t('navbar.reportIssue'), action: () => { navigate('/report-issue'); setIsDropdownOpen(false); } },
@@ -725,6 +730,11 @@ const Navbar = () => {
                           <span>Paw Wallet</span>
                         </div>
                       </NavLink>
+
+                      <div className="px-5 py-3.5 rounded-xl font-medium text-[15px] flex items-center gap-3 text-amber-300 bg-amber-500/10 border border-amber-500/20">
+                        <Star className="w-4 h-4 text-amber-400" />
+                        <span>Pawpoints: {userdata.pawpoints || 0}</span>
+                      </div>
 
                       <NavLink onClick={() => setShowMenu(false)} to="/messages" className="w-full block">
                         <div className="px-5 py-3.5 rounded-xl font-medium text-[15px] flex items-center justify-between text-white/80 hover:bg-white/5 transition-all">

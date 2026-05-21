@@ -43,6 +43,9 @@ import SupportCenter from './pages/SupportCenter'
 import MyTickets from './pages/MyTickets'
 import TicketTracking from './pages/TicketTracking'
 import RateEmployee from './pages/RateEmployee'
+import ReportCruelty from './pages/ReportCruelty'
+import MLPrediction from './pages/MLPrediction'
+import AnimalDiseasePredictor from './pages/AnimalDiseasePredictor'
 
 const App = () => {
   const location = useLocation();
@@ -110,6 +113,9 @@ const App = () => {
         <Route path='/my-tickets' element={token ? <MyTickets /> : <Navigate to="/login" />} />
         <Route path='/ticket-tracking/:id' element={token ? <TicketTracking /> : <Navigate to="/login" />} />
         <Route path='/rate-cs/:ticketId' element={token ? <RateEmployee /> : <Navigate to="/login" />} />
+        <Route path='/report-cruelty' element={<ReportCruelty />} />
+        <Route path='/ml-prediction' element={<MLPrediction />} />
+        <Route path='/disease-predictor' element={<AnimalDiseasePredictor />} />
       </Routes>
 
       {location.pathname != "/login-form" && location.pathname != "/login" && <Footer />}

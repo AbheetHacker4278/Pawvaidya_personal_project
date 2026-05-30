@@ -1,4 +1,5 @@
 import { v2 as cloudinary } from 'cloudinary'
+import { deleteFromFirebase } from '../config/firebase.js'
 import chatMessageModel from "../models/chatMessageModel.js"
 import appointmentModel from "../models/appointmentModel.js"
 
@@ -30,27 +31,33 @@ const deleteAppointmentChatFiles = async (req, res) => {
         let deletedCount = 0
         let failedCount = 0
 
-        // Delete each file from Cloudinary
+        // Delete each file
         for (const message of messagesWithFiles) {
             try {
-                // Extract public_id from Cloudinary URL
-                const urlParts = message.fileUrl.split('/')
-                const fileNameWithExt = urlParts[urlParts.length - 1]
-                const publicId = `chat_files/${fileNameWithExt.split('.')[0]}`
-
-                console.log('Deleting file:', publicId)
-
-                // Delete from Cloudinary
-                const result = await cloudinary.uploader.destroy(publicId, {
-                    resource_type: message.messageType === 'video' ? 'video' : 'image'
-                })
-
-                if (result.result === 'ok') {
+                if (message.fileUrl.includes('storage.googleapis.com') || message.fileUrl.includes('firebasestorage.googleapis.com')) {
+                    console.log('Deleting file from Firebase Storage:', message.fileUrl)
+                    await deleteFromFirebase(message.fileUrl)
                     deletedCount++
-                    console.log('Successfully deleted:', publicId)
                 } else {
-                    failedCount++
-                    console.log('Failed to delete:', publicId, result)
+                    // Extract public_id from Cloudinary URL
+                    const urlParts = message.fileUrl.split('/')
+                    const fileNameWithExt = urlParts[urlParts.length - 1]
+                    const publicId = `chat_files/${fileNameWithExt.split('.')[0]}`
+
+                    console.log('Deleting file from Cloudinary:', publicId)
+
+                    // Delete from Cloudinary
+                    const result = await cloudinary.uploader.destroy(publicId, {
+                        resource_type: message.messageType === 'video' ? 'video' : 'image'
+                    })
+
+                    if (result.result === 'ok') {
+                        deletedCount++
+                        console.log('Successfully deleted:', publicId)
+                    } else {
+                        failedCount++
+                        console.log('Failed to delete:', publicId, result)
+                    }
                 }
             } catch (error) {
                 failedCount++
@@ -99,17 +106,22 @@ const autoDeleteFilesOnCompletion = async (appointmentId) => {
 
         for (const message of messagesWithFiles) {
             try {
-                // Extract public_id from Cloudinary URL
-                const urlParts = message.fileUrl.split('/')
-                const fileNameWithExt = urlParts[urlParts.length - 1]
-                const publicId = `chat_files/${fileNameWithExt.split('.')[0]}`
+                if (message.fileUrl.includes('storage.googleapis.com') || message.fileUrl.includes('firebasestorage.googleapis.com')) {
+                    await deleteFromFirebase(message.fileUrl)
+                    console.log('Auto-deleted file from Firebase:', message.fileUrl)
+                } else {
+                    // Extract public_id from Cloudinary URL
+                    const urlParts = message.fileUrl.split('/')
+                    const fileNameWithExt = urlParts[urlParts.length - 1]
+                    const publicId = `chat_files/${fileNameWithExt.split('.')[0]}`
 
-                // Delete from Cloudinary
-                await cloudinary.uploader.destroy(publicId, {
-                    resource_type: message.messageType === 'video' ? 'video' : 'image'
-                })
+                    // Delete from Cloudinary
+                    await cloudinary.uploader.destroy(publicId, {
+                        resource_type: message.messageType === 'video' ? 'video' : 'image'
+                    })
 
-                console.log('Auto-deleted file:', publicId)
+                    console.log('Auto-deleted file:', publicId)
+                }
             } catch (error) {
                 console.error('Error auto-deleting file:', error)
             }

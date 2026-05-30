@@ -3,7 +3,64 @@ import { AppContext } from '../context/AppContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { assets } from '../assets/assets_frontend/assets';
 import { toast } from 'react-toastify';
-import { Crown, Sparkles, Shield, Zap, Check, X, CreditCard, Wallet, Calendar, ArrowRight, ShieldCheck, Heart } from 'lucide-react';
+import { Crown, Sparkles, Shield, Zap, Check, X, CreditCard, Wallet, Calendar, ArrowRight, ShieldCheck, Heart, Brain, Clock, Video, Percent, Users } from 'lucide-react';
+
+const detailedFeatures = [
+    {
+        title: "AI-Powered Vitals Diagnostics",
+        description: "Instant veterinary diagnosis based on vitals mapping and symptom intelligence using Gemma-3 AI.",
+        details: "Input rectal temperature, heart rates, respiration rate, and observed symptoms. The tool computes a comprehensive health index, maps severity risks, and generates a personalized precautionary care checklist.",
+        benefit: "Early detection of health issues before they become critical emergencies, saving life and cost.",
+        badge: "Platinum Exclusive",
+        badgeBg: "bg-purple-100 text-purple-700 border-purple-200",
+        icon: <Brain className="w-6 h-6" />,
+    },
+    {
+        title: "Priority Emergency Router",
+        description: "Skip the queue during critical emergencies with ultra-fast caregiver assignment.",
+        details: "Non-subscribers wait in the standard queue. Silver users get priority matching (5 min response goal), Gold users get super-priority (3 min response goal), and Platinum users secure a VIP claim lock instantly.",
+        benefit: "Guarantees swift emergency response when every second counts for your pet.",
+        badge: "All Subscribers",
+        badgeBg: "bg-emerald-100 text-emerald-700 border-emerald-200",
+        icon: <Clock className="w-6 h-6" />,
+    },
+    {
+        title: "Free Emergency Booking Fee",
+        description: "Zero additional fees for booking emergency care appointments when your pet is in distress.",
+        details: "Standard accounts incur a ₹100 flat booking fee for emergency visits. Subscribers of all tiers (Silver, Gold, Platinum) have this fee completely waived for all emergency requests.",
+        benefit: "Removes financial barriers and friction when requesting urgent veterinary support.",
+        badge: "All Subscribers",
+        badgeBg: "bg-emerald-100 text-emerald-700 border-emerald-200",
+        icon: <Wallet className="w-6 h-6" />,
+    },
+    {
+        title: "Video Consultations",
+        description: "Telehealth video calls with certified veterinarians from the comfort of your home.",
+        details: "Schedule high-definition video calls for follow-ups, general advice, or minor issues. Gold members receive 10 monthly credits (including 1 free call/month), and Platinum members receive 25 monthly credits.",
+        benefit: "Saves travel time and stress for anxious pets by consulting professionals virtually.",
+        badge: "Gold & Platinum Only",
+        badgeBg: "bg-[#D4AF37]/10 text-amber-800 border-[#D4AF37]/20",
+        icon: <Video className="w-6 h-6" />,
+    },
+    {
+        title: "Routine Care Discounts",
+        description: "Exclusive percentage savings applied automatically to all general care bookings.",
+        details: "Enjoy automatically calculated discounts on all non-emergency checkups. Silver tier grants a 10% discount, Gold tier grants 20%, and Platinum tier grants a massive 30% discount.",
+        benefit: "Makes routine pet health management, vaccinations, and checkups highly affordable.",
+        badge: "All Subscribers",
+        badgeBg: "bg-emerald-100 text-emerald-700 border-emerald-200",
+        icon: <Percent className="w-6 h-6" />,
+    },
+    {
+        title: "Household Caregiver Seats",
+        description: "Grant profile access and scheduling permissions to family members or pet sitters.",
+        details: "Invite multiple accounts to manage your pet's appointments, view diagnostic logs, and access veterinary prescriptions, keeping the whole family aligned on your pet's care.",
+        benefit: "Enables seamless coordination of pet care duties across all household members.",
+        badge: "Platinum Exclusive",
+        badgeBg: "bg-purple-100 text-purple-700 border-purple-200",
+        icon: <Users className="w-6 h-6" />,
+    }
+];
 
 const Subscription = () => {
     const {
@@ -435,6 +492,55 @@ const Subscription = () => {
                             ))}
                         </div>
                     </div>
+                </div>
+            </div>
+
+            {/* Features Detail Section */}
+            <div className='max-w-6xl mx-auto mt-24 mb-16'>
+                <div className='text-center mb-12'>
+                    <h2 className='text-3xl font-serif font-black text-[#5A4035] uppercase tracking-tighter'>Features Spotlight</h2>
+                    <div className='w-20 h-1.5 bg-[#D4AF37] mx-auto mt-4 rounded-full animate-pulse' />
+                    <p className='text-xs font-bold text-[#5A4035]/60 uppercase tracking-widest mt-3'>A deep dive into the premium tools and benefits unlocked by your subscription</p>
+                </div>
+
+                <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8'>
+                    {detailedFeatures.map((feat, idx) => (
+                        <motion.div
+                            key={feat.title}
+                            initial={{ opacity: 0, y: 30 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ delay: idx * 0.1, duration: 0.5 }}
+                            whileHover={{ y: -8 }}
+                            className='bg-white rounded-[2.5rem] p-8 border border-[#e8d5b0]/30 shadow-xl flex flex-col hover:shadow-2xl hover:border-[#D4AF37]/45 transition-all duration-300 relative overflow-hidden group'
+                        >
+                            {/* Accent line */}
+                            <div className='absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-[#5A4035] via-[#D4AF37] to-[#5A4035] opacity-0 group-hover:opacity-100 transition-opacity duration-300' />
+                            
+                            <div className='flex items-center justify-between mb-6'>
+                                <div className='p-4 rounded-2xl bg-[#fdf8f0] text-[#5A4035] group-hover:bg-[#5A4035] group-hover:text-[#D4AF37] transition-all duration-300 shadow-md'>
+                                    {feat.icon}
+                                </div>
+                                <span className={`px-3.5 py-1 rounded-full text-[10px] font-black tracking-wider uppercase border ${feat.badgeBg}`}>
+                                    {feat.badge}
+                                </span>
+                            </div>
+
+                            <h3 className='text-xl font-black text-[#5A4035] mb-3 group-hover:text-[#D4AF37] transition-colors duration-300'>{feat.title}</h3>
+                            <p className='text-sm font-bold text-[#5A4035]/80 mb-4 leading-relaxed'>{feat.description}</p>
+                            
+                            <div className='mt-auto pt-6 border-t border-dashed border-[#5A4035]/15 space-y-4'>
+                                <div>
+                                    <h4 className='text-[10px] font-black text-[#D4AF37] uppercase tracking-wider mb-1'>How it works</h4>
+                                    <p className='text-xs text-[#5A4035]/70 leading-relaxed font-medium'>{feat.details}</p>
+                                </div>
+                                <div>
+                                    <h4 className='text-[10px] font-black text-[#5A4035] uppercase tracking-wider mb-1'>Why it matters</h4>
+                                    <p className='text-xs italic text-[#5A4035]/60 leading-relaxed font-medium'>"{feat.benefit}"</p>
+                                </div>
+                            </div>
+                        </motion.div>
+                    ))}
                 </div>
             </div>
 

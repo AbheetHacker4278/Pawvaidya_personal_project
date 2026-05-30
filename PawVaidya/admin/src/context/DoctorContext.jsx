@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { createContext } from "react";
+import { useState, useEffect, createContext } from "react";
+
 import axios from "axios";
 import { toast } from "react-toastify"
 
@@ -12,6 +12,8 @@ const DoctorContextProvider = (props) => {
     const [dashdata, setdashdata] = useState(false)
     const [profileData, setProfileData] = useState(false)
     const [videoSlots, setVideoSlots] = useState([])
+    const [doctorMessages, setDoctorMessages] = useState([])
+    const [unreadDoctorMessagesCount, setUnreadDoctorMessagesCount] = useState(0)
 
 
 
@@ -342,13 +344,59 @@ const DoctorContextProvider = (props) => {
 
 
 
+    const getDoctorMessages = async () => {
+        if (!dtoken) return [];
+        try {
+            const { data } = await axios.post(`${backendurl}/api/doctor/messages`, {}, {
+                headers: { dtoken }
+            });
+            if (data.success) {
+                setDoctorMessages(data.messages);
+                const docId = profileData ? profileData._id : null;
+                if (docId) {
+                    const unread = data.messages.filter(msg => !msg.readBy?.some(read => read.userId === docId)).length;
+                    setUnreadDoctorMessagesCount(unread);
+                } else {
+                    setUnreadDoctorMessagesCount(data.messages.length);
+                }
+                return data.messages;
+            }
+        } catch (error) {
+            console.error('Failed to fetch doctor notifications:', error.message);
+        }
+        return [];
+    };
+
+    const markDoctorMessageAsRead = async (messageId) => {
+        if (!dtoken) return false;
+        try {
+            const { data } = await axios.post(`${backendurl}/api/doctor/messages/read`, { messageId }, { headers: { dtoken } });
+            if (data.success) {
+                await getDoctorMessages();
+                return true;
+            }
+        } catch (error) {
+            console.error('Failed to mark doctor notification as read:', error.message);
+        }
+        return false;
+    };
+
+    useEffect(() => {
+        if (dtoken && profileData) {
+            getDoctorMessages();
+            const interval = setInterval(getDoctorMessages, 10000);
+            return () => clearInterval(interval);
+        }
+    }, [dtoken, profileData]);
+
     const value = {
         dtoken, setdtoken, backendurl, appointments, setAppointments, getAppointments,
         completeAppointment, cancelAppointment, getdashdata, dashdata, setdashdata,
         getProfileData, profileData, setProfileData,
         createReminder, getDoctorReminders, updateReminder, deleteReminder, getDailyEarnings,
         getPetReports, createPetReport, addVisitNote, uploadMedicalDocument, addVaccination, getPetHealthCard, getPetHealthCardById, updateVideoStatus,
-        videoSlots, getVideoSlots, addVideoSlot
+        videoSlots, getVideoSlots, addVideoSlot,
+        doctorMessages, unreadDoctorMessagesCount, getDoctorMessages, markDoctorMessageAsRead
     }
 
 

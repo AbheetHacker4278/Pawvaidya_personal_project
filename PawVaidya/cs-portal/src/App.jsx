@@ -12,14 +12,16 @@ import TicketDetail from './pages/TicketDetail';
 import EmployeeProfile from './pages/EmployeeProfile';
 import AdminChat from './pages/AdminChat';
 import Customer360 from './pages/Customer360';
+import Notifications from './pages/Notifications';
 import IncomingRequestModal from './components/IncomingRequestModal';
 import BreakOverlay from './components/BreakOverlay';
 import PostBreakVerifyOverlay from './components/PostBreakVerifyOverlay';
 import EarlyLogoutModal from './components/EarlyLogoutModal';
 import ShiftTimerBar from './components/ShiftTimerBar';
+import ScreenRecordOverlay from './components/ScreenRecordOverlay';
 
 import { CSContext } from './context/CSContext';
-import { FaCommentAlt, FaPause, FaSignOutAlt, FaChevronDown, FaCheck, FaBars, FaUser, FaFileAlt, FaChartBar } from 'react-icons/fa';
+import { FaCommentAlt, FaPause, FaSignOutAlt, FaChevronDown, FaChevronUp, FaCheck, FaBars, FaUser, FaFileAlt, FaChartBar, FaBell } from 'react-icons/fa';
 
 const PrivateRoute = ({ children }) => {
   const { cstoken, loading } = useContext(CSContext);
@@ -95,12 +97,12 @@ const BreakButton = () => {
         </span>
         <BreakDots />
         {!disabled && (
-          <FaChevronDown className={`text-[10px] opacity-40 transition-transform duration-300 ${open ? 'rotate-180 opacity-100' : 'group-hover:opacity-70'}`} />
+          <FaChevronUp className={`text-[10px] opacity-40 transition-transform duration-300 ${open ? 'rotate-180 opacity-100' : 'group-hover:opacity-70'}`} />
         )}
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-3 w-64 bg-white/90 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/40 overflow-hidden z-[300] animate-in fade-in zoom-in-95 duration-200 origin-top-right">
+        <div className="absolute right-0 bottom-full mb-3 w-64 bg-white/90 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/40 overflow-hidden z-[300] animate-in fade-in zoom-in-95 duration-200 origin-bottom-right">
           <div className="px-5 pt-4 pb-3 border-b border-slate-100/50 flex items-center justify-between bg-gradient-to-br from-white/50 to-amber-50/30">
             <div>
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Quick Breaks</p>
@@ -163,14 +165,14 @@ const BreakButton = () => {
    Main Sidebar
 ──────────────────────────────────────────── */
 const Sidebar = ({ isOpen, setIsOpen }) => {
-  const { employee, requestEarlyLogout, shiftStarted, shiftCompleted, logout } = useContext(CSContext);
+  const { employee, requestEarlyLogout, shiftStarted, shiftCompleted, logout, unreadCsMessagesCount, isRecording } = useContext(CSContext);
   const location = useLocation();
 
   if (!employee) return null;
 
   const defaultPic = `https://ui-avatars.com/api/?name=${encodeURIComponent(employee.name)}&background=6366f1&color=fff`;
 
-  const navLink = (to, label, icon) => {
+  const navLink = (to, label, icon, badgeCount = 0) => {
     const active = to === '/'
       ? location.pathname === '/'
       : location.pathname.startsWith(to);
@@ -185,7 +187,16 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
             : 'text-slate-500 hover:bg-emerald-50 hover:text-emerald-600'
         }`}
       >
-        {icon && <span className={`text-lg transition-transform duration-300 ${active ? 'scale-110' : 'opacity-40 group-hover:opacity-100 group-hover:scale-110'}`}>{icon}</span>}
+        {icon && (
+          <span className={`relative text-lg transition-transform duration-300 ${active ? 'scale-110' : 'opacity-40 group-hover:opacity-100 group-hover:scale-110'}`}>
+            {icon}
+            {badgeCount > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 flex items-center justify-center bg-rose-500 text-white text-[9px] font-bold rounded-full border border-white px-1">
+                {badgeCount}
+              </span>
+            )}
+          </span>
+        )}
         <span className="tracking-tight">{label}</span>
         {active && (
            <span className="ml-auto w-1.5 h-1.5 bg-white rounded-full shadow-[0_0_8px_rgba(255,255,255,0.8)] animate-pulse"></span>
@@ -248,12 +259,19 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
            {navLink('/customer-360', 'Customer 360', <FaUser />)}
            {navLink('/chat', 'Admin Comms', <FaCommentAlt />)}
            {navLink('/profile', 'My Performance', <FaChartBar />)}
+           {navLink('/notifications', 'Notifications', <FaBell />, unreadCsMessagesCount)}
         </div>
 
         {/* ── Functional Section (Timer + Breaks) ── */}
         {shiftStarted && (
           <div className="mt-auto space-y-4 pt-6 border-t border-slate-50">
              <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] px-2">Live Session</p>
+             {isRecording && (
+               <div className="flex items-center gap-2 px-3 py-2 bg-rose-50 rounded-2xl border border-rose-100 text-rose-600 text-[10px] font-black animate-pulse mx-2">
+                 <span className="w-2 h-2 bg-rose-500 rounded-full shadow-[0_0_8px_rgba(244,63,94,0.8)]"></span>
+                 <span>RECORDING SCREEN ACTIVE</span>
+               </div>
+             )}
              <div className="p-1 bg-slate-50/80 rounded-3xl border border-slate-100 flex flex-col gap-2">
                 <div className="flex items-center justify-center py-1">
                    <ShiftTimerBar />
@@ -310,6 +328,7 @@ const App = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
   const isAuthPage = ['/login', '/register', '/face-verify'].includes(location.pathname);
+  const { isUploadingRecording } = useContext(CSContext);
 
   return (
     <div className="min-h-screen bg-slate-50 flex">
@@ -318,6 +337,17 @@ const App = () => {
       <BreakOverlay />
       <PostBreakVerifyOverlay />
       <EarlyLogoutModal />
+      <ScreenRecordOverlay />
+
+      {isUploadingRecording && (
+        <div className="fixed inset-0 z-[10000] bg-slate-950/80 backdrop-blur-md flex flex-col items-center justify-center animate-in fade-in duration-300">
+          <div className="flex flex-col items-center gap-4">
+            <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin shadow-lg shadow-emerald-500/20" />
+            <h3 className="text-white text-lg font-black tracking-wider uppercase">Uploading Screen Recording</h3>
+            <p className="text-white/60 text-sm">Saving session logs to Firebase storage, please wait...</p>
+          </div>
+        </div>
+      )}
       
       {!isAuthPage && <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />}
       
@@ -333,6 +363,7 @@ const App = () => {
             <Route path="/customer-360" element={<PrivateRoute><Customer360 /></PrivateRoute>} />
             <Route path="/profile"     element={<PrivateRoute><EmployeeProfile /></PrivateRoute>} />
             <Route path="/chat"        element={<PrivateRoute><AdminChat /></PrivateRoute>} />
+            <Route path="/notifications" element={<PrivateRoute><Notifications /></PrivateRoute>} />
           </Routes>
         </div>
       </main>

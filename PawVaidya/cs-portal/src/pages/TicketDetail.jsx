@@ -1,17 +1,26 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { CSContext } from '../context/CSContext';
+import { io } from 'socket.io-client';
 
 const TicketDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { cstoken, backendUrl } = useContext(CSContext);
+    const { cstoken, backendUrl, employee } = useContext(CSContext);
 
     const [ticket, setTicket] = useState(null);
     const [adminReport, setAdminReport] = useState(null);
     const [loading, setLoading] = useState(true);
+
+    // Co-Browsing States
+    const [socket, setSocket] = useState(null);
+    const [coBrowseStatus, setCoBrowseStatus] = useState('inactive'); // inactive, requesting, active, declined
+    const [mirroredState, setMirroredState] = useState(null);
+    const iframeRef = useRef(null);
+    const containerRef = useRef(null);
+    const [containerWidth, setContainerWidth] = useState(800);
 
     // Form states
     const [newStatus, setNewStatus] = useState('');
@@ -63,6 +72,207 @@ const TicketDetail = () => {
         const interval = setInterval(fetchTicket, 10000);
         return () => clearInterval(interval);
     }, [id]);
+
+    // Measure container size for responsive viewport scaling
+    useEffect(() => {
+        if (containerRef.current) {
+            const handleResize = () => {
+                setContainerWidth(containerRef.current.getBoundingClientRect().width);
+            };
+            handleResize();
+            window.addEventListener('resize', handleResize);
+            return () => window.removeEventListener('resize', handleResize);
+        }
+    }, [coBrowseStatus === 'active']);
+
+    // Initialize Socket.io and Listen for Co-Browsing Events
+    useEffect(() => {
+        if (!backendUrl || !id) return;
+
+        const newSocket = io(backendUrl, {
+            withCredentials: true,
+            transports: ['polling', 'websocket']
+        });
+        setSocket(newSocket);
+
+        newSocket.emit('join-room', `ticket-${id}`);
+        console.log(`CS Agent joined ticket room: ticket-${id}`);
+
+        newSocket.on('co-browse-accept', (data) => {
+            console.log('Customer accepted co-browsing session:', data);
+            setCoBrowseStatus('active');
+            toast.success('Customer accepted co-browsing request.');
+        });
+
+        newSocket.on('co-browse-decline', (data) => {
+            console.log('Customer declined co-browsing session:', data);
+            setCoBrowseStatus('declined');
+            toast.warning('Customer declined co-browsing request.');
+            setTimeout(() => setCoBrowseStatus('inactive'), 5000);
+        });
+
+        newSocket.on('co-browse-stop', (data) => {
+            console.log('Co-browsing session ended by user');
+            setCoBrowseStatus('inactive');
+            setMirroredState(null);
+            toast.info('Co-browsing session ended by customer.');
+        });
+
+        newSocket.on('co-browse-sync', (data) => {
+            if (data.isMouseOnly) {
+                setMirroredState(prev => {
+                    if (!prev) return null;
+                    return {
+                        ...prev,
+                        mouseX: data.mouseX,
+                        mouseY: data.mouseY
+                    };
+                });
+            } else {
+                setMirroredState(data);
+            }
+        });
+
+        return () => {
+            newSocket.emit('leave-room', `ticket-${id}`);
+            newSocket.off('co-browse-accept');
+            newSocket.off('co-browse-decline');
+            newSocket.off('co-browse-stop');
+            newSocket.off('co-browse-sync');
+            newSocket.disconnect();
+        };
+    }, [id, backendUrl]);
+
+    // Handle iframe document writes
+    useEffect(() => {
+        if (iframeRef.current && mirroredState?.html) {
+            const doc = iframeRef.current.contentDocument || iframeRef.current.contentWindow.document;
+            
+            let stylesHtml = '';
+            (mirroredState.styles || []).forEach(style => {
+                if (style.type === 'text') {
+                    stylesHtml += `<style>${style.content}</style>`;
+                } else if (style.type === 'link') {
+                    stylesHtml += `<link rel="stylesheet" href="${style.href}">`;
+                }
+            });
+
+            doc.open();
+            doc.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    ${stylesHtml}
+                    <style>
+                        ::-webkit-scrollbar { display: none; }
+                        body { 
+                            margin: 0;
+                            padding: 0;
+                            overflow: hidden; 
+                            pointer-events: none; 
+                            user-select: none;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div id="root">${mirroredState.html}</div>
+                </body>
+                </html>
+            `);
+            doc.close();
+
+            iframeRef.current.contentWindow.scrollTo(mirroredState.scrollX || 0, mirroredState.scrollY || 0);
+        }
+    }, [mirroredState?.html, mirroredState?.styles]);
+
+    // Fast scroll synchronization without iframe reload
+    useEffect(() => {
+        if (iframeRef.current && iframeRef.current.contentWindow && mirroredState) {
+            iframeRef.current.contentWindow.scrollTo(mirroredState.scrollX || 0, mirroredState.scrollY || 0);
+        }
+    }, [mirroredState?.scrollX, mirroredState?.scrollY]);
+
+    const handleRequestCoBrowse = () => {
+        if (!socket || !ticket || !employee) {
+            toast.error('Unable to send request. Active session parameters missing.');
+            return;
+        }
+        // ticket.userId may be a populated object or a raw ObjectId string
+        const resolvedUserId = ticket.userId?._id
+            ? String(ticket.userId._id)
+            : String(ticket.userId);
+
+        if (!resolvedUserId || resolvedUserId === 'undefined') {
+            toast.error('Cannot identify the customer. Please refresh and try again.');
+            return;
+        }
+
+        setCoBrowseStatus('requesting');
+        socket.emit('co-browse-request', {
+            ticketId: id,
+            agentName: employee.name,
+            userId: resolvedUserId
+        });
+        toast.info('Co-browsing request sent to customer.');
+    };
+
+    const handleStopCoBrowse = () => {
+        if (!socket) return;
+        socket.emit('co-browse-stop', { ticketId: id });
+        setCoBrowseStatus('inactive');
+        setMirroredState(null);
+        toast.info('Co-browsing session terminated.');
+    };
+
+    const handleMirrorClick = (e) => {
+        if (!socket || !mirroredState) return;
+
+        const rect = e.currentTarget.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        const clickY = e.clientY - rect.top;
+
+        const pctViewportX = clickX / rect.width;
+        const pctViewportY = clickY / rect.height;
+
+        const docX = (pctViewportX * mirroredState.width) + mirroredState.scrollX;
+        const docY = (pctViewportY * mirroredState.height) + mirroredState.scrollY;
+
+        const pctX = docX / mirroredState.scrollWidth;
+        const pctY = docY / mirroredState.scrollHeight;
+
+        socket.emit('co-browse-highlight', {
+            ticketId: id,
+            pctX,
+            pctY
+        });
+
+        // Add visual click confirmation pulse overlay
+        const clickIndicator = document.createElement('div');
+        clickIndicator.style.position = 'absolute';
+        clickIndicator.style.left = `${clickX}px`;
+        clickIndicator.style.top = `${clickY}px`;
+        clickIndicator.style.transform = 'translate(-50%, -50%)';
+        clickIndicator.style.width = '30px';
+        clickIndicator.style.height = '30px';
+        clickIndicator.style.borderRadius = '50%';
+        clickIndicator.style.border = '2px solid #eab308';
+        clickIndicator.style.backgroundColor = 'rgba(234, 179, 8, 0.2)';
+        clickIndicator.style.pointerEvents = 'none';
+        clickIndicator.style.animation = 'agent-pulse 0.8s ease-out';
+        clickIndicator.style.zIndex = '50';
+
+        const style = document.createElement('style');
+        style.innerHTML = `
+            @keyframes agent-pulse {
+                0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
+                100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
+            }
+        `;
+        clickIndicator.appendChild(style);
+
+        e.currentTarget.appendChild(clickIndicator);
+        setTimeout(() => clickIndicator.remove(), 800);
+    };
 
     const handleUpdateStatus = async (e) => {
         e.preventDefault();
@@ -210,6 +420,178 @@ const TicketDetail = () => {
                     </div>
                 </div>
             )}
+
+            {/* CS Agent Co-Browsing Panel */}
+            <div className="bg-white px-6 py-5 rounded-lg shadow-sm border border-slate-200">
+                <div className="flex justify-between items-center border-b border-slate-100 pb-3 mb-4">
+                    <div className="flex items-center gap-2">
+                        <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 className="font-bold text-slate-800 text-base">Safe Co-Browsing Mode</h3>
+                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Interactive Support System</p>
+                        </div>
+                    </div>
+                    {coBrowseStatus === 'active' && (
+                        <div className="flex items-center gap-3">
+                            <span className="flex h-2 w-2 relative">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                            </span>
+                            <span className="text-xs font-bold text-emerald-600 uppercase tracking-wider">Live Viewport Mirror</span>
+                        </div>
+                    )}
+                </div>
+
+                {coBrowseStatus === 'inactive' && (
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-4 py-2">
+                        <div className="text-sm text-slate-600 flex-1">
+                            <p className="font-medium text-slate-800">Guide the user in real-time</p>
+                            <p className="text-xs text-slate-500 mt-1">
+                                Request a safe, read-only co-browsing connection to view the user's active page. Sensitive data like passwords will be automatically masked.
+                            </p>
+                        </div>
+                        <button
+                            onClick={handleRequestCoBrowse}
+                            className="px-5 py-2.5 bg-indigo-600 text-white font-bold text-sm rounded-lg hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-100 whitespace-nowrap"
+                        >
+                            Request Co-Browsing
+                        </button>
+                    </div>
+                )}
+
+                {coBrowseStatus === 'requesting' && (
+                    <div className="flex items-center justify-between bg-slate-50 p-4 rounded-xl border border-slate-100 animate-pulse">
+                        <div className="flex items-center gap-3">
+                            <div className="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                            <div>
+                                <p className="text-sm font-bold text-indigo-700">Awaiting Approval</p>
+                                <p className="text-xs text-slate-500 mt-0.5">Prompt sent to customer's screen. Waiting for them to accept...</p>
+                            </div>
+                        </div>
+                        <button
+                            onClick={handleStopCoBrowse}
+                            className="px-4 py-2 bg-slate-200 text-slate-700 text-xs font-bold rounded-lg hover:bg-slate-300 transition-colors"
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                )}
+
+                {coBrowseStatus === 'declined' && (
+                    <div className="flex items-center justify-between bg-rose-50 p-4 rounded-xl border border-rose-100">
+                        <div className="flex items-center gap-3 text-rose-800">
+                            <span className="text-lg">❌</span>
+                            <div>
+                                <p className="text-sm font-bold">Request Declined</p>
+                                <p className="text-xs text-rose-600 mt-0.5">The customer chose not to share their screen at this time.</p>
+                            </div>
+                        </div>
+                        <button
+                            onClick={handleRequestCoBrowse}
+                            className="px-4 py-2 bg-rose-600 text-white text-xs font-bold rounded-lg hover:bg-rose-700 transition-colors"
+                        >
+                            Try Again
+                        </button>
+                    </div>
+                )}
+
+                {coBrowseStatus === 'active' && (
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between bg-emerald-50 p-3 rounded-lg border border-emerald-100 text-emerald-850 text-xs font-semibold">
+                            <div className="flex items-center gap-2">
+                                <span>📍</span>
+                                <span>Customer Path: <strong className="text-slate-800 font-bold bg-white px-2 py-0.5 rounded border border-emerald-100">{mirroredState?.path || '/'}</strong></span>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <span className="hidden sm:inline text-slate-500">🖱️ Click anywhere to Highlight guidance spotlight</span>
+                                <button
+                                    onClick={handleStopCoBrowse}
+                                    className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded transition-colors"
+                                >
+                                    End Session
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Mirrored Sandbox View */}
+                        {mirroredState ? (
+                            <div 
+                                ref={containerRef}
+                                style={{
+                                    width: '100%',
+                                    height: `${(mirroredState?.height || 768) * (containerWidth / (mirroredState?.width || 1024))}px`,
+                                    overflow: 'hidden',
+                                    position: 'relative',
+                                    border: '2px solid #cbd5e1',
+                                    borderRadius: '12px',
+                                    backgroundColor: '#f8fafc',
+                                    boxShadow: 'inset 0 2px 4px 0 rgba(0,0,0,0.06)'
+                                }}
+                            >
+                                <div
+                                    style={{
+                                        width: `${mirroredState?.width || 1024}px`,
+                                        height: `${mirroredState?.height || 768}px`,
+                                        transform: `scale(${containerWidth / (mirroredState?.width || 1024)})`,
+                                        transformOrigin: 'top left',
+                                        position: 'relative'
+                                    }}
+                                >
+                                    <iframe
+                                        ref={iframeRef}
+                                        title="Co-Browse Sandbox"
+                                        style={{ width: '100%', height: '100%', border: 'none' }}
+                                        sandbox="allow-same-origin"
+                                    />
+                                    
+                                    {/* Action capture layer */}
+                                    <div
+                                        onClick={handleMirrorClick}
+                                        style={{
+                                            position: 'absolute',
+                                            inset: 0,
+                                            cursor: 'crosshair',
+                                            zIndex: 40,
+                                            background: 'transparent'
+                                        }}
+                                    />
+
+                                    {/* Customer's Sync Cursor */}
+                                    {mirroredState && mirroredState.mouseX !== undefined && mirroredState.mouseY !== undefined && (
+                                        <div
+                                            style={{
+                                                position: 'absolute',
+                                                left: `${mirroredState.mouseX - mirroredState.scrollX}px`,
+                                                top: `${mirroredState.mouseY - mirroredState.scrollY}px`,
+                                                width: '14px',
+                                                height: '14px',
+                                                borderRadius: '50%',
+                                                backgroundColor: '#ef4444',
+                                                border: '2.5px solid white',
+                                                boxShadow: '0 3px 6px rgba(0,0,0,0.4)',
+                                                pointerEvents: 'none',
+                                                zIndex: 45,
+                                                transform: 'translate(-50%, -50%)',
+                                                transition: 'left 0.08s ease-out, top 0.08s ease-out'
+                                            }}
+                                        />
+                                    )}
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="flex flex-col items-center justify-center p-12 border border-dashed border-slate-200 rounded-xl bg-slate-50/50">
+                                <div className="w-10 h-10 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin mb-3"></div>
+                                <p className="text-sm font-semibold text-slate-500">Connecting to stream...</p>
+                                <p className="text-[10px] text-slate-400 mt-1 uppercase tracking-wider font-bold">Waiting for customer's first frame payload</p>
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Timeline */}

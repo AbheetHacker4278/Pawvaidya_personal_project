@@ -90,6 +90,13 @@ const csEmployeeSchema = new mongoose.Schema({
         uploadedAt: { type: Date, default: Date.now }
     }],
 
+    // Screen Recordings
+    screenRecordings: [{
+        url: { type: String, required: true },
+        recordedAt: { type: Date, default: Date.now },
+        durationSeconds: { type: Number, default: 0 }
+    }],
+
     joinedAt: { type: Date, default: Date.now },
     lastLogin: { type: Date, default: null },
     lastLoginIp: { type: String, default: null },

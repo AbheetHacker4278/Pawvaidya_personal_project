@@ -1,4 +1,4 @@
-import { v2 as cloudinary } from 'cloudinary'
+import { uploadFile } from "../utils/uploadHelper.js"
 import chatMessageModel from "../models/chatMessageModel.js"
 import appointmentModel from "../models/appointmentModel.js"
 import directMessageModel from "../models/directMessageModel.js"
@@ -22,23 +22,14 @@ const uploadChatFile = async (req, res) => {
             return res.json({ success: false, message: "Appointment not found" })
         }
 
-        // Determine file type
-        let messageType = 'file'
-        const mimeType = file.mimetype.toLowerCase()
+        // Upload using our helper
+        const uploadResult = await uploadFile(file, 'chat_files');
         
-        if (mimeType.startsWith('image/')) {
-            messageType = 'image'
-        } else if (mimeType.startsWith('video/')) {
-            messageType = 'video'
-        }
+        // Determine messageType for model compatibility
+        const messageType = uploadResult.type === 'image' ? 'image' : 
+                            (file.mimetype.toLowerCase().startsWith('video/') ? 'video' : 'file');
 
-        // Upload to Cloudinary
-        const uploadResult = await cloudinary.uploader.upload(file.path, {
-            resource_type: 'auto',
-            folder: 'chat_files'
-        })
-
-        console.log('File uploaded to Cloudinary:', uploadResult.secure_url)
+        console.log('File uploaded successfully:', uploadResult.url)
 
         // Create new message with file
         const newMessage = new chatMessageModel({
@@ -47,7 +38,7 @@ const uploadChatFile = async (req, res) => {
             senderType,
             message: message || '',
             messageType,
-            fileUrl: uploadResult.secure_url,
+            fileUrl: uploadResult.url,
             fileName: file.originalname,
             fileSize: file.size,
             timestamp: new Date()
@@ -75,17 +66,12 @@ const uploadDirectChatFile = async (req, res) => {
 
         if (!file) return res.json({ success: false, message: "No file uploaded" })
 
-        // Determine file type
-        let fileType = 'file'
-        const mimeType = file.mimetype.toLowerCase()
-        if (mimeType.startsWith('image/')) fileType = 'image'
-        else if (mimeType.startsWith('video/')) fileType = 'video'
-
-        // Upload to Cloudinary
-        const uploadResult = await cloudinary.uploader.upload(file.path, {
-            resource_type: 'auto',
-            folder: 'direct_chat_files'
-        })
+        // Upload using our helper
+        const uploadResult = await uploadFile(file, 'direct_chat_files');
+        
+        // Determine fileType
+        const fileType = uploadResult.type === 'image' ? 'image' : 
+                         (file.mimetype.toLowerCase().startsWith('video/') ? 'video' : 'file');
 
         const newMessage = new directMessageModel({
             senderId,
@@ -93,7 +79,7 @@ const uploadDirectChatFile = async (req, res) => {
             receiverId,
             receiverModel,
             message: message || '',
-            fileUrl: uploadResult.secure_url,
+            fileUrl: uploadResult.url,
             fileType,
             fileName: file.originalname,
             timestamp: new Date()

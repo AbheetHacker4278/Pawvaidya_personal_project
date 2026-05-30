@@ -9,6 +9,7 @@ export const queryFrontendBot = async (req, res) => {
     try {
         const { message, history } = req.body;
         const userId = req.body.userId;
+        const token = req.headers.token;
 
         if (!message) return res.status(400).json({ success: false, message: "Message is required." });
 

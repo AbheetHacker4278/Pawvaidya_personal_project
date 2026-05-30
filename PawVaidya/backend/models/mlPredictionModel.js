@@ -17,7 +17,8 @@ const mlPredictionSchema = new mongoose.Schema({
     riskCategory: { type: String, required: true }, // "Healthy", "Low Risk", "Medium Risk", "High Risk"
     predictedCondition: { type: String, required: true }, // E.g., "Mastitis", "Canine Parvovirus", "Healthy"
     precautions: { type: [String], default: [] },
-    aiAnalysis: { type: String, default: "" }
+    aiAnalysis: { type: String, default: "" },
+    emergencyAlertTriggered: { type: Boolean, default: false }
 }, { timestamps: true });
 
 const mlPredictionModel = mongoose.models.mlPrediction || mongoose.model("mlPrediction", mlPredictionSchema);

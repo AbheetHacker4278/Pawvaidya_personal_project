@@ -10,7 +10,7 @@ import {
   Stethoscope, Trophy, Radio, MessageSquare, Mail,
   AlertTriangle, Trash2, ShieldCheck, Database,
   Clock, BookOpen, ClipboardList, Tag, Tv, Search, Star,
-  Menu, X, ChevronRight, Bell, ShieldAlert, BarChart3, Server, Activity, Scan
+  Menu, X, ChevronRight, Bell, ShieldAlert, BarChart3, Server, Activity, Scan, Cloud, Heart
 } from 'lucide-react';
 
 const SidebarItem = ({ to, icon: Icon, label, isOpen, onClick, subtext, badge }) => {
@@ -97,7 +97,28 @@ const SectionHeader = ({ label, isOpen }) => (
 
 const Sidebar = ({ isOpen }) => {
   const { atoken, backendurl, adminProfile, securityIncidentCount, contentViolationCount } = useContext(AdminContext);
-  const { dtoken } = useContext(DoctorContext);
+  const { dtoken, unreadDoctorMessagesCount } = useContext(DoctorContext);
+  const [firebaseStats, setFirebaseStats] = useState(null);
+
+  React.useEffect(() => {
+    if (!atoken) return;
+    const fetchFirebaseStats = async () => {
+      try {
+        const { data } = await axios.get(backendurl + '/api/admin/firebase-storage-stats', {
+          headers: { atoken }
+        });
+        if (data && data.success) {
+          setFirebaseStats(data);
+        }
+      } catch (err) {
+        console.error("Error fetching Firebase Storage Stats in Sidebar:", err);
+      }
+    };
+
+    fetchFirebaseStats();
+    const interval = setInterval(fetchFirebaseStats, 30000);
+    return () => clearInterval(interval);
+  }, [atoken, backendurl]);
 
   const logNavigation = async (section) => {
     if (!atoken) return;
@@ -182,6 +203,7 @@ const Sidebar = ({ isOpen }) => {
               {(hasPerm('users') || adminProfile?.role === 'master') && (
                 <SidebarItem to="/emergency-dashboard" icon={ShieldAlert} label="Emergency Panel" subtext="Ecosystem Analytics" isOpen={isOpen} onClick={() => logNavigation('Emergency Panel')} />
               )}
+              <SidebarItem to="/stray-campaigns" icon={Heart} label="Stray Campaigns" subtext="Monitor & Support" isOpen={isOpen} onClick={() => logNavigation('Stray Campaigns')} />
               {adminProfile?.role === 'master' && (
                 <SidebarItem to="/media-registry" icon={Database} label="Media Registry" subtext="Cloud Assets" isOpen={isOpen} onClick={() => logNavigation('Media Registry')} />
               )}
@@ -269,15 +291,79 @@ const Sidebar = ({ isOpen }) => {
               <SectionHeader label="Growth" isOpen={isOpen} />
               <SidebarItem to="/doctor-blogs" icon={BookOpen} label="My Blogs" subtext="Published Articles" isOpen={isOpen} />
               <SidebarItem to="/doctor-discounts" icon={Tag} label="Discounts" subtext="Offer Management" isOpen={isOpen} />
+              <SidebarItem to="/doctor-crowdfunding" icon={Heart} label="Crowdfunding" subtext="Support Stray Rescues" isOpen={isOpen} />
 
               <SectionHeader label="Communication" isOpen={isOpen} />
-              <SidebarItem to="/doctor-messages" icon={MessageSquare} label="Messages" subtext="Patient Chat" isOpen={isOpen} />
+              <SidebarItem to="/doctor-messages" icon={MessageSquare} label="Notifications" subtext="Admin Broadcasts" isOpen={isOpen} badge={unreadDoctorMessagesCount} />
               <SidebarItem to="/admin-chat" icon={User} label="Admin Chat" subtext="Direct Line" isOpen={isOpen} />
               <SidebarItem to="/doctor-live-stream" icon={Radio} label="Go Live" subtext="Broadcasting" isOpen={isOpen} />
               <SidebarItem to="/doctor-watch-admin-stream" icon={Tv} label="Admin Stream" subtext="Watch Updates" isOpen={isOpen} />
             </div>
           )}
         </div>
+
+        {/* Firebase Storage Health & Credits Widget */}
+        {atoken && (
+          <div className="px-4 py-2 border-t border-emerald-50 bg-emerald-50/10">
+            {isOpen ? (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="p-3 bg-white/60 backdrop-blur-md rounded-2xl border border-emerald-100/50 shadow-sm"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-1.5">
+                    <Cloud className="w-4 h-4 text-emerald-600" />
+                    <span className="text-[11px] font-bold text-slate-700">Firebase Storage</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className={`w-2 h-2 rounded-full ${firebaseStats?.status === 'online' ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
+                    <span className="text-[9px] font-extrabold uppercase text-slate-500">
+                      {firebaseStats?.status === 'online' ? 'Healthy' : 'Offline'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  {/* Progress Bar */}
+                  <div>
+                    <div className="flex justify-between text-[9px] font-bold text-slate-400 mb-0.5">
+                      <span>USED: {firebaseStats?.details?.usedStorage || '0.00 MB'}</span>
+                      <span>FREE: {firebaseStats?.details?.remainingStorage || '5.00 GB'}</span>
+                    </div>
+                    <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-emerald-500 transition-all duration-500"
+                        style={{ width: firebaseStats?.details?.percentUsed || '0%' }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between text-[8px] text-slate-500 font-bold">
+                    <span>Quota: {firebaseStats?.details?.totalQuota || '5.00 GB'}</span>
+                    <span>Files: {firebaseStats?.details?.fileCount || 0}</span>
+                  </div>
+                </div>
+              </motion.div>
+            ) : (
+              <div className="group relative flex justify-center py-2">
+                <div className="relative">
+                  <Cloud className="w-5 h-5 text-emerald-600 group-hover:scale-110 transition-transform" />
+                  <span className={`absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full border-2 border-white ${firebaseStats?.status === 'online' ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+                </div>
+                
+                {/* Tooltip */}
+                <div className="absolute left-16 bottom-0 px-3 py-2 bg-slate-800 text-white rounded-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 translate-x-1 group-hover:translate-x-0 z-[60] shadow-xl text-left min-w-[150px]">
+                  <p className="text-[10px] font-bold border-b border-white/10 pb-1 mb-1">Firebase Storage</p>
+                  <p className="text-[9px] text-slate-300">Status: <span className={firebaseStats?.status === 'online' ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold'}>{firebaseStats?.status === 'online' ? 'Healthy' : 'Offline'}</span></p>
+                  <p className="text-[9px] text-slate-300">Used: {firebaseStats?.details?.usedStorage || '0.00 MB'}</p>
+                  <p className="text-[9px] text-slate-300">Remaining: {firebaseStats?.details?.remainingStorage || '5.00 GB'}</p>
+                  <p className="text-[9px] text-slate-300">Files: {firebaseStats?.details?.fileCount || 0}</p>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Bottom Footer Info (Optional) */}
         {isOpen && (

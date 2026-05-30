@@ -1748,6 +1748,7 @@ export const processQrWalletPayment = async (req, res) => {
         // SUCCESS — Deduct from wallet
         const newBalance = walletBalance - amountToPay;
         await userModel.findByIdAndUpdate(owner._id, { pawWallet: newBalance });
+        await deleteCache(`user_profile_${owner._id}`);
 
         // Update appointment as paid via wallet and mark completed
         await appointmentModel.findByIdAndUpdate(appointmentId, {

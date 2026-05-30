@@ -46,6 +46,8 @@ import RateEmployee from './pages/RateEmployee'
 import ReportCruelty from './pages/ReportCruelty'
 import MLPrediction from './pages/MLPrediction'
 import AnimalDiseasePredictor from './pages/AnimalDiseasePredictor'
+import DietNutritionPlanner from './pages/DietNutritionPlanner'
+import StrayCrowdfunding from './pages/StrayCrowdfunding'
 
 const App = () => {
   const location = useLocation();
@@ -116,6 +118,8 @@ const App = () => {
         <Route path='/report-cruelty' element={<ReportCruelty />} />
         <Route path='/ml-prediction' element={<MLPrediction />} />
         <Route path='/disease-predictor' element={<AnimalDiseasePredictor />} />
+        <Route path='/diet-planner' element={<DietNutritionPlanner />} />
+        <Route path='/stray-crowdfunding' element={<StrayCrowdfunding />} />
       </Routes>
 
       {location.pathname != "/login-form" && location.pathname != "/login" && <Footer />}

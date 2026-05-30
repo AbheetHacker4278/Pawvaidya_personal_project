@@ -87,6 +87,7 @@ export const getTicketById = async (req, res) => {
         const { id } = req.params;
         const ticket = await ComplaintTicket.findById(id)
             .populate('assignedTo', 'name profilePic averageRating joinedAt')
+            .populate('userId', 'name email')
             .populate('rating');
         if (!ticket) return res.json({ success: false, message: 'Ticket not found.' });
         return res.json({ success: true, ticket });
@@ -104,7 +105,19 @@ export const rateEmployee = async (req, res) => {
 
         const ticket = await ComplaintTicket.findById(id);
         if (!ticket) return res.json({ success: false, message: 'Ticket not found.' });
-        if (!ticket.isClosed) return res.json({ success: false, message: 'Ticket is not closed yet.' });
+
+        // Accept closure from either the boolean flag OR the status field (handles legacy records)
+        const isEffectivelyClosed = ticket.isClosed === true ||
+            ticket.status === 'resolved' ||
+            ticket.status === 'closed';
+
+        if (!isEffectivelyClosed) return res.json({ success: false, message: 'Ticket is not closed yet.' });
+
+        // Backfill isClosed for tickets that were closed by status but flag was not persisted
+        if (!ticket.isClosed) {
+            await ComplaintTicket.findByIdAndUpdate(id, { isClosed: true });
+        }
+
         if (ticket.isRated) return res.json({ success: false, message: 'This ticket has already been rated.' });
         if (String(ticket.userId) !== String(userId)) return res.json({ success: false, message: 'Unauthorized.' });
         if (!ticket.assignedTo) return res.json({ success: false, message: 'No employee assigned.' });
@@ -175,6 +188,15 @@ export const closeTicketByUser = async (req, res) => {
         // If an agent was assigned, decrement their active count
         if (ticket.assignedTo) {
             await CSEmployee.findByIdAndUpdate(ticket.assignedTo, { $inc: { activeTicketsCount: -1 } });
+        }
+
+        // Emit socket alert
+        try {
+            const { getIO } = await import('../socketServer.js');
+            const io = getIO();
+            io.to(`ticket-${id}`).emit('ticket-closed', { ticketId: id });
+        } catch (socketError) {
+            console.error('Error emitting ticket-closed socket event:', socketError);
         }
 
         return res.json({ success: true, message: 'Ticket closed successfully.' });
@@ -324,6 +346,15 @@ export const closeTicket = async (req, res) => {
                 level: newLevel,
                 $inc: { activeTicketsCount: -1 }
             });
+        }
+
+        // Emit socket alert
+        try {
+            const { getIO } = await import('../socketServer.js');
+            const io = getIO();
+            io.to(`ticket-${id}`).emit('ticket-closed', { ticketId: id });
+        } catch (socketError) {
+            console.error('Error emitting ticket-closed socket event:', socketError);
         }
 
         return res.json({ success: true, message: 'Ticket resolved. XP Reward: ' + xpReward });

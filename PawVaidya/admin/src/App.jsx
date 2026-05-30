@@ -67,6 +67,8 @@ import DoctorEmergencies from './pages/Doctor/DoctorEmergencies';
 import DoctorScanner from './pages/Doctor/DoctorScanner';
 import MisbehaviorReports from './pages/MisbehaviorReports';
 import CrueltyReports from './pages/Admin/CrueltyReports';
+import StrayCampaigns from './pages/Admin/StrayCampaigns';
+import DoctorCrowdfunding from './pages/Doctor/DoctorCrowdfunding';
 
 const App = () => {
   const { atoken, adminProfile } = useContext(AdminContext)
@@ -180,6 +182,7 @@ const App = () => {
               <Route path='/cs-reports' element={<CSReports />} />
               <Route path='/misbehavior-reports' element={<MisbehaviorReports />} />
               <Route path='/cruelty-reports' element={<CrueltyReports />} />
+              <Route path='/stray-campaigns' element={<StrayCampaigns />} />
               <Route path='/doctor-dashboard' element={<DoctorDashboard />} />
               <Route path='/doctor-appointments' element={<DoctorAppointments />} />
               <Route path='/doctor-profile' element={<DoctorProfile />} />
@@ -194,6 +197,7 @@ const App = () => {
               <Route path='/patient-records' element={<PatientRecords />} />
               <Route path='/doctor-video-call/:appointmentId' element={<DoctorVideoCall />} />
               <Route path='/doctor-emergencies' element={<DoctorEmergencies />} />
+              <Route path='/doctor-crowdfunding' element={<DoctorCrowdfunding />} />
             </Routes>
           </div>
         </main>

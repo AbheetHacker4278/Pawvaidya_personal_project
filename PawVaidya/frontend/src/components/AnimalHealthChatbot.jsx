@@ -209,7 +209,7 @@ const AnimalHealthChatbot = () => {
   const quickChips = getQuickChips(!!token);
 
   return (
-    <div className="fixed bottom-28 md:bottom-5 right-5 z-[9999] flex flex-col items-end gap-3">
+    <div className="fixed bottom-28 md:bottom-5 right-5 z-[130] flex flex-col items-end gap-3">
 
       {/* ── Popup teaser ──────────────────────────────────────────────────── */}
       <AnimatePresence>
@@ -375,7 +375,7 @@ const AnimalHealthChatbot = () => {
                     </motion.button>
                   </div>
                   <p className="text-center text-gray-400 text-[10px] mt-2 flex items-center justify-center gap-1">
-                    <Sparkles className="w-3 h-3" /> Powered by NVIDIA NIM · Gemma 3-27B
+                    <Sparkles className="w-3 h-3" /> Powered by Google Cloud GenAI · Gemini
                   </p>
                 </div>
               </>

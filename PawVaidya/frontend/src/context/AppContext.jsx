@@ -384,6 +384,7 @@ const AppContextProvider = (props) => {
         userdata,
         setuserdata,
         loaduserprofiledata,
+        loadUserProfileData: loaduserprofiledata,
         isLoggedin, setisLoggedin,
         getuserdata,
         unreadMessages,

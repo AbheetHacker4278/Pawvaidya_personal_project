@@ -1439,6 +1439,9 @@ const MyAppointments = () => {
         setStrayDescription('');
         setReportFile(null);
         fetchEmergencyRequests();
+        if (typeof loadUserProfileData === 'function') {
+          loadUserProfileData();
+        }
       } else {
         toast.error(data.message || "Failed to book emergency.");
       }

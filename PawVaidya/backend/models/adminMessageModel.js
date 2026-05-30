@@ -6,7 +6,7 @@ const adminMessageSchema = new mongoose.Schema({
     targetType: { 
         type: String, 
         required: true, 
-        enum: ['all', 'users', 'doctors', 'specific'] 
+        enum: ['all', 'users', 'doctors', 'cs_agents', 'specific'] 
     },
     targetIds: [{ type: String }], // For specific users/doctors
     createdBy: { type: String, default: 'Admin' },

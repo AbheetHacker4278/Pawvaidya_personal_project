@@ -12,6 +12,7 @@ export const authDoctor = async (req, res, next) => {
         }
         const token_decode = jwt.verify(dtoken, process.env.JWT_SECRET)
         req.body.docId = token_decode.id
+        req.docId = token_decode.id  // survives multer body overwrite on multipart routes
         next()
     } catch (error) {
         if (error.name === 'TokenExpiredError') {

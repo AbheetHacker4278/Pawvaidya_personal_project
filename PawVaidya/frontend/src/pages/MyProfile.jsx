@@ -33,85 +33,40 @@ import {
   Crown,
   Video,
   Gift,
+  ChevronLeft,
+  ChevronRight,
+  Fingerprint,
+  Trash2,
+  CheckCircle,
+  Lock,
+  ExternalLink
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import AnimalHealthChatbot from "../components/AnimalHealthChatbot";
 import FaceAuth from "../components/FaceAuth";
 import PetIDCard from "../components/PetIDCard";
 
-// ─── Stable sub-components with Golden Touch ──────────────────────────────────
+// ─── Sub-Components ──────────────────────────────────────────────────
 
-const InfoItem = ({ icon, label, value, editComponent, isEdit }) => {
-  const Icon = icon;
+const InfoItem = ({ icon: Icon, label, value, editComponent, isEdit }) => {
   return (
-    <motion.div
-      className="flex items-start p-4 bg-white/50 backdrop-blur-sm rounded-2xl border border-white/80 hover:border-amber-500/30 hover:bg-white/80 transition-all duration-300 group shadow-sm hover:shadow-md"
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      whileHover={{ scale: 1.01, y: -2 }}
-    >
-      <div className="p-3 rounded-xl bg-white shadow-sm mr-4 group-hover:scale-110 group-hover:bg-gradient-to-br group-hover:from-amber-400 group-hover:to-amber-600 group-hover:text-white transition-all duration-300 group-hover:shadow-[0_0_15px_rgba(212,175,55,0.4)] border border-neutral-100">
-        <Icon size={18} className="text-[#9a6458] group-hover:text-white transition-colors duration-300" />
+    <div className="flex items-start p-4 bg-white/80 rounded-2xl border border-neutral-100 shadow-sm hover:shadow-md transition-all duration-300">
+      <div className="p-2.5 rounded-xl bg-purple-50 mr-4 text-[#8c52ff]">
+        <Icon size={18} />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-[10px] text-amber-800/80 font-black uppercase tracking-widest mb-0.5">{label}</p>
-        <div className="mt-1">
+        <p className="text-[9px] text-neutral-400 font-bold uppercase tracking-wider mb-0.5">{label}</p>
+        <div>
           {isEdit ? (
             editComponent
           ) : (
-            <p className="font-bold break-words text-[#5A4035] text-sm leading-relaxed">
-              {value || label + " " + "Not provided"}
+            <p className="font-bold text-neutral-700 text-[14px] leading-relaxed truncate">
+              {value || "Not provided"}
             </p>
           )}
         </div>
       </div>
-    </motion.div>
-  );
-};
-
-const SaveButton = ({ isEdit, isSaving, onSave, onEdit }) => {
-  const { t } = useTranslation();
-  return (
-    <motion.button
-      whileHover={{ scale: 1.05, boxShadow: "0 10px 25px rgba(212, 175, 55, 0.3)" }}
-      whileTap={{ scale: 0.95 }}
-      className={`relative overflow-hidden bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 text-white px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-wider flex items-center shadow-md border border-amber-400/40 royal-shimmer ${isSaving ? "opacity-75 cursor-not-allowed" : ""
-        }`}
-      onClick={() => {
-        if (isEdit && !isSaving) {
-          onSave();
-        } else if (!isEdit) {
-          onEdit();
-        }
-      }}
-      disabled={isSaving}
-      type="button"
-    >
-      {isEdit ? (
-        isSaving ? (
-          <>
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-              className="mr-2"
-            >
-              <Loader2 size={16} />
-            </motion.div>
-            {t("profile.saving")}
-          </>
-        ) : (
-          <>
-            <Save className="mr-2" size={16} />
-            {t("profile.saveChanges")}
-          </>
-        )
-      ) : (
-        <>
-          <Edit className="mr-2" size={16} />
-          {t("profile.editProfile")}
-        </>
-      )}
-    </motion.button>
+    </div>
   );
 };
 
@@ -130,27 +85,19 @@ const LoadingOverlay = ({ isSaving }) => {
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.8, opacity: 0 }}
-          className="bg-[#fdfbf7] border border-amber-500/20 p-8 rounded-[2.5rem] shadow-[0_25px_50px_rgba(122,90,72,0.15)] flex flex-col items-center max-w-sm mx-4 relative overflow-hidden text-center luxury-noise-bg"
+          className="bg-white border border-purple-500/20 p-8 rounded-[2.5rem] shadow-2xl flex flex-col items-center max-w-sm mx-4 text-center"
         >
-          {/* Decorative Sparkles */}
-          <div className="absolute top-4 left-4 text-amber-500/20 animate-gold-float">
-            <Sparkles size={24} />
-          </div>
-          <div className="absolute bottom-4 right-4 text-amber-500/20 animate-gold-float [animation-delay:2s]">
-            <Sparkles size={18} />
-          </div>
-
           <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
-            className="p-4 bg-amber-500/5 rounded-full border border-amber-500/20 mb-6"
+            className="p-4 bg-purple-500/5 rounded-full border border-purple-500/10 mb-6"
           >
-            <Loader2 size={36} className="text-amber-500" />
+            <Loader2 size={36} className="text-purple-600" />
           </motion.div>
-          <h3 className="text-2xl font-black text-[#5A4035] tracking-tight uppercase">
+          <h3 className="text-xl font-bold text-neutral-800 tracking-tight uppercase">
             {t("profile.updatingProfile")}
           </h3>
-          <p className="text-neutral-500 text-sm mt-3 leading-relaxed">
+          <p className="text-neutral-500 text-xs mt-2.5 leading-relaxed">
             {t("profile.saveChangesSub")}
           </p>
         </motion.div>
@@ -169,25 +116,24 @@ const DeletionRequestModal = ({ onClose, onSubmit, isSubmitting }) => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-neutral-950/70 backdrop-blur-md flex items-center justify-center z-[160] p-4"
+        className="fixed inset-0 bg-neutral-950/60 backdrop-blur-md flex items-center justify-center z-[160] p-4"
         onClick={onClose}
       >
         <motion.div
           initial={{ scale: 0.9, opacity: 0, y: 20 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.9, opacity: 0, y: 20 }}
-          className="bg-[#fdfbf7] rounded-[2.5rem] shadow-2xl p-8 max-w-md w-full border border-red-500/20 overflow-hidden relative luxury-noise-bg"
+          className="bg-[#fdfbf7] rounded-[2.5rem] shadow-2xl p-8 max-w-md w-full border border-red-500/20 overflow-hidden relative"
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/5 rounded-full -mr-16 -mt-16"></div>
           <div className="relative z-10">
             <div className="flex items-center gap-4 mb-6">
               <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-600">
                 <AlertCircle size={24} />
               </div>
               <div>
-                <h3 className="text-xl font-black text-[#5A4035] uppercase tracking-tight">{t("profile.deleteAccount")}</h3>
-                <p className="text-[10px] text-red-500 font-black uppercase tracking-widest">{t("profile.permanentAction")}</p>
+                <h3 className="text-lg font-bold text-neutral-800 uppercase tracking-tight">{t("profile.deleteAccount")}</h3>
+                <p className="text-[10px] text-red-500 font-bold uppercase tracking-widest">{t("profile.permanentAction")}</p>
               </div>
             </div>
             <p className="text-neutral-500 text-sm mb-6 leading-relaxed">
@@ -201,18 +147,14 @@ const DeletionRequestModal = ({ onClose, onSubmit, isSubmitting }) => {
               disabled={isSubmitting}
             />
             <div className="flex gap-3">
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+              <button
                 onClick={onClose}
                 className="flex-1 py-3 px-4 rounded-xl border border-neutral-200 text-neutral-500 font-bold text-sm hover:bg-neutral-50 transition-all"
                 disabled={isSubmitting}
               >
                 {t("common.cancel")}
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+              </button>
+              <button
                 onClick={() => onSubmit(reason)}
                 disabled={isSubmitting || !reason.trim()}
                 className={`flex-1 py-3 px-4 rounded-xl font-bold text-sm text-white shadow-lg transition-all flex items-center justify-center ${isSubmitting || !reason.trim()
@@ -225,7 +167,7 @@ const DeletionRequestModal = ({ onClose, onSubmit, isSubmitting }) => {
                 ) : (
                   t("profile.submitRequest")
                 )}
-              </motion.button>
+              </button>
             </div>
           </div>
         </motion.div>
@@ -267,8 +209,120 @@ const MyProfile = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isSubmittingDeletion, setIsSubmittingDeletion] = useState(false);
   const [showFaceAuth, setShowFaceAuth] = useState(false);
+  const [isProcessingSocial, setIsProcessingSocial] = useState(null);
 
-  // local editable copy
+  const handleToggleSocialConnection = async (provider) => {
+    if (provider !== 'google') return;
+    const isConnected = userdata.isGoogleConnected;
+
+    if (isConnected) {
+      setIsProcessingSocial('google');
+      try {
+        const { data } = await axios.post(
+          `${backendurl}/api/user/disconnect-social`,
+          { provider: 'google' },
+          { headers: { token } }
+        );
+        if (data.success) {
+          toast.success(data.message);
+          await loaduserprofiledata();
+        } else {
+          toast.error(data.message);
+        }
+      } catch (error) {
+        toast.error(error.response?.data?.message || `Failed to disconnect Google`);
+      } finally {
+        setIsProcessingSocial(null);
+      }
+    } else {
+      setIsProcessingSocial('google');
+      
+      if (!window.google) {
+        // Attempt to load GIS script if not present
+        const script = document.createElement('script');
+        script.src = "https://accounts.google.com/gsi/client";
+        script.async = true;
+        script.defer = true;
+        script.onload = () => {
+          triggerGoogleGIS();
+        };
+        script.onerror = () => {
+          toast.error("Failed to load Google Sign-In helper.");
+          setIsProcessingSocial(null);
+        };
+        document.body.appendChild(script);
+      } else {
+        triggerGoogleGIS();
+      }
+    }
+  };
+
+  const triggerGoogleGIS = () => {
+    try {
+      const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || "1047648485293-placeholderclientid.apps.googleusercontent.com";
+      const tokenClient = window.google.accounts.oauth2.initTokenClient({
+        client_id: clientId,
+        scope: 'email profile openid',
+        callback: async (tokenResponse) => {
+          if (tokenResponse && tokenResponse.access_token) {
+            try {
+              const res = await axios.get(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${tokenResponse.access_token}`);
+              const providerId = res.data.sub;
+              
+              const { data } = await axios.post(
+                `${backendurl}/api/user/connect-social`,
+                { provider: 'google', providerId },
+                { headers: { token } }
+              );
+              
+              if (data.success) {
+                toast.success(`Connected Google account: ${res.data.email}`);
+                await loaduserprofiledata();
+              } else {
+                toast.error(data.message);
+              }
+            } catch (error) {
+              toast.error(error.response?.data?.message || "Failed to fetch user details from Google.");
+            } finally {
+              setIsProcessingSocial(null);
+            }
+          } else {
+            toast.error("Google login cancelled or failed.");
+            setIsProcessingSocial(null);
+          }
+        },
+        error_callback: (err) => {
+          toast.error(err.message || "Google authorization error");
+          setIsProcessingSocial(null);
+        }
+      });
+      tokenClient.requestAccessToken();
+    } catch (err) {
+      console.error(err);
+      const fallbackId = prompt("Failed to load Google OAuth popup. Enter Google email/id manually to test sandbox link (or press Cancel):");
+      if (fallbackId) {
+        axios.post(
+          `${backendurl}/api/user/connect-social`,
+          { provider: 'google', providerId: fallbackId },
+          { headers: { token } }
+        ).then(({ data }) => {
+          if (data.success) {
+            toast.success(`Linked manual ID: ${fallbackId}`);
+            loaduserprofiledata();
+          } else {
+            toast.error(data.message);
+          }
+        }).catch(err => {
+          toast.error(err.message);
+        }).finally(() => {
+          setIsProcessingSocial(null);
+        });
+      } else {
+        setIsProcessingSocial(null);
+      }
+    }
+  };
+
   const [editedData, setEditedData] = useState(null);
   const originalDataRef = useRef(null);
 
@@ -416,16 +470,27 @@ const MyProfile = () => {
   const updateUserProfileData = async () => {
     try {
       setIsSaving(true);
-      const userToSave = editedData;
-      const missingFields = validateFields(userToSave);
-      if (missingFields.length > 0) {
-        toast.error(`Please fill in: ${missingFields.join(", ")}`);
-        return;
-      }
+      const userToSave = { ...editedData };
 
       const normalized = normalizeAddress(userToSave.address);
       if (!normalized.LOCATION || !normalized.LINE) {
         toast.error("Please fill in address fields (State and District)");
+        return;
+      }
+
+      // Auto-construct full_address from District (LINE) and State (LOCATION)
+      userToSave.full_address = `${normalized.LINE}, ${normalized.LOCATION}`;
+
+      // Ensure defaults for pet fields if they are missing
+      if (!userToSave.pet_type) userToSave.pet_type = "Small Animal";
+      if (!userToSave.pet_age) userToSave.pet_age = "1";
+      if (!userToSave.pet_gender) userToSave.pet_gender = "Male";
+      if (!userToSave.breed) userToSave.breed = "Not Selected";
+      if (!userToSave.category) userToSave.category = "Not Selected";
+
+      const missingFields = validateFields(userToSave);
+      if (missingFields.length > 0) {
+        toast.error(`Please fill in: ${missingFields.join(", ")}`);
         return;
       }
 
@@ -526,788 +591,682 @@ const MyProfile = () => {
 
   if (!editedData) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f2e4c7] relative overflow-hidden">
-        {/* Glowing sparkles in background */}
-        <div className="absolute top-20 left-20 text-[#9a6458]/20 animate-gold-float">
+      <div className="min-h-screen flex items-center justify-center bg-[#f2e4c6] relative overflow-hidden">
+        <div className="absolute top-20 left-20 text-[#8c574b]/10 animate-pulse">
           <Sparkles size={40} />
         </div>
-        <div className="absolute bottom-20 right-20 text-[#9a6458]/20 animate-gold-float [animation-delay:2s]">
+        <div className="absolute bottom-20 right-20 text-[#8c574b]/10 animate-pulse [animation-delay:1.5s]">
           <Sparkles size={60} />
         </div>
-        <motion.div animate={{ rotate: 360 }} transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }} className="p-4 bg-[#9a6458]/5 rounded-full border border-amber-500/20 shadow-xl">
-          <Loader2 size={48} className="text-[#9a6458]" />
+        <motion.div animate={{ rotate: 360 }} transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }} className="p-4 bg-purple-500/5 rounded-full border border-purple-500/20 shadow-xl">
+          <Loader2 size={48} className="text-purple-600" />
         </motion.div>
       </div>
     );
   }
 
   const normalized = normalizeAddress(editedData.address);
+  const remainingVideoCalls = userdata?.subscription?.plan === "Platinum" || userdata?.subscription?.plan === "Gold"
+    ? Math.max(0, (userdata.subscription.plan === "Gold" ? 10 : 25) - (userdata.videoCallsUsed || 0))
+    : 25;
 
   return (
-    <div className="max-w-6xl mx-auto p-4 min-h-screen bg-[#f2e4c7] relative">
-      <LoadingOverlay isSaving={isSaving} />
+    <div className="min-h-screen bg-[#f2e4c6] py-12 px-4 md:px-8 relative overflow-hidden font-sans">
+      
+      {/* Decorative ambient elements */}
+      <div className="absolute top-20 left-10 w-96 h-96 bg-purple-300/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-40 right-20 w-[450px] h-[450px] bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
 
-      {/* ─── HEADER & STATS CONTAINER (Aesthetic Light Cream & Gold Premium Panel) ─── */}
-      <motion.div
-        initial={{ opacity: 0, y: -30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
-        className="luxury-noise-bg gold-shimmer bg-[#fdfbf7]/90 border border-amber-500/20 shadow-[0_15px_45px_rgba(122,90,72,0.1)] rounded-[3rem] mb-8 overflow-hidden relative"
-      >
-        {/* Floating background decorations */}
-        <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-b from-amber-500/5 to-transparent rounded-full blur-3xl pointer-events-none"></div>
-        <div className="absolute -left-10 -bottom-10 w-60 h-60 bg-amber-500/5 rounded-full blur-2xl pointer-events-none"></div>
+      <div className="max-w-7xl mx-auto relative z-10">
+        
+        {/* Loading Overlay */}
+        <LoadingOverlay isSaving={isSaving} />
 
-        <div className="p-8 md:p-10 relative z-10">
-          <div className="flex flex-col md:flex-row items-center md:items-start gap-8 md:gap-10">
-            {/* Avatar Section */}
-            <motion.div className="flex-shrink-0 relative" whileHover={{ scale: 1.05 }} transition={{ type: "spring", stiffness: 300, damping: 15 }}>
-              {isEdit ? (
-                <label htmlFor="image" className="cursor-pointer block">
-                  <motion.div className="relative w-40 h-40 rounded-[2.5rem] overflow-hidden border-4 border-amber-500/40 shadow-2xl bg-white group" whileHover={{ scale: 1.02 }}>
-                    <img
-                      className="w-full h-full object-cover"
-                      src={image ? URL.createObjectURL(image) : editedData.image}
-                      alt="Profile"
-                      onError={(e) => (e.target.src = assets.profile_pic)}
-                    />
-                    <div className="absolute inset-0 bg-neutral-900/40 flex items-center justify-center backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      <Upload className="w-10 h-10 text-amber-500 animate-bounce" />
-                    </div>
+        {/* Dynamic Modal Controllers */}
+        <AnimatePresence>
+          {selectedPetForID && (
+            <PetIDCard pet={selectedPetForID} ownerName={userdata.name} phone={userdata.phone} onClose={() => setSelectedPetForID(null)} />
+          )}
+          {showFaceAuth && (
+            <FaceAuth mode="register" onCancel={() => setShowFaceAuth(false)} onAuthSuccess={() => setShowFaceAuth(false)} />
+          )}
+        </AnimatePresence>
+
+        {/* Core Layout Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          
+          {/* ────────────────── LEFT COLUMN: PROFILE & ACCOUNT SETTINGS ────────────────── */}
+          <div className="lg:col-span-3 flex flex-col gap-6 items-stretch lg:self-start">
+            
+            {/* Profile Identity Card */}
+            <div className="bg-white rounded-[2.5rem] shadow-sm border border-neutral-100 overflow-hidden relative pb-8 flex flex-col items-center h-fit">
+              
+              {/* Header Curve Banner */}
+              <div className="w-full h-36 bg-gradient-to-r from-violet-500 via-purple-500 to-indigo-600 relative rounded-t-[2.5rem]" />
+              
+              {/* Profile Avatar Overlapping Wrapper */}
+              <div className="relative -mt-16 flex flex-col items-center z-10">
+                
+                {/* Crown subscription badge */}
+                {userdata?.subscription?.status === "Active" && userdata.subscription.plan !== "None" && (
+                  <motion.div
+                    whileHover={{ scale: 1.15 }}
+                    className="absolute -top-3 -left-3 bg-white p-2 rounded-2xl shadow-md border border-amber-300 z-20 flex items-center justify-center cursor-pointer"
+                    onClick={() => navigate("/subscription")}
+                    title={`${userdata.subscription.plan} Tier`}
+                  >
+                    <Crown className="w-5 h-5 text-amber-500 fill-amber-400" />
                   </motion.div>
-                  <input onChange={handleImageChange} type="file" id="image" accept="image/*" hidden />
-                </label>
-              ) : (
-                <div className="relative group">
-                  {/* Outer Glowing Rings */}
-                  <div className="absolute -inset-1.5 bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 rounded-[2.7rem] blur-md opacity-35 group-hover:opacity-60 transition duration-1000 group-hover:duration-200"></div>
-                  {userdata?.subscription?.status === "Active" && userdata.subscription.plan !== "None" && (
-                    <div className="absolute -inset-1 rounded-[2.6rem] border border-amber-400/40 animate-pulse-gold pointer-events-none"></div>
-                  )}
+                )}
 
-                  <div className="relative w-40 h-40 rounded-[2.5rem] overflow-hidden border-4 border-white shadow-xl bg-white">
+                {/* Verified Badge */}
+                {!editedData.isBanned && (
+                  <div className="absolute bottom-0 right-0 bg-emerald-500 text-white p-1.5 rounded-full border-4 border-white shadow-sm z-20">
+                    <CheckCircle className="w-3.5 h-3.5 fill-white text-emerald-500" />
+                  </div>
+                )}
+
+                {/* Main profile picture */}
+                <div className="w-32 h-32 rounded-full border-4 border-white shadow-lg overflow-hidden bg-neutral-100 group relative">
+                  {isEdit ? (
+                    <label htmlFor="image" className="cursor-pointer block w-full h-full">
+                      <img
+                        className="w-full h-full object-cover"
+                        src={image ? URL.createObjectURL(image) : editedData.image}
+                        alt="Profile"
+                        onError={(e) => (e.target.src = assets.profile_pic)}
+                      />
+                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Upload className="w-6 h-6 text-white animate-bounce" />
+                      </div>
+                      <input onChange={handleImageChange} type="file" id="image" accept="image/*" hidden />
+                    </label>
+                  ) : (
                     <img
                       src={editedData.image}
                       alt="Profile"
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                      className="w-full h-full object-cover"
                       onError={(e) => (e.target.src = assets.profile_pic)}
                     />
-                  </div>
-
-                  {/* Premium Subscription Badge */}
-                  {userdata?.subscription?.status === "Active" && userdata.subscription.plan !== "None" && (
-                    <motion.div
-                      initial={{ scale: 0, rotate: -20 }}
-                      animate={{ scale: 1, rotate: 0 }}
-                      whileHover={{ scale: 1.15, rotate: 5 }}
-                      className="absolute -top-4 -right-4 bg-[#fdfbf7] p-2.5 rounded-[1.5rem] shadow-xl border-2 border-amber-500/20 backdrop-blur-md z-20 flex items-center justify-center transform transition-transform"
-                    >
-                      <img
-                        src={
-                          userdata.subscription.plan === "Platinum"
-                            ? assets.platinum_logo
-                            : userdata.subscription.plan === "Gold"
-                              ? assets.gold_logo
-                              : assets.silver_logo
-                        }
-                        alt={`${userdata.subscription.plan} Badge`}
-                        className="w-12 h-12 object-contain filter drop-shadow-[0_2px_5px_rgba(212,175,55,0.2)]"
-                      />
-                    </motion.div>
                   )}
+                </div>
+              </div>
 
-                  {/* Profile Completeness Trophy */}
-                  {profileCompleteness === 100 && (
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      whileHover={{ scale: 1.2 }}
-                      className="absolute -bottom-2 -left-2 bg-gradient-to-br from-amber-400 to-amber-600 p-2.5 rounded-full shadow-lg border-2 border-white z-20"
-                    >
-                      <Trophy size={16} className="text-white" />
-                    </motion.div>
-                  )}
+              {/* User Identity Info */}
+              <h2 className="text-xl font-black text-neutral-800 mt-4 text-center px-4 truncate max-w-full">
+                {isEdit ? (
+                  <input
+                    type="text"
+                    className="bg-neutral-50 border border-neutral-200 text-neutral-800 rounded-xl px-3 py-1.5 text-center text-base font-bold focus:outline-none focus:ring-2 focus:ring-purple-500/20 max-w-[200px]"
+                    value={editedData.name || ""}
+                    onChange={(e) => handleInputChange("name", e.target.value)}
+                  />
+                ) : (
+                  userdata.name
+                )}
+              </h2>
+
+              {userdata?.subscription?.plan && userdata.subscription.plan !== "None" && (
+                <div className="mt-2 px-3 py-1 bg-purple-100 text-purple-700 text-[9px] font-black uppercase tracking-wider rounded-full border border-purple-200">
+                  {userdata.subscription.plan} Tier
                 </div>
               )}
 
-              {/* Mobile Profile Completeness */}
-              <div className="mt-5 md:hidden w-full">
-                <div className="flex justify-between items-center mb-1.5">
-                  <span className="text-[9px] font-black text-[#5A4035]/60 uppercase tracking-[0.2em]">Profile Progress</span>
-                  <span className="text-xs font-black text-[#5A4035]">{profileCompleteness}%</span>
+              {userdata?.pawCode && (
+                <div
+                  onClick={() => {
+                    navigator.clipboard.writeText(userdata.pawCode);
+                    toast.success("Referral Paw Code copied!");
+                  }}
+                  className="mt-3 flex items-center gap-1 px-3 py-1 bg-neutral-50 hover:bg-neutral-100 text-neutral-500 text-[10px] font-mono rounded-lg border border-neutral-200 cursor-pointer transition-all active:scale-95"
+                  title="Click to copy Paw Code"
+                >
+                  <Gift className="w-3.5 h-3.5 text-purple-500" />
+                  <span>PAW CODE: </span>
+                  <span className="font-bold text-neutral-700">{userdata.pawCode}</span>
                 </div>
-                <div className="w-full bg-neutral-200 rounded-full h-1.5 overflow-hidden border border-white/50 shadow-inner">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: `${profileCompleteness}%` }}
-                    className="bg-gradient-to-r from-amber-500 to-yellow-400 h-full shadow-[0_0_8px_rgba(212,175,55,0.3)]"
-                  />
-                </div>
+              )}
+
+              <div className="mt-4 flex items-center gap-1.5 text-xs text-neutral-500 px-4 max-w-full">
+                <Mail className="w-4 h-4 text-neutral-400 shrink-0" />
+                <span className="truncate">{editedData.email}</span>
               </div>
-            </motion.div>
 
-            {/* Header Content Area */}
-            <div className="flex-1 space-y-4 w-full text-center md:text-left">
-              <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
-                <div className="space-y-3">
-                  <div className="flex flex-col md:flex-row md:items-baseline md:gap-4 flex-wrap justify-center md:justify-start">
-                    <h1 className="text-3xl md:text-5xl font-black text-[#5A4035] tracking-tight leading-none mb-1 md:mb-0">
-                      {isEdit ? (
-                        <input
-                          type="text"
-                          className="bg-white border-2 border-amber-500/30 text-amber-600 rounded-2xl p-2 px-4 focus:ring-4 focus:ring-amber-500/10 focus:border-amber-500/50 outline-none w-full md:max-w-md text-2xl md:text-3xl font-black shadow-inner"
-                          value={editedData.name || ""}
-                          onChange={(e) => handleInputChange("name", e.target.value)}
-                          placeholder="Enter your name"
-                        />
-                      ) : (
-                        <span className="gold-text-premium font-black tracking-tight leading-none">{userdata.name}</span>
-                      )}
-                    </h1>
+              {userPets && userPets.length > 0 && (
+                <button
+                  onClick={() => setSelectedPetForID(userPets[0])}
+                  className="mt-6 px-5 py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-sm hover:shadow transition-all flex items-center gap-1.5 active:scale-95"
+                >
+                  <Star className="w-4 h-4 fill-yellow-300 text-yellow-300" /> Premium Pet ID
+                </button>
+              )}
 
-                    {!isEdit && (
-                      <div className="flex flex-wrap items-center gap-2 mt-2 md:mt-0 justify-center md:justify-start select-none">
-                        {userdata?.subscription?.plan && userdata.subscription.plan !== "None" && (
-                          <motion.div
-                            initial={{ opacity: 0, scale: 0.8 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-amber-500/10 via-yellow-500/5 to-amber-600/10 text-[#9a6458] text-[10px] font-black uppercase tracking-widest shadow-inner border border-amber-500/20 whitespace-nowrap"
-                          >
-                            <Crown size={11} className="text-[#9a6458] fill-current" />
-                            {userdata.subscription.plan} Member
-                          </motion.div>
-                        )}
-                        {userdata?.pawCode && (
-                          <motion.div
-                            initial={{ opacity: 0, scale: 0.8 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => {
-                              navigator.clipboard.writeText(userdata.pawCode);
-                              toast.success("Your permanent Paw Code copied to clipboard!");
-                            }}
-                            className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#FCF6E8] hover:bg-[#F5ECD2] text-[#5A4035] text-[10px] font-black uppercase tracking-widest shadow-sm hover:shadow border border-amber-500/30 border-dashed whitespace-nowrap transition-all"
-                            title="Click to copy your referral Paw Code!"
-                          >
-                            <Gift size={11} className="text-amber-600" />
-                            <span>Paw Code:</span>
-                            <span className="font-mono font-bold text-amber-700 tracking-wider bg-amber-50/50 px-1.5 py-0.5 rounded border border-amber-200/40">{userdata.pawCode}</span>
-                          </motion.div>
-                        )}
-                      </div>
-                    )}
+              {/* Next Appointment or Book Appointment Widget */}
+              {nextAppointment ? (
+                <div className="mt-6 w-[88%] bg-purple-50/70 border border-purple-100 rounded-2xl p-4 flex flex-col gap-2">
+                  <div className="flex items-center gap-1.5 text-purple-700">
+                    <Clock className="w-3.5 h-3.5 animate-pulse" />
+                    <span className="text-[10px] font-black uppercase tracking-wider">Next Appointment</span>
                   </div>
-
-                  {/* Desktop Profile Completeness */}
-                  <div className="hidden md:block pt-1">
-                    <div className="flex items-center gap-3 mb-1.5">
-                      <span className="text-[10px] font-black text-amber-800/60 uppercase tracking-[0.25em]">Profile Completeness</span>
-                      <span className="px-2 py-0.5 bg-amber-500/10 text-amber-800 text-[9px] font-black rounded-lg border border-amber-500/20">{profileCompleteness}%</span>
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={nextAppointment.docData?.image || assets.profile_pic}
+                      alt="Doctor"
+                      className="w-10 h-10 rounded-full object-cover border border-purple-200"
+                    />
+                    <div className="min-w-0">
+                      <h5 className="text-xs font-bold text-neutral-800 truncate">{nextAppointment.docData?.name || "Doctor"}</h5>
+                      <p className="text-[10px] text-neutral-500 truncate">{nextAppointment.docData?.speciality || "General Vet"}</p>
                     </div>
-                    <div className="w-64 h-2 bg-neutral-200/50 rounded-full overflow-hidden border border-white shadow-inner">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${profileCompleteness}%` }}
-                        transition={{ duration: 1.2, ease: "circOut" }}
-                        className="h-full bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-600 relative"
-                      >
-                        <div className="absolute inset-0 bg-[linear-gradient(45deg,rgba(255,255,255,0.15)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.15)_50%,rgba(255,255,255,0.15)_75%,transparent_75%,transparent)] bg-[length:20px_20px] animate-[scroll_2s_linear_infinite]"></div>
-                      </motion.div>
-                    </div>
+                  </div>
+                  <div className="flex items-center justify-between mt-1 text-[10px] text-neutral-600 font-bold bg-white px-2.5 py-1.5 rounded-xl border border-neutral-100">
+                    <span>{nextAppointment.slotDate ? nextAppointment.slotDate.replaceAll("_", "/") : ""}</span>
+                    <span className="text-purple-600 font-black">{nextAppointment.slotTime}</span>
                   </div>
                 </div>
+              ) : (
+                <div className="mt-6 w-[88%] bg-amber-50/50 border border-amber-100 rounded-2xl p-4 flex flex-col items-center text-center gap-1.5">
+                  <Calendar className="w-5 h-5 text-amber-500" />
+                  <h5 className="text-[10px] font-black text-amber-800 uppercase tracking-wider">No Upcoming Visits</h5>
+                  <p className="text-[9px] text-neutral-500 leading-normal">Keep your pet's health checked. Book a video consultation today.</p>
+                  <button
+                    onClick={() => navigate("/doctors")}
+                    className="mt-2 px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-bold text-[9px] uppercase tracking-wider transition-all active:scale-95"
+                  >
+                    Book Consult
+                  </button>
+                </div>
+              )}
 
-                <div className="flex flex-wrap gap-3 justify-center md:justify-end items-center">
-                  <div className="flex items-center bg-white border border-neutral-100 px-4 py-2.5 rounded-2xl shadow-sm backdrop-blur-sm">
-                    <Mail size={15} className="text-[#9a6458] mr-2" />
-                    <span className="text-xs font-bold text-neutral-600">{userdata.email}</span>
+              {/* Decorative pets illustration */}
+              <div className="mt-4 px-4 w-full flex justify-center">
+                <img src="/pets_illustration.png" alt="pets illustration" className="max-w-[160px] w-full object-contain" />
+              </div>
+
+            </div>
+
+            {/* Linked Accounts */}
+            <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-neutral-100">
+              <h4 className="text-xs font-black uppercase tracking-wider text-neutral-800 mb-4 flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-purple-500" /> Linked Accounts
+              </h4>
+              <div className="flex items-center justify-between p-3 bg-neutral-50 rounded-2xl border border-neutral-100 shadow-inner">
+                <div className="flex items-center gap-2">
+                  <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                  </svg>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-neutral-700">Google</p>
+                    <p className="text-[9px] text-neutral-400 font-bold uppercase tracking-wider">
+                      {userdata.isGoogleConnected ? "Connected" : "Not Connected"}
+                    </p>
                   </div>
-                  {userPets && userPets.length > 0 && (
-                    <motion.button
-                      whileHover={{ scale: 1.05, y: -2 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => setSelectedPetForID(userPets[0])}
-                      className="bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 text-white px-5 py-2.5 rounded-2xl shadow-md flex items-center text-xs font-black uppercase tracking-wider border border-amber-400/40 royal-shimmer"
-                    >
-                      <Star className="w-3.5 h-3.5 mr-1.5 fill-current text-yellow-300" /> {t("profile.premiumPetID")}
-                    </motion.button>
+                </div>
+                
+                <button
+                  onClick={() => handleToggleSocialConnection('google')}
+                  disabled={isProcessingSocial !== null}
+                  className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all shadow-sm shrink-0 min-w-[76px] flex items-center justify-center ${
+                    userdata.isGoogleConnected
+                      ? "bg-neutral-100 hover:bg-red-50 text-neutral-500 hover:text-red-500 border border-neutral-200"
+                      : "bg-purple-600 hover:bg-purple-700 text-white"
+                  }`}
+                >
+                  {isProcessingSocial === 'google' ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    userdata.isGoogleConnected ? "Disconnect" : "Connect"
                   )}
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex flex-wrap gap-4 justify-center md:justify-start pt-3">
-                {!editedData.isBanned ? (
-                  <>
-                    <SaveButton isEdit={isEdit} isSaving={isSaving} onSave={updateUserProfileData} onEdit={() => setIsEdit(true)} />
-                    {isEdit && (
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={handleCancelEdit}
-                        className="border border-[#9a6458]/30 text-[#9a6458] hover:text-[#7b483d] px-6 py-3 rounded-2xl bg-white/50 hover:bg-white font-black text-xs uppercase tracking-wider transition-all shadow-sm"
-                        disabled={isSaving}
-                        type="button"
-                      >
-                        Cancel
-                      </motion.button>
-                    )}
-                  </>
-                ) : (
-                  <div className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-red-500/10 text-red-500 font-bold border border-red-500/20 shadow-sm text-xs uppercase tracking-wider">
-                    <AlertCircle size={16} />
-                    Profile Locked
-                  </div>
-                )}
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={toggleEdit}
-                  className="px-6 py-2.5 bg-amber-500 text-white rounded-2xl text-xs font-black uppercase tracking-wider flex items-center shadow-xl hover:bg-amber-400 transition-all border border-amber-300 md:hidden"
-                >
-                  <Edit size={14} className="mr-2" /> {isEdit ? t("profile.cancel") : t("profile.editProfile")}
-                </motion.button>
+                </button>
               </div>
             </div>
-          </div>
 
-          {/* Quick Metrics Grid */}
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="mt-10 grid grid-cols-2 md:grid-cols-5 gap-4"
-          >
-            {[
-              { icon: Activity, label: "Status", value: editedData.isBanned ? "Restricted" : "Verified", color: "text-emerald-600", bg: "bg-emerald-500/5", border: "border-emerald-500/20" },
-              { icon: PawPrint, label: "Total Pets", value: `${userPets?.length || 0} Pets`, color: "text-amber-700", bg: "bg-amber-500/5", border: "border-amber-500/20" },
-              { icon: Zap, label: "Paw Wallet", value: `₹${userdata.pawWallet || 0}`, color: "text-[#9a6458]", bg: "bg-yellow-500/5", border: "border-yellow-500/20" },
-              { icon: Trophy, label: "PawPoints", value: `${userdata.pawpoints || 0} PTS`, color: "text-yellow-600", bg: "bg-amber-500/5", border: "border-amber-500/20" },
-              {
-                icon: Video,
-                label: "Video Calls",
-                value:
-                  userdata?.subscription?.plan === "Platinum" || userdata?.subscription?.plan === "Gold"
-                    ? `${Math.max(0, (userdata.subscription.plan === "Gold" ? 10 : 25) - (userdata.videoCallsUsed || 0))} Left`
-                    : "Upgrade Plan",
-                color: "text-rose-600",
-                bg: "bg-rose-500/5",
-                border: "border-rose-500/20",
-              },
-            ].map((stat, i) => (
-              <motion.div
-                key={i}
-                whileHover={{ scale: 1.03, y: -2, borderColor: "rgba(212,175,55,0.4)" }}
-                className="bg-white/80 border border-amber-500/10 p-4 rounded-[2rem] shadow-sm hover:shadow-md transition-all duration-300 relative group overflow-hidden"
-              >
-                <div className="absolute top-0 right-0 p-3 opacity-5 group-hover:opacity-10 transition-opacity duration-300">
-                  <stat.icon size={44} className={stat.color} />
-                </div>
-                <div className="flex items-center gap-3 mb-2.5">
-                  <div className={`p-2 rounded-xl ${stat.bg} ${stat.color} border ${stat.border}`}>
-                    <stat.icon size={16} />
-                  </div>
-                  <span className="text-[10px] font-black text-neutral-400 uppercase tracking-widest">{stat.label}</span>
-                </div>
-                <p className="text-base font-black text-[#5A4035] group-hover:text-amber-600 transition-colors duration-300">{stat.value}</p>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-      </motion.div>
-
-      {/* ─── MODAL CONTROLLERS ─── */}
-      <AnimatePresence>
-        {selectedPetForID && (
-          <PetIDCard pet={selectedPetForID} ownerName={userdata.name} phone={userdata.phone} onClose={() => setSelectedPetForID(null)} />
-        )}
-        {showFaceAuth && (
-          <FaceAuth mode="register" onCancel={() => setShowFaceAuth(false)} onAuthSuccess={() => setShowFaceAuth(false)} />
-        )}
-      </AnimatePresence>
-
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start relative z-10">
-        <div className="lg:col-span-8 space-y-8">
-          {/* ─── ACCOUNT INFORMATION CARD (Cream & Gold Premium Form) ─── */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5 }}
-            className="bg-white/50 backdrop-blur-xl shadow-[0_15px_40px_rgba(122,90,72,0.1)] rounded-[3rem] overflow-hidden border border-white p-3"
-          >
-            {/* Header Plate */}
-            <div className="p-6 bg-gradient-to-r from-[#9a6458] to-[#7b483d] text-white flex items-center justify-between rounded-[2.5rem] shadow-lg mb-6 border border-amber-500/10">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-white/25 rounded-2xl text-white">
-                  <User size={20} className="animate-pulse" />
-                </div>
-                <div>
-                  <h2 className="text-lg font-black uppercase tracking-tighter text-white leading-none">Account Information</h2>
-                  <p className="text-[9px] text-amber-100/80 uppercase tracking-widest mt-1">Manage secure profile specifics</p>
-                </div>
-              </div>
-              <Sparkles className="text-yellow-300 animate-gold-float" size={18} />
-            </div>
-
-            <div className="p-3 grid grid-cols-1 md:grid-cols-2 gap-4">
-              <InfoItem
-                icon={Phone}
-                label="Contact"
-                value={editedData.phone}
-                isEdit={isEdit}
-                editComponent={
-                  <input
-                    type="text"
-                    className="bg-white border border-amber-500/20 focus:border-amber-500/50 rounded-2xl p-3 w-full outline-none text-sm text-neutral-800 font-bold transition-all shadow-inner focus:ring-4 focus:ring-amber-500/5"
-                    value={editedData.phone || ""}
-                    onChange={(e) => handlePhoneChange(e.target.value)}
-                  />
-                }
-              />
-              <InfoItem
-                icon={Mail}
-                label="Email"
-                value={editedData.email}
-                isEdit={isEdit}
-                editComponent={
-                  <p className="font-bold px-4 py-3 bg-neutral-100 rounded-2xl border border-dashed border-neutral-300 text-neutral-500 text-sm">
-                    {editedData.email}
-                  </p>
-                }
-              />
-              <InfoItem
-                icon={User}
-                label="Gender"
-                value={editedData.gender}
-                isEdit={isEdit}
-                editComponent={
-                  <select
-                    className="bg-white border border-amber-500/20 focus:border-amber-500/50 rounded-2xl p-3 w-full outline-none text-sm text-neutral-800 font-bold transition-all shadow-inner focus:ring-4 focus:ring-amber-500/5"
-                    value={editedData.gender || ""}
-                    onChange={(e) => handleInputChange("gender", e.target.value)}
-                  >
-                    <option value="">Select Gender</option>
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                    <option value="Other">Other</option>
-                  </select>
-                }
-              />
-              <InfoItem
-                icon={Calendar}
-                label="Birthday"
-                value={formatDate(editedData.dob)}
-                isEdit={isEdit}
-                editComponent={
-                  <input
-                    type="date"
-                    className="bg-white border border-amber-500/20 focus:border-amber-500/50 rounded-2xl p-3 w-full outline-none text-sm text-neutral-800 font-bold transition-all shadow-inner focus:ring-4 focus:ring-amber-500/5"
-                    value={editedData.dob || ""}
-                    onChange={(e) => handleInputChange("dob", e.target.value)}
-                  />
-                }
-              />
-              <div className="md:col-span-2">
-                <InfoItem
-                  icon={MapPin}
-                  label="Address"
-                  value={`${normalized.LOCATION}, ${normalized.LINE}`}
-                  isEdit={isEdit}
-                  editComponent={
-                    <div className="grid grid-cols-2 gap-3">
-                      <input
-                        type="text"
-                        className="bg-white border border-amber-500/20 focus:border-amber-500/50 rounded-2xl p-3 outline-none text-sm text-neutral-800 font-bold transition-all shadow-inner focus:ring-4 focus:ring-amber-500/5"
-                        value={normalized.LOCATION}
-                        placeholder="State"
-                        onChange={(e) => handleAddressChange("LOCATION", e.target.value)}
-                      />
-                      <input
-                        type="text"
-                        className="bg-white border border-amber-500/20 focus:border-amber-500/50 rounded-2xl p-3 outline-none text-sm text-neutral-800 font-bold transition-all shadow-inner focus:ring-4 focus:ring-amber-500/5"
-                        value={normalized.LINE}
-                        placeholder="District"
-                        onChange={(e) => handleAddressChange("LINE", e.target.value)}
-                      />
-                    </div>
-                  }
-                />
-              </div>
-            </div>
-          </motion.div>
-
-          {/* ─── MY PET FAMILY SECTION (Luxury passports / ID cards) ─── */}
-          <div className="space-y-6">
-            <h3 className="text-2xl font-black text-[#5A4035] uppercase tracking-tighter flex items-center gap-3 px-4">
-              <PawPrint size={24} className="text-[#9a6458]" /> {t("profile.myPetFamily")}
-              <span className="bg-amber-500/10 text-amber-800 text-xs px-2.5 py-1 rounded-xl border border-amber-500/20 ml-2">{userPets?.length || 0}</span>
-            </h3>
-
-            {userPets && userPets.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {userPets.map((pet, index) => (
-                  <motion.div
-                    key={pet._id || index}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.1 * index }}
-                    whileHover={{ y: -5 }}
-                    className="bg-white/70 backdrop-blur-lg shadow-md hover:shadow-[0_20px_40px_rgba(122,90,72,0.12)] rounded-[2.5rem] border border-white/80 p-6 relative group overflow-hidden transition-all duration-300 gold-shimmer"
-                  >
-                    {/* Tiny decorative gold frame internally */}
-                    <div className="absolute inset-2 border border-[#9a6458]/5 rounded-[2rem] pointer-events-none"></div>
-
-                    <div className="flex items-center gap-5 mb-6 relative z-10">
-                      <div className="w-24 h-24 rounded-[1.8rem] overflow-hidden border-2 border-[#9a6458]/15 shadow-lg bg-amber-50/40 shrink-0 relative group">
-                        <img src={pet.image || assets.upload_area} alt={pet.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="text-xl font-black text-[#5A4035] truncate flex items-center gap-1.5 leading-tight">
-                          {pet.name}
-                        </h4>
-                        <div className="flex items-center gap-2 mt-1.5">
-                          <span className="px-2.5 py-0.5 bg-amber-100/60 text-[#9a6458] text-[9px] font-black rounded-lg uppercase tracking-wider border border-[#9a6458]/10">{pet.type}</span>
-                          {pet.isVerified && (
-                            <div className="flex items-center text-blue-600 gap-0.5 font-bold text-[10px]">
-                              <ShieldCheck size={13} className="fill-blue-100" /> Verified
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3 mb-6 relative z-10">
-                      <div className="bg-white/60 p-3 rounded-2xl border border-neutral-100 shadow-inner">
-                        <p className="text-[8px] font-black text-neutral-400 uppercase tracking-widest mb-0.5">Breed</p>
-                        <p className="text-xs font-bold text-[#5A4035] truncate">{pet.breed || "N/A"}</p>
-                      </div>
-                      <div className="bg-white/60 p-3 rounded-2xl border border-neutral-100 shadow-inner">
-                        <p className="text-[8px] font-black text-neutral-400 uppercase tracking-widest mb-0.5">Age / Sex</p>
-                        <p className="text-xs font-bold text-[#5A4035]">{pet.age}Y • {pet.gender}</p>
-                      </div>
-                    </div>
-
-                    <motion.button
-                      whileHover={{ scale: 1.02, boxShadow: "0 10px 20px rgba(212,175,55,0.2)" }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => setSelectedPetForID(pet)}
-                      className="w-full py-3 bg-[#5A4035] hover:bg-[#4a3229] text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-md border border-amber-500/20 relative z-10 royal-shimmer"
-                    >
-                      <CreditCard size={13} className="text-amber-100" /> {t("profile.officialPetID")}
-                    </motion.button>
-                  </motion.div>
-                ))}
-              </div>
-            ) : (
-              <div className="bg-white/40 backdrop-blur-md rounded-[2.5rem] border-2 border-dashed border-[#9a6458]/20 p-12 text-center shadow-inner">
-                <PawPrint size={44} className="text-[#9a6458]/15 mx-auto mb-4 animate-bounce" />
-                <p className="text-[#5A4035]/60 font-black text-sm uppercase tracking-wide">No pets registered yet.</p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* ─── RIGHT HAND COLUMN (Widgets & Security Modules) ─── */}
-        <div className="lg:col-span-4 space-y-8">
-          {/* Biometric Integration Card */}
-          <AnimatePresence>
-            {!userdata.isFaceRegistered ? (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="p-6 rounded-[2.5rem] bg-gradient-to-br from-amber-50/70 to-amber-100/50 border border-amber-200/60 shadow-md relative overflow-hidden group gold-shimmer"
-              >
-                <div className="absolute top-0 right-0 p-6 opacity-5 rotate-12">
-                  <Shield size={100} className="text-amber-600" />
-                </div>
-                <div className="flex items-center gap-4 mb-4 relative z-10">
-                  <div className="p-3 bg-gradient-to-br from-amber-500 to-amber-600 rounded-2xl text-white shadow-lg shadow-amber-200/50 animate-pulse-gold">
-                    <Shield size={22} />
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-black text-amber-900 uppercase tracking-tight leading-tight">Biometric Shield</h4>
-                    <p className="text-[10px] text-amber-700/80 mt-0.5 font-bold uppercase tracking-wide">Security Inactive</p>
-                  </div>
-                </div>
-                <p className="text-xs text-amber-800/80 mb-5 leading-relaxed relative z-10">
-                  Setup face authentication to guarantee protection of your pet health vault and transactional history.
-                </p>
-                <motion.button
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={() => setShowFaceAuth(true)}
-                  className="w-full py-3 bg-gradient-to-r from-[#9a6458] to-[#7b483d] text-white rounded-2xl font-black text-xs uppercase tracking-wider transition-all shadow-md royal-shimmer"
-                >
-                  Setup Biometrics
-                </motion.button>
-              </motion.div>
-            ) : (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="p-6 rounded-[2.5rem] bg-gradient-to-br from-blue-50/60 to-blue-100/40 border border-blue-200/60 shadow-md relative overflow-hidden group gold-shimmer"
-              >
-                <div className="absolute top-0 right-0 p-6 opacity-5 rotate-12">
-                  <ShieldCheck size={100} className="text-blue-500" />
-                </div>
-                <div className="flex items-center gap-4 mb-4 relative z-10">
-                  <div className="p-3 bg-blue-500/10 border border-blue-200/20 rounded-2xl text-blue-600">
-                    <ShieldCheck size={22} className="animate-pulse" />
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-black text-blue-900 uppercase tracking-tight leading-tight">Biometric Shield</h4>
-                    <p className="text-[10px] text-blue-600 mt-0.5 font-black uppercase tracking-wider">Active & Encrypted</p>
-                  </div>
-                </div>
-                <p className="text-xs text-blue-800/80 mb-5 leading-relaxed relative z-10">
-                  Your profile and diagnostic reports are fully secured via active on-device biometric scanning.
-                </p>
-                <motion.button
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={() => setShowFaceAuth(true)}
-                  className="w-full py-3 bg-white text-blue-600 border border-blue-200 rounded-2xl font-black text-xs uppercase tracking-wider hover:bg-neutral-50 transition-all shadow-sm"
-                >
-                  Update Face Scan
-                </motion.button>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* ─── SUBSCRIPTION MEMBERSHIP CARD (Luxury Ivory Card design) ─── */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="p-6 rounded-[2.5rem] bg-gradient-to-br from-white/95 via-amber-50/20 to-[#fbf9f4] border border-amber-500/25 shadow-xl relative overflow-hidden group"
-          >
-            {/* Glossy diagonal sheet */}
-            <div className="absolute inset-0 bg-gradient-to-tr from-amber-500/5 via-white/0 to-amber-500/5 pointer-events-none"></div>
-
-            <div className="flex flex-col gap-6 relative z-10">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className={`p-3 rounded-2xl shadow-md ${userdata.subscription?.plan === "Platinum"
-                    ? "bg-purple-600 text-white"
-                    : userdata.subscription?.plan === "Gold"
-                      ? "bg-amber-500 text-white animate-pulse"
-                      : userdata.subscription?.plan === "Silver"
-                        ? "bg-slate-500 text-white"
-                        : "bg-[#9a6458] text-white"
-                    }`}>
-                    <CreditCard size={20} />
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-black uppercase tracking-tight leading-none text-[#5A4035]">
-                      {userdata?.subscription?.plan && userdata.subscription.plan !== "None" ? `${userdata.subscription.plan} Membership` : "Basic Access"}
-                    </h4>
-                    <p className="text-[9px] text-[#9a6458] uppercase tracking-widest mt-1">Tier Level Access</p>
-                  </div>
-                </div>
-
-                {/* Simulated Gold Chip detailing */}
-                {userdata?.subscription?.plan && userdata.subscription.plan !== "None" && (
-                  <div className="w-8 h-6 rounded-lg bg-gradient-to-br from-yellow-300 via-amber-400 to-yellow-600 border border-amber-200/40 shadow-sm flex items-center justify-center opacity-80">
-                    <div className="grid grid-cols-3 gap-0.5 w-full h-full p-1 opacity-45">
-                      <div className="border-r border-b border-black"></div>
-                      <div className="border-r border-b border-black"></div>
-                      <div className="border-b border-black"></div>
-                      <div className="border-r border-black"></div>
-                      <div className="border-r border-black"></div>
-                      <div></div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
+            {/* Premium Membership */}
+            <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-neutral-100 flex flex-col justify-between">
               <div>
-                {userdata?.subscription?.plan && userdata.subscription.plan !== "None" ? (
-                  <div className="space-y-1.5">
-                    <p className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider">Expiry Information</p>
-                    <div className="flex items-center gap-1.5">
-                      <Clock size={13} className="text-[#9a6458]" />
-                      <span className="text-xs font-black text-amber-700">{formatDate(userdata.subscription.expiryDate)}</span>
-                    </div>
+                <h4 className="text-xs font-black uppercase tracking-wider text-neutral-800 mb-3 flex items-center gap-2">
+                  <Crown className="w-4 h-4 text-amber-500" />
+                  {userdata?.subscription?.plan && userdata.subscription.plan !== "None" ? `${userdata.subscription.plan} Membership` : "Platinum Membership"}
+                </h4>
+                
+                <p className="text-[11px] text-neutral-500 leading-relaxed mb-4">
+                  Enjoy unlimited online pet consultations, 24/7 priority support, smart health tracking, and free shipping on prescriptions.
+                </p>
+
+                <div className="mt-3">
+                  <p className="text-[9px] text-neutral-400 font-black uppercase tracking-wider">Expiry Information</p>
+                  <div className="flex items-center gap-1.5 mt-1 text-xs font-semibold text-neutral-600">
+                    <Clock className="w-3.5 h-3.5 text-neutral-400" />
+                    <span>{userdata.subscription?.expiryDate ? formatDate(userdata.subscription.expiryDate) : "June 6, 2026"}</span>
                   </div>
-                ) : (
-                  <p className="text-xs text-neutral-500 leading-relaxed">
-                    Upgrade to high-tier subscriptions to unlock VIP consults, zero processing fees, and priority live queues.
-                  </p>
-                )}
+                </div>
               </div>
 
               <button
                 onClick={() => navigate("/subscription")}
-                className="w-full py-3 bg-[#5A4035] hover:bg-[#4a3229] text-white rounded-2xl font-black text-xs uppercase tracking-wider transition-all shadow-md royal-shimmer"
+                className="w-full mt-4 py-3 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white rounded-2xl font-bold text-xs uppercase tracking-wider shadow-sm transition-all flex items-center justify-center gap-1 active:scale-95"
               >
-                {userdata.subscription?.plan !== "None" ? "Manage Membership" : "View Premium Plans"}
+                Manage Membership <ChevronRight className="w-3.5 h-3.5" />
               </button>
             </div>
-          </motion.div>
 
-          {/* ─── VIDEO ALLOWANCE WIDGET ─── */}
-          {userdata?.subscription?.plan && (userdata.subscription.plan === "Gold" || userdata.subscription.plan === "Platinum") && (
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="bg-white/50 border border-amber-500/20 p-6 rounded-[2.5rem] shadow-xl relative overflow-hidden"
-            >
-              <div className="absolute -top-6 -right-6 opacity-5 rotate-12 text-[#9a6458]">
-                <Video size={100} />
-              </div>
-              <div className="relative z-10 text-center">
-                <div className="flex items-center gap-3 mb-4 justify-center">
-                  <div className="p-2 bg-[#9a6458]/10 rounded-xl text-[#9a6458]">
-                    <Video size={16} />
-                  </div>
-                  <span className="text-xs font-black uppercase tracking-widest text-[#5A4035]">Video Consultations</span>
-                </div>
-
-                <div className="text-4xl font-black text-[#5A4035] mb-2 tracking-tight">
-                  {Math.max(0, (userdata.subscription.plan === "Gold" ? 10 : 25) - (userdata.videoCallsUsed || 0))}
-                  <span className="text-xs font-black text-neutral-400 ml-1.5 uppercase tracking-widest">Left</span>
-                </div>
-
-                <div className="w-full bg-[#5A4035]/10 rounded-full h-2.5 overflow-hidden mb-3 p-0.5 border border-[#5A4035]/5">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: `${((userdata.videoCallsUsed || 0) / (userdata.subscription.plan === "Gold" ? 10 : 25)) * 100}%` }}
-                    className="bg-gradient-to-r from-amber-500 to-yellow-400 h-full rounded-full"
-                  />
-                </div>
-                <p className="text-[9px] font-black uppercase tracking-widest text-[#5A4035]/40">
-                  Allowance: {userdata.subscription.plan === "Gold" ? 10 : 25} Monthly Credits
+            {/* Danger Zone */}
+            <div className="bg-red-50/50 rounded-[2rem] p-6 shadow-sm border border-red-100 flex flex-col justify-between">
+              <div>
+                <h4 className="text-xs font-black uppercase tracking-wider text-red-600 mb-2 flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-red-500" /> Danger Zone
+                </h4>
+                <p className="text-[10px] text-neutral-500 leading-relaxed mb-4">
+                  Permanently close and delete your diagnostic history, wallet funds, and linked biometric data.
                 </p>
               </div>
-            </motion.div>
-          )}
 
-          {/* ─── UPCOMING APPOINTMENT WIDGET (PawVaidya Copper-Gold design) ─── */}
-          {nextAppointment && (
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="bg-gradient-to-br from-[#9a6458] to-[#7b483d] border border-amber-500/20 p-6 rounded-[2.5rem] shadow-xl text-white relative overflow-hidden"
-            >
-              <div className="absolute top-0 right-0 p-8 opacity-10 rotate-12 text-white">
-                <Calendar size={120} />
-              </div>
-              <div className="relative z-10">
-                <div className="flex items-center gap-3 mb-5">
-                  <div className="p-2 bg-white/20 rounded-xl text-white">
-                    <Clock size={16} />
-                  </div>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-amber-100">{t("profile.nextAppointment")}</span>
-                </div>
-                <h4 className="text-xl font-black mb-1.5 text-white">Dr. {nextAppointment.docData.name}</h4>
-                <p className="text-amber-100/90 text-xs mb-6 flex items-center gap-1.5 font-bold">
-                  <Calendar size={13} className="text-amber-300" />
-                  {nextAppointment.slotDate.replace(/_/g, " ")} • {nextAppointment.slotTime}
-                </p>
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => navigate("/my-appointments")}
-                  className="w-full py-3 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-2xl text-xs font-black uppercase tracking-wider transition-all royal-shimmer"
-                >
-                  Manage Bookings
-                </motion.button>
-              </div>
-            </motion.div>
-          )}
-
-          {/* ─── HEALTH TIP CARD (Powered by Gemini AI) ─── */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-white/60 backdrop-blur-xl p-8 rounded-[2.5rem] border border-white shadow-xl relative overflow-hidden"
-          >
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-xl text-amber-500">
-                  <Heart size={18} fill="#d97706" className="animate-pulse" />
-                </div>
-                <div>
-                  <h3 className="font-black text-[#5A4035] uppercase tracking-tight leading-none">Pet Health Tip</h3>
-                  <p className="text-[8px] text-[#9a6458]/70 uppercase tracking-widest mt-1">Smart advice</p>
-                </div>
-              </div>
-              <motion.button
-                whileHover={{ scale: 1.1, rotate: 15 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={() => setupDailyContentGeneration(true)}
-                disabled={isRefreshingTip}
-                className="p-2 bg-white rounded-xl text-neutral-400 hover:text-amber-500 hover:shadow-md transition-all border border-neutral-100"
-              >
-                <RefreshCw size={15} className={isRefreshingTip ? "animate-spin" : ""} />
-              </motion.button>
-            </div>
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={dailyQuote}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="bg-white/70 p-5 rounded-2xl border border-amber-500/10 italic text-[#5A4035] text-xs leading-relaxed font-bold shadow-inner"
-              >
-                "{dailyQuote}"
-              </motion.div>
-            </AnimatePresence>
-            <p className="text-center text-[8px] font-black text-[#5A4035]/30 uppercase tracking-[0.25em] mt-5">Powered by Gemini AI</p>
-          </motion.div>
-
-          {/* ─── BAN DETAILS / APPEAL ZONE ─── */}
-          {editedData.isBanned && (
-            <div className="bg-red-500/5 backdrop-blur-sm p-6 rounded-[2.5rem] border border-red-500/20 shadow-md">
-              <h4 className="text-xs font-black text-red-500 uppercase tracking-widest mb-4 flex items-center gap-2">
-                <AlertCircle size={15} /> Account Restricted
-              </h4>
-              <div className="bg-[#fdfbf7] p-4 rounded-2xl border border-red-500/10 mb-4">
-                <div className="flex justify-between items-center mb-1.5">
-                  <span className="text-[9px] font-black text-[#5A4035]/60 uppercase tracking-wider">Unban Appeal Attempts</span>
-                  <span className="text-xs font-black text-red-600">
-                    {userdata.unbanAttempts || 0}/3
-                  </span>
-                </div>
-                <div className="w-full bg-neutral-200 h-1.5 rounded-full overflow-hidden p-0.5 border border-white shadow-inner">
-                  <div className="bg-red-500 h-full rounded-full" style={{ width: `${((userdata.unbanAttempts || 0) / 3) * 100}%` }} />
-                </div>
-              </div>
               <button
                 onClick={() => setShowDeleteModal(true)}
-                disabled={userdata.unbanAttempts >= 3}
-                className="w-full py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-2xl font-black text-xs uppercase tracking-wider shadow-lg hover:from-red-600 hover:to-red-700 transition-all disabled:opacity-40"
+                className="w-full py-3 bg-red-600 hover:bg-red-700 text-white rounded-2xl font-bold text-xs uppercase tracking-wider shadow-sm transition-all flex items-center justify-center gap-1.5 active:scale-95"
               >
-                Request Support Appeal
+                <Trash2 className="w-4 h-4" /> Request Account Deletion
               </button>
             </div>
-          )}
 
-          {/* ─── DANGER ZONE ─── */}
-          <div className="bg-red-500/5 backdrop-blur-sm p-6 rounded-[2.5rem] border border-red-500/10 shadow-sm">
-            <h4 className="text-xs font-black text-red-500 uppercase tracking-widest mb-3 flex items-center gap-2">
-              <AlertCircle size={14} /> Danger Zone
-            </h4>
-            <p className="text-[10px] text-neutral-500 mb-4 px-1 leading-relaxed">
-              Permanently close and delete your diagnostic history, wallet funds, and linked biometric data.
-            </p>
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => setShowDeleteModal(true)}
-              className="w-full py-3 bg-white hover:bg-red-600 text-red-600 hover:text-white font-black text-xs uppercase tracking-wider rounded-2xl border border-red-200 hover:border-red-600 transition-all shadow-sm"
-            >
-              Request Account Deletion
-            </motion.button>
           </div>
+
+          {/* ────────────────── RIGHT COLUMN: PANELS & GRID ────────────────── */}
+          <div className="lg:col-span-9 space-y-6">
+            
+            {/* ROW 1: 5 QUICK STATS CARDS */}
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+              {[
+                { label: "Status", value: editedData.isBanned ? "Restricted" : "Verified", icon: ShieldCheck, color: "text-emerald-600", bg: "bg-emerald-50" },
+                { label: "Total Pets", value: `${userPets?.length || 0} Pets`, icon: PawPrint, color: "text-amber-600", bg: "bg-amber-50" },
+                { label: "Paw Wallet", value: `₹${userdata.pawWallet || 0}`, icon: Zap, color: "text-purple-600", bg: "bg-purple-50" },
+                { label: "Paw Points", value: `${userdata.pawpoints || 0} PTS`, icon: Trophy, color: "text-blue-600", bg: "bg-blue-50" },
+                { label: "Video Calls", value: `${remainingVideoCalls} Left`, icon: Video, color: "text-rose-600", bg: "bg-rose-50" }
+              ].map((stat, idx) => (
+                <div key={idx} className="bg-white rounded-2xl border border-neutral-100 p-4 shadow-sm flex flex-col justify-between h-28 hover:shadow-md transition-shadow duration-300">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider">{stat.label}</span>
+                    <div className={`p-1.5 rounded-lg ${stat.bg} ${stat.color}`}>
+                      <stat.icon className="w-4 h-4" />
+                    </div>
+                  </div>
+                  <span className="text-base font-black text-neutral-800">{stat.value}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* ROW 2: PROFILE COMPLETENESS */}
+            <div className="bg-white rounded-3xl p-6 shadow-sm border border-neutral-100 overflow-hidden flex items-center justify-between">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="p-1.5 bg-purple-50 rounded-lg text-[#8c52ff]">
+                    <PawPrint className="w-4 h-4" />
+                  </div>
+                  <h3 className="text-sm font-bold text-neutral-800 uppercase tracking-wider">Profile Completeness</h3>
+                </div>
+                
+                <div className="flex items-center gap-4">
+                  <div className="flex-1 bg-neutral-100 rounded-full h-4 overflow-hidden p-0.5 border border-neutral-200/50 shadow-inner relative">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${profileCompleteness}%` }}
+                      transition={{ duration: 1.2, ease: "easeOut" }}
+                      className="h-full bg-gradient-to-r from-violet-500 to-indigo-500 rounded-full"
+                    />
+                  </div>
+                  <span className="text-xs font-black text-purple-700 bg-purple-50 px-2 py-0.5 rounded-lg border border-purple-100">{profileCompleteness}%</span>
+                </div>
+              </div>
+              
+              <div className="w-24 h-24 -mr-4 -mb-6 flex-shrink-0 relative self-end">
+                <img src="/completeness_dog.png" alt="peaking puppy" className="w-full h-full object-contain" />
+              </div>
+            </div>
+
+            {/* ROW 3: PROFILE DETAILS */}
+            <div className="bg-white rounded-3xl p-6 shadow-sm border border-neutral-100">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 bg-purple-50 text-[#8c52ff] rounded-xl">
+                    <User className="w-5 h-5" />
+                  </div>
+                  <h3 className="text-base font-black text-neutral-800 uppercase tracking-tight">Profile Details</h3>
+                </div>
+                
+                {/* Actions */}
+                <div className="flex items-center gap-2">
+                  {isEdit ? (
+                    <>
+                      <button
+                        onClick={updateUserProfileData}
+                        className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-sm transition-all flex items-center gap-1"
+                      >
+                        <Save className="w-3.5 h-3.5" /> Save
+                      </button>
+                      <button
+                        onClick={handleCancelEdit}
+                        className="px-4 py-2 bg-neutral-100 hover:bg-neutral-200 text-neutral-600 font-bold text-xs uppercase tracking-wider rounded-xl border border-neutral-200 transition-all"
+                      >
+                        Cancel
+                      </button>
+                    </>
+                  ) : (
+                    !editedData.isBanned ? (
+                      <button
+                        onClick={() => setIsEdit(true)}
+                        className="px-4 py-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-sm transition-all flex items-center gap-1.5"
+                      >
+                        <Edit className="w-3.5 h-3.5" /> Edit Profile
+                      </button>
+                    ) : (
+                      <div className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-red-50 text-red-600 text-xs font-bold border border-red-200 uppercase tracking-wider">
+                        <Lock className="w-3.5 h-3.5" /> Profile Locked
+                      </div>
+                    )
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <InfoItem
+                  icon={Phone}
+                  label="Contact"
+                  value={editedData.phone}
+                  isEdit={isEdit}
+                  editComponent={
+                    <input
+                      type="text"
+                      className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-2 text-sm text-neutral-800 font-medium focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
+                      value={editedData.phone || ""}
+                      onChange={(e) => handlePhoneChange(e.target.value)}
+                    />
+                  }
+                />
+                
+                <InfoItem
+                  icon={Mail}
+                  label="Email"
+                  value={editedData.email}
+                  isEdit={isEdit}
+                  editComponent={
+                    <span className="text-sm font-semibold text-neutral-400 bg-neutral-100 px-4 py-2.5 rounded-xl border border-neutral-200 w-full block">
+                      {editedData.email}
+                    </span>
+                  }
+                />
+
+                <InfoItem
+                  icon={User}
+                  label="Gender"
+                  value={editedData.gender}
+                  isEdit={isEdit}
+                  editComponent={
+                    <select
+                      className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-2 text-sm text-neutral-800 font-medium focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
+                      value={editedData.gender || ""}
+                      onChange={(e) => handleInputChange("gender", e.target.value)}
+                    >
+                      <option value="">Select Gender</option>
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  }
+                />
+
+                <InfoItem
+                  icon={Calendar}
+                  label="Birthday"
+                  value={formatDate(editedData.dob)}
+                  isEdit={isEdit}
+                  editComponent={
+                    <input
+                      type="date"
+                      className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-2 text-sm text-neutral-800 font-medium focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
+                      value={editedData.dob || ""}
+                      onChange={(e) => handleInputChange("dob", e.target.value)}
+                    />
+                  }
+                />
+
+                <div className="md:col-span-2">
+                  <InfoItem
+                    icon={MapPin}
+                    label="Address"
+                    value={`${normalized.LOCATION}, ${normalized.LINE}`}
+                    isEdit={isEdit}
+                    editComponent={
+                      <div className="grid grid-cols-2 gap-3 w-full">
+                        <input
+                          type="text"
+                          className="bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-2 text-sm text-neutral-800 font-medium focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
+                          value={normalized.LOCATION}
+                          placeholder="State"
+                          onChange={(e) => handleAddressChange("LOCATION", e.target.value)}
+                        />
+                        <input
+                          type="text"
+                          className="bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-2 text-sm text-neutral-800 font-medium focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
+                          value={normalized.LINE}
+                          placeholder="District"
+                          onChange={(e) => handleAddressChange("LINE", e.target.value)}
+                        />
+                      </div>
+                    }
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* ROW 4: MY PET FAMILY + BIOMETRIC SHIELD */}
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+              
+              {/* MY PET FAMILY (2/3 width) */}
+              <div className="md:col-span-8 bg-white rounded-3xl p-6 shadow-sm border border-neutral-100 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 bg-purple-50 text-[#8c52ff] rounded-lg">
+                        <PawPrint className="w-4 h-4" />
+                      </div>
+                      <h3 className="text-base font-black text-neutral-800 uppercase tracking-tight">My Pet Family</h3>
+                      <span className="bg-purple-100 text-purple-700 text-xs px-2 py-0.5 rounded-full font-bold ml-1">{userPets?.length || 0}</span>
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      <button className="p-1.5 rounded-lg border border-neutral-200 hover:bg-neutral-50 text-neutral-500 transition-all">
+                        <ChevronLeft className="w-4 h-4" />
+                      </button>
+                      <button className="p-1.5 rounded-lg border border-neutral-200 hover:bg-neutral-50 text-neutral-500 transition-all">
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Pet Family Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-2">
+                    {userPets && userPets.length > 0 ? (
+                      userPets.map((pet, idx) => (
+                        <div key={pet._id || idx} className="bg-white border border-neutral-100 rounded-2xl p-4 shadow-sm flex flex-col justify-between hover:shadow-md transition-all duration-300">
+                          <div>
+                            <img src={pet.image || assets.upload_area} alt={pet.name} className="w-full h-24 object-cover rounded-xl mb-3 bg-neutral-50" />
+                            <span className="text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded bg-blue-50 text-blue-600 border border-blue-100/50 mb-1.5 inline-block">
+                              {pet.type || "Other"}
+                            </span>
+                            <h4 className="text-sm font-bold text-neutral-800">{pet.name}</h4>
+                            <div className="grid grid-cols-2 gap-2 mt-2 border-t border-neutral-50 pt-2 text-[10px]">
+                              <div>
+                                <p className="text-neutral-400 uppercase font-bold tracking-wider">Breed</p>
+                                <p className="font-semibold text-neutral-600 truncate">{pet.breed || "N/A"}</p>
+                              </div>
+                              <div>
+                                <p className="text-neutral-400 uppercase font-bold tracking-wider">Age/Sex</p>
+                                <p className="font-semibold text-neutral-600 truncate">{pet.age}Y - {pet.gender || "M"}</p>
+                              </div>
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => setSelectedPetForID(pet)}
+                            className="w-full mt-3 py-2 bg-neutral-50 hover:bg-neutral-100 border border-neutral-200 rounded-xl text-[9px] font-bold uppercase tracking-wider text-neutral-600 flex items-center justify-center gap-1.5 transition-all active:scale-95"
+                          >
+                            <CreditCard className="w-3.5 h-3.5" /> Official Pet ID
+                          </button>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="col-span-3 py-8 text-center text-neutral-400 text-xs font-semibold">
+                        No pets registered yet.
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Update Face Scan Button */}
+                <button
+                  onClick={() => setShowFaceAuth(true)}
+                  className="w-full mt-6 py-3 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white rounded-2xl font-bold text-xs uppercase tracking-wider shadow-sm hover:shadow transition-all flex items-center justify-center gap-2 active:scale-95"
+                >
+                  <Fingerprint className="w-4 h-4" /> Update Face Scan
+                </button>
+              </div>
+
+              {/* BIOMETRIC SHIELD (1/3 width) */}
+              <div className="md:col-span-4 bg-gradient-to-br from-[#6c33e8] to-[#4c1ba6] rounded-3xl p-6 shadow-lg text-white flex flex-col justify-between h-[395px] relative overflow-hidden">
+                <div className="absolute -top-12 -right-12 w-32 h-32 bg-white/5 rounded-full blur-xl pointer-events-none" />
+                
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Shield className="w-4 h-4 text-purple-200" />
+                    <span className="text-[10px] font-black uppercase tracking-wider text-purple-200">Biometric Shield</span>
+                  </div>
+                  <h4 className="text-xs font-black uppercase tracking-widest text-emerald-300">
+                    {userdata.isFaceRegistered ? "Active & Encrypted" : "Security Inactive"}
+                  </h4>
+                </div>
+
+                {/* Central orbit/spinning elements */}
+                <div className="relative w-36 h-36 mx-auto flex items-center justify-center my-2">
+                  <div className="absolute inset-0 rounded-full border border-white/10 animate-spin-slow" />
+                  <div className="absolute inset-4 rounded-full border border-dashed border-white/20 animate-[spin_10s_linear_infinite]" />
+                  <div className="absolute inset-8 rounded-full border border-white/30 animate-[spin_6s_linear_infinite_reverse]" />
+                  
+                  <div className="relative z-10 w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center backdrop-blur-md border border-white/30 shadow-[0_0_20px_rgba(255,255,255,0.25)]">
+                    <Shield className="w-8 h-8 text-white fill-white/10" />
+                    <PawPrint className="w-4 h-4 absolute text-purple-300" />
+                  </div>
+                </div>
+
+                <p className="text-[11px] text-purple-100 text-center leading-relaxed mb-4">
+                  {userdata.isFaceRegistered
+                    ? "Your profile and diagnostic reports are fully secured via active on-device biometric scanning."
+                    : "Setup face authentication to guarantee protection of your pet health vault and transactional history."}
+                </p>
+
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setShowFaceAuth(true)}
+                    className="flex-1 py-3 bg-white text-indigo-700 hover:bg-neutral-50 rounded-2xl font-bold text-xs uppercase tracking-wider shadow-sm transition-all flex items-center justify-center gap-1.5 active:scale-95"
+                  >
+                    <Fingerprint className="w-4 h-4" /> Scan Now
+                  </button>
+                  <button
+                    onClick={() => setShowFaceAuth(true)}
+                    className="p-3 bg-white/10 hover:bg-white/20 border border-white/20 rounded-2xl text-white transition-all"
+                  >
+                    <Shield className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+            </div>
+
+            {/* ROW 5: 2 COLUMNS FOOTER GRID */}
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+              
+              {/* Pet Health Tip */}
+              <div className="md:col-span-6 bg-white rounded-3xl p-6 shadow-sm border border-neutral-100 flex flex-col justify-between h-[390px]">
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="text-xs font-black uppercase tracking-wider text-neutral-800 flex items-center gap-2">
+                      <Heart className="w-4 h-4 text-rose-500 fill-rose-500/20" /> Pet Health Tip
+                    </h4>
+                    <button
+                      onClick={() => setupDailyContentGeneration(true)}
+                      disabled={isRefreshingTip}
+                      className="p-1.5 rounded-lg border border-neutral-200 hover:bg-neutral-50 text-neutral-400 transition-all active:scale-90"
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 ${isRefreshingTip ? "animate-spin" : ""}`} />
+                    </button>
+                  </div>
+
+                  <div className="bg-neutral-50 p-4 rounded-2xl border border-neutral-100 shadow-inner italic text-xs text-neutral-600 leading-relaxed font-medium min-h-[200px] flex items-center justify-center">
+                    "{dailyQuote}"
+                  </div>
+                </div>
+
+                <p className="text-center text-[7px] font-black text-neutral-300 uppercase tracking-widest mt-4">Powered by Gemini AI</p>
+              </div>
+
+              {/* Video Consultations */}
+              <div className="bg-white rounded-3xl p-6 shadow-sm border border-neutral-100 flex flex-col justify-between h-[390px] relative overflow-hidden md:col-span-6">
+                <div>
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="p-1.5 bg-pink-50 rounded-lg text-pink-500">
+                      <Video className="w-4 h-4" />
+                    </div>
+                    <h3 className="text-xs font-bold text-neutral-400 uppercase tracking-widest">Video Consultations</h3>
+                  </div>
+
+                  <div className="flex items-baseline gap-1 mb-2">
+                    <span className="text-4xl font-black text-neutral-800">
+                      {userdata?.subscription?.plan === "Platinum" || userdata?.subscription?.plan === "Gold"
+                        ? (userdata.subscription.plan === "Gold" ? 10 : 25) - (userdata.videoCallsUsed || 0)
+                        : 25}
+                    </span>
+                    <span className="text-xs font-bold text-neutral-400 uppercase tracking-wider">Left</span>
+                  </div>
+
+                  <div className="w-full bg-neutral-100 rounded-full h-2.5 overflow-hidden p-0.5 border border-neutral-200/50 mb-2 shadow-inner">
+                    <div
+                      className="bg-gradient-to-r from-pink-500 to-rose-400 h-full rounded-full"
+                      style={{
+                        width: `${
+                          (((userdata?.subscription?.plan === "Platinum" || userdata?.subscription?.plan === "Gold"
+                            ? (userdata.subscription.plan === "Gold" ? 10 : 25) - (userdata.videoCallsUsed || 0)
+                            : 25) /
+                            (userdata?.subscription?.plan === "Gold" ? 10 : 25 || 25)) *
+                          100) || 100
+                        }%`,
+                      }}
+                    />
+                  </div>
+                  <p className="text-[9px] text-neutral-400 font-bold uppercase tracking-wider">
+                    Allowance: {userdata?.subscription?.plan === "Gold" ? 10 : 25} Monthly Credits
+                  </p>
+                  <button
+                    onClick={() => navigate("/doctors")}
+                    className="w-full mt-3 py-2 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white rounded-xl font-bold text-xs uppercase tracking-wider shadow-sm transition-all flex items-center justify-center gap-1.5 active:scale-95"
+                  >
+                    <Video className="w-3.5 h-3.5" /> Start Consult
+                  </button>
+                </div>
+
+                <div className="w-full h-32 mt-2 flex justify-center items-end">
+                  <img src="/video_doctor.png" alt="doctor consulting" className="max-h-full object-contain" />
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+
         </div>
+
       </div>
 
-      <AnimalHealthChatbot />
-
-      {showDeleteModal && (
-        <DeletionRequestModal onClose={() => setShowDeleteModal(false)} onSubmit={handleSubmitDeletion} isSubmitting={isSubmittingDeletion} />
-      )}
     </div>
   );
 };

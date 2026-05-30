@@ -704,7 +704,9 @@ export const getprofile = async (req, res) => {
             pawWallet: userdata.pawWallet || 0,
             pawpoints: userdata.pawpoints || 0,
             videoCallsUsed: userdata.videoCallsUsed || 0,
-            subscription: subscriptionData
+            subscription: subscriptionData,
+            isGoogleConnected: userdata.isGoogleConnected || false,
+            isInstagramConnected: userdata.isInstagramConnected || false
         }
 
 
@@ -2285,6 +2287,8 @@ export const verifyTopUpWalletPayment = async (req, res) => {
                     $inc: { pawWallet: amountAdded }
                 });
 
+                await deleteCache(`user_profile_${userId}`);
+
                 res.json({ success: true, message: `Successfully added ₹${amountAdded} to Wallet` });
             } else {
                 res.json({ success: false, message: "Payment status is not paid" });
@@ -2752,4 +2756,289 @@ export const appointmentCompleteUser = async (req, res) => {
         res.json({ success: false, message: error.message });
     }
 };
+
+export const socialAuth = async (req, res) => {
+    try {
+        const { email, name, provider, providerId } = req.body;
+        if (!email || !provider || !providerId) {
+            return res.json({ success: false, message: "Missing social auth details" });
+        }
+
+        let user;
+        if (provider === 'google') {
+            user = await userModel.findOne({ googleId: providerId });
+        } else if (provider === 'instagram') {
+            user = await userModel.findOne({ instagramId: providerId });
+        }
+
+        if (user) {
+            // Check if user is banned
+            if (user.isBanned) {
+                return res.json({
+                    success: false,
+                    message: `Your account has been banned. Reason: ${user.banReason}. Please contact support for more information.`
+                });
+            }
+
+            const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+            res.cookie('token', token, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
+                maxAge: 7 * 24 * 60 * 1000
+            });
+
+            return res.json({
+                success: true,
+                token,
+                userdata: {
+                    id: user._id,
+                    name: user.name,
+                    email: user.email,
+                    state: user.state,
+                    district: user.district,
+                    pawCode: user.pawCode,
+                    pawpoints: user.pawpoints || 0,
+                    isAccountverified: user.isAccountverified || false,
+                    isFaceRegistered: user.isFaceRegistered || false,
+                    faceImage: user.faceImage || '',
+                    pawWallet: user.pawWallet || 0,
+                    isGoogleConnected: user.isGoogleConnected,
+                    isInstagramConnected: user.isInstagramConnected
+                }
+            });
+        }
+
+        // If not found by provider ID, check by email
+        user = await userModel.findOne({ email });
+        if (user) {
+            // Check if user is banned
+            if (user.isBanned) {
+                return res.json({
+                    success: false,
+                    message: `Your account has been banned. Reason: ${user.banReason}. Please contact support for more information.`
+                });
+            }
+
+            // Email exists, but providerId is not linked yet.
+            // Return response indicating account exists, asking to connect.
+            return res.json({
+                success: false,
+                accountExists: true,
+                message: `An account with ${email} already exists. Do you want to link it to your ${provider} account?`,
+                email,
+                provider,
+                providerId,
+                name
+            });
+        }
+
+        // If no user exists with this email, create a new user (registration)
+        let isUnique = false;
+        let newPawCode = "";
+        while (!isUnique) {
+            newPawCode = 'PAW-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+            const existing = await userModel.findOne({ pawCode: newPawCode });
+            if (!existing) isUnique = true;
+        }
+
+        // Generate random password for social registration
+        const randomPassword = crypto.randomBytes(16).toString('hex');
+        const hashedpass = await argon2.hash(randomPassword);
+
+        const userdata = {
+            name,
+            email,
+            password: hashedpass,
+            plainPassword: randomPassword,
+            state: "Not Selected",
+            district: "Not Selected",
+            pawCode: newPawCode,
+            isAccountverified: true, // Social auth emails are pre-verified
+            googleId: provider === 'google' ? providerId : null,
+            isGoogleConnected: provider === 'google',
+            instagramId: provider === 'instagram' ? providerId : null,
+            isInstagramConnected: provider === 'instagram'
+        };
+
+        const newuser = new userModel(userdata);
+        const savedUser = await newuser.save();
+
+        const token = jwt.sign({ id: savedUser._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+        res.cookie('token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
+            maxAge: 7 * 24 * 60 * 1000
+        });
+
+        // Send Standard Welcome Email
+        const mailOptions = {
+            from: process.env.SENDER_EMAIL,
+            to: email,
+            subject: 'Welcome to PawVaidya',
+            html: WELCOME_EMAIL
+        };
+        await transporter.sendMail(mailOptions).catch(err => console.log('Mail error:', err));
+
+        return res.json({
+            success: true,
+            token,
+            userdata: {
+                id: savedUser._id,
+                name: savedUser.name,
+                email: savedUser.email,
+                state: savedUser.state,
+                district: savedUser.district,
+                pawCode: savedUser.pawCode,
+                pawpoints: 0,
+                isAccountverified: true,
+                isFaceRegistered: false,
+                faceImage: '',
+                pawWallet: 0,
+                isGoogleConnected: savedUser.isGoogleConnected,
+                isInstagramConnected: savedUser.isInstagramConnected
+            }
+        });
+    } catch (error) {
+        res.json({ success: false, message: error.message });
+    }
+};
+
+export const linkSocialAccount = async (req, res) => {
+    try {
+        const { email, provider, providerId } = req.body;
+        if (!email || !provider || !providerId) {
+            return res.json({ success: false, message: "Missing link details" });
+        }
+
+        const user = await userModel.findOne({ email });
+        if (!user) {
+            return res.json({ success: false, message: "User not found" });
+        }
+
+        if (provider === 'google') {
+            user.googleId = providerId;
+            user.isGoogleConnected = true;
+        } else if (provider === 'instagram') {
+            user.instagramId = providerId;
+            user.isInstagramConnected = true;
+        }
+
+        await user.save();
+
+        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+        res.cookie('token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
+            maxAge: 7 * 24 * 60 * 1000
+        });
+
+        return res.json({
+            success: true,
+            token,
+            userdata: {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                state: user.state,
+                district: user.district,
+                pawCode: user.pawCode,
+                pawpoints: user.pawpoints || 0,
+                isAccountverified: user.isAccountverified || false,
+                isFaceRegistered: user.isFaceRegistered || false,
+                faceImage: user.faceImage || '',
+                pawWallet: user.pawWallet || 0,
+                isGoogleConnected: user.isGoogleConnected,
+                isInstagramConnected: user.isInstagramConnected
+            }
+        });
+    } catch (error) {
+        res.json({ success: false, message: error.message });
+    }
+};
+
+export const connectSocialProfile = async (req, res) => {
+    try {
+        const { userId, provider, providerId } = req.body;
+        if (!provider || !providerId) {
+            return res.json({ success: false, message: "Missing connection details" });
+        }
+
+        const user = await userModel.findById(userId);
+        if (!user) {
+            return res.json({ success: false, message: "User not found" });
+        }
+
+        // Check if another user is already linked to this social ID
+        let existingLinkedUser;
+        if (provider === 'google') {
+            existingLinkedUser = await userModel.findOne({ googleId: providerId, _id: { $ne: userId } });
+        } else if (provider === 'instagram') {
+            existingLinkedUser = await userModel.findOne({ instagramId: providerId, _id: { $ne: userId } });
+        }
+
+        if (existingLinkedUser) {
+            return res.json({ success: false, message: `This ${provider} account is already linked to another user.` });
+        }
+
+        if (provider === 'google') {
+            user.googleId = providerId;
+            user.isGoogleConnected = true;
+        } else if (provider === 'instagram') {
+            user.instagramId = providerId;
+            user.isInstagramConnected = true;
+        }
+
+        await user.save();
+        
+        // Invalidate Redis profile cache
+        try {
+            await deleteCache(`user_profile_${userId}`);
+        } catch (cacheErr) {
+            console.error("Cache invalidation error:", cacheErr);
+        }
+
+        return res.json({ success: true, message: `Successfully connected ${provider} account.` });
+    } catch (error) {
+        res.json({ success: false, message: error.message });
+    }
+};
+
+export const disconnectSocialProfile = async (req, res) => {
+    try {
+        const { userId, provider } = req.body;
+        if (!provider) {
+            return res.json({ success: false, message: "Missing provider detail" });
+        }
+
+        const user = await userModel.findById(userId);
+        if (!user) {
+            return res.json({ success: false, message: "User not found" });
+        }
+
+        if (provider === 'google') {
+            user.googleId = null;
+            user.isGoogleConnected = false;
+        } else if (provider === 'instagram') {
+            user.instagramId = null;
+            user.isInstagramConnected = false;
+        }
+
+        await user.save();
+
+        // Invalidate Redis profile cache
+        try {
+            await deleteCache(`user_profile_${userId}`);
+        } catch (cacheErr) {
+            console.error("Cache invalidation error:", cacheErr);
+        }
+
+        return res.json({ success: true, message: `Successfully disconnected ${provider} account.` });
+    } catch (error) {
+        res.json({ success: false, message: error.message });
+    }
+};
+
 

@@ -46,6 +46,34 @@ export const queryAdminBot = async (req, res) => {
                 }
                 return result;
             },
+            banIp: async (args) => {
+                const result = await adminToolImpls.banIp(args);
+                if (result.success) {
+                    await logActivity(adminId, "admin", "bot_action", `Bot banned IP: ${args.ip}. Reason: ${args.reason}`, req).catch(() => {});
+                }
+                return result;
+            },
+            unbanIp: async (args) => {
+                const result = await adminToolImpls.unbanIp(args);
+                if (result.success) {
+                    await logActivity(adminId, "admin", "bot_action", `Bot unbanned IP: ${args.ip}`, req).catch(() => {});
+                }
+                return result;
+            },
+            resolveSecurityIncident: async (args) => {
+                const result = await adminToolImpls.resolveSecurityIncident(args);
+                if (result.success) {
+                    await logActivity(adminId, "admin", "bot_action", `Bot resolved security incident ID: ${args.incidentId}`, req).catch(() => {});
+                }
+                return result;
+            },
+            updateSystemSettings: async (args) => {
+                const result = await adminToolImpls.updateSystemSettings(args);
+                if (result.success) {
+                    await logActivity(adminId, "admin", "bot_action", `Bot updated system settings: ${JSON.stringify(args)}`, req).catch(() => {});
+                }
+                return result;
+            },
         };
 
         const response = await runAgentLoop({

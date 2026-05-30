@@ -95,7 +95,7 @@ const FinancialCalculations = () => {
             </div>
 
             {/* Summary Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-7 gap-6">
                 <SummaryCard 
                     title="Total Treasury" 
                     amount={summary.totalEarnings} 
@@ -137,6 +137,13 @@ const FinancialCalculations = () => {
                     icon={<Gift className="text-purple-500" />} 
                     color="purple"
                     subtitle="Loss via Manual Grants"
+                />
+                <SummaryCard 
+                    title="Stray Contribs" 
+                    amount={summary.adminCrowdfundLoss} 
+                    icon={<TrendingDown className="text-rose-600" />} 
+                    color="rose"
+                    subtitle="Admin Stray Contributions"
                 />
             </div>
 

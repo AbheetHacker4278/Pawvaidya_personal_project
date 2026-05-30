@@ -23,11 +23,9 @@ const LanguageSwitcher = () => {
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-1.5 px-3 lg:px-4 py-2 lg:py-2.5 rounded-2xl transition-all duration-300"
+        className="flex items-center gap-1.5 px-3 h-9 rounded-full transition-all duration-300 hover:bg-white/45"
         style={{
-          background: 'rgba(255,255,255,0.75)',
-          border: '1px solid rgba(232,213,176,0.7)',
-          boxShadow: '0 2px 8px rgba(61,43,31,0.06)'
+          color: '#5A4035'
         }}
       >
         <span className="text-[16px] lg:text-[18px] drop-shadow-sm">{currentLanguage.flag}</span>

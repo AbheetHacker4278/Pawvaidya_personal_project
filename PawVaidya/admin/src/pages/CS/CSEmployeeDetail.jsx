@@ -3,7 +3,7 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import { AdminContext } from '../../context/AdminContext';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaTrophy, FaCalendarCheck, FaStar, FaHistory, FaUserShield, FaClock, FaImage, FaSignOutAlt, FaFileAlt, FaFileDownload, FaIdCard, FaGraduationCap, FaPassport, FaTimes, FaShieldAlt, FaCheckCircle, FaHospital, FaCar, FaCoffee, FaExclamationTriangle, FaChartBar, FaUndo } from 'react-icons/fa';
+import { FaTrophy, FaCalendarCheck, FaStar, FaHistory, FaUserShield, FaClock, FaImage, FaSignOutAlt, FaFileAlt, FaFileDownload, FaIdCard, FaGraduationCap, FaPassport, FaTimes, FaShieldAlt, FaCheckCircle, FaHospital, FaCar, FaCoffee, FaExclamationTriangle, FaChartBar, FaUndo, FaVideo } from 'react-icons/fa';
 
 const CSEmployeeDetail = () => {
     const { id } = useParams();
@@ -698,6 +698,68 @@ const CSEmployeeDetail = () => {
                         </div>
                         <p className="text-sm font-bold text-gray-500 mb-1">DigiLocker Not Linked</p>
                         <p className="text-xs text-gray-400">This agent has not linked their DigiLocker account yet.</p>
+                    </div>
+                )}
+            </div>
+
+            {/* Screen Recordings Section */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+                <h3 className="text-lg font-bold text-gray-800 mb-4 border-b pb-2 flex items-center">
+                    <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-rose-500 to-rose-600 flex items-center justify-center mr-3 shadow-sm">
+                        <FaVideo className="text-white text-sm" />
+                    </span>
+                    Mandatory Screen Recordings
+                </h3>
+
+                {employee.screenRecordings && employee.screenRecordings.length > 0 ? (
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-gray-200 text-sm">
+                            <thead className="bg-gray-50">
+                                <tr>
+                                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Date & Time</th>
+                                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Duration</th>
+                                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-gray-100">
+                                {employee.screenRecordings.map((recording, idx) => {
+                                    const date = new Date(recording.recordedAt).toLocaleString();
+                                    const durationMin = Math.floor(recording.durationSeconds / 60);
+                                    const durationSec = recording.durationSeconds % 60;
+                                    const durationStr = `${durationMin}m ${durationSec}s`;
+                                    
+                                    return (
+                                        <tr key={idx} className="hover:bg-gray-50/50 transition-colors">
+                                            <td className="px-6 py-4 whitespace-nowrap text-gray-700 font-medium">
+                                                {date}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-gray-600 font-semibold font-mono">
+                                                {durationStr}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <a 
+                                                    href={recording.url} 
+                                                    target="_blank" 
+                                                    rel="noopener noreferrer" 
+                                                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-rose-50 border border-rose-100 text-rose-600 rounded-lg text-xs font-bold hover:bg-rose-100 transition-colors"
+                                                >
+                                                    <FaVideo size={12} />
+                                                    View Recording
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+                ) : (
+                    <div className="text-center py-10 bg-gray-50 rounded-xl border border-dashed border-gray-100">
+                        <div className="w-14 h-14 mx-auto mb-3 rounded-xl bg-gray-100 flex items-center justify-center">
+                            <FaVideo className="text-gray-300 text-xl" />
+                        </div>
+                        <p className="text-sm font-bold text-gray-500 mb-1">No Screen Recordings Found</p>
+                        <p className="text-xs text-gray-400">There are no uploaded screen recordings for this agent yet.</p>
                     </div>
                 )}
             </div>

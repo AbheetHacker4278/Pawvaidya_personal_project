@@ -13,6 +13,7 @@ const SERVICE_META = {
     nodemailer: { label: 'Nodemailer', icon: Mail, color: '#f59e0b', bgGrad: 'from-amber-500 to-orange-600', lightBg: 'bg-amber-50', lightText: 'text-amber-700', lightBorder: 'border-amber-200', emoji: '📨' },
     supabase: { label: 'Supabase', icon: Server, color: '#8b5cf6', bgGrad: 'from-violet-500 to-purple-600', lightBg: 'bg-violet-50', lightText: 'text-violet-700', lightBorder: 'border-violet-200', emoji: '⚡' },
     gemini: { label: 'Gemini AI', icon: BrainCircuit, color: '#ec4899', bgGrad: 'from-pink-500 to-rose-600', lightBg: 'bg-pink-50', lightText: 'text-pink-700', lightBorder: 'border-pink-200', emoji: '🧠' },
+    firebase_storage: { label: 'Firebase Storage', icon: Cloud, color: '#f59e0b', bgGrad: 'from-orange-500 to-amber-600', lightBg: 'bg-orange-50', lightText: 'text-orange-700', lightBorder: 'border-orange-200', emoji: '🔥' },
 };
 
 const StatusBadge = ({ status }) => {

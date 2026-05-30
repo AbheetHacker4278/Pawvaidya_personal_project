@@ -4,16 +4,41 @@ import { useNavigate } from 'react-router';
 import { DoctorContext } from '../context/DoctorContext';
 import { assets } from '../assets/assets_admin/assets';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, Search, User, LogOut, ChevronDown, Bell, Settings, Home, MessageSquare } from 'lucide-react';
+import { Menu, Search, User, LogOut, ChevronDown, Bell, Settings, Home, MessageSquare, RefreshCw } from 'lucide-react';
 import EmergencyAlertBell from './EmergencyAlertBell';
 
 const Navbar = ({ toggleSidebar }) => {
-  const { atoken, setatoken, getAdminProfile, adminProfile } = useContext(AdminContext);
+  const { atoken, setatoken, getAdminProfile, adminProfile, syncLegacyFiles, broadcastReuploadDocs } = useContext(AdminContext);
   const { dtoken, setdtoken, getProfileData, profileData } = useContext(DoctorContext);
   const navigate = useNavigate();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [broadcasting, setBroadcasting] = useState(false);
+
+  const handleSync = async () => {
+    setSyncing(true);
+    try {
+      await syncLegacyFiles();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const handleBroadcastReupload = async () => {
+    if (!window.confirm("Are you sure you want to send a global broadcast request to all Doctors and CS Agents to delete and re-upload all documents?")) return;
+    setBroadcasting(true);
+    try {
+      await broadcastReuploadDocs();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setBroadcasting(false);
+    }
+  };
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 10);
@@ -112,6 +137,48 @@ const Navbar = ({ toggleSidebar }) => {
             <div className="flex items-center gap-0.5 bg-white border border-slate-200 rounded px-1.5 py-0.5 text-[10px] font-bold text-slate-500 shadow-sm">
               <span className="text-[12px]">⌘</span>K
             </div>
+          </motion.button>
+        )}
+        {/* Sync Button */}
+        {atoken && (
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleSync}
+            disabled={syncing}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${
+              syncing
+                ? 'bg-emerald-50 text-emerald-600 border-emerald-200 cursor-not-allowed'
+                : 'bg-emerald-600 text-white border-emerald-500 hover:bg-emerald-700 hover:border-emerald-600 shadow-sm shadow-emerald-600/10'
+            }`}
+            title="Sync legacy non-image files to Firebase"
+          >
+            <motion.div
+              animate={syncing ? { rotate: 360 } : {}}
+              transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+            </motion.div>
+            <span>{syncing ? 'Syncing...' : 'Sync Files'}</span>
+          </motion.button>
+        )}
+
+        {/* Request Re-upload Button */}
+        {atoken && (
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleBroadcastReupload}
+            disabled={broadcasting}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${
+              broadcasting
+                ? 'bg-amber-50 text-amber-600 border-amber-200 cursor-not-allowed animate-pulse'
+                : 'bg-gradient-to-r from-amber-500 to-amber-600 text-white border-amber-500 hover:from-amber-600 hover:to-amber-700 hover:border-amber-600 shadow-sm shadow-amber-600/10'
+            }`}
+            title="Request Doctors and CS Agents to delete and re-upload documents"
+          >
+            <Bell className="w-3.5 h-3.5" />
+            <span>{broadcasting ? 'Sending...' : 'Request Re-upload'}</span>
           </motion.button>
         )}
 

@@ -111,18 +111,37 @@ const getFinancialCalculations = async (req, res) => {
             }
         });
 
+        // 6. Admin Crowdfunding Contributions (Deductions from Earnings)
+        let adminCrowdfundLoss = 0;
+        try {
+            const strayCrowdfundingModel = (await import('../models/strayCrowdfundingModel.js')).default;
+            const campaigns = await strayCrowdfundingModel.find({});
+            campaigns.forEach(camp => {
+                if (camp.contributions) {
+                    camp.contributions.forEach(contrib => {
+                        if (contrib.paymentId && contrib.paymentId.startsWith('ADMIN_CONTRIB_')) {
+                            adminCrowdfundLoss += contrib.amount;
+                        }
+                    });
+                }
+            });
+        } catch (strayErr) {
+            console.error("Error calculating admin crowdfund loss:", strayErr);
+        }
+
         res.json({
             success: true,
             data: {
                 summary: {
-                    totalEarnings: (totalBookingEarnings + totalSubscriptionEarnings) - totalCSManualDeduction,
+                    totalEarnings: (totalBookingEarnings + totalSubscriptionEarnings) - totalCSManualDeduction - adminCrowdfundLoss,
                     bookingEarnings: totalBookingEarnings,
                     subscriptionEarnings: totalSubscriptionEarnings,
-                    totalLoss: totalGiftedLoss + adminCouponLossSoFar + totalCSManualDeduction,
+                    totalLoss: totalGiftedLoss + adminCouponLossSoFar + totalCSManualDeduction + adminCrowdfundLoss,
                     giftedSubscriptionLoss: totalGiftedLoss + (totalCSManualDeduction - (manualDeductionLogs.filter(l => l.activityType === 'refund').reduce((acc, l) => acc + (l.metadata.amount || 0), 0))),
                     adminCouponLoss: adminCouponLossSoFar,
                     csRefundLoss: manualDeductionLogs.filter(l => l.activityType === 'refund').reduce((acc, l) => acc + (l.metadata.amount || 0), 0),
-                    csManualGiftLoss: manualDeductionLogs.filter(l => l.activityType === 'grant_subscription').reduce((acc, l) => acc + (l.metadata.amount || 0), 0)
+                    csManualGiftLoss: manualDeductionLogs.filter(l => l.activityType === 'grant_subscription').reduce((acc, l) => acc + (l.metadata.amount || 0), 0),
+                    adminCrowdfundLoss: adminCrowdfundLoss
                 },
                 breakdown: bookingBreakdown,
                 subscriptionBreakdown: subscriptionBreakdown,

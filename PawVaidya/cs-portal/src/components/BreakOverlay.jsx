@@ -19,16 +19,21 @@ const BreakOverlay = () => {
     const { m, s } = formatTime(breakTimeRemaining);
 
     return (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-950/90 backdrop-blur-2xl animate-in fade-in duration-700">
+        <div 
+            className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-950/90 animate-in fade-in duration-700 bg-cover bg-center"
+            style={{ 
+                backgroundImage: "linear-gradient(to bottom, rgba(15, 23, 42, 0.8), rgba(15, 23, 42, 0.9)), url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1920&auto=format&fit=crop')" 
+            }}
+        >
             {/* Ambient Background Glow */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-emerald-500/10 rounded-full blur-[150px] animate-pulse"></div>
-            <div className="absolute top-1/4 left-1/3 w-[400px] h-[400px] bg-amber-500/10 rounded-full blur-[120px] animate-pulse delay-700"></div>
-
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-emerald-500/5 rounded-full blur-[150px] animate-pulse"></div>
+            
             <div className="text-center space-y-16 relative z-10">
                 <div className="space-y-4">
                     <h2 className="text-emerald-400/60 text-xl font-black uppercase tracking-[0.5em] animate-pulse drop-shadow-[0_0_10px_rgba(16,185,129,0.3)]">
                         System Standby Mode
                     </h2>
+                    <p className="text-white/40 text-xs font-bold tracking-widest uppercase">Screen Saver Active • Recording Paused</p>
                     <div className="h-1 w-32 bg-gradient-to-r from-emerald-500 via-amber-500 to-emerald-500 mx-auto rounded-full shadow-[0_0_20px_rgba(245,158,11,0.4)]"></div>
                 </div>
 

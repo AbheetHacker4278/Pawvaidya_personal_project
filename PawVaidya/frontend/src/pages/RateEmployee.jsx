@@ -23,7 +23,8 @@ const RateEmployee = () => {
                     headers: { token }
                 });
                 if (data.success) {
-                    if (data.ticket.status !== 'closed') {
+                    const isClosed = data.ticket.isClosed || data.ticket.status === 'closed' || data.ticket.status === 'resolved';
+                    if (!isClosed) {
                         toast.error('Ticket is not closed yet.');
                         navigate(`/ticket-tracking/${ticketId}`);
                     } else if (data.ticket.isRated) {

@@ -4,6 +4,7 @@ import doctorModel from '../models/doctorModel.js';
 import appointmentModel from '../models/appointmentModel.js';
 import blogModel from '../models/blogModel.js';
 import { v2 as cloudinary } from 'cloudinary';
+import { uploadFile } from '../utils/uploadHelper.js';
 import { getIO } from '../socketServer.js';
 
 // Submit a report (User or Doctor)
@@ -93,11 +94,9 @@ const uploadEvidence = async (req, res) => {
             return res.json({ success: false, message: 'No file uploaded' });
         }
 
-        // Upload to Cloudinary
-        const result = await cloudinary.uploader.upload(req.file.path, {
-            folder: 'report_evidence',
-            resource_type: 'auto'
-        });
+        // Upload using our helper
+        const uploadResult = await uploadFile(req.file, 'report_evidence');
+        const fileUrl = uploadResult.url;
 
         // Update report with evidence URL
         const report = await reportModel.findById(reportId);
@@ -105,13 +104,13 @@ const uploadEvidence = async (req, res) => {
             return res.json({ success: false, message: 'Report not found' });
         }
 
-        report.evidence.push(result.secure_url);
+        report.evidence.push(fileUrl);
         await report.save();
 
         res.json({
             success: true,
             message: 'Evidence uploaded successfully',
-            evidenceUrl: result.secure_url
+            evidenceUrl: fileUrl
         });
 
     } catch (error) {

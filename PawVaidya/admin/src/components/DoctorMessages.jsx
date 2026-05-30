@@ -4,9 +4,8 @@ import axios from 'axios';
 import { extractLinks, getLinkSource, getSourceColor } from '../utils/linkUtils';
 
 const DoctorMessages = () => {
-    const { dtoken, backendurl } = useContext(DoctorContext);
-    const [messages, setMessages] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const { dtoken, doctorMessages: messages, getDoctorMessages, markDoctorMessageAsRead } = useContext(DoctorContext);
+    const [loading, setLoading] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
 
     const fetchMessages = async (isBackgroundRefresh = false) => {
@@ -14,41 +13,21 @@ const DoctorMessages = () => {
             if (isBackgroundRefresh) {
                 setRefreshing(true);
             }
-            const { data } = await axios.post(`${backendurl}/api/doctor/messages`, {}, {
-                headers: { dtoken }
-            });
-            if (data.success) {
-                setMessages(data.messages);
-            }
+            await getDoctorMessages();
         } catch (error) {
             console.error(error);
         } finally {
-            setLoading(false);
             setRefreshing(false);
         }
     };
 
     const markAsRead = async (messageId) => {
-        try {
-            await axios.post(`${backendurl}/api/doctor/messages/read`,
-                { messageId },
-                { headers: { dtoken } }
-            );
-        } catch (error) {
-            console.error(error);
-        }
+        await markDoctorMessageAsRead(messageId);
     };
 
     useEffect(() => {
         if (dtoken) {
-            fetchMessages(false);
-
-            // Poll for new messages every 5 seconds for real-time updates
-            const interval = setInterval(() => {
-                fetchMessages(true); // Background refresh
-            }, 5000); // 5 seconds
-
-            return () => clearInterval(interval);
+            getDoctorMessages();
         }
     }, [dtoken]);
 

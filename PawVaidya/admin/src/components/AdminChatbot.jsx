@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useContext } from 'react';
 import { AdminContext } from '../context/AdminContext';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import {
     MessageSquare,
     X,
@@ -19,8 +20,19 @@ import {
     ShieldCheck
 } from 'lucide-react';
 
+// ─── Render bold **text** ─────────────────────────────────────────────────────
+const renderText = (text) => {
+    const parts = text.split(/(\*\*[^*]+\*\*)/g);
+    return parts.map((part, i) =>
+        part.startsWith('**') && part.endsWith('**')
+            ? <strong key={i} className="font-bold text-emerald-700">{part.slice(2, -2)}</strong>
+            : <span key={i}>{part}</span>
+    );
+};
+
 const AdminChatbot = () => {
     const { atoken, backendurl } = useContext(AdminContext);
+    const navigate = useNavigate();
     const [isOpen, setIsOpen] = useState(false);
     const [isMinimized, setIsMinimized] = useState(false);
     const [messages, setMessages] = useState([
@@ -40,6 +52,16 @@ const AdminChatbot = () => {
     useEffect(() => {
         scrollToBottom();
     }, [messages]);
+
+    const processNavigation = (text) => {
+        const match = text.match(/\[NAVIGATE:([^\]]+)\]/);
+        if (match) {
+            const path = match[1];
+            setTimeout(() => { navigate(path); setIsOpen(false); }, 700);
+            return text.replace(/\[NAVIGATE:[^\]]+\]/, '').trim();
+        }
+        return text;
+    };
 
     const handleSend = async (e) => {
         e.preventDefault();
@@ -69,7 +91,8 @@ const AdminChatbot = () => {
             });
 
             if (data.success) {
-                setMessages(prev => [...prev, { role: 'assistant', content: data.response }]);
+                const cleaned = processNavigation(data.response);
+                setMessages(prev => [...prev, { role: 'assistant', content: cleaned }]);
             } else {
                 setMessages(prev => [...prev, { role: 'assistant', content: "Error: " + data.message }]);
             }
@@ -143,7 +166,7 @@ const AdminChatbot = () => {
                                                     ? 'bg-white text-gray-800 rounded-tl-none border border-gray-100'
                                                     : 'bg-green-600 text-white rounded-tr-none'
                                                     }`}>
-                                                    <p className="leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                                                    <p className="leading-relaxed whitespace-pre-wrap">{renderText(msg.content)}</p>
                                                 </div>
                                             </div>
                                         </div>

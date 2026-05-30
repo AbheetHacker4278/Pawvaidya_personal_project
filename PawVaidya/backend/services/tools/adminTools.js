@@ -2,6 +2,9 @@ import userModel from "../../models/userModel.js";
 import doctorModel from "../../models/doctorModel.js";
 import appointmentModel from "../../models/appointmentModel.js";
 import ComplaintTicket from "../../models/complaintTicketModel.js";
+import systemConfigModel from "../../models/systemConfigModel.js";
+import bannedIpModel from "../../models/bannedIpModel.js";
+import securityIncidentModel from "../../models/securityIncidentModel.js";
 import { transporter } from "../../config/nodemailer.js";
 import VERIFICATION_EMAIL_TEMPLATE from "../../mailservice/emailtemplate2.js";
 
@@ -21,6 +24,19 @@ Available Tools (use JSON format: {"tool": "toolName", "args": {...}}):
 - getRevenueReport(): Returns a revenue summary from appointments.
 - getPendingDoctors(): Lists doctors with no appointments yet (possibly pending review).
 - getCsAgentCount(): Returns the count of active CS agents.
+- listCsAgents(limit: number): Returns a list of customer support agents.
+- searchCsAgent(query: string): Searches for a CS agent by name or email.
+- getDashboardGuidance(): Returns navigation links and routes for all admin portal pages.
+- getSystemSettings(): Returns current system settings (maintenanceMode, killSwitch, etc.).
+- updateSystemSettings(maintenanceMode: boolean, killSwitch: boolean, maintenanceMessage: string, defaultCommissionPercentage: number): Updates system settings.
+- getBannedIps(): Returns all currently banned IP addresses.
+- banIp(ip: string, reason: string): Bans an IP address.
+- unbanIp(ip: string): Unbans an IP address.
+- getSecurityIncidents(): Lists all security incidents logged on the platform.
+- resolveSecurityIncident(incidentId: string): Marks a specific security incident as resolved.
+- getTopUsersByWallet(limit: number): Returns the top users sorted by wallet balance descending.
+- getTopUsersByPawpoints(limit: number): Returns the top users sorted by paw points descending.
+- getUsersBySubscription(plan: string): Returns users who have a specific subscription plan ('Silver', 'Gold', 'Platinum').
 `;
 
 // ─── Tool Implementations ─────────────────────────────────────────────────────
@@ -224,6 +240,199 @@ export const adminToolImpls = {
             return { message: "CS Agent data not available." };
         }
     },
+
+    listCsAgents: async ({ limit }) => {
+        try {
+            const { default: csEmployeeModel } = await import("../../models/csEmployeeModel.js");
+            const agents = await csEmployeeModel
+                .find({})
+                .select("name email phone status averageRating level rank isOnline")
+                .limit(limit || 20);
+            return { success: true, count: agents.length, agents };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    },
+
+    searchCsAgent: async ({ query }) => {
+        try {
+            if (!query) return { error: "query is required." };
+            const { default: csEmployeeModel } = await import("../../models/csEmployeeModel.js");
+            const agent = await csEmployeeModel
+                .findOne({ $or: [{ email: query }, { name: { $regex: query, $options: "i" } }] })
+                .select("name email phone status averageRating level rank isOnline");
+            return agent 
+                ? { success: true, agent } 
+                : { success: false, message: `CS Agent "${query}" not found.` };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    },
+
+    getDashboardGuidance: async () => {
+        return {
+            navigation: [
+                { page: "Admin Dashboard", path: "/admin-dashboard" },
+                { page: "Manage Admins", path: "/manage-admins" },
+                { page: "All Appointments", path: "/all-appointments" },
+                { page: "Add Doctor", path: "/add-doctor" },
+                { page: "Doctors List", path: "/doctor-list" },
+                { page: "Total Registered Users", path: "/total-users" },
+                { page: "Payment Details", path: "/payment-details" },
+                { page: "All Subscriptions", path: "/all-subscriptions" },
+                { page: "Emergency Dashboard", path: "/emergency-dashboard" },
+                { page: "Admin Messages / Group Chat", path: "/admin-messages" },
+                { page: "All Incident Reports", path: "/all-reports" },
+                { page: "User Unban Requests", path: "/unban-requests" },
+                { page: "Account Deletion Requests", path: "/deletion-requests" },
+                { page: "Trash / Deleted Reports", path: "/trash" },
+                { page: "System Logs & Audit Trail", path: "/admin-logs" },
+                { page: "Admin Profile Settings", path: "/admin-profile" },
+                { page: "Admin Live Video Streams", path: "/admin-live-streams" },
+                { page: "Broadcast Email Utility", path: "/broadcast-email" },
+                { page: "Doctor Rankings / Performance", path: "/doctor-rankings" },
+                { page: "Doctor Attendance Records", path: "/doctor-attendance" },
+                { page: "Media Registry", path: "/media-registry" },
+                { page: "App Issue Reports", path: "/app-issue-reports" },
+                { page: "IP & Domain Blacklist", path: "/blacklist-management" },
+                { page: "Manage Coupons", path: "/manage-coupons" },
+                { page: "Admin & User Polls", path: "/polls" },
+                { page: "Security Threat Monitoring", path: "/security-monitoring" },
+                { page: "Render Deployments status", path: "/admin-deployments" },
+                { page: "Redis Monitoring & Cache status", path: "/redis-monitoring" },
+                { page: "Financial / Accounting CS", path: "/financial-calculations" },
+                { page: "CS Employees Management", path: "/cs-employees" },
+                { page: "CS Support Tickets", path: "/cs-tickets" },
+                { page: "CS Performance Reports", path: "/cs-reports" },
+                { page: "User Misbehavior Reports", path: "/misbehavior-reports" },
+                { page: "Animal Cruelty Reports", path: "/cruelty-reports" }
+            ],
+            tip: "Use this map of paths to guide the admin step-by-step or to trigger automatic navigation."
+        };
+    },
+    getSystemSettings: async () => {
+        try {
+            const config = await systemConfigModel.findOne({}) || {
+                maintenanceMode: false,
+                killSwitch: false,
+                maintenanceMessage: "System is currently under maintenance. Please try again later.",
+                commissionRules: { defaultPercentage: 20 }
+            };
+            return { success: true, config };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    },
+    updateSystemSettings: async ({ maintenanceMode, killSwitch, maintenanceMessage, defaultCommissionPercentage }) => {
+        try {
+            let config = await systemConfigModel.findOne({});
+            if (!config) {
+                config = new systemConfigModel();
+            }
+            if (maintenanceMode !== undefined) config.maintenanceMode = maintenanceMode;
+            if (killSwitch !== undefined) config.killSwitch = killSwitch;
+            if (maintenanceMessage !== undefined) config.maintenanceMessage = maintenanceMessage;
+            if (defaultCommissionPercentage !== undefined) {
+                if (!config.commissionRules) config.commissionRules = { defaultPercentage: 20 };
+                config.commissionRules.defaultPercentage = defaultCommissionPercentage;
+            }
+            config.lastUpdatedBy = 'admin_bot';
+            config.updatedAt = new Date();
+            await config.save();
+            return { success: true, message: "System settings updated successfully.", config };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    },
+    getBannedIps: async () => {
+        try {
+            const bannedIps = await bannedIpModel.find({ isActive: true }).sort({ createdAt: -1 });
+            return { success: true, bannedIps };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    },
+    banIp: async ({ ip, reason }) => {
+        try {
+            const record = await bannedIpModel.findOneAndUpdate(
+                { ip },
+                { reason, isActive: true, bannedAt: new Date() },
+                { upsert: true, new: true }
+            );
+            return { success: true, message: `IP Address ${ip} has been banned.`, record };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    },
+    unbanIp: async ({ ip }) => {
+        try {
+            const record = await bannedIpModel.findOneAndUpdate(
+                { ip },
+                { isActive: false, unbannedAt: new Date() },
+                { new: true }
+            );
+            if (!record) return { success: false, message: `IP Address ${ip} not found in banned list.` };
+            return { success: true, message: `IP Address ${ip} has been unbanned.`, record };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    },
+    getSecurityIncidents: async () => {
+        try {
+            const incidents = await securityIncidentModel.find({}).sort({ createdAt: -1 }).limit(50);
+            return { success: true, incidents };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    },
+    resolveSecurityIncident: async ({ incidentId }) => {
+        try {
+            const record = await securityIncidentModel.findByIdAndUpdate(
+                incidentId,
+                { status: 'resolved', resolvedAt: new Date() },
+                { new: true }
+            );
+            if (!record) return { success: false, message: "Security incident not found." };
+            return { success: true, message: "Security incident resolved.", record };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    },
+    getTopUsersByWallet: async ({ limit }) => {
+        try {
+            const users = await userModel
+                .find({})
+                .sort({ pawWallet: -1 })
+                .limit(limit || 5)
+                .select("name email pawWallet pawpoints isBanned");
+            return { success: true, users };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    },
+    getTopUsersByPawpoints: async ({ limit }) => {
+        try {
+            const users = await userModel
+                .find({})
+                .sort({ pawpoints: -1 })
+                .limit(limit || 5)
+                .select("name email pawWallet pawpoints isBanned");
+            return { success: true, users };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    },
+    getUsersBySubscription: async ({ plan }) => {
+        try {
+            const users = await userModel
+                .find({ "subscription.plan": plan })
+                .limit(20)
+                .select("name email subscription pawWallet pawpoints");
+            return { success: true, count: users.length, users };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    }
 };
 
 // ─── System Prompt ────────────────────────────────────────────────────────────
@@ -240,4 +449,14 @@ Instructions:
 4. Be efficient and direct — admins are busy.
 5. NEVER make up data — always use tools for real information.
 6. If no tool is needed, respond naturally and helpfully.
+7. If the admin wants to navigate, open, go to, or view a specific admin dashboard/platform page, use the path from getDashboardGuidance() and append [NAVIGATE:path] at the very end of your message (e.g. [NAVIGATE:/all-appointments]). This will automatically route the admin's browser page.
+8. CRITICAL: ONLY append [NAVIGATE:...] if the user explicitly asks to navigate, open, go to, or show a page. For informational queries (such as listing users, finding the richest user, or checking statistics), ALWAYS fetch the data using the provided tools and display it directly in the chat box. DO NOT redirect/navigate the user for informational queries.
+9. Whenever the admin asks any question related to a specific admin category or sidebar page/module (e.g. Subscriptions, Users, Financials, CS Agents/Tickets, Security, Doctors, etc.), you MUST append a section listing all related available questions/actions that you can answer or perform within that module. List them clearly under a "💡 Related Actions/Questions" header at the very end of your response as bullet points. 
+For example:
+- If the question is about Subscriptions: list options like 'net profit', 'loss / cancelled subscriptions', 'recent subscriptions', 'list users with Platinum plan', 'change subscription plan'.
+- If the question is about Financials: list options like 'net profit from appointments', 'total revenue report', 'refund details', 'recent transactions'.
+- If the question is about CS Agents/Support Service: list options like 'CS agent list', 'online agents count', 'QA scores of agents', 'Shift logs', 'average rating of agents'.
+- If the question is about Doctors: list options like 'doctor specialities', 'top rated doctors', 'recent doctor onboardings', 'appointment slots availability'.
+- If the question is about Users: list options like 'richest user by wallet balance', 'users with highest paw points', 'banned users list', 'recent signups'.
+Ensure this suggestion behavior works dynamically for all sidebar sections: Dashboard, Financials, Manage Admins, Appointments, Doctors/Doctor List, Total Users, Payment Details, Subscriptions, Emergency Panel, Media Registry, Blacklist, Coupons, Polls, Security Monitor, Messages, Broadcast Email, Reports, App Issues, Unban Requests, Deletion Requests, CS Agents, CS Tickets, Complaints, Cruelty Reports, CS Reports, Activity Logs.
 `;

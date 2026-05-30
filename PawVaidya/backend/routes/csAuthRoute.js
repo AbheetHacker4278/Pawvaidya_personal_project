@@ -20,7 +20,11 @@ import {
     getUser360,
     issueRefund,
     revokeSubscription,
-    grantSubscription
+    grantSubscription,
+    getCSMessages,
+    markCSMessageAsRead,
+    triggerEmergencyAlert,
+    uploadScreenRecording
 } from '../controllers/csAuthController.js';
 import {
     initiateDigilockerLink,
@@ -92,12 +96,18 @@ router.post('/shift/early-logout', authCSEmployee, earlyLogout);
 router.post('/shift/sync', authCSEmployee, syncShift);
 router.post('/shift/complete', authCSEmployee, completeShift);
 router.get('/shift/status', authCSEmployee, getShiftStatus);
+router.post('/upload-recording', authCSEmployee, upload.single('recording'), uploadScreenRecording);
 
 // Customer 360 & Refunds
 router.get('/user-360/:email', authCSEmployee, getUser360);
 router.post('/refund', authCSEmployee, issueRefund);
 router.post('/revoke-subscription', authCSEmployee, revokeSubscription);
 router.post('/grant-subscription', authCSEmployee, grantSubscription);
+router.post('/trigger-emergency', authCSEmployee, triggerEmergencyAlert);
+
+// Admin notification routes
+router.get('/messages', authCSEmployee, getCSMessages);
+router.post('/messages/read', authCSEmployee, markCSMessageAsRead);
 
 // DigiLocker routes (protected)
 router.post('/digilocker/initiate', authCSEmployee, initiateDigilockerLink);

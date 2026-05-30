@@ -679,6 +679,21 @@ const TotalUsers = () => {
                                                     }}
                                                 />
                                             )}
+                                            {user.isGoogleConnected && (
+                                                <Chip
+                                                    label="Google"
+                                                    size="small"
+                                                    sx={{
+                                                        height: 20,
+                                                        fontSize: '0.65rem',
+                                                        fontWeight: 800,
+                                                        bgcolor: '#e0f2fe',
+                                                        color: '#0284c7',
+                                                        border: '1px solid #bae6fd',
+                                                        borderRadius: 1.5,
+                                                    }}
+                                                />
+                                            )}
                                         </Box>
 
                                         <Typography variant="body2" color="#64748b" fontWeight="600" sx={{ mb: 0.5 }}>
@@ -980,9 +995,19 @@ const TotalUsers = () => {
                                                     <Typography variant="subtitle2" fontWeight="800">Authentication</Typography>
                                                 </Box>
                                                 <Typography variant="caption" color="text.secondary" fontWeight="700">PASSWORD HASH</Typography>
-                                                <Typography variant="body2" sx={{ fontFamily: 'monospace', bgcolor: 'white', p: 1, mt: 1, borderRadius: 1.5, fontSize: '0.75rem', wordBreak: 'break-all', border: '1px solid #f1f5f9' }}>
+                                                <Typography variant="body2" sx={{ fontFamily: 'monospace', bgcolor: 'white', p: 1, mt: 1, borderRadius: 1.5, fontSize: '0.75rem', wordBreak: 'break-all', border: '1px solid #f1f5f9', mb: 2 }}>
                                                     {selectedUserDetails.password || 'Secure/Internal'}
                                                 </Typography>
+                                                <Typography variant="caption" color="text.secondary" fontWeight="700">CONNECTED SOCIALS</Typography>
+                                                <Box sx={{ mt: 1 }}>
+                                                    <Chip
+                                                        label={selectedUserDetails.isGoogleConnected ? 'Google Linked' : 'Google Not Linked'}
+                                                        size="small"
+                                                        color={selectedUserDetails.isGoogleConnected ? 'success' : 'default'}
+                                                        variant="outlined"
+                                                        sx={{ fontWeight: 'bold', fontSize: '0.7rem' }}
+                                                    />
+                                                </Box>
                                             </Paper>
                                         </Grid>
                                         <Grid item xs={12} md={4}>

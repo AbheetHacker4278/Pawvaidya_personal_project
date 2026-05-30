@@ -17,6 +17,7 @@ const doctorSchema = new mongoose.Schema({
     full_address: { type: String, required: true },
     date: { type: Number, required: true },
     slots_booked: { type: Object, default: {} },
+    pawWallet: { type: Number, default: 0 },
     // Login/Logout tracking
     lastLogin: { type: Date, default: null },
     lastLogout: { type: Date, default: null },
@@ -74,7 +75,27 @@ const doctorSchema = new mongoose.Schema({
     faceDescriptor: {
         type: [Number], // Array of 128 floats for face embedding
         default: []
-    }
+    },
+    // Medical Documents (education certificates, records, govt IDs)
+    medicalDocuments: [{
+        name: { type: String, required: true },         // original filename
+        url: { type: String, required: true },           // public URL
+        mimeType: { type: String, default: '' },         // e.g. image/jpeg, application/pdf
+        fileType: { type: String, enum: ['image', 'pdf', 'other'], default: 'other' },
+        storageProvider: { type: String, enum: ['cloudinary', 'firebase'], default: 'firebase' },
+        category: {
+            type: String,
+            enum: ['education', 'records', 'govtId', 'other'],
+            default: 'other'
+        },
+        uploadedAt: { type: Date, default: Date.now },
+        verificationStatus: {
+            type: String,
+            enum: ['pending', 'verified', 'rejected'],
+            default: 'pending'
+        },
+        adminNote: { type: String, default: '' }
+    }]
 }, { minimize: false })
 
 const doctorModel = mongoose.models.doctor || mongoose.model('doctor', doctorSchema);

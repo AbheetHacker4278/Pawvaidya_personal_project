@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react'
+import axios from 'axios'
 import { AdminContext } from '../../context/AdminContext'
 import BanUserDialog from '../../components/BanUserDialog'
 import {
@@ -47,6 +48,14 @@ import BlockIcon from '@mui/icons-material/Block'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import WarningIcon from '@mui/icons-material/Warning'
 import DeleteIcon from '@mui/icons-material/Delete'
+import FolderIcon from '@mui/icons-material/Folder'
+import VerifiedIcon from '@mui/icons-material/Verified'
+import CancelIcon from '@mui/icons-material/Cancel'
+import PendingIcon from '@mui/icons-material/Pending'
+import OpenInNewIcon from '@mui/icons-material/OpenInNew'
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf'
+import ImageIcon from '@mui/icons-material/Image'
+import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile'
 
 const DoctorsList = () => {
   const { doctors, atoken, getalldoctors, changeavailablity, deleteDoctor, makeAllDoctorsAvailable, makeAllDoctorsUnavailable, getDoctorsWithPasswords, getActivityLogs, banUser, unbanUser, blacklistEmails } = useContext(AdminContext)
@@ -67,6 +76,15 @@ const DoctorsList = () => {
   const [banDialogOpen, setBanDialogOpen] = useState(false)
   const [doctorToBan, setDoctorToBan] = useState(null)
   const [defaultBanIp, setDefaultBanIp] = useState(false)
+
+  // Medical Documents state
+  const [medicalDocs, setMedicalDocs] = useState([])
+  const [medicalDocsLoading, setMedicalDocsLoading] = useState(false)
+  const [verifyDialogOpen, setVerifyDialogOpen] = useState(false)
+  const [docToVerify, setDocToVerify] = useState(null)
+  const [verifyStatus, setVerifyStatus] = useState('verified')
+  const [verifyNote, setVerifyNote] = useState('')
+  const [verifyLoading, setVerifyLoading] = useState(false)
 
   // Separate available and not available doctors
   const getDoctorsByAvailability = (isAvailable) => {
@@ -280,11 +298,12 @@ const DoctorsList = () => {
   };
 
   // Handle view details
-  const handleViewDetails = async (doctor) => {
+  const handleViewDetails = async (doctor, tabIndex = 0) => {
     setSelectedDoctorDetails(null);
     setActivityLogs([]);
+    setMedicalDocs([]);
     setDetailsDialogOpen(true);
-    setDetailsTab(0); // Start with Profile Details tab
+    setDetailsTab(tabIndex); // Start with specified tab
     setDoctorDetailsLoading(true);
 
     try {
@@ -297,6 +316,9 @@ const DoctorsList = () => {
       setLogsLoading(true);
       const logsData = await getActivityLogs(doctor._id, 'doctor', 50, 0);
       setActivityLogs(logsData.logs || []);
+
+      // Fetch medical documents
+      fetchDoctorDocuments(doctor._id);
     } catch (error) {
       console.error('Error fetching doctor details:', error);
     } finally {
@@ -305,11 +327,66 @@ const DoctorsList = () => {
     }
   };
 
+  const fetchDoctorDocuments = async (doctorId) => {
+    setMedicalDocsLoading(true);
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000';
+    try {
+      const { data } = await axios.get(
+        `${backendUrl}/api/admin/doctor-documents/${doctorId}`,
+        { headers: { atoken } }
+      );
+      if (data.success) setMedicalDocs(data.documents || []);
+    } catch (e) {
+      console.error('fetchDoctorDocuments error:', e);
+    } finally {
+      setMedicalDocsLoading(false);
+    }
+  };
+
+  const handleVerifyDoc = async () => {
+    if (!docToVerify) return;
+    setVerifyLoading(true);
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000';
+    try {
+      const { data } = await axios.post(
+        `${backendUrl}/api/admin/doctor-documents/verify`,
+        { doctorId: selectedDoctorDetails._id, documentId: docToVerify._id, verificationStatus: verifyStatus, adminNote: verifyNote },
+        { headers: { atoken } }
+      );
+      if (data.success) {
+        fetchDoctorDocuments(selectedDoctorDetails._id);
+        setVerifyDialogOpen(false);
+        setDocToVerify(null);
+        setVerifyNote('');
+      }
+    } catch (e) {
+      console.error('handleVerifyDoc error:', e);
+    } finally {
+      setVerifyLoading(false);
+    }
+  };
+
+  const handleAdminDeleteDoc = async (docId) => {
+    if (!window.confirm('Permanently delete this document?')) return;
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000';
+    try {
+      const { data } = await axios.post(
+        `${backendUrl}/api/admin/doctor-documents/delete`,
+        { doctorId: selectedDoctorDetails._id, documentId: docId },
+        { headers: { atoken } }
+      );
+      if (data.success) fetchDoctorDocuments(selectedDoctorDetails._id);
+    } catch (e) {
+      console.error('handleAdminDeleteDoc error:', e);
+    }
+  };
+
   const handleDetailsDialogClose = () => {
     setDetailsDialogOpen(false);
     setSelectedDoctorDetails(null);
     setActivityLogs([]);
     setDetailsTab(0);
+    setMedicalDocs([]);
   };
 
   const formatDate = (dateString) => {
@@ -454,7 +531,7 @@ const DoctorsList = () => {
       </div>
 
       {/* Stats Overview */}
-      <div className='grid grid-cols-1 md:grid-cols-2 gap-4 mb-8'>
+      <div className='grid grid-cols-1 md:grid-cols-3 gap-4 mb-8'>
         <div className='bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-2xl p-6'>
           <div className='flex items-center justify-between'>
             <div>
@@ -480,6 +557,222 @@ const DoctorsList = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </div>
+          </div>
+        </div>
+
+        <div className='bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-2xl p-6'>
+          <div className='flex items-center justify-between'>
+            <div>
+              <h3 className='text-lg font-semibold text-indigo-800'>Document Uploads</h3>
+              <p className='text-3xl font-bold text-indigo-900'>
+                {doctors.filter(d => d.medicalDocuments && d.medicalDocuments.length > 0).length} / {doctors.length}
+              </p>
+              <p className='text-xs text-indigo-600 mt-1'>Doctors with uploaded documents</p>
+            </div>
+            <div className='w-12 h-12 bg-indigo-200 rounded-full flex items-center justify-center'>
+              <FolderIcon className="text-indigo-600" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Document Stats & Verification Hub */}
+      <div className="bg-white/80 backdrop-blur-xl border border-slate-200 rounded-[2rem] p-6 mb-8 shadow-sm">
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Left panel: Breakdown & Metrics */}
+          <div className="w-full lg:w-1/3 flex flex-col justify-between p-6 bg-slate-50/50 border border-slate-100 rounded-3xl animate-fadeIn">
+            <div>
+              <h2 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                <FolderIcon className="text-emerald-500" />
+                Document Statistics
+              </h2>
+              <div className="space-y-4">
+                {/* Total Docs */}
+                <div className="flex justify-between items-center pb-2 border-b border-slate-100">
+                  <span className="text-sm text-slate-500">Total Uploaded Files</span>
+                  <span className="text-lg font-black text-slate-800">
+                    {doctors.reduce((acc, d) => acc + (d.medicalDocuments?.length || 0), 0)}
+                  </span>
+                </div>
+                {/* Categories */}
+                <div className="space-y-2">
+                  <span className="text-xs font-black text-slate-400 uppercase tracking-wider">By Category</span>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="p-2.5 bg-white border border-slate-100 rounded-xl">
+                      <span className="text-[10px] text-slate-400 block font-medium">Education</span>
+                      <span className="text-sm font-bold text-indigo-600">
+                        {doctors.reduce((acc, d) => acc + (d.medicalDocuments?.filter(doc => doc.category === 'education').length || 0), 0)}
+                      </span>
+                    </div>
+                    <div className="p-2.5 bg-white border border-slate-100 rounded-xl">
+                      <span className="text-[10px] text-slate-400 block font-medium">Records</span>
+                      <span className="text-sm font-bold text-emerald-600">
+                        {doctors.reduce((acc, d) => acc + (d.medicalDocuments?.filter(doc => doc.category === 'records').length || 0), 0)}
+                      </span>
+                    </div>
+                    <div className="p-2.5 bg-white border border-slate-100 rounded-xl">
+                      <span className="text-[10px] text-slate-400 block font-medium">Govt ID</span>
+                      <span className="text-sm font-bold text-purple-600">
+                        {doctors.reduce((acc, d) => acc + (d.medicalDocuments?.filter(doc => doc.category === 'govtId').length || 0), 0)}
+                      </span>
+                    </div>
+                    <div className="p-2.5 bg-white border border-slate-100 rounded-xl">
+                      <span className="text-[10px] text-slate-400 block font-medium">Others</span>
+                      <span className="text-sm font-bold text-slate-600">
+                        {doctors.reduce((acc, d) => acc + (d.medicalDocuments?.filter(doc => doc.category === 'other').length || 0), 0)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 pt-4 border-t border-slate-100 space-y-3">
+              <span className="text-xs font-black text-slate-400 uppercase tracking-wider">Verification Status</span>
+              
+              {/* Verified progress */}
+              <div className="space-y-1">
+                {(() => {
+                  const total = doctors.reduce((acc, d) => acc + (d.medicalDocuments?.length || 0), 0);
+                  const verified = doctors.reduce((acc, d) => acc + (d.medicalDocuments?.filter(doc => doc.verificationStatus === 'verified').length || 0), 0);
+                  const pct = total ? Math.round((verified / total) * 100) : 0;
+                  return (
+                    <>
+                      <div className="flex justify-between text-xs">
+                        <span className="text-slate-500">Verified</span>
+                        <span className="font-bold text-emerald-600">{verified} ({pct}%)</span>
+                      </div>
+                      <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                        <div className="bg-emerald-500 h-full rounded-full" style={{ width: `${pct}%` }}></div>
+                      </div>
+                    </>
+                  );
+                })()}
+              </div>
+
+              {/* Pending progress */}
+              <div className="space-y-1">
+                {(() => {
+                  const total = doctors.reduce((acc, d) => acc + (d.medicalDocuments?.length || 0), 0);
+                  const pending = doctors.reduce((acc, d) => acc + (d.medicalDocuments?.filter(doc => doc.verificationStatus === 'pending').length || 0), 0);
+                  const pct = total ? Math.round((pending / total) * 100) : 0;
+                  return (
+                    <>
+                      <div className="flex justify-between text-xs">
+                        <span className="text-slate-500">Pending Review</span>
+                        <span className="font-bold text-amber-600">{pending} ({pct}%)</span>
+                      </div>
+                      <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                        <div className="bg-amber-500 h-full rounded-full" style={{ width: `${pct}%` }}></div>
+                      </div>
+                    </>
+                  );
+                })()}
+              </div>
+
+              {/* Rejected progress */}
+              <div className="space-y-1">
+                {(() => {
+                  const total = doctors.reduce((acc, d) => acc + (d.medicalDocuments?.length || 0), 0);
+                  const rejected = doctors.reduce((acc, d) => acc + (d.medicalDocuments?.filter(doc => doc.verificationStatus === 'rejected').length || 0), 0);
+                  const pct = total ? Math.round((rejected / total) * 100) : 0;
+                  return (
+                    <>
+                      <div className="flex justify-between text-xs">
+                        <span className="text-slate-500">Rejected</span>
+                        <span className="font-bold text-rose-600">{rejected} ({pct}%)</span>
+                      </div>
+                      <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                        <div className="bg-rose-500 h-full rounded-full" style={{ width: `${pct}%` }}></div>
+                      </div>
+                    </>
+                  );
+                })()}
+              </div>
+            </div>
+          </div>
+
+          {/* Right panel: Doctor List with Uploaded Docs */}
+          <div className="w-full lg:w-2/3 flex flex-col animate-fadeIn">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                <VerifiedIcon className="text-indigo-500" />
+                Doctors with Uploaded Documents
+              </h2>
+              <span className="px-3 py-1 bg-indigo-50 text-indigo-700 text-xs font-bold rounded-full">
+                {doctors.filter(d => d.medicalDocuments && d.medicalDocuments.length > 0).length} Doctor(s)
+              </span>
+            </div>
+
+            {doctors.filter(d => d.medicalDocuments && d.medicalDocuments.length > 0).length === 0 ? (
+              <div className="flex-1 flex flex-col items-center justify-center p-8 bg-slate-50 border border-slate-100 rounded-3xl text-center">
+                <FolderIcon className="text-slate-300 w-16 h-16 mb-2" />
+                <p className="text-slate-600 font-semibold">No documents uploaded yet</p>
+                <p className="text-slate-400 text-xs mt-1">Uploaded credentials will appear here for verification.</p>
+              </div>
+            ) : (
+              <div className="flex-1 overflow-y-auto max-h-[360px] pr-2 space-y-3 scrollbar-thin scrollbar-thumb-slate-200">
+                {doctors.filter(d => d.medicalDocuments && d.medicalDocuments.length > 0).map(doc => {
+                  const docCount = doc.medicalDocuments.length;
+                  const docCategories = [...new Set(doc.medicalDocuments.map(d => d.category))];
+                  const hasPending = doc.medicalDocuments.some(d => d.verificationStatus === 'pending');
+                  const verifiedCount = doc.medicalDocuments.filter(d => d.verificationStatus === 'verified').length;
+                  const rejectedCount = doc.medicalDocuments.filter(d => d.verificationStatus === 'rejected').length;
+                  const pendingCount = doc.medicalDocuments.filter(d => d.verificationStatus === 'pending').length;
+
+                  return (
+                    <div key={doc._id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-white hover:bg-slate-50 border border-slate-100 rounded-2xl shadow-sm transition-all duration-300 gap-4">
+                      <div className="flex items-center gap-3">
+                        <Avatar src={doc.image} alt={doc.name} className="w-12 h-12 border border-slate-100" />
+                        <div>
+                          <h4 className="font-bold text-slate-800 text-sm sm:text-base leading-snug">{doc.name}</h4>
+                          <span className="text-xs text-slate-400 block">{doc.speciality}</span>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {docCategories.map(cat => (
+                              <span key={cat} className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">
+                                {cat === 'govtId' ? 'Govt ID' : cat}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap sm:flex-nowrap items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
+                        <div className="flex flex-col items-start sm:items-end">
+                          <span className="text-xs font-bold text-slate-700">{docCount} document(s)</span>
+                          <div className="flex items-center gap-1.5 mt-1">
+                            {verifiedCount > 0 && (
+                              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" title={`${verifiedCount} Verified`} />
+                            )}
+                            {pendingCount > 0 && (
+                              <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse" title={`${pendingCount} Pending`} />
+                            )}
+                            {rejectedCount > 0 && (
+                              <span className="w-2.5 h-2.5 rounded-full bg-rose-500" title={`${rejectedCount} Rejected`} />
+                            )}
+                            <span className="text-[10px] text-slate-400">
+                              ({verifiedCount}v, {pendingCount}p, {rejectedCount}r)
+                            </span>
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={() => handleViewDetails(doc, 3)}
+                          className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all duration-300 active:scale-95 flex items-center gap-1.5 ${
+                            hasPending
+                              ? 'bg-amber-500 text-white hover:bg-amber-600 shadow-md shadow-amber-100'
+                              : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-md shadow-indigo-100'
+                          }`}
+                        >
+                          {hasPending ? 'Verify (Pending)' : 'Review Docs'}
+                          <OpenInNewIcon sx={{ fontSize: 12 }} />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -565,6 +858,7 @@ const DoctorsList = () => {
                 <Tab label="Profile Details" />
                 <Tab label="Login Statistics" />
                 <Tab label="Activity Logs" />
+                <Tab label={`Medical Documents (${medicalDocs.length})`} icon={medicalDocsLoading ? undefined : undefined} />
               </Tabs>
 
               {/* Profile Details Tab */}
@@ -921,11 +1215,186 @@ const DoctorsList = () => {
                   )}
                 </Box>
               )}
+
+              {/* Medical Documents Tab */}
+              {detailsTab === 3 && (
+                <Box>
+                  {/* Stats summary */}
+                  <Box display="flex" gap={2} mb={3} flexWrap="wrap">
+                    {['pending', 'verified', 'rejected'].map(s => {
+                      const count = medicalDocs.filter(d => d.verificationStatus === s).length;
+                      return (
+                        <Paper key={s} elevation={1} sx={{ px: 2, py: 1, borderRadius: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: s === 'verified' ? '#10b981' : s === 'rejected' ? '#ef4444' : '#f59e0b' }} />
+                          <Typography variant="caption" fontWeight="bold" sx={{ textTransform: 'capitalize' }}>{s}: {count}</Typography>
+                        </Paper>
+                      );
+                    })}
+                    <Paper elevation={1} sx={{ px: 2, py: 1, borderRadius: 3 }}>
+                      <Typography variant="caption" fontWeight="bold">Total: {medicalDocs.length}</Typography>
+                    </Paper>
+                  </Box>
+
+                  {medicalDocsLoading ? (
+                    <Box display="flex" justifyContent="center" p={4}>
+                      <CircularProgress color="primary" />
+                    </Box>
+                  ) : medicalDocs.length === 0 ? (
+                    <Box textAlign="center" py={6}>
+                      <FolderIcon sx={{ fontSize: 56, color: '#c7d2fe', mb: 2 }} />
+                      <Typography variant="h6" color="text.secondary">No documents uploaded yet</Typography>
+                      <Typography variant="body2" color="text.disabled">The doctor has not uploaded any medical documents</Typography>
+                    </Box>
+                  ) : (
+                    <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(260px,1fr))', gap: 2 }}>
+                      {medicalDocs.map(doc => (
+                        <Paper
+                          key={doc._id}
+                          elevation={2}
+                          sx={{
+                            borderRadius: 3,
+                            overflow: 'hidden',
+                            border: '2px solid',
+                            borderColor: doc.verificationStatus === 'verified' ? '#bbf7d0' : doc.verificationStatus === 'rejected' ? '#fecaca' : '#fef3c7',
+                            transition: 'box-shadow 0.2s',
+                            '&:hover': { boxShadow: '0 8px 24px rgba(0,0,0,0.12)' }
+                          }}
+                        >
+                          {/* Thumbnail */}
+                          <Box sx={{ height: 140, bgcolor: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
+                            {doc.fileType === 'image' ? (
+                              <img src={doc.url} alt={doc.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            ) : doc.fileType === 'pdf' ? (
+                              <Box textAlign="center">
+                                <PictureAsPdfIcon sx={{ fontSize: 52, color: '#ef4444' }} />
+                                <Typography variant="caption" display="block" color="text.secondary" fontWeight="bold">PDF</Typography>
+                              </Box>
+                            ) : (
+                              <Box textAlign="center">
+                                <InsertDriveFileIcon sx={{ fontSize: 52, color: '#6366f1' }} />
+                                <Typography variant="caption" display="block" color="text.secondary" fontWeight="bold">
+                                  {doc.mimeType && doc.mimeType.split('/')[1] ? doc.mimeType.split('/')[1].toUpperCase() : 'FILE'}
+                                </Typography>
+                              </Box>
+                            )}
+                            <Chip
+                              label={doc.verificationStatus ? doc.verificationStatus.toUpperCase() : 'PENDING'}
+                              size="small"
+                              sx={{
+                                position: 'absolute', top: 8, right: 8, fontSize: 9, fontWeight: 'bold',
+                                bgcolor: doc.verificationStatus === 'verified' ? '#10b981' : doc.verificationStatus === 'rejected' ? '#ef4444' : '#f59e0b',
+                                color: 'white'
+                              }}
+                            />
+                          </Box>
+
+                          {/* Info */}
+                          <Box sx={{ p: 1.5 }}>
+                            <Typography variant="body2" fontWeight="bold" noWrap title={doc.name}>{doc.name}</Typography>
+                            <Box display="flex" alignItems="center" gap={1} mt={0.5} mb={1}>
+                              <Chip
+                                label={
+                                  doc.category === 'education' ? 'Education' :
+                                  doc.category === 'records' ? 'Records' :
+                                  doc.category === 'govtId' ? 'Govt ID' : 'Other'
+                                }
+                                size="small"
+                                sx={{
+                                  fontSize: 9, fontWeight: 'bold',
+                                  bgcolor: doc.category === 'education' ? '#dbeafe' :
+                                           doc.category === 'records' ? '#dcfce7' :
+                                           doc.category === 'govtId' ? '#f3e8ff' : '#f1f5f9'
+                                }}
+                              />
+                              <Typography variant="caption" color="text.disabled">
+                                {doc.storageProvider === 'cloudinary' ? 'Cloudinary' : 'Firebase'}
+                              </Typography>
+                            </Box>
+                            {doc.adminNote && (
+                              <Typography variant="caption" color="text.secondary" display="block"
+                                sx={{ fontStyle: 'italic', mb: 1, borderTop: '1px solid #f1f5f9', pt: 0.5 }}>
+                                Note: {doc.adminNote}
+                              </Typography>
+                            )}
+                            <Typography variant="caption" color="text.disabled" display="block" mb={1.5}>
+                              Uploaded: {new Date(doc.uploadedAt).toLocaleDateString()}
+                            </Typography>
+                            <Box display="flex" gap={1} flexWrap="wrap">
+                              <Button
+                                size="small" variant="outlined"
+                                startIcon={<OpenInNewIcon />}
+                                href={doc.url} target="_blank" rel="noreferrer"
+                                sx={{ fontSize: 10, borderRadius: 2, flex: 1 }}
+                              >View</Button>
+                              <Button
+                                size="small" variant="contained"
+                                sx={{ fontSize: 10, borderRadius: 2, flex: 1, bgcolor: '#4f46e5', '&:hover': { bgcolor: '#4338ca' } }}
+                                onClick={() => {
+                                  setDocToVerify(doc);
+                                  setVerifyStatus(doc.verificationStatus || 'verified');
+                                  setVerifyNote(doc.adminNote || '');
+                                  setVerifyDialogOpen(true);
+                                }}
+                              >Verify</Button>
+                              <Button
+                                size="small" variant="contained" color="error"
+                                sx={{ fontSize: 10, borderRadius: 2, minWidth: 'auto', px: 1 }}
+                                onClick={() => handleAdminDeleteDoc(doc._id)}
+                              ><DeleteIcon sx={{ fontSize: 14 }} /></Button>
+                            </Box>
+                          </Box>
+                        </Paper>
+                      ))}
+                    </Box>
+                  )}
+                </Box>
+              )}
             </>
           ) : (
             <Typography>No details available</Typography>
           )}
         </DialogContent>
+
+        {/* Verify Document Dialog */}
+        <Dialog open={verifyDialogOpen} onClose={() => setVerifyDialogOpen(false)} maxWidth="sm" fullWidth>
+          <DialogTitle sx={{ bgcolor: '#4f46e5', color: 'white', fontWeight: 'bold' }}>
+            {docToVerify?.verificationStatus === 'verified' ? '🔄 Update Verification' : '✅ Verify Document'}: {docToVerify?.name}
+          </DialogTitle>
+          <DialogContent dividers>
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="subtitle2" fontWeight="bold" gutterBottom>Verification Status</Typography>
+              <Box display="flex" gap={1} mb={3}>
+                {['verified', 'rejected', 'pending'].map(s => (
+                  <Button
+                    key={s}
+                    variant={verifyStatus === s ? 'contained' : 'outlined'}
+                    color={s === 'verified' ? 'success' : s === 'rejected' ? 'error' : 'warning'}
+                    size="small"
+                    onClick={() => setVerifyStatus(s)}
+                    sx={{ textTransform: 'capitalize', fontWeight: 'bold' }}
+                  >
+                    {s === 'verified' ? '✅ Verified' : s === 'rejected' ? '❌ Rejected' : '⏳ Pending'}
+                  </Button>
+                ))}
+              </Box>
+              <Typography variant="subtitle2" fontWeight="bold" gutterBottom>Admin Note (optional)</Typography>
+              <textarea
+                value={verifyNote}
+                onChange={e => setVerifyNote(e.target.value)}
+                placeholder="Add a note for the doctor..."
+                rows={3}
+                style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 14, resize: 'vertical' }}
+              />
+            </Box>
+          </DialogContent>
+          <DialogActions sx={{ px: 3, py: 2 }}>
+            <Button onClick={() => setVerifyDialogOpen(false)} color="inherit">Cancel</Button>
+            <Button onClick={handleVerifyDoc} variant="contained" color="primary" disabled={verifyLoading}>
+              {verifyLoading ? 'Saving...' : 'Save'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
         <DialogActions sx={{ px: 3, py: 2 }}>
           <Button onClick={handleDetailsDialogClose} color="primary" variant="contained">
             Close

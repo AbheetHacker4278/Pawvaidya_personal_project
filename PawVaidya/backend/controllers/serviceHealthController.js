@@ -6,6 +6,7 @@ import { v2 as cloudinary } from 'cloudinary';
 import { transporter } from '../config/nodemailer.js';
 import supabase from '../config/supabase.js';
 import { getIO } from '../socketServer.js';
+import { getFirebaseStorageStats } from '../config/firebase.js';
 
 /**
  * Comprehensive Service Health Check Controller
@@ -180,6 +181,31 @@ export const getServiceHealth = async (req, res) => {
                 latency: 0,
                 error: error.message,
                 details: { configured: false }
+            };
+        }
+
+        // ── 5.5. Firebase Storage Health ──────────────────────────────────
+        try {
+            const firebaseStats = await getFirebaseStorageStats();
+            services.firebase_storage = {
+                status: firebaseStats.status,
+                latency: firebaseStats.latency,
+                error: firebaseStats.error,
+                details: firebaseStats.details
+            };
+        } catch (error) {
+            services.firebase_storage = {
+                status: 'offline',
+                latency: 0,
+                error: error.message,
+                details: {
+                    bucketName: 'Unknown',
+                    usedStorage: '0.00 MB',
+                    remainingStorage: '5.00 GB',
+                    totalQuota: '5.00 GB',
+                    percentUsed: '0%',
+                    fileCount: 0
+                }
             };
         }
 

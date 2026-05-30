@@ -9,12 +9,17 @@ import authuser from '../middleware/authuser.js';
 import upload from '../middleware/multer.js';
 import { uploadBlogFiles } from '../middleware/multerBlogs.js';
 import securityMonitor from '../middleware/securityMonitor.js';
+import { socialAuth, linkSocialAccount, connectSocialProfile, disconnectSocialProfile } from '../controllers/userController.js';
 
 export const userRouter = express.Router()
 
 userRouter.post('/register', registeruser)
 userRouter.post('/login', loginUser)
 userRouter.post('/logout', logout)
+userRouter.post('/social-auth', socialAuth)
+userRouter.post('/link-social-account', linkSocialAccount)
+userRouter.post('/connect-social', authuser, connectSocialProfile)
+userRouter.post('/disconnect-social', authuser, disconnectSocialProfile)
 userRouter.get('/get-profile', authuser, getprofile)
 userRouter.post('/update-profile', upload.single('image'), authuser, securityMonitor, updateprofile)
 userRouter.post('/book-appointment', authuser, bookappointment)

@@ -56,6 +56,10 @@ const animalDiseaseSchema = new mongoose.Schema({
     pawPointsEarned: {
         type: Number,
         default: 3
+    },
+    emergencyAlertTriggered: {
+        type: Boolean,
+        default: false
     }
 }, { timestamps: true });
 

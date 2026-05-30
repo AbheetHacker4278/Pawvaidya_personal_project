@@ -6,6 +6,7 @@ import validator from 'validator';
 import bcryptjs from 'bcryptjs';
 import argon2 from "argon2";
 import { v2 as cloudinary } from 'cloudinary';
+import { uploadFile } from '../utils/uploadHelper.js';
 import doctorModel from '../models/doctorModel.js';
 import jwt from 'jsonwebtoken';
 import appointmentModel from '../models/appointmentModel.js';
@@ -1183,6 +1184,7 @@ export const Appointmentcancel = async (req, res) => {
             await userModel.findByIdAndUpdate(appointmentData.userId, {
                 $inc: { pawWallet: appointmentData.amount }
             });
+            await deleteCache(`user_profile_${appointmentData.userId}`);
         }
 
         // releasing doctor slot 
@@ -2168,17 +2170,15 @@ export const createAdminMessage = async (req, res) => {
         const attachments = [];
         if (req.files && req.files.length > 0) {
             for (const file of req.files) {
-                // Upload to Cloudinary
-                const uploadResult = await cloudinary.uploader.upload(file.path, {
-                    resource_type: 'auto', // Automatically detect resource type
-                    folder: 'admin_messages'
-                });
+                // Upload using helper
+                const uploadResult = await uploadFile(file, 'admin_messages');
 
-                // Determine file type
-                const fileType = uploadResult.resource_type === 'video' ? 'video' : 'image';
+                // Determine file type for admin message compatibility
+                const fileType = file.mimetype.toLowerCase().startsWith('image/') ? 'image' : 
+                                 (file.mimetype.toLowerCase().startsWith('video/') ? 'video' : 'file');
 
                 attachments.push({
-                    url: uploadResult.secure_url,
+                    url: uploadResult.url,
                     type: fileType,
                     filename: file.originalname
                 });
@@ -2253,16 +2253,14 @@ export const updateAdminMessage = async (req, res) => {
         if (req.files && req.files.length > 0) {
             const attachments = [];
             for (const file of req.files) {
-                // Upload to Cloudinary
-                const uploadResult = await cloudinary.uploader.upload(file.path, {
-                    resource_type: 'auto',
-                    folder: 'admin_messages'
-                });
+                // Upload using helper
+                const uploadResult = await uploadFile(file, 'admin_messages');
 
-                const fileType = uploadResult.resource_type === 'video' ? 'video' : 'image';
+                const fileType = file.mimetype.toLowerCase().startsWith('image/') ? 'image' : 
+                                 (file.mimetype.toLowerCase().startsWith('video/') ? 'video' : 'file');
 
                 attachments.push({
-                    url: uploadResult.secure_url,
+                    url: uploadResult.url,
                     type: fileType,
                     filename: file.originalname
                 });
@@ -4056,3 +4054,288 @@ export const getRedisHistory = async (req, res) => {
         res.json({ success: false, message: error.message });
     }
 };
+
+// Sync Legacy Files to Firebase Storage (Admin Only)
+export const syncLegacyFiles = async (req, res) => {
+    try {
+        // Dynamically import required models and tools
+        const chatMessageModel = (await import('../models/chatMessageModel.js')).default;
+        const directMessageModel = (await import('../models/directMessageModel.js')).default;
+        const petReportModel = (await import('../models/petReportModel.js')).default;
+        const emergencyRequestModel = (await import('../models/emergencyRequestModel.js')).default;
+        const csEmployeeModel = (await import('../models/csEmployeeModel.js')).default;
+        const { uploadToFirebase } = await import('../config/firebase.js');
+        const axios = (await import('axios')).default;
+        const path = (await import('path')).default;
+
+        const isNonImageFile = (url) => {
+            if (!url) return false;
+            const lower = url.toLowerCase();
+            // Exclude images
+            if (lower.match(/\.(jpg|jpeg|png|gif|webp|heic|svg|bmp)$/)) return false;
+            // Exclude already stored on Google Cloud/Firebase
+            if (lower.includes('storage.googleapis.com') || lower.includes('firebasestorage.googleapis.com')) return false;
+            return lower.startsWith('http://') || lower.startsWith('https://');
+        };
+
+        const downloadAndUpload = async (url, folderName) => {
+            try {
+                // Determine file name from URL
+                const parsedUrl = new URL(url);
+                let filename = path.basename(parsedUrl.pathname);
+                if (!filename || !filename.includes('.')) {
+                    filename = `migrated_file_${Date.now()}.pdf`;
+                }
+
+                // Temporary file path in uploads
+                const tempDir = './uploads';
+                if (!fs.existsSync(tempDir)) {
+                    fs.mkdirSync(tempDir, { recursive: true });
+                }
+                const tempFilePath = path.join(tempDir, `temp_${Date.now()}_${filename}`);
+
+                // Download file
+                const response = await axios({
+                    method: 'GET',
+                    url: url,
+                    responseType: 'stream'
+                });
+
+                const writer = fs.createWriteStream(tempFilePath);
+                response.data.pipe(writer);
+
+                await new Promise((resolve, reject) => {
+                    writer.on('finish', resolve);
+                    writer.on('error', reject);
+                });
+
+                // Get MIME type (approximate or use axios content-type)
+                const mimeType = response.headers['content-type'] || 'application/octet-stream';
+
+                // Upload to Firebase
+                const destinationPath = `migrated/${folderName}/${Date.now()}_${filename}`;
+                const publicUrl = await uploadToFirebase(tempFilePath, destinationPath, mimeType);
+
+                return publicUrl;
+            } catch (err) {
+                console.error(`Failed to migrate file ${url}:`, err.message);
+                return null;
+            }
+        };
+
+        let syncCount = 0;
+        let errors = 0;
+
+        // 1. Chat Messages
+        const chatMsgs = await chatMessageModel.find({ 
+            messageType: 'file',
+            fileUrl: { $regex: /^https?:\/\// } 
+        });
+        for (const msg of chatMsgs) {
+            if (isNonImageFile(msg.fileUrl)) {
+                const newUrl = await downloadAndUpload(msg.fileUrl, 'chat_files');
+                if (newUrl) {
+                    msg.fileUrl = newUrl;
+                    await msg.save();
+                    syncCount++;
+                } else {
+                    errors++;
+                }
+            }
+        }
+
+        // 2. Direct Messages
+        const directMsgs = await directMessageModel.find({
+            fileType: 'file',
+            fileUrl: { $regex: /^https?:\/\// }
+        });
+        for (const msg of directMsgs) {
+            if (isNonImageFile(msg.fileUrl)) {
+                const newUrl = await downloadAndUpload(msg.fileUrl, 'direct_messages');
+                if (newUrl) {
+                    msg.fileUrl = newUrl;
+                    await msg.save();
+                    syncCount++;
+                } else {
+                    errors++;
+                }
+            }
+        }
+
+        // 3. Pet Reports
+        const petReports = await petReportModel.find({
+            'attachments.url': { $regex: /^https?:\/\// }
+        });
+        for (const report of petReports) {
+            let updated = false;
+            for (const att of report.attachments) {
+                if (isNonImageFile(att.url)) {
+                    const newUrl = await downloadAndUpload(att.url, 'pet_reports');
+                    if (newUrl) {
+                        att.url = newUrl;
+                        updated = true;
+                        syncCount++;
+                    } else {
+                        errors++;
+                    }
+                }
+            }
+            if (updated) {
+                await report.save();
+            }
+        }
+
+        // 4. Emergency Requests
+        const emergencyRequests = await emergencyRequestModel.find({
+            'attachments.url': { $regex: /^https?:\/\// }
+        });
+        for (const reqObj of emergencyRequests) {
+            let updated = false;
+            for (const att of reqObj.attachments) {
+                if (isNonImageFile(att.url)) {
+                    const newUrl = await downloadAndUpload(att.url, 'emergency_attachments');
+                    if (newUrl) {
+                        att.url = newUrl;
+                        updated = true;
+                        syncCount++;
+                    } else {
+                        errors++;
+                    }
+                }
+            }
+            if (updated) {
+                await reqObj.save();
+            }
+        }
+
+        // 5. Admin Messages
+        const adminMessages = await adminMessageModel.find({
+            'attachments.url': { $regex: /^https?:\/\// }
+        });
+        for (const msg of adminMessages) {
+            let updated = false;
+            for (const att of msg.attachments) {
+                if (isNonImageFile(att.url)) {
+                    const newUrl = await downloadAndUpload(att.url, 'admin_messages');
+                    if (newUrl) {
+                        att.url = newUrl;
+                        updated = true;
+                        syncCount++;
+                    } else {
+                        errors++;
+                    }
+                }
+            }
+            if (updated) {
+                await msg.save();
+            }
+        }
+
+        // 6. CS Employee Verification Docs
+        const employees = await csEmployeeModel.find({
+            'verificationDocs.docUrl': { $regex: /^https?:\/\// }
+        });
+        for (const emp of employees) {
+            let updated = false;
+            for (const doc of emp.verificationDocs) {
+                if (isNonImageFile(doc.docUrl)) {
+                    const newUrl = await downloadAndUpload(doc.docUrl, 'cs_documents');
+                    if (newUrl) {
+                        doc.docUrl = newUrl;
+                        updated = true;
+                        syncCount++;
+                    } else {
+                        errors++;
+                    }
+                }
+            }
+            if (updated) {
+                await emp.save();
+            }
+        }
+
+        res.json({
+            success: true,
+            message: `Migration synchronization completed.`,
+            syncedCount: syncCount,
+            errorCount: errors
+        });
+    } catch (error) {
+        console.error('Fatal error in syncLegacyFiles:', error);
+        res.status(500).json({
+            success: false,
+            message: error.message || 'Internal server error during migration.'
+        });
+    }
+};
+
+export const getFirebaseStorageStatsEndpoint = async (req, res) => {
+    try {
+        const { getFirebaseStorageStats } = await import('../config/firebase.js');
+        const stats = await getFirebaseStorageStats();
+        res.json({
+            success: true,
+            ...stats
+        });
+    } catch (error) {
+        console.error('Error in getFirebaseStorageStatsEndpoint:', error);
+        res.status(500).json({
+            success: false,
+            message: error.message || 'Failed to fetch Firebase stats.'
+        });
+    }
+};
+
+// API to send a broadcast notification to CS agents and Doctors to re-upload documents
+export const broadcastReuploadDocs = async (req, res) => {
+    try {
+        // Create message for doctors
+        const docMessage = await adminMessageModel.create({
+            title: "⚠️ ACTION REQUIRED: Re-upload Verification Documents",
+            message: "Attention Doctors: Due to a storage database upgrade, all verification and credential documents must be re-uploaded. Please delete any existing files and re-upload your valid credentials at your earliest convenience to prevent account suspension.",
+            targetType: "doctors",
+            priority: "high",
+            isActive: true,
+            createdBy: "Admin"
+        });
+
+        // Create message for CS agents
+        const csMessage = await adminMessageModel.create({
+            title: "⚠️ ACTION REQUIRED: Re-upload Verification Documents",
+            message: "Attention Support Agents: Due to a storage database upgrade, all verification and identification documents must be re-uploaded. Please delete any existing files and re-upload your valid credentials at your earliest convenience to maintain active duty status.",
+            targetType: "cs_agents",
+            priority: "high",
+            isActive: true,
+            createdBy: "Admin"
+        });
+
+        // Emit real-time notification via Socket.io
+        try {
+            const io = getIO();
+            io.emit('admin-broadcast', {
+                message: "⚠️ ACTION REQUIRED: Doctors & CS Agents must delete and re-upload verification documents.",
+                type: 'warning',
+                duration: 10000,
+                timestamp: new Date()
+            });
+        } catch (socketError) {
+            console.error('Failed to emit socket broadcast:', socketError.message);
+        }
+
+        res.json({
+            success: true,
+            message: "Re-upload documents broadcast notifications successfully sent to all Doctors and Customer Service Agents.",
+            data: {
+                docNotificationId: docMessage._id,
+                csNotificationId: csMessage._id
+            }
+        });
+    } catch (error) {
+        console.error('Error in broadcastReuploadDocs:', error);
+        res.status(500).json({
+            success: false,
+            message: error.message || 'Failed to send broadcast notifications.'
+        });
+    }
+};
+

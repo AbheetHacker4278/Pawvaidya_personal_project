@@ -4,9 +4,10 @@ import { toast } from 'react-toastify';
 import { AppContext } from '../context/AppContext';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FaCheckCircle, FaClock, FaPhoneAlt, FaStar, FaInfoCircle } from 'react-icons/fa';
+import io from 'socket.io-client';
 
 const TicketTracking = () => {
-    const { id } = useParams();
+    const id = useParams().id;
     const { token, backendUrl } = useContext(AppContext);
     const [ticket, setTicket] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -41,16 +42,43 @@ const TicketTracking = () => {
         }
     };
 
-    // Use polling for real-time updates as per plan or every 10s
+    // Use polling and socket for real-time updates
     useEffect(() => {
-        if (!token) return;
+        if (!token || !backendUrl) return;
         fetchTicket();
-        const intv = setInterval(fetchTicket, 10000);
-        return () => clearInterval(intv);
-    }, [id, token]);
+
+        const socket = io(backendUrl, {
+            withCredentials: true,
+            transports: ['polling', 'websocket']
+        });
+
+        socket.emit('join-room', `ticket-${id}`);
+
+        socket.on('ticket-closed', (data) => {
+            console.log('Ticket closed real-time socket event received:', data);
+            toast.info('This ticket has been marked as resolved/closed.');
+            fetchTicket();
+        });
+
+        socket.on('ticket-updated', () => {
+            console.log('Ticket updated real-time socket event received');
+            fetchTicket();
+        });
+
+        const intv = setInterval(fetchTicket, 15000);
+
+        return () => {
+            socket.emit('leave-room', `ticket-${id}`);
+            socket.off('ticket-closed');
+            socket.off('ticket-updated');
+            socket.disconnect();
+            clearInterval(intv);
+        };
+    }, [id, token, backendUrl]);
 
     if (loading || !ticket) return <div className="p-12 text-center text-gray-500">Loading ticket details...</div>;
 
+    const isClosed = ticket.isClosed || ticket.status === 'closed' || ticket.status === 'resolved';
     const timelineReversed = [...ticket.timeline].reverse();
 
     const getStatusIcon = (status) => {
@@ -121,7 +149,7 @@ const TicketTracking = () => {
                     )}
                 </div>
 
-                {ticket.scheduledCall?.date && ticket.status !== 'closed' && (
+                {ticket.scheduledCall?.date && !isClosed && (
                     <div className="bg-purple-50 p-5 rounded-xl shadow-sm border border-purple-200">
                         <div className="flex items-center text-purple-700 font-bold mb-2">
                             <FaPhoneAlt className="mr-2" /> Call Scheduled
@@ -155,7 +183,7 @@ const TicketTracking = () => {
                     </div>
                 )}
 
-                {ticket.status === 'closed' && !ticket.isRated && (
+                {isClosed && !ticket.isRated && (
                     <div className="bg-yellow-50 p-5 rounded-xl shadow-sm border border-yellow-200 text-center">
                         <div className="text-yellow-500 flex justify-center mb-2"><FaStar size={24} /></div>
                         <p className="text-sm text-yellow-800 font-medium mb-3">Ticket Closed! How did we do?</p>
@@ -168,7 +196,7 @@ const TicketTracking = () => {
                     </div>
                 )}
 
-                {ticket.status !== 'closed' && (
+                {!isClosed && (
                     <button
                         onClick={handleCloseTicket}
                         disabled={ticket.scheduledCall?.date && !isMeetActive(ticket.scheduledCall.date, ticket.scheduledCall.time)}

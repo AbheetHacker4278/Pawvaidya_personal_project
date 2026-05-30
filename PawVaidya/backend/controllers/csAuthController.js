@@ -1,6 +1,8 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { v2 as cloudinary } from 'cloudinary';
+import { uploadFile } from '../utils/uploadHelper.js';
+import { uploadToFirebase } from '../config/firebase.js';
 import CSEmployee from '../models/csEmployeeModel.js';
 import CSLoginHistory from '../models/csLoginHistoryModel.js';
 import CSShiftLog from '../models/csShiftLogModel.js';
@@ -12,6 +14,11 @@ import activityLogModel from '../models/activityLogModel.js';
 import doctorModel from '../models/doctorModel.js';
 import mlPredictionModel from '../models/mlPredictionModel.js';
 import animalDiseaseModel from '../models/animalDiseaseModel.js';
+import nutritionPlanModel from '../models/nutritionPlanModel.js';
+import adminMessageModel from '../models/adminMessageModel.js';
+import strayCrowdfundingModel from '../models/strayCrowdfundingModel.js';
+import { transporter } from '../config/nodemailer.js';
+import { deleteCache } from '../utils/cacheUtils.js';
 
 // POST /api/cs/login
 export const csLogin = async (req, res) => {
@@ -427,25 +434,22 @@ export const uploadCSDocument = async (req, res) => {
             return res.json({ success: false, message: 'Missing required fields or file.' });
         }
 
-        const uploadRes = await cloudinary.uploader.upload(docFile.path, {
-            resource_type: 'image',
-            folder: 'cs_docs',
-            access_mode: 'public'
-        });
-
+        // Upload using our helper
+        const uploadResult = await uploadFile(docFile, 'cs_docs');
+ 
         const updatedEmployee = await CSEmployee.findByIdAndUpdate(
             employeeId,
             {
                 $push: {
                     documents: {
                         docType,
-                        docUrl: uploadRes.secure_url
+                        docUrl: uploadResult.url
                     }
                 }
             },
             { new: true }
         ).select('-password -plainPassword -faceDescriptor');
-
+ 
         return res.json({
             success: true,
             message: 'Document uploaded successfully.',
@@ -580,6 +584,12 @@ export const getUser360 = async (req, res) => {
         const mlPredictions = await mlPredictionModel.find({ userId: user._id }).sort({ createdAt: -1 });
         const animalDiseases = await animalDiseaseModel.find({ userId: user._id }).sort({ createdAt: -1 });
 
+        // Query AI Diet & Nutrition Plans
+        const nutritionPlans = await nutritionPlanModel.find({ userId: user._id }).sort({ createdAt: -1 });
+
+        // Query stray crowdfunding campaigns created by the user
+        const crowdfundingCampaigns = await strayCrowdfundingModel.find({ creatorId: user._id }).sort({ createdAt: -1 });
+
         return res.json({ 
             success: true, 
             user, 
@@ -589,7 +599,9 @@ export const getUser360 = async (req, res) => {
             subscriptions, 
             refundLogs,
             mlPredictions,
-            animalDiseases
+            animalDiseases,
+            nutritionPlans,
+            crowdfundingCampaigns
         });
     } catch (error) {
         console.error('getUser360 error:', error);
@@ -617,6 +629,7 @@ export const issueRefund = async (req, res) => {
 
         user.pawWallet += refundAmount;
         await user.save();
+        await deleteCache(`user_profile_${user._id}`);
 
         if (appointmentId) {
             await appointmentModel.findByIdAndUpdate(appointmentId, {
@@ -733,4 +746,276 @@ export const grantSubscription = async (req, res) => {
     }
 };
 
-export default { csLogin, faceRegister, faceVerify, completeProfile, updateCSProfile, getCSProfile, getPublicCSProfile, csLogout, reRegisterFace, uploadCSDocument, deleteCSDocument, logBreak, verifyFaceSession, earlyLogout, syncShift, completeShift, getShiftStatus, getUser360, issueRefund, revokeSubscription, grantSubscription };
+// POST /api/cs/trigger-emergency
+export const triggerEmergencyAlert = async (req, res) => {
+    try {
+        const { userId, petName, vitals, type, recordId } = req.body;
+        const employeeId = req.employeeId;
+
+        if (!userId || !petName || !recordId || !type) {
+            return res.json({ success: false, message: 'User ID, Pet Name, Record ID, and Type are required.' });
+        }
+
+        const user = await userModel.findById(userId);
+        if (!user) return res.json({ success: false, message: 'User not found.' });
+
+        const employee = await CSEmployee.findById(employeeId);
+
+        // Update database record to mark it as triggered
+        if (type === 'prediction') {
+            await mlPredictionModel.findByIdAndUpdate(recordId, { emergencyAlertTriggered: true }, { new: true });
+        } else if (type === 'disease') {
+            await animalDiseaseModel.findByIdAndUpdate(recordId, { emergencyAlertTriggered: true }, { new: true });
+        }
+
+        // Send Email to the user
+        let vitalsText = '';
+        if (vitals) {
+            vitalsText = `vitals (Temperature: ${vitals.temperature || 'N/A'}°F, Heart/Pulse Rate: ${vitals.pulseRate || 'N/A'} bpm, Respiratory Rate: ${vitals.respirationRate || 'N/A'} /m)`;
+        } else {
+            vitalsText = `recent clinical telemetry data`;
+        }
+
+        const mailOptions = {
+            from: process.env.SENDER_EMAIL,
+            to: user.email,
+            subject: `🚨 Emergency Vet Visit Recommended for ${petName}`,
+            html: `
+                <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #ffcccc; background-color: #fff5f5; border-radius: 8px;">
+                    <h2 style="color: #d32f2f;">🚨 Urgent Health Alert for ${petName}</h2>
+                    <p>Dear ${user.name},</p>
+                    <p>Our veterinary support team has reviewed the ${vitalsText} for <strong>${petName}</strong>.</p>
+                    <p style="font-size: 16px; font-weight: bold; color: #d32f2f;">We strongly recommend scheduling an emergency vet visit immediately.</p>
+                    <p>Our agent, <strong>${employee?.name || 'Customer Support'}</strong>, is standing by to help you schedule a priority slot or video consultation if needed.</p>
+                    <br/>
+                    <p>Best regards,</p>
+                    <p><strong>PawVaidya Support Team</strong></p>
+                </div>
+            `
+        };
+
+        await transporter.sendMail(mailOptions);
+
+        // Emit socket alert to all CS agents so they receive it and hide their trigger option immediately
+        try {
+            const { getIO } = await import('../socketServer.js');
+            const io = getIO();
+            io.emit('emergency-alert-triggered', {
+                userId,
+                petName,
+                recordId,
+                type,
+                agentName: employee?.name || 'an agent'
+            });
+            // Notify the user in real-time
+            io.to(`user-${String(userId)}`).emit('emergency-alert', {
+                message: `CS Agent ${employee?.name || 'Support'} has suggested an emergency vet visit for your pet ${petName} due to abnormal clinical vitals.`,
+                timestamp: new Date()
+            });
+        } catch (socketError) {
+            console.error('Error emitting emergency-alert-triggered socket event:', socketError);
+        }
+
+        res.json({ success: true, message: 'Emergency Vet Visit recommendation triggered and user notified.' });
+    } catch (error) {
+        console.error('triggerEmergencyAlert error:', error);
+        res.json({ success: false, message: error.message });
+    }
+};
+
+// GET /api/cs/messages
+export const getCSMessages = async (req, res) => {
+    try {
+        const employeeId = req.employeeId;
+
+        if (!employeeId) {
+            return res.json({
+                success: false,
+                message: 'Not Authorized'
+            });
+        }
+
+        const now = new Date();
+
+        // Get all active messages for CS agents
+        const messages = await adminMessageModel.find({
+            isActive: true,
+            $and: [
+                {
+                    $or: [
+                        { targetType: 'all' },
+                        { targetType: 'cs_agents' },
+                        { targetType: 'specific', targetIds: employeeId }
+                    ]
+                },
+                {
+                    $or: [
+                        { expiresAt: null },
+                        { expiresAt: { $gt: now } }
+                    ]
+                }
+            ]
+        }).sort({ priority: -1, createdAt: -1 });
+
+        res.json({
+            success: true,
+            messages
+        });
+    } catch (error) {
+        console.error('Error getting CS messages:', error);
+        res.json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
+// POST /api/cs/messages/read
+export const markCSMessageAsRead = async (req, res) => {
+    try {
+        const employeeId = req.employeeId;
+        const { messageId } = req.body;
+
+        if (!employeeId) {
+            return res.json({
+                success: false,
+                message: 'Not Authorized'
+            });
+        }
+
+        const message = await adminMessageModel.findById(messageId);
+
+        if (!message) {
+            return res.json({
+                success: false,
+                message: 'Message not found'
+            });
+        }
+
+        // Check if already read
+        const alreadyRead = message.readBy.some(read => read.userId === employeeId);
+
+        if (!alreadyRead) {
+            message.readBy.push({
+                userId: employeeId,
+                readAt: new Date()
+            });
+            await message.save();
+        }
+
+        res.json({
+            success: true,
+            message: 'Message marked as read'
+        });
+    } catch (error) {
+        console.error('Error marking CS message as read:', error);
+        res.json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
+// POST /api/cs/upload-recording
+export const uploadScreenRecording = async (req, res) => {
+    try {
+        const employeeId = req.employeeId;
+        const file = req.file;
+
+        if (!file) {
+            return res.json({ success: false, message: 'No screen recording file provided.' });
+        }
+
+        const durationSeconds = Number(req.body.durationSeconds) || 0;
+        const timestamp = Date.now();
+        const destPath = `cs_screen_recordings/${employeeId}/${timestamp}_recording.webm`;
+
+        const fs = await import('fs');
+        const path = await import('path');
+        const localUploadsDir = path.join(process.cwd(), 'uploads');
+
+        if (!fs.existsSync(localUploadsDir)) {
+            fs.mkdirSync(localUploadsDir, { recursive: true });
+        }
+
+        const filename = `${timestamp}_recording.webm`;
+        const localDestPath = path.join(localUploadsDir, filename);
+
+        // Copy to local backup path before attempting upload
+        fs.copyFileSync(file.path, localDestPath);
+
+        let publicUrl;
+        let isFallback = false;
+        try {
+            publicUrl = await uploadToFirebase(file.path, destPath, file.mimetype || 'video/webm');
+            
+            // If Firebase succeeded, delete the local backup
+            try {
+                if (fs.existsSync(localDestPath)) {
+                    fs.unlinkSync(localDestPath);
+                }
+            } catch (err) {
+                console.warn('Error deleting local backup:', err.message);
+            }
+        } catch (firebaseErr) {
+            console.error('Firebase upload failed, using local backup storage:', firebaseErr.message);
+            isFallback = true;
+
+            const backendUrl = process.env.VITE_BACKEND_URL || 'http://localhost:4000';
+            publicUrl = `${backendUrl}/uploads/${filename}`;
+        }
+
+        const updatedEmployee = await CSEmployee.findByIdAndUpdate(
+            employeeId,
+            {
+                $push: {
+                    screenRecordings: {
+                        url: publicUrl,
+                        recordedAt: new Date(),
+                        durationSeconds
+                    }
+                }
+            },
+            { new: true }
+        ).select('-password -plainPassword -faceDescriptor');
+
+        res.json({
+            success: true,
+            message: isFallback 
+                ? 'Screen recording saved locally (Firebase billing issue fallback).' 
+                : 'Screen recording uploaded successfully to Firebase.',
+            url: publicUrl,
+            employee: updatedEmployee
+        });
+    } catch (error) {
+        console.error('uploadScreenRecording error:', error);
+        res.json({ success: false, message: error.message });
+    }
+};
+
+export default { 
+    csLogin, 
+    faceRegister, 
+    faceVerify, 
+    completeProfile, 
+    updateCSProfile, 
+    getCSProfile, 
+    getPublicCSProfile, 
+    csLogout, 
+    reRegisterFace, 
+    uploadCSDocument, 
+    deleteCSDocument, 
+    logBreak, 
+    verifyFaceSession, 
+    earlyLogout, 
+    syncShift, 
+    completeShift, 
+    getShiftStatus, 
+    getUser360, 
+    issueRefund, 
+    revokeSubscription, 
+    grantSubscription, 
+    getCSMessages, 
+    markCSMessageAsRead,
+    uploadScreenRecording
+};

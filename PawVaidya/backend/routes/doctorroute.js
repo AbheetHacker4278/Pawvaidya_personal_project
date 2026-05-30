@@ -6,6 +6,7 @@ import { authDoctor } from '../middleware/authDoctor.js';
 import { getPetHealthCardByToken, doctorAddVaccination, getPetHealthCardByPetId, addAttachment } from '../controllers/petReportController.js';
 import upload from '../middleware/multer.js';
 import securityMonitor from '../middleware/securityMonitor.js';
+import { uploadMedicalDocuments, getMyMedicalDocuments, deleteMedicalDocument } from '../controllers/doctorDocumentController.js';
 
 export const doctorrouter = express.Router()
 
@@ -78,5 +79,10 @@ doctorrouter.post('/pet-report/attachment/:reportId', authDoctor, upload.array('
 // Poll routes
 doctorrouter.get('/active-polls', authDoctor, getActivePolls)
 doctorrouter.post('/vote-poll', authDoctor, voteInPoll)
+
+// Medical Documents routes
+doctorrouter.post('/documents/upload', authDoctor, upload.array('documents', 10), uploadMedicalDocuments)
+doctorrouter.get('/documents/my', authDoctor, getMyMedicalDocuments)
+doctorrouter.post('/documents/delete', authDoctor, deleteMedicalDocument)
 
 export default doctorrouter

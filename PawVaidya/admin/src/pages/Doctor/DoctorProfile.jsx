@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useState, useRef } from 'react';
 import { DoctorContext } from '../../context/DoctorContext';
 import { toast } from 'react-toastify';
 import axios from 'axios';
-import { Camera, MapPin, Phone, Clock, CreditCard, Edit2, Save, RefreshCw, UserCheck, ShieldCheck } from 'lucide-react';
+import { Camera, MapPin, Phone, Clock, CreditCard, Edit2, Save, RefreshCw, UserCheck, ShieldCheck, Upload, FileText, Eye, Trash2, CheckCircle, XCircle, AlertCircle, FolderOpen } from 'lucide-react';
 import { getCurrentLocation } from '../../../../frontend/src/utils/geolocation';
 import FaceAuth from '../../components/FaceAuth';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -20,6 +20,14 @@ const DoctorProfile = () => {
     const [attendanceTime, setAttendanceTime] = useState(null);
     const [todaySchedule, setTodaySchedule] = useState(null);
     const [imageUrl, setImageUrl] = useState('');
+
+    // Medical Documents state
+    const [medicalDocs, setMedicalDocs] = useState([]);
+    const [uploadCategory, setUploadCategory] = useState('education');
+    const [docFiles, setDocFiles] = useState([]);
+    const [docUploading, setDocUploading] = useState(false);
+    const [previewDoc, setPreviewDoc] = useState(null);
+    const docInputRef = useRef(null);
 
     const fetchTodaySchedule = async () => {
         try {
@@ -171,8 +179,54 @@ const DoctorProfile = () => {
         if (dtoken) {
             getProfileData();
             fetchTodaySchedule();
+            fetchMyDocs();
         }
     }, [dtoken]);
+
+    const fetchMyDocs = async () => {
+        try {
+            const { data } = await axios.get(backendurl + '/api/doctor/documents/my', { headers: { dtoken } });
+            if (data.success) setMedicalDocs(data.documents || []);
+        } catch (e) {
+            console.error('fetchMyDocs error:', e);
+        }
+    };
+
+    const handleDocUpload = async () => {
+        if (docFiles.length === 0) return toast.error('Please select file(s) to upload');
+        setDocUploading(true);
+        try {
+            const fd = new FormData();
+            fd.append('category', uploadCategory);
+            docFiles.forEach(f => fd.append('documents', f));
+            const { data } = await axios.post(backendurl + '/api/doctor/documents/upload', fd, { headers: { dtoken } });
+            if (data.success) {
+                toast.success(data.message);
+                setDocFiles([]);
+                if (docInputRef.current) docInputRef.current.value = '';
+                fetchMyDocs();
+            } else {
+                toast.error(data.message);
+            }
+        } catch (e) {
+            toast.error('Upload failed: ' + e.message);
+        } finally {
+            setDocUploading(false);
+        }
+    };
+
+    const handleDocDelete = async (docId) => {
+        if (!window.confirm('Delete this document?')) return;
+        try {
+            const { data } = await axios.post(backendurl + '/api/doctor/documents/delete', { documentId: docId }, { headers: { dtoken } });
+            if (data.success) {
+                toast.success('Document deleted');
+                fetchMyDocs();
+            } else toast.error(data.message);
+        } catch (e) {
+            toast.error('Delete failed');
+        }
+    };
 
     useEffect(() => {
         if (profileData && profileData._id) {
@@ -531,6 +585,154 @@ const DoctorProfile = () => {
                     ) : (
                         <p className="text-gray-600 whitespace-pre-wrap">{profileData.full_address}</p>
                     )}
+                </div>
+
+                {/* ─── Medical Documents Section ─── */}
+                <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+                    {/* Header */}
+                    <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-blue-600 p-6">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                                <FolderOpen className="w-5 h-5 text-white" />
+                            </div>
+                            <div>
+                                <h2 className="text-xl font-bold text-white">Medical Documents</h2>
+                                <p className="text-indigo-100 text-sm">Upload your education certificates, medical records &amp; government IDs</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="p-6 space-y-6">
+                        {/* Upload Panel */}
+                        <div className="border-2 border-dashed border-indigo-200 rounded-xl p-6 bg-indigo-50/40 hover:bg-indigo-50 transition-colors">
+                            <div className="flex flex-col md:flex-row gap-4 items-start md:items-end">
+                                {/* Category */}
+                                <div className="flex-1">
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2">Document Category</label>
+                                    <select
+                                        value={uploadCategory}
+                                        onChange={e => setUploadCategory(e.target.value)}
+                                        className="w-full px-3 py-2.5 rounded-lg border border-indigo-200 focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 bg-white text-sm"
+                                    >
+                                        <option value="education">🎓 Medical Education</option>
+                                        <option value="records">📋 Medical Records</option>
+                                        <option value="govtId">🪪 Government ID</option>
+                                        <option value="other">📁 Other</option>
+                                    </select>
+                                </div>
+                                {/* File Picker */}
+                                <div className="flex-[2]">
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2">Select Files <span className="text-gray-400 font-normal">(images → Cloudinary, PDFs/others → Firebase)</span></label>
+                                    <input
+                                        ref={docInputRef}
+                                        type="file"
+                                        multiple
+                                        accept="image/*,application/pdf,.doc,.docx"
+                                        onChange={e => setDocFiles(Array.from(e.target.files))}
+                                        className="w-full px-3 py-2 rounded-lg border border-indigo-200 bg-white text-sm file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-indigo-600 file:text-white file:text-xs file:font-semibold hover:file:bg-indigo-700 cursor-pointer"
+                                    />
+                                    {docFiles.length > 0 && (
+                                        <p className="mt-1 text-xs text-indigo-600 font-medium">{docFiles.length} file(s) selected</p>
+                                    )}
+                                </div>
+                                {/* Upload Btn */}
+                                <button
+                                    onClick={handleDocUpload}
+                                    disabled={docUploading || docFiles.length === 0}
+                                    className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white rounded-lg text-sm font-semibold hover:bg-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-indigo-200 whitespace-nowrap"
+                                >
+                                    {docUploading ? (
+                                        <><RefreshCw className="w-4 h-4 animate-spin" /> Uploading...</>
+                                    ) : (
+                                        <><Upload className="w-4 h-4" /> Upload Now</>
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Documents List */}
+                        {medicalDocs.length === 0 ? (
+                            <div className="text-center py-10">
+                                <FileText className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                                <p className="text-gray-500 font-medium">No documents uploaded yet</p>
+                                <p className="text-gray-400 text-sm">Upload your medical education, records or government IDs above</p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                                {medicalDocs.map(doc => (
+                                    <motion.div
+                                        key={doc._id}
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        className="group relative bg-gray-50 border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-all duration-300"
+                                    >
+                                        {/* Preview Thumbnail */}
+                                        <div className="h-36 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center relative overflow-hidden">
+                                            {doc.fileType === 'image' ? (
+                                                <img src={doc.url} alt={doc.name} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <div className="flex flex-col items-center">
+                                                    <FileText className="w-12 h-12 text-indigo-400" />
+                                                    <span className="text-xs text-gray-500 mt-1 uppercase font-bold">
+                                                        {doc.mimeType?.split('/')[1]?.toUpperCase() || 'FILE'}
+                                                    </span>
+                                                </div>
+                                            )}
+                                            {/* Overlay on hover */}
+                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                                                <a href={doc.url} target="_blank" rel="noreferrer"
+                                                    className="w-9 h-9 bg-white rounded-full flex items-center justify-center shadow hover:scale-110 transition-transform"
+                                                    title="Open">
+                                                    <Eye className="w-4 h-4 text-gray-700" />
+                                                </a>
+                                                <button
+                                                    onClick={() => handleDocDelete(doc._id)}
+                                                    className="w-9 h-9 bg-red-500 rounded-full flex items-center justify-center shadow hover:scale-110 transition-transform"
+                                                    title="Delete">
+                                                    <Trash2 className="w-4 h-4 text-white" />
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {/* Info footer */}
+                                        <div className="p-3">
+                                            <p className="text-xs font-semibold text-gray-800 truncate" title={doc.name}>{doc.name}</p>
+                                            <div className="flex items-center justify-between mt-2">
+                                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                                                    doc.category === 'education' ? 'bg-blue-100 text-blue-700' :
+                                                    doc.category === 'records' ? 'bg-green-100 text-green-700' :
+                                                    doc.category === 'govtId' ? 'bg-purple-100 text-purple-700' :
+                                                    'bg-gray-100 text-gray-600'
+                                                }`}>
+                                                    {doc.category === 'education' ? '🎓 Education' :
+                                                     doc.category === 'records' ? '📋 Records' :
+                                                     doc.category === 'govtId' ? '🪪 Govt ID' : '📁 Other'}
+                                                </span>
+                                                <span className={`flex items-center gap-1 text-[10px] font-bold ${
+                                                    doc.verificationStatus === 'verified' ? 'text-emerald-600' :
+                                                    doc.verificationStatus === 'rejected' ? 'text-red-500' :
+                                                    'text-amber-500'
+                                                }`}>
+                                                    {doc.verificationStatus === 'verified' ? <CheckCircle className="w-3 h-3" /> :
+                                                     doc.verificationStatus === 'rejected' ? <XCircle className="w-3 h-3" /> :
+                                                     <AlertCircle className="w-3 h-3" />}
+                                                    {doc.verificationStatus?.charAt(0).toUpperCase() + doc.verificationStatus?.slice(1)}
+                                                </span>
+                                            </div>
+                                            {doc.adminNote && (
+                                                <p className="mt-1.5 text-[10px] text-gray-500 italic border-t border-gray-100 pt-1.5">
+                                                    Admin note: {doc.adminNote}
+                                                </p>
+                                            )}
+                                            <p className="text-[9px] text-gray-400 mt-1">
+                                                {doc.storageProvider === 'cloudinary' ? '☁️ Cloudinary' : '🔥 Firebase'} · {new Date(doc.uploadedAt).toLocaleDateString()}
+                                            </p>
+                                        </div>
+                                    </motion.div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>

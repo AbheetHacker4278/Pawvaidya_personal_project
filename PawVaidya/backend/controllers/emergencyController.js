@@ -8,6 +8,8 @@ import mongoose from "mongoose";
 import notificationQueue from "../utils/notificationQueue.js";
 import { encrypt, decrypt } from "../utils/encryption.js";
 import { v2 as cloudinary } from "cloudinary";
+import { uploadFile } from "../utils/uploadHelper.js";
+import { deleteCache } from "../utils/cacheUtils.js";
 
 // Decrypts emergency request logs and identifiers for runtime display safely
 export const decryptRequest = (reqObj) => {
@@ -213,20 +215,17 @@ export const createEmergencyRequest = async (req, res) => {
             }
         }
 
-        // Optional medical file/report processing via Cloudinary
+        // Optional medical file/report processing via our helper
         let initialAttachments = [];
         if (req.file) {
             try {
-                const uploadResult = await cloudinary.uploader.upload(req.file.path, {
-                    resource_type: "auto",
-                    folder: "emergency_attachments"
-                });
+                const uploadResult = await uploadFile(req.file, "emergency_attachments");
                 initialAttachments.push({
-                    url: uploadResult.secure_url,
+                    url: uploadResult.url,
                     name: req.file.originalname || "Medical Report"
                 });
             } catch (uploadErr) {
-                console.error("Cloudinary upload failed for emergency request file:", uploadErr.message);
+                console.error("Upload failed for emergency request file:", uploadErr.message);
             }
         }
 
@@ -382,6 +381,8 @@ export const createEmergencyRequest = async (req, res) => {
                 console.error("Delayed expiry failed:", err.message);
             }
         }, 5 * 60 * 1000);
+
+        await deleteCache(`user_profile_${userId}`);
 
         res.json({
             success: true,
@@ -925,6 +926,7 @@ export const repayEmergencyDues = async (req, res) => {
         }
 
         await user.save();
+        await deleteCache(`user_profile_${userId}`);
 
         // Mark due paid
         due.isPaid = true;

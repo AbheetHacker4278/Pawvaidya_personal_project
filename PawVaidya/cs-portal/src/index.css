@@ -5,6 +5,11 @@
 @layer base {
   html, body {
     @apply bg-slate-50 text-slate-900 font-sans antialiased overflow-x-hidden;
+    -ms-overflow-style: none !important;
+    scrollbar-width: none !important;
+  }
+  ::-webkit-scrollbar {
+    display: none !important;
   }
 }
 

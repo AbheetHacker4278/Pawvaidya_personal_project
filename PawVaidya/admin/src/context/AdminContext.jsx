@@ -878,10 +878,44 @@ const AdminContextProvider = (props) => {
         }
     };
 
+    const syncLegacyFiles = async () => {
+        try {
+            const { data } = await axios.post(backendurl + '/api/admin/sync-legacy-files', {}, { headers: { atoken } });
+            if (data.success) {
+                toast.success(`${data.message} Synced: ${data.syncedCount}, Errors: ${data.errorCount}`);
+                return data;
+            } else {
+                toast.error(data.message);
+                return null;
+            }
+        } catch (error) {
+            toast.error(error.message || 'Failed to sync legacy files');
+            return null;
+        }
+    };
+
+    const broadcastReuploadDocs = async () => {
+        try {
+            const { data } = await axios.post(backendurl + '/api/admin/broadcast-reupload-docs', {}, { headers: { atoken } });
+            if (data.success) {
+                toast.success(data.message);
+                return true;
+            } else {
+                toast.error(data.message);
+                return false;
+            }
+        } catch (error) {
+            toast.error(error.message || 'Failed to send broadcast notification');
+            return false;
+        }
+    };
+
     const value = {
         atoken, setatoken,
         backendurl, doctors,
         getalldoctors, changeavailablity, makeAllDoctorsAvailable, makeAllDoctorsUnavailable,
+        syncLegacyFiles,
+        broadcastReuploadDocs,
         appointments, setappointments,
         getallappointments, cancelappointment,
         dashdata, getdashdata, getallusers, setusers,

@@ -35,6 +35,10 @@ const adminSchema = new mongoose.Schema({
         type: [String],
         default: [] // Array of permission strings, e.g., ['manage_doctors', 'manage_users']
     },
+    pawWallet: {
+        type: Number,
+        default: 0
+    },
     faceDescriptor: {
         type: [Number], // Array of 128 floats for face embedding
         default: []

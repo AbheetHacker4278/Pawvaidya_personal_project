@@ -5,6 +5,7 @@ import userModel from '../models/userModel.js'
 import doctorModel from '../models/doctorModel.js'
 import petModel from '../models/petModel.js'
 import { v2 as cloudinary } from 'cloudinary'
+import { uploadFile } from '../utils/uploadHelper.js'
 import { transporter } from '../config/nodemailer.js'
 import { VISIT_NOTE_EMAIL, PET_REPORT_EMAIL } from '../mailservice/petReportEmailTemplate.js'
 
@@ -132,15 +133,11 @@ export const addAttachment = async (req, res) => {
     if (!report || report.isDeleted) return res.json({ success: false, message: 'Report not found' })
     const files = req.files || []
     for (const file of files) {
-      const isPdf = file.originalname.toLowerCase().endsWith('.pdf')
-      const uploadResult = await cloudinary.uploader.upload(file.path, { 
-        resource_type: isPdf ? 'raw' : 'auto', 
-        folder: 'pet_reports' 
-      })
+      const uploadResult = await uploadFile(file, 'pet_reports')
       
       report.attachments.push({ 
-        url: uploadResult.secure_url, 
-        type: uploadResult.resource_type, 
+        url: uploadResult.url, 
+        type: uploadResult.type, 
         filename: file.originalname 
       })
     }

@@ -1,5 +1,5 @@
 import express from 'express';
-import { addDoctor, allDoctors, loginAdmin, verifyAdminOTP, registerFace, loginWithFace, logAdminActivity, getAdminActivityLogs, getDoctorAttendanceLogs, appointmenetsAdmin, Appointmentcancel, admindashboard, allUsers, deleteUser, editUser, deleteDoctor, makeAllDoctorsAvailable, makeAllDoctorsUnavailable, getUserDetailsWithPassword, getDoctorDetailsWithPassword, getAllUsersWithPasswords, getAllDoctorsWithPasswords, getActivityLogs, getRealtimeActivityLogs, sendVerificationEmailToUser, createAdminMessage, getAllAdminMessages, updateAdminMessage, deleteAdminMessage, getBlogReports, updateBlogReportStatus, banFromBlogging, unbanFromBlogging, getUnbanRequests, handleUnbanRequest, deleteBlogReport, bulkDeleteBlogReports, addAdmin, allAdmins, updateAdmin, deleteAdmin, sendBroadcastEmail, sendIndividualEmail, getDoctorRankings, giveIncentive, omniSearch, sendBroadcastAlert, getSystemConfig, updateSystemConfig, getCloudinaryAssets, deleteCloudinaryAsset, getSystemSettings, getFraudAlerts, updateCommissionRules, sendEmergencyBroadcast, getSupabaseHealth, getDeletionRequests, processDeletionRequest, blacklistEmails, getBlacklist, removeFromBlacklist, exportDataToWord, getSecurityIncidents, resolveSecurityIncident, getUnreadSecurityIncidentCount, approveAdminLogin, disapproveAdminLogin, getUserPaymentDetails, getPaymentUsers, getAllSubscriptions, revokeSubscription, giftSubscription, getRedisStats, getRedisHistory } from '../controllers/adminController.js';
+import { addDoctor, allDoctors, loginAdmin, verifyAdminOTP, registerFace, loginWithFace, logAdminActivity, getAdminActivityLogs, getDoctorAttendanceLogs, appointmenetsAdmin, Appointmentcancel, admindashboard, allUsers, deleteUser, editUser, deleteDoctor, makeAllDoctorsAvailable, makeAllDoctorsUnavailable, getUserDetailsWithPassword, getDoctorDetailsWithPassword, getAllUsersWithPasswords, getAllDoctorsWithPasswords, getActivityLogs, getRealtimeActivityLogs, sendVerificationEmailToUser, createAdminMessage, getAllAdminMessages, updateAdminMessage, deleteAdminMessage, getBlogReports, updateBlogReportStatus, banFromBlogging, unbanFromBlogging, getUnbanRequests, handleUnbanRequest, deleteBlogReport, bulkDeleteBlogReports, addAdmin, allAdmins, updateAdmin, deleteAdmin, sendBroadcastEmail, sendIndividualEmail, getDoctorRankings, giveIncentive, omniSearch, sendBroadcastAlert, getSystemConfig, updateSystemConfig, getCloudinaryAssets, deleteCloudinaryAsset, getSystemSettings, getFraudAlerts, updateCommissionRules, sendEmergencyBroadcast, getSupabaseHealth, getDeletionRequests, processDeletionRequest, blacklistEmails, getBlacklist, removeFromBlacklist, exportDataToWord, getSecurityIncidents, resolveSecurityIncident, getUnreadSecurityIncidentCount, approveAdminLogin, disapproveAdminLogin, getUserPaymentDetails, getPaymentUsers, getAllSubscriptions, revokeSubscription, giftSubscription, getRedisStats, getRedisHistory, syncLegacyFiles, getFirebaseStorageStatsEndpoint, broadcastReuploadDocs } from '../controllers/adminController.js';
 import { getContentViolations, resolveContentViolation, banIpAddress, getBannedIps, unbanIpAddress, banFromViolation } from '../controllers/contentModerationController.js';
 import { createCoupon, getAllCoupons, toggleCouponStatus, deleteCoupon } from '../controllers/couponController.js';
 import { getServiceHealth } from '../controllers/serviceHealthController.js';
@@ -10,6 +10,7 @@ import { getPetHealthCardByPetId } from '../controllers/petReportController.js';
 import authAdmin from '../middleware/authAdmin.js';
 import securityMonitor from '../middleware/securityMonitor.js';
 import changeavailablity from '../controllers/doctorController.js';
+import { getAdminDoctorDocuments, verifyDoctorDocument, adminDeleteDoctorDocument } from '../controllers/doctorDocumentController.js';
 
 const adminRouter = express.Router();
 
@@ -150,6 +151,15 @@ adminRouter.get('/redis-stats', authAdmin, getRedisStats);
 adminRouter.get('/redis-history', authAdmin, getRedisHistory);
 adminRouter.get('/user-payment-details/:userId', authAdmin, getUserPaymentDetails);
 adminRouter.get('/pet-health/:petId', authAdmin, getPetHealthCardByPetId);
+
+adminRouter.post('/sync-legacy-files', authAdmin, syncLegacyFiles);
+adminRouter.get('/firebase-storage-stats', authAdmin, getFirebaseStorageStatsEndpoint);
+adminRouter.post('/broadcast-reupload-docs', authAdmin, broadcastReuploadDocs);
+
+// Doctor Medical Documents (Admin)
+adminRouter.get('/doctor-documents/:doctorId', authAdmin, getAdminDoctorDocuments);
+adminRouter.post('/doctor-documents/verify', authAdmin, verifyDoctorDocument);
+adminRouter.post('/doctor-documents/delete', authAdmin, adminDeleteDoctorDocument);
 
 // Financial Calculations Route
 import { getFinancialCalculations } from '../controllers/adminFinanceController.js';

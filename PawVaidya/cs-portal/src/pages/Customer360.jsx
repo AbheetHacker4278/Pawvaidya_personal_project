@@ -1,14 +1,221 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import { CSContext } from '../context/CSContext';
-import { FaSearch, FaWallet, FaPaw, FaCalendarAlt, FaExclamationTriangle, FaUser, FaChartPie, FaCrown, FaHistory, FaUndo, FaTimes, FaStethoscope, FaClipboardList, FaHeartbeat, FaMedkit } from 'react-icons/fa';
+import { FaSearch, FaWallet, FaPaw, FaCalendarAlt, FaExclamationTriangle, FaUser, FaChartPie, FaCrown, FaHistory, FaUndo, FaTimes, FaStethoscope, FaClipboardList, FaHeartbeat, FaMedkit, FaAppleAlt, FaLeaf, FaFlask, FaTint, FaHeart, FaCoins, FaClock, FaMapMarkerAlt, FaBan, FaCheckCircle, FaInfoCircle, FaGoogle } from 'react-icons/fa';
 
 const Customer360 = () => {
-  const { backendUrl, cstoken } = useContext(CSContext);
+  const { backendUrl, cstoken, socket } = useContext(CSContext);
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [customerData, setCustomerData] = useState(null);
+
+  useEffect(() => {
+    if (!socket) return;
+    
+    const handleEmergencyAlertTriggered = (data) => {
+      console.log('Customer360: emergency-alert-triggered event received:', data);
+      
+      // Update local state to immediately hide button / mark as triggered
+      setCustomerData(prevData => {
+        if (!prevData) return prevData;
+        
+        const updatedMlPredictions = prevData.mlPredictions?.map(pred => {
+          if (pred._id === data.recordId && data.type === 'prediction') {
+            return { ...pred, emergencyAlertTriggered: true };
+          }
+          return pred;
+        });
+        
+        const updatedAnimalDiseases = prevData.animalDiseases?.map(disease => {
+          if (disease._id === data.recordId && data.type === 'disease') {
+            return { ...disease, emergencyAlertTriggered: true };
+          }
+          return disease;
+        });
+        
+        return {
+          ...prevData,
+          mlPredictions: updatedMlPredictions,
+          animalDiseases: updatedAnimalDiseases
+        };
+      });
+    };
+    
+    socket.on('emergency-alert-triggered', handleEmergencyAlertTriggered);
+    
+    return () => {
+      socket.off('emergency-alert-triggered', handleEmergencyAlertTriggered);
+    };
+  }, [socket]);
+
+  const evaluateVitals = (caseItem) => {
+    if (!caseItem) return { status: 'Normal', vitalsEvaluation: { temperature: 'Normal', heartRate: 'Normal', respiratoryRate: 'Normal' }, summary: 'Healthy', veterinaryLetter: '' };
+    
+    const animal = caseItem.animalType;
+    const temp = caseItem.vitals?.temperature;
+    const pulse = caseItem.vitals?.pulseRate;
+    const resp = caseItem.vitals?.respirationRate;
+    
+    let tempStatus = 'Normal';
+    let pulseStatus = 'Normal';
+    let respStatus = 'Normal';
+    
+    if (animal === 'Dog') {
+      if (temp < 101.0 || temp > 102.5) tempStatus = 'Abnormal';
+      if (pulse < 70 || pulse > 120) pulseStatus = 'Abnormal';
+      if (resp < 15 || resp > 35) respStatus = 'Abnormal';
+    } else if (animal === 'Cat') {
+      if (temp < 100.5 || temp > 102.5) tempStatus = 'Abnormal';
+      if (pulse < 120 || pulse > 140) pulseStatus = 'Abnormal';
+      if (resp < 20 || resp > 30) respStatus = 'Abnormal';
+    } else if (animal === 'Cow') {
+      if (temp < 100.5 || temp > 102.8) tempStatus = 'Abnormal';
+      if (pulse < 40 || pulse > 80) pulseStatus = 'Abnormal';
+      if (resp < 10 || resp > 30) respStatus = 'Abnormal';
+    } else if (animal === 'Sheep' || animal === 'Goat') {
+      if (temp < 101.5 || temp > 103.5) tempStatus = 'Abnormal';
+      if (pulse < 70 || pulse > 90) pulseStatus = 'Abnormal';
+      if (resp < 12 || resp > 20) respStatus = 'Abnormal';
+    }
+    
+    // Flag as abnormal if vitals are out of range, OR if ML model predicts anything other than Healthy / Low Risk
+    const isAbnormal =
+      tempStatus === 'Abnormal' ||
+      pulseStatus === 'Abnormal' ||
+      respStatus === 'Abnormal' ||
+      caseItem.riskCategory === 'High Risk' ||
+      caseItem.riskCategory === 'Medium Risk' ||
+      caseItem.riskCategory === 'Low Risk' ||
+      (caseItem.predictedCondition && caseItem.predictedCondition !== 'Healthy');
+    
+    return {
+      status: isAbnormal ? 'Abnormal' : 'Normal',
+      vitalsEvaluation: {
+        temperature: tempStatus,
+        heartRate: pulseStatus,
+        respiratoryRate: respStatus
+      },
+      summary: caseItem.predictedCondition || 'Healthy',
+      veterinaryLetter: caseItem.aiAnalysis || 'No recommendations generated.'
+    };
+  };
+
+  const handleTriggerEmergency = async (alert) => {
+    try {
+      const { data } = await axios.post(`${backendUrl}/api/cs/trigger-emergency`, {
+        userId: customerData.user._id,
+        petName: alert.petName,
+        vitals: alert.vitals,
+        type: alert.type,
+        recordId: alert.recordId
+      }, { headers: { cstoken } });
+      
+      if (data.success) {
+        toast.success(data.message);
+        
+        // Update local state immediately
+        setCustomerData(prevData => {
+          if (!prevData) return prevData;
+          
+          const updatedMlPredictions = prevData.mlPredictions?.map(pred => {
+            if (pred._id === alert.recordId && alert.type === 'prediction') {
+              return { ...pred, emergencyAlertTriggered: true };
+            }
+            return pred;
+          });
+          
+          const updatedAnimalDiseases = prevData.animalDiseases?.map(disease => {
+            if (disease._id === alert.recordId && alert.type === 'disease') {
+              return { ...disease, emergencyAlertTriggered: true };
+            }
+            return disease;
+          });
+          
+          return {
+            ...prevData,
+            mlPredictions: updatedMlPredictions,
+            animalDiseases: updatedAnimalDiseases
+          };
+        });
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      console.error('handleTriggerEmergency error:', error);
+      toast.error('Failed to trigger emergency suggestion.');
+    }
+  };
+
+  const getCriticalAlerts = () => {
+    if (!customerData) return [];
+    const alerts = [];
+    
+    // Track latest prediction per pet
+    const processedPetsMl = new Set();
+    if (customerData.mlPredictions) {
+      for (const pred of customerData.mlPredictions) {
+        if (processedPetsMl.has(pred.petName)) continue;
+        processedPetsMl.add(pred.petName);
+        
+        const evalResult = evaluateVitals(pred);
+        const isAbnormal = evalResult.status === 'Abnormal';
+        
+        if (isAbnormal) {
+          const petBreed = customerData.pets?.find(p => p.name === pred.petName || p._id === pred.petId)?.breed || 'N/A';
+          const abnormalDetails = [];
+          if (evalResult.vitalsEvaluation.temperature === 'Abnormal') {
+            abnormalDetails.push(`temperature of ${pred.vitals?.temperature}°F`);
+          }
+          if (evalResult.vitalsEvaluation.heartRate === 'Abnormal') {
+            abnormalDetails.push(`heart/pulse rate of ${pred.vitals?.pulseRate} bpm`);
+          }
+          if (evalResult.vitalsEvaluation.respiratoryRate === 'Abnormal') {
+            abnormalDetails.push(`respiratory rate of ${pred.vitals?.respirationRate} /m`);
+          }
+          
+          const detailsText = abnormalDetails.join(' and ');
+          
+          alerts.push({
+            type: 'prediction',
+            recordId: pred._id,
+            petId: pred.petId,
+            petName: pred.petName,
+            breed: petBreed,
+            details: detailsText || `abnormal vitals detected`,
+            vitals: pred.vitals,
+            triggered: pred.emergencyAlertTriggered || false
+          });
+        }
+      }
+    }
+
+    // Track latest disease per pet
+    const processedPetsDisease = new Set();
+    if (customerData.animalDiseases) {
+      for (const disease of customerData.animalDiseases) {
+        if (processedPetsDisease.has(disease.petName)) continue;
+        processedPetsDisease.add(disease.petName);
+        
+        if (disease.caseStatus === 'Requires Vet') {
+          const petBreed = customerData.pets?.find(p => p.name === disease.petName || p._id === disease.petId)?.breed || 'N/A';
+          const primaryPrediction = disease.predictions?.[0]?.condition || 'health issues';
+          
+          alerts.push({
+            type: 'disease',
+            recordId: disease._id,
+            petId: disease.petId,
+            petName: disease.petName,
+            breed: petBreed,
+            details: `condition requiring vet attention: ${primaryPrediction}`,
+            triggered: disease.emergencyAlertTriggered || false
+          });
+        }
+      }
+    }
+    
+    return alerts;
+  };
 
   const [refundModalOpen, setRefundModalOpen] = useState(false);
   const [refundAmount, setRefundAmount] = useState('');
@@ -196,6 +403,35 @@ const Customer360 = () => {
 
       {customerData && customerData.user && (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          {/* Critical Telemetry Warnings */}
+          {getCriticalAlerts().map((alert, index) => (
+            <div key={index} className="bg-red-50 border-l-4 border-red-500 p-5 rounded-2xl shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              <div className="flex items-start gap-3">
+                <FaExclamationTriangle className="text-red-500 text-2xl mt-1 shrink-0 animate-pulse" />
+                <div>
+                  <h3 className="font-extrabold text-red-800 text-lg uppercase tracking-wider">Critical Pet Vitals Detected</h3>
+                  <p className="text-sm font-semibold text-slate-700 mt-1">
+                    Pet: <span className="font-extrabold text-slate-900">{alert.petName} ({alert.breed})</span> recently recorded {alert.details}.
+                  </p>
+                </div>
+              </div>
+              <div className="shrink-0 w-full md:w-auto">
+                {alert.triggered ? (
+                  <span className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-100 text-emerald-800 font-extrabold text-xs rounded-xl border border-emerald-200">
+                    ● Emergency Visit Suggested
+                  </span>
+                ) : (
+                  <button
+                    onClick={() => handleTriggerEmergency(alert)}
+                    className="w-full md:w-auto px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-extrabold text-xs rounded-xl transition-all shadow-md shadow-red-600/20 active:scale-95"
+                  >
+                    Suggest for Emergency Vet visit
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+
           {/* User Overview Card */}
           <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
             <div className="bg-gradient-to-r from-slate-800 to-slate-900 px-6 py-8 relative">
@@ -222,6 +458,11 @@ const Customer360 = () => {
                     <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${customerData.user.isBanned ? 'bg-red-500/20 text-red-200 border border-red-500/50' : 'bg-emerald-500/20 text-emerald-200 border border-emerald-500/50'}`}>
                       {customerData.user.isBanned ? 'Banned' : 'Active Account'}
                     </span>
+                    {customerData.user.isGoogleConnected && (
+                      <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-sky-500/20 text-sky-200 border border-sky-500/50 flex items-center gap-1.5 shadow-sm shadow-sky-500/10">
+                        <FaGoogle className="text-sky-300" /> Google Linked
+                      </span>
+                    )}
                   </div>
                 </div>
                 
@@ -613,83 +854,87 @@ const Customer360 = () => {
               <div className="space-y-4">
                 {customerData.mlPredictions && customerData.mlPredictions.length > 0 ? (
                   <div className="grid grid-cols-1 gap-6 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
-                    {customerData.mlPredictions.map((caseItem) => (
-                      <div key={caseItem._id} className="p-5 bg-slate-50 rounded-2xl border border-slate-200/60 shadow-sm relative overflow-hidden">
-                        {/* Title Header */}
-                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-200/60 pb-3 mb-4">
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <h4 className="font-extrabold text-slate-800 text-base">{caseItem.petName}</h4>
-                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 border border-purple-200 uppercase">
-                                {caseItem.animalType}
-                              </span>
-                              <span className="text-xs text-slate-500">Breed: {caseItem.breed}</span>
+                    {customerData.mlPredictions.map((caseItem) => {
+                      const evalResult = evaluateVitals(caseItem);
+                      const petBreed = customerData.pets?.find(p => p.name === caseItem.petName || p._id === caseItem.petId)?.breed || 'N/A';
+                      return (
+                        <div key={caseItem._id} className="p-5 bg-slate-50 rounded-2xl border border-slate-200/60 shadow-sm relative overflow-hidden">
+                          {/* Title Header */}
+                          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-200/60 pb-3 mb-4">
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <h4 className="font-extrabold text-slate-800 text-base">{caseItem.petName}</h4>
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 border border-purple-200 uppercase">
+                                  {caseItem.animalType}
+                                </span>
+                                <span className="text-xs text-slate-500">Breed: {petBreed}</span>
+                              </div>
+                              <p className="text-[10px] text-slate-400 mt-0.5">Checked on: {new Date(caseItem.createdAt).toLocaleString()}</p>
                             </div>
-                            <p className="text-[10px] text-slate-400 mt-0.5">Checked on: {new Date(caseItem.createdAt).toLocaleString()}</p>
-                          </div>
-                          
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-bold text-slate-400 bg-slate-200/60 px-2 py-1 rounded-lg">
-                              +{caseItem.pawPointsEarned || 5} PawPoints Credit
-                            </span>
-                            <span className={`text-xs font-black px-3.5 py-1 rounded-full uppercase tracking-wider ${
-                              caseItem.predictionResult?.status === 'Abnormal' ? 'bg-red-100 text-red-800 border border-red-200' : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
-                            }`}>
-                              ● {caseItem.predictionResult?.status || 'Normal'}
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Split columns */}
-                        <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
-                          
-                          {/* Vitals stats grids */}
-                          <div className="md:col-span-4 bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex flex-col justify-between">
-                            <h5 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                              <FaHeartbeat className="text-purple-500" /> Physiological Vitals
-                            </h5>
                             
-                            <div className="grid grid-cols-3 gap-2">
-                              <div className="p-2 bg-slate-50 rounded-lg text-center">
-                                <p className="text-[10px] font-bold text-slate-400">TEMP</p>
-                                <p className="text-sm font-extrabold text-slate-700 mt-1">{caseItem.vitals?.temperature}°C</p>
-                                <span className={`text-[8px] font-bold px-1 py-0.2 rounded ${caseItem.predictionResult?.vitalsEvaluation?.temperature === 'Normal' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
-                                  {caseItem.predictionResult?.vitalsEvaluation?.temperature || 'Check'}
-                                </span>
-                              </div>
-                              <div className="p-2 bg-slate-50 rounded-lg text-center">
-                                <p className="text-[10px] font-bold text-slate-400">PULSE</p>
-                                <p className="text-sm font-extrabold text-slate-700 mt-1">{caseItem.vitals?.heartRate} bpm</p>
-                                <span className={`text-[8px] font-bold px-1 py-0.2 rounded ${caseItem.predictionResult?.vitalsEvaluation?.heartRate === 'Normal' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
-                                  {caseItem.predictionResult?.vitalsEvaluation?.heartRate || 'Check'}
-                                </span>
-                              </div>
-                              <div className="p-2 bg-slate-50 rounded-lg text-center">
-                                <p className="text-[10px] font-bold text-slate-400">RESP</p>
-                                <p className="text-sm font-extrabold text-slate-700 mt-1">{caseItem.vitals?.respiratoryRate} /m</p>
-                                <span className={`text-[8px] font-bold px-1 py-0.2 rounded ${caseItem.predictionResult?.vitalsEvaluation?.respiratoryRate === 'Normal' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
-                                  {caseItem.predictionResult?.vitalsEvaluation?.respiratoryRate || 'Check'}
-                                </span>
-                              </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] font-bold text-slate-400 bg-slate-200/60 px-2 py-1 rounded-lg">
+                                +{caseItem.pawPointsEarned || 5} PawPoints Credit
+                              </span>
+                              <span className={`text-xs font-black px-3.5 py-1 rounded-full uppercase tracking-wider ${
+                                evalResult.status === 'Abnormal' ? 'bg-red-100 text-red-800 border border-red-200' : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                              }`}>
+                                ● {evalResult.status}
+                              </span>
                             </div>
                           </div>
 
-                          {/* AI Recommendation Panel */}
-                          <div className="md:col-span-8 bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
-                            <h5 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
-                              <FaCrown className="text-purple-500" /> Gemma-3 Generative Health Advisory
-                            </h5>
-                            <div className="p-3 bg-purple-50/50 rounded-lg border border-purple-100 max-h-[140px] overflow-y-auto pr-1.5 custom-scrollbar">
-                              <p className="text-xs text-purple-900 font-extrabold mb-1">Diagnosis Matrix: <span className="underline">{caseItem.predictionResult?.summary}</span></p>
-                              <p className="text-[11px] text-slate-600 leading-relaxed font-medium italic">
-                                "{caseItem.predictionResult?.veterinaryLetter || 'No recommendations generated.'}"
-                              </p>
+                          {/* Split columns */}
+                          <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
+                            
+                            {/* Vitals stats grids */}
+                            <div className="md:col-span-4 bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex flex-col justify-between">
+                              <h5 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                                <FaHeartbeat className="text-purple-500" /> Physiological Vitals
+                              </h5>
+                              
+                              <div className="grid grid-cols-3 gap-2">
+                                <div className="p-2 bg-slate-50 rounded-lg text-center">
+                                  <p className="text-[10px] font-bold text-slate-400">TEMP</p>
+                                  <p className="text-sm font-extrabold text-slate-700 mt-1">{caseItem.vitals?.temperature}°F</p>
+                                  <span className={`text-[8px] font-bold px-1 py-0.2 rounded ${evalResult.vitalsEvaluation?.temperature === 'Normal' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
+                                    {evalResult.vitalsEvaluation?.temperature || 'Check'}
+                                  </span>
+                                </div>
+                                <div className="p-2 bg-slate-50 rounded-lg text-center">
+                                  <p className="text-[10px] font-bold text-slate-400">PULSE</p>
+                                  <p className="text-sm font-extrabold text-slate-700 mt-1">{caseItem.vitals?.pulseRate || caseItem.vitals?.heartRate} bpm</p>
+                                  <span className={`text-[8px] font-bold px-1 py-0.2 rounded ${evalResult.vitalsEvaluation?.heartRate === 'Normal' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
+                                    {evalResult.vitalsEvaluation?.heartRate || 'Check'}
+                                  </span>
+                                </div>
+                                <div className="p-2 bg-slate-50 rounded-lg text-center">
+                                  <p className="text-[10px] font-bold text-slate-400">RESP</p>
+                                  <p className="text-sm font-extrabold text-slate-700 mt-1">{caseItem.vitals?.respirationRate || caseItem.vitals?.respiratoryRate} /m</p>
+                                  <span className={`text-[8px] font-bold px-1 py-0.2 rounded ${evalResult.vitalsEvaluation?.respiratoryRate === 'Normal' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
+                                    {evalResult.vitalsEvaluation?.respiratoryRate || 'Check'}
+                                  </span>
+                                </div>
+                              </div>
                             </div>
-                          </div>
 
+                            {/* AI Recommendation Panel */}
+                            <div className="md:col-span-8 bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
+                              <h5 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+                                <FaCrown className="text-purple-500" /> Gemma-3 Generative Health Advisory
+                              </h5>
+                              <div className="p-3 bg-purple-50/50 rounded-lg border border-purple-100 max-h-[140px] overflow-y-auto pr-1.5 custom-scrollbar">
+                                <p className="text-xs text-purple-900 font-extrabold mb-1">Diagnosis Matrix: <span className="underline">{evalResult.summary}</span></p>
+                                <p className="text-[11px] text-slate-600 leading-relaxed font-medium italic">
+                                  "{evalResult.veterinaryLetter || 'No recommendations generated.'}"
+                                </p>
+                              </div>
+                            </div>
+
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className="text-center py-10 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
@@ -731,6 +976,286 @@ const Customer360 = () => {
               </div>
             </div>
           )}
+
+          {/* ── AI Diet & Nutrition Planner ── */}
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mt-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6 border-b border-slate-100 pb-5">
+              <div>
+                <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                  <FaAppleAlt className="text-green-500" /> AI Diet &amp; Nutrition Planner
+                </h3>
+                <p className="text-xs text-slate-500 mt-1">AI-generated veterinary-grade meal plans created by the user for their pets.</p>
+              </div>
+              <span className="text-xs font-bold bg-green-50 text-green-700 border border-green-200 px-3 py-1 rounded-full">
+                {customerData.nutritionPlans?.length || 0} Plan{(customerData.nutritionPlans?.length || 0) !== 1 ? 's' : ''} Generated
+              </span>
+            </div>
+
+            {customerData.nutritionPlans && customerData.nutritionPlans.length > 0 ? (
+              <div className="space-y-6 max-h-[700px] overflow-y-auto pr-2 custom-scrollbar">
+                {customerData.nutritionPlans.map((plan) => (
+                  <div key={plan._id} className="p-5 bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl border border-green-200/60 shadow-sm">
+
+                    {/* Plan Header */}
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 pb-3 border-b border-green-200/60">
+                      <div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h4 className="font-extrabold text-slate-800 text-base">{plan.petName}</h4>
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-200 text-green-900 uppercase">{plan.animalType}</span>
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-200 text-slate-700">{plan.breed}</span>
+                          <span className="text-[10px] text-slate-500">{plan.age} yr • {plan.weight} kg</span>
+                        </div>
+                        <p className="text-[10px] text-slate-400 mt-0.5">Generated on: {new Date(plan.createdAt).toLocaleString()}</p>
+                      </div>
+                      <div className="flex items-center gap-2 flex-wrap shrink-0">
+                        <span className="text-[10px] font-bold px-2 py-1 rounded-lg bg-amber-100 text-amber-800 border border-amber-200 uppercase tracking-tight">
+                          Activity: {plan.activityLevel}
+                        </span>
+                        <span className="text-sm font-black text-green-700 bg-white border border-green-200 px-3 py-1 rounded-xl shadow-sm">
+                          🔥 {plan.caloricTarget} kcal/day
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Goals & Medical Conditions */}
+                    {(plan.goals || (plan.medicalConditions && plan.medicalConditions.length > 0)) && (
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        {plan.goals && (
+                          <div className="flex items-center gap-1.5 text-xs bg-blue-50 border border-blue-100 text-blue-800 px-3 py-1 rounded-lg">
+                            <FaLeaf className="text-blue-500 shrink-0" />
+                            <span className="font-semibold">Goal:</span> {plan.goals}
+                          </div>
+                        )}
+                        {plan.medicalConditions && plan.medicalConditions.map((cond, i) => (
+                          <span key={i} className="text-[10px] font-bold px-2 py-1 rounded-lg bg-red-50 text-red-700 border border-red-100">
+                            ⚕ {cond}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* 3-column body */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+                      {/* Meal Schedule */}
+                      <div className="bg-white rounded-xl border border-green-100 shadow-sm p-4">
+                        <h5 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                          <FaAppleAlt className="text-green-500" /> Daily Meal Schedule
+                        </h5>
+                        <div className="space-y-3">
+                          {[['🌅 Morning', plan.dietSchedule?.morning], ['☀️ Afternoon', plan.dietSchedule?.afternoon], ['🌙 Evening', plan.dietSchedule?.evening]].map(([label, text]) => (
+                            text ? (
+                              <div key={label} className="p-2.5 bg-green-50/60 rounded-lg border border-green-100">
+                                <p className="text-[10px] font-extrabold text-green-700 uppercase tracking-tight mb-1">{label}</p>
+                                <p className="text-[11px] text-slate-600 leading-relaxed">{text}</p>
+                              </div>
+                            ) : null
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Portion Calculator */}
+                      <div className="bg-white rounded-xl border border-green-100 shadow-sm p-4">
+                        <h5 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                          <FaFlask className="text-indigo-500" /> Portion Calculator
+                        </h5>
+                        <div className="space-y-3">
+                          <div className="flex justify-between items-center p-2.5 bg-slate-50 rounded-lg">
+                            <span className="text-xs font-semibold text-slate-600">Dry Food</span>
+                            <span className="text-sm font-extrabold text-slate-800">{plan.portionCalculator?.dryFoodGrams ?? '–'} g</span>
+                          </div>
+                          <div className="flex justify-between items-center p-2.5 bg-slate-50 rounded-lg">
+                            <span className="text-xs font-semibold text-slate-600">Wet Food</span>
+                            <span className="text-sm font-extrabold text-slate-800">{plan.portionCalculator?.wetFoodGrams ?? '–'} g</span>
+                          </div>
+                          <div className="flex justify-between items-center p-2.5 bg-blue-50 rounded-lg border border-blue-100">
+                            <span className="text-xs font-semibold text-blue-700 flex items-center gap-1"><FaTint className="text-blue-400" /> Water</span>
+                            <span className="text-sm font-extrabold text-blue-800">{plan.portionCalculator?.waterRequirementMl ?? '–'} ml</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Custom Recipes */}
+                      <div className="bg-white rounded-xl border border-green-100 shadow-sm p-4">
+                        <h5 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                          <FaLeaf className="text-emerald-500" /> Custom Recipes ({plan.customRecipes?.length || 0})
+                        </h5>
+                        {plan.customRecipes && plan.customRecipes.length > 0 ? (
+                          <div className="space-y-3 max-h-[200px] overflow-y-auto pr-1 custom-scrollbar">
+                            {plan.customRecipes.map((recipe, ri) => (
+                              <div key={ri} className="p-2.5 bg-emerald-50/60 rounded-lg border border-emerald-100">
+                                <p className="text-[10px] font-extrabold text-emerald-800 mb-1.5">🍽 {recipe.title}</p>
+                                {recipe.ingredients && recipe.ingredients.length > 0 && (
+                                  <div className="mb-1.5">
+                                    <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wide mb-1">Ingredients:</p>
+                                    <div className="flex flex-wrap gap-1">
+                                      {recipe.ingredients.map((ing, ii) => (
+                                        <span key={ii} className="text-[9px] bg-white border border-emerald-200 text-emerald-800 px-1.5 py-0.5 rounded-md font-semibold">{ing}</span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                                {recipe.instructions && (
+                                  <p className="text-[10px] text-slate-500 leading-relaxed italic">{recipe.instructions}</p>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-xs text-slate-400 italic text-center py-4">No custom recipes in this plan.</p>
+                        )}
+                      </div>
+
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12 bg-green-50/50 rounded-2xl border border-dashed border-green-200">
+                <FaAppleAlt className="text-green-300 text-4xl mx-auto mb-3" />
+                <p className="font-bold text-slate-700">No AI Diet Plans Generated Yet</p>
+                <p className="text-xs text-slate-400 mt-1">This user has not created any nutrition plans using the AI Diet Planner.</p>
+              </div>
+            )}
+          </div>
+
+          {/* ── Stray Crowdfunding Campaigns ── */}
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mt-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6 border-b border-slate-100 pb-5">
+              <div>
+                <h3 className="text-xl font-black text-slate-800 flex items-center gap-2">
+                  <FaHeart className="text-rose-500" /> Stray Crowdfunding Campaigns
+                </h3>
+                <p className="text-xs text-slate-500 mt-1">Monitor stray animal crowdfunding campaigns created by this user.</p>
+              </div>
+              <span className="text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200 px-3 py-1 rounded-full">
+                {customerData.crowdfundingCampaigns?.length || 0} Campaign{(customerData.crowdfundingCampaigns?.length || 0) !== 1 ? 's' : ''} Found
+              </span>
+            </div>
+
+            {/* Stats Summary Widget */}
+            {customerData.crowdfundingCampaigns && customerData.crowdfundingCampaigns.length > 0 && (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase">Total Campaigns</p>
+                  <p className="text-xl font-black text-slate-800 mt-1">{customerData.crowdfundingCampaigns.length}</p>
+                </div>
+                <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100">
+                  <p className="text-[10px] font-bold text-emerald-600 uppercase">Active</p>
+                  <p className="text-xl font-black text-emerald-800 mt-1">
+                    {customerData.crowdfundingCampaigns.filter(c => c.status === 'Active').length}
+                  </p>
+                </div>
+                <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100">
+                  <p className="text-[10px] font-bold text-blue-600 uppercase">Completed</p>
+                  <p className="text-xl font-black text-blue-800 mt-1">
+                    {customerData.crowdfundingCampaigns.filter(c => c.status === 'Completed').length}
+                  </p>
+                </div>
+                <div className="p-4 bg-rose-50 rounded-2xl border border-rose-100">
+                  <p className="text-[10px] font-bold text-rose-600 uppercase">Suspended</p>
+                  <p className="text-xl font-black text-rose-800 mt-1">
+                    {customerData.crowdfundingCampaigns.filter(c => c.status === 'Suspended').length}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {customerData.crowdfundingCampaigns && customerData.crowdfundingCampaigns.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[700px] overflow-y-auto pr-2 custom-scrollbar">
+                {customerData.crowdfundingCampaigns.map((camp) => {
+                  const progressPercent = Math.min(100, Math.round((camp.raisedAmount / camp.targetAmount) * 100)) || 0;
+                  
+                  const getStatusBadge = (status) => {
+                    switch (status) {
+                      case 'Active':
+                        return 'bg-emerald-100 text-emerald-800 border-emerald-200';
+                      case 'Completed':
+                        return 'bg-blue-100 text-blue-800 border-blue-200';
+                      case 'Cancelled':
+                        return 'bg-amber-100 text-amber-800 border-amber-200';
+                      case 'Suspended':
+                        return 'bg-rose-100 text-rose-800 border-rose-300 font-extrabold';
+                      default:
+                        return 'bg-slate-100 text-slate-800 border-slate-200';
+                    }
+                  };
+
+                  return (
+                    <div key={camp._id} className="bg-slate-50/50 rounded-2xl border border-slate-200/60 p-5 flex flex-col justify-between gap-4 group hover:shadow-md transition-all duration-300">
+                      
+                      {/* Image & Title Header */}
+                      <div className="flex gap-4 items-start">
+                        {camp.imageUrl && (
+                          <img 
+                            src={camp.imageUrl} 
+                            alt={camp.title}
+                            className="w-16 h-16 rounded-xl object-cover border border-slate-200"
+                          />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2 flex-wrap mb-1">
+                            <span className="text-[9px] font-black uppercase bg-slate-200 text-slate-700 px-2.5 py-0.5 rounded tracking-wider">
+                              {camp.animalType}
+                            </span>
+                            <span className={`text-[9px] font-black uppercase border px-2.5 py-0.5 rounded-full ${getStatusBadge(camp.status)}`}>
+                              {camp.status}
+                            </span>
+                          </div>
+                          <h4 className="font-extrabold text-slate-800 text-sm truncate" title={camp.title}>{camp.title}</h4>
+                          <p className="text-[11px] text-slate-400 mt-0.5">Created: {new Date(camp.createdAt).toLocaleDateString()}</p>
+                        </div>
+                      </div>
+
+                      {/* Description */}
+                      <p className="text-xs text-slate-500 font-semibold line-clamp-2 italic leading-relaxed">
+                        "{camp.description}"
+                      </p>
+
+                      {/* Target / Raised Statistics */}
+                      <div className="bg-white p-3.5 rounded-xl border border-slate-100 space-y-2.5">
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="font-extrabold text-slate-500">Fundraising Progress</span>
+                          <span className="font-black text-slate-800">{progressPercent}%</span>
+                        </div>
+                        <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-gradient-to-r from-rose-500 to-amber-500 rounded-full"
+                            style={{ width: `${progressPercent}%` }}
+                          />
+                        </div>
+                        <div className="flex justify-between items-center text-xs">
+                          <div>
+                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tight">Raised</p>
+                            <p className="font-black text-emerald-600 text-sm">₹{camp.raisedAmount}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tight">Target Goal</p>
+                            <p className="font-black text-slate-800 text-sm">₹{camp.targetAmount}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Meta Footer */}
+                      <div className="flex justify-between items-center text-[10px] text-slate-400 border-t border-slate-100 pt-3">
+                        <span className="font-bold flex items-center gap-1"><FaStethoscope className="text-slate-400" /> {camp.clinicName}</span>
+                        {camp.endDate && (
+                          <span className="font-bold flex items-center gap-1"><FaClock className="text-slate-400" /> Ends: {new Date(camp.endDate).toLocaleDateString()}</span>
+                        )}
+                      </div>
+                      
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-12 bg-rose-50/50 rounded-2xl border border-dashed border-rose-200">
+                <FaHeart className="text-rose-300 text-4xl mx-auto mb-3" />
+                <p className="font-bold text-slate-700">No Crowdfunding Campaigns Created</p>
+                <p className="text-xs text-slate-400 mt-1">This user has not created any stray crowdfunding campaigns.</p>
+              </div>
+            )}
+          </div>
 
         </div>
       )}

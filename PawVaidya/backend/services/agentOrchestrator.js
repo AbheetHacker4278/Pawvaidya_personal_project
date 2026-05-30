@@ -1,7 +1,4 @@
-import axios from "axios";
-import { GoogleGenerativeAI } from "@google/generative-ai";
-
-const NVIDIA_API_URL = "https://integrate.api.nvidia.com/v1/chat/completions";
+import { GoogleGenAI } from "@google/genai";
 
 /**
  * Local Heuristic Fallback Engine
@@ -55,30 +52,25 @@ For booking appointments, viewing your pet records, checking rewards, or contact
  * Iterates through available model list to resolve model-specific version support 404 errors.
  */
 async function callGemini(messages, systemPrompt) {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) throw new Error("GEMINI_API_KEY is missing in environment variables.");
+    const apiKey = process.env.GOOGLE_CLOUD_API_KEY || process.env.GEMINI_API_KEY;
+    if (!apiKey) throw new Error("GOOGLE_CLOUD_API_KEY or GEMINI_API_KEY is missing in environment variables.");
 
-    const genAI = new GoogleGenerativeAI(apiKey);
+    const ai = new GoogleGenAI({ apiKey });
 
     // Dynamic fallback sequence to prevent version-specific API model 404s
     const modelsToTry = [
-        "gemini-1.5-flash",
-        "gemini-1.5-flash-latest",
-        "gemini-2.0-flash",
+        "gemini-3.5-flash",
         "gemini-2.5-flash",
+        "gemini-2.0-flash",
+        "gemini-1.5-flash",
         "gemini-1.5-pro",
-        "gemini-pro"
     ];
 
     let lastError = null;
 
     for (const modelId of modelsToTry) {
         try {
-            console.log(`[Gemini Fallback] Attempting generation with model: ${modelId}...`);
-            const model = genAI.getGenerativeModel({
-                model: modelId,
-                systemInstruction: systemPrompt,
-            });
+            console.log(`[Google Cloud GenAI] Attempting generation with model: ${modelId}...`);
 
             // Format chat messages for Gemini:
             // Gemini expects alternating user and model roles.
@@ -109,15 +101,42 @@ async function callGemini(messages, systemPrompt) {
                 contents.push({ role: "user", parts: [{ text: "Hello" }] });
             }
 
-            console.log(`[Orchestrator Fallback] Dispatching history to Gemini (${modelId})...`);
-            const result = await model.generateContent({ contents });
-            const response = await result.response;
-            return response.text();
+            console.log(`[Orchestrator Fallback] Dispatching history to Google Cloud GenAI (${modelId})...`);
+            
+            const response = await ai.models.generateContent({
+                model: modelId,
+                contents: contents,
+                config: {
+                    systemInstruction: {
+                        parts: [{ text: systemPrompt }]
+                    },
+                    safetySettings: [
+                        {
+                            category: 'HARM_CATEGORY_HATE_SPEECH',
+                            threshold: 'OFF',
+                        },
+                        {
+                            category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
+                            threshold: 'OFF',
+                        },
+                        {
+                            category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
+                            threshold: 'OFF',
+                        },
+                        {
+                            category: 'HARM_CATEGORY_HARASSMENT',
+                            threshold: 'OFF',
+                        }
+                    ],
+                }
+            });
+
+            return response.text;
         } catch (err) {
-            console.warn(`[Gemini Fallback] Model ${modelId} failed:`, err.message);
+            console.warn(`[Google Cloud GenAI] Model ${modelId} failed:`, err.message);
             lastError = err;
             // Move to next model if this one is not found or unsupported
-            if (err.message.includes("404") || err.message.includes("not found") || err.message.includes("not supported")) {
+            if (err.message.includes("404") || err.message.includes("not found") || err.message.includes("not supported") || err.message.includes("model")) {
                 continue;
             } else {
                 throw err; // Throw other critical errors directly (like auth/quota errors)
@@ -125,16 +144,50 @@ async function callGemini(messages, systemPrompt) {
         }
     }
 
-    throw lastError || new Error("All Gemini model fallback options failed.");
+    throw lastError || new Error("All Google Cloud GenAI model fallback options failed.");
+}
+
+/**
+ * Helper to extract multiple JSON objects matching the tool structure.
+ * Counts brace balance to support nested structures.
+ */
+function extractJsonObjects(str) {
+    const objects = [];
+    let braceCount = 0;
+    let startIdx = -1;
+    
+    for (let i = 0; i < str.length; i++) {
+        if (str[i] === '{') {
+            if (braceCount === 0) {
+                startIdx = i;
+            }
+            braceCount++;
+        } else if (str[i] === '}') {
+            if (braceCount > 0) {
+                braceCount--;
+                if (braceCount === 0 && startIdx !== -1) {
+                    const candidate = str.substring(startIdx, i + 1);
+                    try {
+                        const parsed = JSON.parse(candidate);
+                        if (parsed && typeof parsed === 'object' && parsed.tool) {
+                            objects.push(parsed);
+                        }
+                    } catch (e) {
+                        // Ignore invalid JSON structures
+                    }
+                }
+            }
+        }
+    }
+    return objects;
 }
 
 /**
  * Shared AI Agent Orchestrator
- * Runs a prompt-based agentic loop against NVIDIA NIM (Gemma 3-27B).
+ * Runs a prompt-based agentic loop against Google Cloud GenAI (Gemini).
  * Parses JSON tool calls from the response, executes them locally,
  * and feeds the results back to the agent in a loop.
  * 
- * Automatically falls back to Gemini 1.5 Flash if NVIDIA NIM times out (8s) or fails.
  * Falls back to offline heuristic response engine if all cloud models fail.
  */
 export const runAgentLoop = async ({
@@ -143,12 +196,9 @@ export const runAgentLoop = async ({
     userMessage,
     history = [],
     maxIterations = 5,
-    model = "google/gemma-3-27b-it",
     maxTokens = 1024,
     temperature = 0.2,
 }) => {
-    const nvidiaKey = process.env.NVIDIA_NIM_API_KEY;
-    
     // Build initial messages array
     let messages = [{ role: "system", content: systemPrompt }];
 
@@ -158,7 +208,7 @@ export const runAgentLoop = async ({
         content: m.content || m.text || (m.parts?.[0]?.text) || "",
     })).filter(m => m.content);
 
-    // Remove leading assistant message (NVIDIA requires user first)
+    // Remove leading assistant message (Gemini format helper)
     if (normalizedHistory.length > 0 && normalizedHistory[0].role === "assistant") {
         normalizedHistory.shift();
     }
@@ -166,91 +216,81 @@ export const runAgentLoop = async ({
     messages.push(...normalizedHistory);
     messages.push({ role: "user", content: userMessage });
 
-    const headers = {
-        Authorization: `Bearer ${nvidiaKey}`,
-        "Content-Type": "application/json",
-    };
-
-    const basePayload = { model, max_tokens: maxTokens, temperature, top_p: 0.7 };
-
     let aiResponse = "";
     let iterations = 0;
 
     while (iterations <= maxIterations) {
-        // Attempt API call with NVIDIA NIM first, fall back to Gemini if it fails or times out (8 seconds)
         let callSuccess = false;
 
-        if (nvidiaKey) {
-            try {
-                console.log(`[Orchestrator] Attempting NVIDIA NIM call (Iteration ${iterations})...`);
-                const response = await axios.post(
-                    NVIDIA_API_URL,
-                    { ...basePayload, messages },
-                    { headers, timeout: 8000 } // Robust 8-second timeout to prevent hangs
-                );
-                
-                aiResponse = response.data.choices[0].message.content;
-                callSuccess = true;
-                console.log("[Orchestrator] NVIDIA NIM responded successfully.");
-            } catch (error) {
-                console.warn(`[Orchestrator] NVIDIA NIM error/timeout (Iteration ${iterations}): ${error.message}`);
-            }
-        } else {
-            console.warn("[Orchestrator] NVIDIA NIM API key missing. Skipping to fallback...");
-        }
-
-        // Graceful Fallback Layer
-        if (!callSuccess) {
-            try {
-                console.log(`[Orchestrator] Falling back to Gemini 1.5 Flash (Iteration ${iterations})...`);
-                aiResponse = await callGemini(messages, systemPrompt);
-                console.log("[Orchestrator] Gemini responded successfully.");
-                callSuccess = true;
-            } catch (fallbackError) {
-                console.error("[Orchestrator] Critical: Gemini fallback also failed:", fallbackError.message);
-                
-                // Final Offline Resilience Fallback Layer - Heuristic Engine
-                console.log("[Orchestrator] Engaging final Heuristic Offline Response Fallback...");
-                aiResponse = getLocalHeuristicResponse(userMessage, systemPrompt);
-                callSuccess = true;
-            }
-        }
-
-        // Try to extract a JSON tool call from the response
-        let toolCall = null;
         try {
-            const jsonMatch = aiResponse.match(/\{[\s\S]*?"tool"[\s\S]*?\}/);
-            if (jsonMatch) toolCall = JSON.parse(jsonMatch[0]);
-        } catch {
-            // No valid JSON in response
+            console.log(`[Orchestrator] Dispatching to Google Cloud GenAI (Iteration ${iterations})...`);
+            aiResponse = await callGemini(messages, systemPrompt);
+            console.log("[Orchestrator] Google Cloud GenAI responded successfully.");
+            callSuccess = true;
+        } catch (error) {
+            console.error(`[Orchestrator] Google Cloud GenAI failed (Iteration ${iterations}):`, error.message);
+            
+            // Final Heuristic Offline Response Fallback Layer
+            console.log("[Orchestrator] Engaging final Heuristic Offline Response Fallback...");
+            aiResponse = getLocalHeuristicResponse(userMessage, systemPrompt);
+            callSuccess = true;
         }
 
-        // Break if no tool call, or tool not found, or max iterations reached
-        if (!toolCall || !toolImpls[toolCall.tool] || iterations >= maxIterations) break;
+        // Try to extract JSON tool calls from the response using brace-balancing
+        const toolCalls = extractJsonObjects(aiResponse);
 
-        const { tool, args } = toolCall;
-        console.log(`[Agent] Executing tool: ${tool}`, args);
+        // Break if no tool calls were extracted, or max iterations reached
+        if (toolCalls.length === 0 || iterations >= maxIterations) break;
 
-        // Safe tool execution wrapper
-        let toolResult;
-        try {
-            toolResult = await toolImpls[tool](args || {});
-        } catch (toolError) {
-            console.error(`[Orchestrator] Error during tool execution for '${tool}':`, toolError);
-            toolResult = { error: `Failed to execute tool '${tool}': ${toolError.message}` };
-        }
+        // Execute all extracted tool calls in parallel
+        const toolResults = await Promise.all(toolCalls.map(async (tc) => {
+            const { tool, args } = tc;
+            let result;
+            
+            if (!toolImpls[tool]) {
+                console.warn(`[Agent] Tool '${tool}' requested but not available.`);
+                result = {
+                    error: `Tool '${tool}' is not available. This is because the user is currently not logged in (guest mode). Please inform the user that they must log in to access this feature.`
+                };
+            } else {
+                console.log(`[Agent] Executing tool: ${tool}`, args);
+                try {
+                    result = await toolImpls[tool](args || {});
+                } catch (toolError) {
+                    console.error(`[Orchestrator] Error during tool execution for '${tool}':`, toolError);
+                    result = { error: `Failed to execute tool '${tool}': ${toolError.message}` };
+                }
+                console.log(`[Agent] Tool execution complete for '${tool}'.`);
+            }
+            return { tool, result };
+        }));
 
-        console.log(`[Agent] Tool execution complete for '${tool}'.`);
-
-        // Feed the tool result back into the conversation
+        // Feed the tool results back into the conversation
         messages.push({ role: "assistant", content: aiResponse });
+        
+        const resultsContent = toolResults.map(tr => 
+            `Tool Result from ${tr.tool}: ${JSON.stringify(tr.result)}`
+        ).join("\n");
+
         messages.push({
             role: "user",
-            content: `Tool Result from ${tool}: ${JSON.stringify(toolResult)}`,
+            content: resultsContent,
         });
 
         iterations++;
     }
 
-    return aiResponse;
+    // Safety Guardrail: If the final response is still a raw JSON tool call block, return a friendly message
+    let finalResponse = aiResponse;
+    try {
+        const trimmed = aiResponse.trim();
+        const candidateCalls = extractJsonObjects(trimmed);
+        if (candidateCalls.length > 0 && trimmed.replace(/\{[\s\S]*?\}/g, "").trim() === "") {
+            finalResponse = "To access this personalized feature, please make sure you are logged in to your PawVaidya account! Once you are logged in, I will be able to retrieve your pets, appointments, wallet balance, and more. 🐾";
+        }
+    } catch (e) {
+        // Fallback to normal response
+    }
+
+    return finalResponse;
 };

@@ -191,6 +191,35 @@ export const initializeSocket = (server) => {
       console.log(`Socket ${socket.id} joined cs-agents room`);
     });
 
+    // Co-Browsing Events
+    socket.on('co-browse-request', (data) => {
+      console.log(`Co-browse request from agent for ticket ${data.ticketId} targeting user ${data.userId}`);
+      io.to(`user-${String(data.userId)}`).emit('co-browse-request', data);
+    });
+
+    socket.on('co-browse-accept', (data) => {
+      console.log(`Co-browse accepted for ticket ${data.ticketId}`);
+      socket.to(`ticket-${data.ticketId}`).emit('co-browse-accept', data);
+    });
+
+    socket.on('co-browse-decline', (data) => {
+      console.log(`Co-browse declined for ticket ${data.ticketId}`);
+      socket.to(`ticket-${data.ticketId}`).emit('co-browse-decline', data);
+    });
+
+    socket.on('co-browse-stop', (data) => {
+      console.log(`Co-browse stopped for ticket ${data.ticketId}`);
+      socket.to(`ticket-${data.ticketId}`).emit('co-browse-stop', data);
+    });
+
+    socket.on('co-browse-sync', (data) => {
+      socket.to(`ticket-${data.ticketId}`).emit('co-browse-sync', data);
+    });
+
+    socket.on('co-browse-highlight', (data) => {
+      socket.to(`ticket-${data.ticketId}`).emit('co-browse-highlight', data);
+    });
+
     // Emergency Appointment Events
     socket.on('register-doctor-emergency', (data) => {
       const { docId, district } = data;

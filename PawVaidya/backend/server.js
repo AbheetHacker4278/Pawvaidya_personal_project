@@ -1,10 +1,11 @@
 import express from 'express';
-// Triggering restart for gamification sync...
+// Triggering restart for firebase new bucket domain...
 import cors from 'cors';
 import http from 'http';
 import 'dotenv/config'
 import connectdb from './config/mongodb.js';
 import connectCloudnairy from './config/cloudinary.js';
+import { connectFirebase } from './config/firebase.js';
 import adminRouter from './routes/adminroute.js';
 import { doctorrouter } from './routes/doctorroute.js';
 import userRouter from './routes/userroute.js';
@@ -30,6 +31,9 @@ import crueltyReportRouter from './routes/crueltyReportRoute.js';
 import gamificationRouter from './routes/csGamificationRoute.js';
 import mlPredictionRouter from './routes/mlPredictionRoute.js';
 import animalDiseaseRouter from './routes/animalDiseaseRoute.js';
+import nutritionPlanRouter from './routes/nutritionPlanRoute.js';
+import strayCrowdfundingRouter from './routes/strayCrowdfundingRoute.js';
+import cardRouter from './routes/cardRoute.js';
 
 
 import cookieParser from 'cookie-parser';
@@ -51,6 +55,7 @@ const server = http.createServer(app);
 
 connectdb()
 connectCloudnairy()
+connectFirebase()
 
 // Initialize Schedulers
 initScheduler();
@@ -70,6 +75,7 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 app.use(cors({ origin: allowedorigins, credentials: true }));
 app.use(cookieParser())
+app.use('/uploads', express.static('uploads'));
 app.use(telemetryMiddleware)
 app.use(maintenanceMiddleware)
 app.use(securityMonitor)
@@ -204,6 +210,24 @@ try {
   app.use('/api/disease-predictor', animalDiseaseRouter);
 } catch (error) {
   console.error("Failed to use animalDiseaseRouter:", error.message);
+}
+
+try {
+  app.use('/api/nutrition-plan', nutritionPlanRouter);
+} catch (error) {
+  console.error("Failed to use nutritionPlanRouter:", error.message);
+}
+
+try {
+  app.use('/api/stray-crowdfunding', strayCrowdfundingRouter);
+} catch (error) {
+  console.error("Failed to use strayCrowdfundingRouter:", error.message);
+}
+
+try {
+  app.use('/api/cards', cardRouter);
+} catch (error) {
+  console.error("Failed to use cardRouter:", error.message);
 }
 
 // Pet report feature disabled

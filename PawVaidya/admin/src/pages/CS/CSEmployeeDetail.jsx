@@ -151,7 +151,9 @@ const CSEmployeeDetail = () => {
                     }
                     if (newTab) newTab.location.href = targetUrl;
                 } catch (err) {
-                    const prodBackend = 'https://pawvaidya-admin-uy9o.onrender.com';
+                    const prodBackend = (backendurl && !backendurl.includes('localhost:4000')) 
+                        ? backendurl 
+                        : 'https://pawvaidya-backend.onrender.com';
                     const fallbackUrl = targetUrl.replace(/https?:\/\/localhost:4000/i, prodBackend);
                     if (newTab) newTab.location.href = fallbackUrl;
                 }

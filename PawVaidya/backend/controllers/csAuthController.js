@@ -958,14 +958,31 @@ export const uploadScreenRecording = async (req, res) => {
                 console.warn('Error deleting local backup:', err.message);
             }
         } catch (firebaseErr) {
-            console.error('Firebase upload failed, using local backup storage:', firebaseErr.message);
-            isFallback = true;
+            console.error('Firebase upload failed, trying Cloudinary backup storage:', firebaseErr.message);
+            try {
+                // Upload the local backup file to Cloudinary since it's persistent
+                const uploadResult = await cloudinary.uploader.upload(localDestPath, {
+                    resource_type: 'video',
+                    folder: 'cs_screen_recordings'
+                });
+                publicUrl = uploadResult.secure_url;
+                
+                // If Cloudinary succeeded, delete the local backup file
+                try {
+                    if (fs.existsSync(localDestPath)) {
+                        fs.unlinkSync(localDestPath);
+                    }
+                } catch (err) {}
+            } catch (cloudinaryErr) {
+                console.error('Cloudinary upload failed too, falling back to local storage:', cloudinaryErr.message);
+                isFallback = true;
 
-            const host = req.get('host');
-            const protocol = req.protocol;
-            const requestBackendUrl = `${protocol}://${host}`;
-            const backendUrl = process.env.BACKEND_URL || process.env.VITE_BACKEND_URL || requestBackendUrl;
-            publicUrl = `${backendUrl}/uploads/${filename}`;
+                const host = req.get('host');
+                const protocol = req.protocol;
+                const requestBackendUrl = `${protocol}://${host}`;
+                const backendUrl = process.env.BACKEND_URL || process.env.VITE_BACKEND_URL || requestBackendUrl;
+                publicUrl = `${backendUrl}/uploads/${filename}`;
+            }
         }
 
         const updatedEmployee = await CSEmployee.findByIdAndUpdate(

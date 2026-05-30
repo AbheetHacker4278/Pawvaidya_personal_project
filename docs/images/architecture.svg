@@ -1,8 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 950 620" width="950" height="620" style="background: #030712; border-radius: 20px; font-family: system-ui, -apple-system, sans-serif;">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1020 720" width="1020" height="720" style="background: #030712; border-radius: 20px; font-family: system-ui, -apple-system, sans-serif;">
   <defs>
     <!-- Background Glows -->
     <radialGradient id="bg-glow" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#1e1b4b" stop-opacity="0.5" />
+      <stop offset="0%" stop-color="#1e1b4b" stop-opacity="0.6" />
       <stop offset="100%" stop-color="#030712" stop-opacity="0" />
     </radialGradient>
     
@@ -10,6 +10,12 @@
     <linearGradient id="node-grad" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#111827" />
       <stop offset="100%" stop-color="#0b0f17" />
+    </linearGradient>
+    
+    <!-- Component Inner Fills -->
+    <linearGradient id="comp-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b" />
+      <stop offset="100%" stop-color="#0f172a" />
     </linearGradient>
     
     <!-- Accent Color Gradients -->
@@ -42,9 +48,13 @@
         stroke-dashoffset: -40;
       }
     }
-    .flow-path {
+    .flow-path-http {
       stroke-dasharray: 6, 8;
       animation: dash 2.5s linear infinite;
+    }
+    .flow-path-ws {
+      stroke-dasharray: 4, 6;
+      animation: dash 1.5s linear infinite;
     }
     .flow-path-reverse {
       stroke-dasharray: 6, 8;
@@ -68,7 +78,6 @@
       animation: blink 2s infinite;
     }
     
-    /* Hover effects for SVG Interactive Viewer */
     .card-node {
       transition: transform 0.3s ease;
       cursor: pointer;
@@ -79,201 +88,331 @@
   </style>
 
   <!-- Base Background & Ambient Glow -->
-  <rect width="950" height="620" fill="#020617" />
-  <circle cx="475" cy="310" r="400" fill="url(#bg-glow)" />
+  <rect width="1020" height="720" fill="#020617" />
+  <circle cx="510" cy="360" r="450" fill="url(#bg-glow)" />
 
   <!-- Grid overlay -->
-  <path d="M0 50 H950 M0 100 H950 M0 150 H950 M0 200 H950 M0 250 H950 M0 300 H950 M0 350 H950 M0 400 H950 M0 450 H950 M0 500 H950 M0 550 H950 M50 0 V620 M100 0 V620 M150 0 V620 M200 0 V620 M250 0 V620 M300 0 V620 M350 0 V620 M400 0 V620 M450 0 V620 M500 0 V620 M550 0 V620 M600 0 V620 M650 0 V620 M700 0 V620 M750 0 V620 M800 0 V620 M850 0 V620 M900 0 V620" 
-        stroke="rgba(255,255,255,0.015)" stroke-width="1" />
-  <rect x="10" y="10" width="930" height="600" rx="15" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="2" />
+  <path d="M0 60 H1020 M0 120 H1020 M0 180 H1020 M0 240 H1020 M0 300 H1020 M0 360 H1020 M0 420 H1020 M0 480 H1020 M0 540 H1020 M0 600 H1020 M0 660 H1020 M60 0 V720 M120 0 V720 M180 0 V720 M240 0 V720 M300 0 V720 M360 0 V720 M420 0 V720 M480 0 V720 M540 0 V720 M600 0 V720 M660 0 V720 M720 0 V720 M780 0 V720 M840 0 V720 M900 0 V720 M960 0 V720" 
+        stroke="rgba(255,255,255,0.01)" stroke-width="1" />
+  <rect x="15" y="15" width="990" height="690" rx="15" fill="none" stroke="rgba(255,255,255,0.02)" stroke-width="2" />
 
-  <!-- HEADER (CENTER ALIGNED) -->
-  <text x="475" y="45" font-size="22" font-weight="900" fill="url(#amber-grad)" letter-spacing="1.5" text-anchor="middle">PAWVAIDYA SYSTEM TOPOLOGY &amp; ARCHITECTURE</text>
-  <text x="475" y="65" font-size="12" fill="#64748b" font-weight="500" text-anchor="middle">MERN Stack Veterinary Intelligence Platform • High-Fidelity Data &amp; Live WebSocket Flow Map</text>
+  <!-- HEADER -->
+  <text x="40" y="55" font-size="24" font-weight="900" fill="url(#amber-grad)" letter-spacing="1.5">PAWVAIDYA SYSTEM INTERNALS &amp; TOPOLOGY</text>
+  <text x="40" y="75" font-size="12" fill="#64748b" font-weight="500">Comprehensive Architectural Map of Frontend Clients, Core Express Backend, Live WebSocket Sync, and Database Clusters</text>
 
-  <!-- ==================== FLOW LINES ==================== -->
-  <!-- User to Gateway -->
-  <path d="M 285 160 C 325 160, 320 250, 360 250" fill="none" stroke="#3b82f6" stroke-width="2" class="flow-path" />
-  <!-- CS to Gateway -->
-  <path d="M 285 320 C 325 320, 320 300, 360 300" fill="none" stroke="#10b981" stroke-width="2" class="flow-path" />
-  <!-- Admin to Gateway -->
-  <path d="M 285 480 C 325 480, 320 350, 360 350" fill="none" stroke="#f59e0b" stroke-width="2" class="flow-path" />
+  <!-- ==================== FLOW CHANNELS & LINES ==================== -->
+  <!-- HTTPS Rest Paths (Dashed lines) -->
+  <path d="M 290 160 C 340 160, 335 240, 385 240" fill="none" stroke="#3b82f6" stroke-width="2" class="flow-path-http" />
+  <path d="M 290 350 L 385 350" fill="none" stroke="#10b981" stroke-width="2" class="flow-path-http" />
+  <path d="M 290 540 C 340 540, 335 460, 385 460" fill="none" stroke="#f59e0b" stroke-width="2" class="flow-path-http" />
 
-  <!-- Gateway to Services -->
-  <path d="M 590 250 C 625 250, 630 190, 665 190" fill="none" stroke="#8b5cf6" stroke-width="2" class="flow-path" />
-  <!-- Gateway to DB -->
-  <path d="M 590 350 C 625 350, 630 410, 665 410" fill="none" stroke="#10b981" stroke-width="2" class="flow-path" />
+  <!-- WS Real-Time Socket Paths (Purple Dot-Dashed lines) -->
+  <path d="M 290 190 C 350 190, 330 550, 385 550" fill="none" stroke="#c084fc" stroke-width="1.5" class="flow-path-ws" />
+  <path d="M 290 380 C 350 380, 330 575, 385 575" fill="none" stroke="#c084fc" stroke-width="1.5" class="flow-path-ws" />
+  <path d="M 290 570 C 350 570, 330 600, 385 600" fill="none" stroke="#c084fc" stroke-width="1.5" class="flow-path-ws" />
 
-  <!-- Bi-directional Live Chat Socket Loop -->
-  <path d="M 285 140 Q 475 125, 665 140" fill="none" stroke="#8b5cf6" stroke-dasharray="4,6" stroke-width="1.5" class="flow-path-reverse" opacity="0.6" />
-  <text x="475" y="112" fill="#a855f7" font-size="9" font-weight="700" text-anchor="middle">Live Socket Messages &amp; Typing Indicator Relay</text>
+  <!-- Gateway to Services & DB -->
+  <path d="M 635 300 C 680 300, 680 180, 730 180" fill="none" stroke="#8b5cf6" stroke-width="2" class="flow-path-http" />
+  <path d="M 635 400 C 680 400, 680 470, 730 470" fill="none" stroke="#10b981" stroke-width="2" class="flow-path-http" />
 
-  <!-- ==================== LEFT COLUMN: FRONTEND PORTALS (WIDTH: 250) ==================== -->
-  
+  <!-- Socket Server to Services Sync -->
+  <path d="M 635 580 C 700 580, 680 280, 730 250" fill="none" stroke="#8b5cf6" stroke-width="1.5" class="flow-path-ws" />
+
+  <!-- Socket.IO Ban Auto-Logout Eject Broadcast Loop -->
+  <path d="M 635 600 Q 490 690, 250 595" fill="none" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="3,4" class="flow-path-reverse" />
+  <text x="490" y="682" fill="#f87171" font-size="9" font-weight="700" text-anchor="middle">Ban Broadcast Trigger Loop (Ejects Active Socket &amp; Auto-Logout)</text>
+
+  <!-- ==================== LEFT COLUMN: FRONTEND PORTALS (x: 40, width: 250) ==================== -->
+  <text x="40" y="98" font-size="11" font-weight="800" fill="#64748b" letter-spacing="2">CLIENT APPLICATIONS LAYER</text>
+
   <!-- USER PORTAL CARD -->
-  <g class="card-node" transform="translate(35, 90)">
-    <rect width="250" height="140" rx="10" fill="url(#node-grad)" stroke="#3b82f6" stroke-width="1.5" />
+  <g class="card-node" transform="translate(40, 110)">
+    <rect width="250" height="170" rx="10" fill="url(#node-grad)" stroke="#3b82f6" stroke-width="1.5" />
     <rect width="250" height="28" rx="10" fill="url(#blue-grad)" opacity="0.1" />
     <circle cx="20" cy="14" r="5" fill="#3b82f6" />
-    <text x="35" y="19" fill="#f8fafc" font-size="12" font-weight="800">User Portal (React/Vite)</text>
+    <text x="35" y="19" fill="#f8fafc" font-size="12" font-weight="800">User Portal (React / Vite)</text>
     
-    <text x="15" y="48" font-size="10">
-      <tspan fill="#e2e8f0" font-weight="700">• Gold Plan: </tspan>
-      <tspan fill="#94a3b8">RF Disease Predictor &amp; PDFs</tspan>
-    </text>
-    <text x="15" y="66" font-size="10">
-      <tspan fill="#e2e8f0" font-weight="700">• Platinum: </tspan>
-      <tspan fill="#94a3b8">Vitals check &amp; AI advisory letters</tspan>
-    </text>
-    <text x="15" y="84" font-size="10">
-      <tspan fill="#e2e8f0" font-weight="700">• Live Chat: </tspan>
-      <tspan fill="#94a3b8">Media lightboxes &amp; file uploads</tspan>
-    </text>
-    <text x="15" y="102" font-size="10">
-      <tspan fill="#e2e8f0" font-weight="700">• ZegoCloud: </tspan>
-      <tspan fill="#94a3b8">WebRTC video consultations</tspan>
-    </text>
-    <text x="15" y="120" font-size="10">
-      <tspan fill="#e2e8f0" font-weight="700">• Pet Profiles: </tspan>
-      <tspan fill="#94a3b8">Official ID Document Gen</tspan>
-    </text>
+    <!-- Sub-Component: ML Diagnostics -->
+    <g transform="translate(12, 40)">
+      <rect width="226" height="50" rx="6" fill="url(#comp-grad)" stroke="rgba(59, 130, 246, 0.2)" stroke-width="1" />
+      <text x="10" y="18" fill="#93c5fd" font-size="9" font-weight="800">🧠 ML DIAGNOSTIC SUITE</text>
+      <text x="10" y="32" font-size="8">
+        <tspan fill="#f1f5f9" font-weight="700">Gold Plan: </tspan>
+        <tspan fill="#94a3b8">RF Symptom Predictor &amp; PDFs</tspan>
+      </text>
+      <text x="10" y="42" font-size="8">
+        <tspan fill="#f1f5f9" font-weight="700">Platinum Plan: </tspan>
+        <tspan fill="#94a3b8">Vitals check &amp; AI letters</tspan>
+      </text>
+    </g>
+
+    <!-- Sub-Component: Consultations -->
+    <g transform="translate(12, 100)">
+      <rect width="226" height="58" rx="6" fill="url(#comp-grad)" stroke="rgba(59, 130, 246, 0.2)" stroke-width="1" />
+      <text x="10" y="18" fill="#93c5fd" font-size="9" font-weight="800">💬 CONSULTANCY SUITE</text>
+      <text x="10" y="32" font-size="8">
+        <tspan fill="#f1f5f9" font-weight="700">Live Chat: </tspan>
+        <tspan fill="#94a3b8">Typing indicators &amp; media</tspan>
+      </text>
+      <text x="10" y="42" font-size="8">
+        <tspan fill="#f1f5f9" font-weight="700">ZegoCloud: </tspan>
+        <tspan fill="#94a3b8">WebRTC Video &amp; Audio</tspan>
+      </text>
+      <text x="10" y="52" font-size="8">
+        <tspan fill="#f1f5f9" font-weight="700">Pet ID Card: </tspan>
+        <tspan fill="#94a3b8">Profiles &amp; Document Gen</tspan>
+      </text>
+    </g>
   </g>
 
   <!-- CUSTOMER SERVICE 360 CARD -->
-  <g class="card-node" transform="translate(35, 250)">
-    <rect width="250" height="140" rx="10" fill="url(#node-grad)" stroke="#10b981" stroke-width="1.5" />
+  <g class="card-node" transform="translate(40, 300)">
+    <rect width="250" height="170" rx="10" fill="url(#node-grad)" stroke="#10b981" stroke-width="1.5" />
     <rect width="250" height="28" rx="10" fill="url(#emerald-grad)" opacity="0.1" />
     <circle cx="20" cy="14" r="5" fill="#10b981" />
-    <text x="35" y="19" fill="#f8fafc" font-size="12" font-weight="800">CS 360 Portal (React/Vite)</text>
+    <text x="35" y="19" fill="#f8fafc" font-size="12" font-weight="800">CS 360 Portal (Agent Console)</text>
     
-    <text x="15" y="48" font-size="10">
-      <tspan fill="#e2e8f0" font-weight="700">• Screen Record: </tspan>
-      <tspan fill="#94a3b8">Forced Firebase captures</tspan>
-    </text>
-    <text x="15" y="66" font-size="10">
-      <tspan fill="#e2e8f0" font-weight="700">• Biometrics: </tspan>
-      <tspan fill="#94a3b8">Webcam Face-API.js alarm</tspan>
-    </text>
-    <text x="15" y="84" font-size="10">
-      <tspan fill="#e2e8f0" font-weight="700">• Customer 360: </tspan>
-      <tspan fill="#94a3b8">Gold/Platinum logs view</tspan>
-    </text>
-    <text x="15" y="102" font-size="10">
-      <tspan fill="#e2e8f0" font-weight="700">• DigiLocker: </tspan>
-      <tspan fill="#94a3b8">Aadhaar agent verification</tspan>
-    </text>
-    <text x="15" y="120" font-size="10">
-      <tspan fill="#e2e8f0" font-weight="700">• QA Bypasses: </tspan>
-      <tspan fill="#94a3b8">Quick developer logins</tspan>
-    </text>
+    <!-- Sub-Component: Compliance System -->
+    <g transform="translate(12, 40)">
+      <rect width="226" height="58" rx="6" fill="url(#comp-grad)" stroke="rgba(16, 185, 129, 0.2)" stroke-width="1" />
+      <text x="10" y="16" fill="#a7f3d0" font-size="9" font-weight="800">⏺️ AUDIT &amp; RECORDING COMPLIANCE</text>
+      <text x="10" y="30" font-size="8">
+        <tspan fill="#f1f5f9" font-weight="700">Screen Record: </tspan>
+        <tspan fill="#94a3b8">Forced Firebase uploads</tspan>
+      </text>
+      <text x="10" y="40" font-size="8">
+        <tspan fill="#f1f5f9" font-weight="700">Break Standby: </tspan>
+        <tspan fill="#94a3b8">Screensaver overlay &amp; state</tspan>
+      </text>
+      <text x="10" y="50" font-size="8">
+        <tspan fill="#f1f5f9" font-weight="700">DigiLocker: </tspan>
+        <tspan fill="#94a3b8">Aadhaar agent verification</tspan>
+      </text>
+    </g>
+
+    <!-- Sub-Component: Identity Verify & Logs -->
+    <g transform="translate(12, 108)">
+      <rect width="226" height="50" rx="6" fill="url(#comp-grad)" stroke="rgba(16, 185, 129, 0.2)" stroke-width="1" />
+      <text x="10" y="18" fill="#a7f3d0" font-size="9" font-weight="800">👤 IDENTITY &amp; TELEMETRY</text>
+      <text x="10" y="32" font-size="8">
+        <tspan fill="#f1f5f9" font-weight="700">Face ID: </tspan>
+        <tspan fill="#94a3b8">Webcam auth + 60s countdown alarm</tspan>
+      </text>
+      <text x="10" y="42" font-size="8">
+        <tspan fill="#f1f5f9" font-weight="700">CS Logs: </tspan>
+        <tspan fill="#94a3b8">Gold &amp; Platinum telemetry lookup</tspan>
+      </text>
+    </g>
   </g>
 
-  <!-- ADMIN & DOCTOR PORTAL CARD -->
-  <g class="card-node" transform="translate(35, 410)">
-    <rect width="250" height="140" rx="10" fill="url(#node-grad)" stroke="#f59e0b" stroke-width="1.5" />
+  <!-- ADMIN COMMAND CENTER CARD -->
+  <g class="card-node" transform="translate(40, 490)">
+    <rect width="250" height="170" rx="10" fill="url(#node-grad)" stroke="#f59e0b" stroke-width="1.5" />
     <rect width="250" height="28" rx="10" fill="url(#amber-grad)" opacity="0.1" />
     <circle cx="20" cy="14" r="5" fill="#f59e0b" />
     <text x="35" y="19" fill="#f8fafc" font-size="12" font-weight="800">Admin Command Center</text>
     
-    <text x="15" y="48" font-size="10">
-      <tspan fill="#e2e8f0" font-weight="700">• Vet Schedules: </tspan>
-      <tspan fill="#94a3b8">Duration slots &amp; toggles</tspan>
-    </text>
-    <text x="15" y="66" font-size="10">
-      <tspan fill="#e2e8f0" font-weight="700">• Vet Blogs: </tspan>
-      <tspan fill="#94a3b8">Verification badges &amp; media</tspan>
-    </text>
-    <text x="15" y="84" font-size="10">
-      <tspan fill="#e2e8f0" font-weight="700">• Ban System: </tspan>
-      <tspan fill="#94a3b8">Auto-logout &amp; slot cancel</tspan>
-    </text>
-    <text x="15" y="102" font-size="10">
-      <tspan fill="#e2e8f0" font-weight="700">• Observability: </tspan>
-      <tspan fill="#94a3b8">Render logs &amp; metrics</tspan>
-    </text>
-    <text x="15" y="120" font-size="10">
-      <tspan fill="#e2e8f0" font-weight="700">• Telemetry: </tspan>
-      <tspan fill="#94a3b8">CPU, RAM &amp; thermal gauges</tspan>
-    </text>
+    <!-- Sub-Component: Vet Management -->
+    <g transform="translate(12, 40)">
+      <rect width="226" height="58" rx="6" fill="url(#comp-grad)" stroke="rgba(245, 158, 11, 0.2)" stroke-width="1" />
+      <text x="10" y="16" fill="#fde68a" font-size="9" font-weight="800">🩺 VET CONTROL &amp; COMPLIANCE</text>
+      <text x="10" y="30" font-size="8">
+        <tspan fill="#f1f5f9" font-weight="700">Schedules: </tspan>
+        <tspan fill="#94a3b8">Slot durations &amp; ranges</tspan>
+      </text>
+      <text x="10" y="40" font-size="8">
+        <tspan fill="#f1f5f9" font-weight="700">Vet Blogs: </tspan>
+        <tspan fill="#94a3b8">Verified badges &amp; media</tspan>
+      </text>
+      <text x="10" y="50" font-size="8">
+        <tspan fill="#f1f5f9" font-weight="700">Audit Reports: </tspan>
+        <tspan fill="#94a3b8">Approve/reject credentials</tspan>
+      </text>
+    </g>
+
+    <!-- Sub-Component: Ban & Observability -->
+    <g transform="translate(12, 108)">
+      <rect width="226" height="50" rx="6" fill="url(#comp-grad)" stroke="rgba(245, 158, 11, 0.2)" stroke-width="1" />
+      <text x="10" y="18" fill="#fde68a" font-size="9" font-weight="800">🚫 EJECTIONS &amp; OBSERVABILITY</text>
+      <text x="10" y="32" font-size="8">
+        <tspan fill="#f1f5f9" font-weight="700">Ban System: </tspan>
+        <tspan fill="#94a3b8">Auto-logout &amp; WS ejects</tspan>
+      </text>
+      <text x="10" y="42" font-size="8">
+        <tspan fill="#f1f5f9" font-weight="700">Telemetry: </tspan>
+        <tspan fill="#94a3b8">Render deploys &amp; gauges</tspan>
+      </text>
+    </g>
   </g>
 
 
-  <!-- ==================== MIDDLE COLUMN: CORE NODE.JS BACKEND ==================== -->
-  
-  <!-- NODE CORE GATEWAY ENGINE CARD -->
-  <g transform="translate(360, 200)">
-    <rect width="230" height="200" rx="12" fill="url(#node-grad)" stroke="#f43f5e" stroke-width="2" />
-    <rect width="230" height="32" rx="12" fill="url(#rose-grad)" opacity="0.1" />
-    <circle cx="20" cy="16" r="5" fill="#f43f5e" class="live-dot" />
-    <text x="35" y="21" fill="#f8fafc" font-size="13" font-weight="900" letter-spacing="0.5">Core Backend (Node.js)</text>
+  <!-- ==================== MIDDLE COLUMN: CORE CONTROLLERS & SOCKET (x: 385, width: 250) ==================== -->
+  <text x="385" y="98" font-size="11" font-weight="800" fill="#64748b" letter-spacing="2">CORE SYSTEM GATEWAY LAYER</text>
+
+  <!-- EXPRESS API GATEWAY CONTAINER -->
+  <g transform="translate(385, 110)">
+    <rect width="250" height="380" rx="12" fill="url(#node-grad)" stroke="#f43f5e" stroke-width="2" />
+    <rect width="250" height="32" rx="12" fill="url(#rose-grad)" opacity="0.1" />
+    <circle cx="20" cy="16" r="5" fill="#f43f5e" />
+    <text x="35" y="21" fill="#f8fafc" font-size="13" font-weight="900" letter-spacing="0.5">Express API Gateway Server</text>
     
-    <!-- Security Shield -->
+    <!-- Security Shield Sub-Node -->
     <g transform="translate(15, 45)">
-      <rect width="200" height="35" rx="6" fill="#1e293b" stroke="#e11d48" stroke-width="1" />
-      <text x="10" y="21" fill="#f8fafc" font-size="10" font-weight="700">Security: SQLi &amp; XSS Middleware</text>
+      <rect width="220" height="75" rx="6" fill="#1e293b" stroke="#e11d48" stroke-width="1" />
+      <text x="10" y="18" fill="#fca5a5" font-size="10" font-weight="900">🛡️ SECURITY &amp; COMPLIANCE MIDDLEWARE</text>
+      
+      <!-- Draw Lock Icon -->
+      <rect x="195" y="28" width="14" height="10" rx="2" fill="#ef4444" />
+      <path d="M198 28 V24 A4 4 0 0 1 206 24 V28" fill="none" stroke="#ef4444" stroke-width="1.5" />
+      
+      <text x="10" y="32" font-size="8">
+        <tspan fill="#f1f5f9" font-weight="700">Argon2 / JWT: </tspan>
+        <tspan fill="#94a3b8">Authorization validation</tspan>
+      </text>
+      <text x="10" y="45" font-size="8">
+        <tspan fill="#f1f5f9" font-weight="700">Incidents Suite: </tspan>
+        <tspan fill="#94a3b8">SQLi &amp; XSS interceptors</tspan>
+      </text>
+      <text x="10" y="58" font-size="8">
+        <tspan fill="#f1f5f9" font-weight="700">Access Filters: </tspan>
+        <tspan fill="#94a3b8">Geo-IP Approval limits</tspan>
+      </text>
+      <text x="10" y="68" font-size="8">
+        <tspan fill="#f1f5f9" font-weight="700">Audit System: </tspan>
+        <tspan fill="#94a3b8">Threat telemetry to Supabase Logs</tspan>
+      </text>
     </g>
 
-    <!-- API Routes / Express -->
-    <g transform="translate(15, 90)">
-      <rect width="200" height="42" rx="6" fill="#0f172a" stroke="#475569" stroke-width="1" />
-      <text x="10" y="17" fill="#fda4af" font-size="10" font-weight="800">REST API Gateway (Express)</text>
-      <text x="10" y="32" fill="#94a3b8" font-size="9">JWT Auth • IP Whitelists • Geo-Approval</text>
-    </g>
+    <!-- Controllers stack -->
+    <g transform="translate(15, 130)">
+      <rect width="220" height="235" rx="6" fill="#0f172a" stroke="#475569" stroke-width="1" />
+      <text x="10" y="18" fill="#fda4af" font-size="10" font-weight="800">📂 ROUTE CONTROLLERS LAYER</text>
+      
+      <!-- Drawer 1: Auth & User -->
+      <g transform="translate(8, 30)">
+        <rect width="204" height="28" rx="4" fill="#1e293b" stroke="#334155" stroke-width="1" />
+        <rect x="8" y="8" width="12" height="12" rx="2" fill="#3b82f6" />
+        <text x="25" y="17" fill="#cbd5e1" font-size="9" font-weight="700">Profile controller (User/Vet)</text>
+      </g>
 
-    <!-- Socket.IO Engine -->
-    <g transform="translate(15, 142)">
-      <rect width="200" height="45" rx="6" fill="#1e1b4b" stroke="#818cf8" stroke-width="1" />
-      <text x="10" y="18" fill="#c7d2fe" font-size="10" font-weight="800">Socket.IO Real-Time server</text>
-      <text x="10" y="32" fill="#94a3b8" font-size="9">Channels: Chat, Typing &amp; Ban Ejections</text>
+      <!-- Drawer 2: Vets Schedules -->
+      <g transform="translate(8, 63)">
+        <rect width="204" height="28" rx="4" fill="#1e293b" stroke="#334155" stroke-width="1" />
+        <rect x="8" y="8" width="12" height="12" rx="2" fill="#fbbf24" />
+        <text x="25" y="17" fill="#cbd5e1" font-size="9" font-weight="700">Schedules &amp; Blogs controller</text>
+      </g>
+
+      <!-- Drawer 3: Appointments -->
+      <g transform="translate(8, 96)">
+        <rect width="204" height="28" rx="4" fill="#1e293b" stroke="#334155" stroke-width="1" />
+        <rect x="8" y="8" width="12" height="12" rx="2" fill="#10b981" />
+        <text x="25" y="17" fill="#cbd5e1" font-size="9" font-weight="700">Appointments &amp; Pay controller</text>
+      </g>
+
+      <!-- Drawer 4: CS Shift Recordings -->
+      <g transform="translate(8, 129)">
+        <rect width="204" height="28" rx="4" fill="#1e293b" stroke="#334155" stroke-width="1" />
+        <rect x="8" y="8" width="12" height="12" rx="2" fill="#ec4899" />
+        <text x="25" y="17" fill="#cbd5e1" font-size="9" font-weight="700">CS record &amp; Face-API logs</text>
+      </g>
+
+      <!-- Drawer 5: Reports / Incident Ban System -->
+      <g transform="translate(8, 162)">
+        <rect width="204" height="28" rx="4" fill="#1e293b" stroke="#e11d48" stroke-width="1" />
+        <rect x="8" y="8" width="12" height="12" rx="2" fill="#ef4444" />
+        <text x="25" y="17" fill="#fca5a5" font-size="9" font-weight="800">Reports &amp; Ban controller</text>
+      </g>
+      
+      <!-- Drawer 6: Diagnostics -->
+      <g transform="translate(8, 195)">
+        <rect width="204" height="32" rx="4" fill="#1e293b" stroke="#8b5cf6" stroke-width="1" />
+        <rect x="8" y="10" width="12" height="12" rx="2" fill="#8b5cf6" />
+        <text x="25" y="20" fill="#cbd5e1" font-size="9" font-weight="700">AI Diagnostic controller</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- SOCKET.IO WEBSOCKET BROADCASTER CARD -->
+  <g transform="translate(385, 510)">
+    <rect width="250" height="150" rx="12" fill="url(#node-grad)" stroke="#a855f7" stroke-width="2" />
+    <rect width="250" height="32" rx="12" fill="url(#purple-grad)" opacity="0.1" />
+    <circle cx="20" cy="16" r="5" fill="#a855f7" class="live-dot" />
+    <text x="35" y="21" fill="#f8fafc" font-size="13" font-weight="900" letter-spacing="0.5">Socket.IO Real-Time Engine</text>
+    
+    <g transform="translate(15, 45)">
+      <rect width="220" height="92" rx="6" fill="#1e1b4b" stroke="#818cf8" stroke-width="1" />
+      <text x="10" y="18" fill="#c7d2fe" font-size="10" font-weight="800">⚙️ SOCKET EVENT COORDINATOR</text>
+      
+      <text x="10" y="34" font-size="8">
+        <tspan fill="#e2e8f0" font-weight="700">• join_room: </tspan>
+        <tspan fill="#94a3b8">CS &amp; User consult rooms</tspan>
+      </text>
+      <text x="10" y="48" font-size="8">
+        <tspan fill="#e2e8f0" font-weight="700">• send_message: </tspan>
+        <tspan fill="#94a3b8">Chat &amp; typing indicators</tspan>
+      </text>
+      <text x="10" y="62" font-size="8">
+        <tspan fill="#e2e8f0" font-weight="700">• force_logout: </tspan>
+        <tspan fill="#fda4af" font-weight="700">Real-time ban ejections</tspan>
+      </text>
+      <text x="10" y="76" font-size="8">
+        <tspan fill="#e2e8f0" font-weight="700">• cs_status: </tspan>
+        <tspan fill="#94a3b8">CS break status updates</tspan>
+      </text>
     </g>
   </g>
 
 
-  <!-- ==================== RIGHT COLUMN: SERVICES & DATABASE (WIDTH: 250) ==================== -->
-  
-  <!-- CLOUD & AI INTEGRATIONS -->
-  <g class="card-node" transform="translate(665, 90)">
-    <rect width="250" height="200" rx="10" fill="url(#node-grad)" stroke="#8b5cf6" stroke-width="1.5" />
+  <!-- ==================== RIGHT COLUMN: INTEGRATED SERVICES (x: 730, width: 250) ==================== -->
+  <text x="730" y="98" font-size="11" font-weight="800" fill="#64748b" letter-spacing="2">INTEGRATION &amp; DATA LAYER</text>
+
+  <!-- CLOUD & AI THIRD PARTY SERVICES -->
+  <g class="card-node" transform="translate(730, 110)">
+    <rect width="250" height="235" rx="10" fill="url(#node-grad)" stroke="#8b5cf6" stroke-width="1.5" />
     <rect width="250" height="28" rx="10" fill="url(#purple-grad)" opacity="0.1" />
     <circle cx="20" cy="14" r="5" fill="#8b5cf6" />
     <text x="35" y="19" fill="#f8fafc" font-size="12" font-weight="800">Integrated Services</text>
     
     <text x="15" y="48" font-size="10">
-      <tspan fill="#c084fc" font-weight="700">🤖 Google Gemini: </tspan>
-      <tspan fill="#94a3b8">AI symptom chatbot</tspan>
+      <tspan fill="#c084fc" font-weight="700">🤖 Gemini AI: </tspan>
+      <tspan fill="#94a3b8">Diagnostics &amp; letters</tspan>
     </text>
-    <text x="15" y="68" font-size="10">
+    <text x="15" y="72" font-size="10">
       <tspan fill="#60a5fa" font-weight="700">📹 ZegoCloud: </tspan>
-      <tspan fill="#94a3b8">WebRTC consultations</tspan>
+      <tspan fill="#94a3b8">WebRTC video consults</tspan>
     </text>
-    <text x="15" y="88" font-size="10">
+    <text x="15" y="96" font-size="10">
       <tspan fill="#34d399" font-weight="700">☁️ Cloudinary: </tspan>
-      <tspan fill="#94a3b8">Chat &amp; Blog media storage</tspan>
+      <tspan fill="#94a3b8">Chat &amp; blog media vault</tspan>
     </text>
-    <text x="15" y="108" font-size="10">
+    <text x="15" y="120" font-size="10">
       <tspan fill="#f87171" font-weight="700">🔥 Firebase: </tspan>
-      <tspan fill="#94a3b8">CS shift screen recordings</tspan>
+      <tspan fill="#94a3b8">CS shift screen records</tspan>
     </text>
-    <text x="15" y="128" font-size="10">
+    <text x="15" y="144" font-size="10">
       <tspan fill="#fbbf24" font-weight="700">💳 Razorpay: </tspan>
       <tspan fill="#94a3b8">Vet billing &amp; wallets</tspan>
     </text>
-    <text x="15" y="148" font-size="10">
-      <tspan fill="#38bdf8" font-weight="700">🪵 Supabase: </tspan>
-      <tspan fill="#94a3b8">Security threat audits</tspan>
-    </text>
     <text x="15" y="168" font-size="10">
-      <tspan fill="#fb7185" font-weight="700">📈 Render API: </tspan>
-      <tspan fill="#94a3b8">Server metrics &amp; bandwidth</tspan>
+      <tspan fill="#38bdf8" font-weight="700">🪵 Supabase: </tspan>
+      <tspan fill="#94a3b8">Incident &amp; threat logging</tspan>
+    </text>
+    <text x="15" y="192" font-size="10">
+      <tspan fill="#fb7185" font-weight="700">📈 Render: </tspan>
+      <tspan fill="#94a3b8">Deploy health &amp; CPU stats</tspan>
+    </text>
+    <text x="15" y="216" font-size="10">
+      <tspan fill="#e2e8f0" font-weight="700">👤 Face-API: </tspan>
+      <tspan fill="#94a3b8">Face landmark auth</tspan>
     </text>
   </g>
 
-  <!-- MONGODB ATLAS DB CLUSTER -->
-  <g class="card-node" transform="translate(665, 310)">
-    <rect width="250" height="240" rx="10" fill="url(#node-grad)" stroke="#22c55e" stroke-width="1.5" />
+  <!-- MONGODB ATLAS CLUSTER (WIDTH: 250) -->
+  <g class="card-node" transform="translate(730, 360)">
+    <rect width="250" height="300" rx="10" fill="url(#node-grad)" stroke="#22c55e" stroke-width="1.5" />
     <rect width="250" height="28" rx="10" fill="url(#emerald-grad)" opacity="0.1" />
     <circle cx="20" cy="14" r="5" fill="#22c55e" />
-    <text x="35" y="19" fill="#f8fafc" font-size="12" font-weight="800">MongoDB Atlas Database</text>
+    <text x="35" y="19" fill="#f8fafc" font-size="12" font-weight="800">MongoDB Atlas Cluster</text>
     
     <!-- 3D Database Cylinder Drawings (Horizontally Aligned) -->
     <g transform="translate(20, 45)" fill="none" stroke="#22c55e" stroke-width="1.2">
@@ -297,37 +436,45 @@
     <!-- Schema details list inside DB Card (Description texts fit inside width 250) -->
     <text x="20" y="112" fill="#34d399" font-size="10" font-weight="700">💾 Collections &amp; Key Properties:</text>
     
-    <text x="20" y="130" font-size="9">
+    <text x="20" y="132" font-size="9">
       <tspan fill="#e2e8f0" font-weight="700">• Users: </tspan>
-      <tspan fill="#94a3b8">Credentials, isBanned, Reason</tspan>
+      <tspan fill="#94a3b8">Credentials, isBanned, plan</tspan>
     </text>
-    <text x="20" y="147" font-size="9">
+    <text x="20" y="152" font-size="9">
       <tspan fill="#e2e8f0" font-weight="700">• Doctors: </tspan>
-      <tspan fill="#94a3b8">Speciality, Slots, isBanned</tspan>
+      <tspan fill="#94a3b8">Speciality, badge, isBanned</tspan>
     </text>
-    <text x="20" y="164" font-size="9">
+    <text x="20" y="172" font-size="9">
       <tspan fill="#e2e8f0" font-weight="700">• Schedules: </tspan>
-      <tspan fill="#94a3b8">Availability &amp; Status Toggles</tspan>
+      <tspan fill="#94a3b8">Slot duration &amp; isOff state</tspan>
     </text>
-    <text x="20" y="181" font-size="9">
+    <text x="20" y="192" font-size="9">
       <tspan fill="#e2e8f0" font-weight="700">• ChatMessage: </tspan>
-      <tspan fill="#94a3b8">Sender, Message Type, Media</tspan>
+      <tspan fill="#94a3b8">senderType &amp; media URLs</tspan>
     </text>
-    <text x="20" y="198" font-size="9">
+    <text x="20" y="212" font-size="9">
       <tspan fill="#e2e8f0" font-weight="700">• Appointments: </tspan>
-      <tspan fill="#94a3b8">Slots, petId, Cancel Reasons</tspan>
+      <tspan fill="#94a3b8">petId, slots, cancellation</tspan>
     </text>
-    <text x="20" y="215" font-size="9">
+    <text x="20" y="232" font-size="9">
       <tspan fill="#e2e8f0" font-weight="700">• Reports: </tspan>
-      <tspan fill="#94a3b8">Status, Action, Evidence</tspan>
+      <tspan fill="#94a3b8">evidenceUrls, status</tspan>
+    </text>
+    <text x="20" y="252" font-size="9">
+      <tspan fill="#e2e8f0" font-weight="700">• Telemetries: </tspan>
+      <tspan fill="#94a3b8">CS capture URLs &amp; timers</tspan>
+    </text>
+    <text x="20" y="272" font-size="9">
+      <tspan fill="#e2e8f0" font-weight="700">• ThreatAudit: </tspan>
+      <tspan fill="#94a3b8">SQLi / XSS payloads</tspan>
     </text>
   </g>
 
 
   <!-- ==================== FLOW RESPONDERS GLOW SPHERES ==================== -->
-  <circle cx="360" cy="250" r="3" fill="#3b82f6" class="pulse-glow" filter="url(#glow)" />
-  <circle cx="360" cy="300" r="3" fill="#10b981" class="pulse-glow" filter="url(#glow)" />
-  <circle cx="360" cy="350" r="3" fill="#f59e0b" class="pulse-glow" filter="url(#glow)" />
-  <circle cx="665" cy="190" r="3" fill="#8b5cf6" class="pulse-glow" filter="url(#glow)" />
-  <circle cx="665" cy="410" r="3" fill="#22c55e" class="pulse-glow" filter="url(#glow)" />
+  <circle cx="385" cy="240" r="3.5" fill="#3b82f6" class="pulse-glow" />
+  <circle cx="385" cy="350" r="3.5" fill="#10b981" class="pulse-glow" />
+  <circle cx="385" cy="460" r="3.5" fill="#f59e0b" class="pulse-glow" />
+  <circle cx="730" cy="180" r="3.5" fill="#8b5cf6" class="pulse-glow" />
+  <circle cx="730" cy="470" r="3.5" fill="#22c55e" class="pulse-glow" />
 </svg>

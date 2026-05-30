@@ -1,0 +1,196 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" width="100%" height="100%" style="background: #070a13; border-radius: 20px; font-family: system-ui, -apple-system, sans-serif;">
+  <defs>
+    <!-- Card Gradients -->
+    <linearGradient id="card-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b" />
+      <stop offset="100%" stop-color="#0f172a" />
+    </linearGradient>
+    <linearGradient id="accent-gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a" />
+      <stop offset="100%" stop-color="#ca8a04" />
+    </linearGradient>
+    <linearGradient id="accent-blue" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#60a5fa" />
+      <stop offset="100%" stop-color="#2563eb" />
+    </linearGradient>
+    <linearGradient id="accent-purple" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#c084fc" />
+      <stop offset="100%" stop-color="#7c3aed" />
+    </linearGradient>
+    
+    <!-- Neon Glow Filter -->
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="5" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+
+  <style>
+    /* CSS Styling & Animations */
+    .node-rect {
+      stroke-width: 1.5;
+      fill: url(#card-grad);
+      transition: all 0.3s ease;
+    }
+    .node-rect:hover {
+      stroke-width: 2.5;
+      filter: drop-shadow(0 0 10px rgba(59, 130, 246, 0.3));
+    }
+    .title-text { fill: #f8fafc; font-size: 14px; font-weight: 700; }
+    .subtitle-text { fill: #94a3b8; font-size: 11px; }
+    
+    /* Flow Animation along paths */
+    @keyframes dash {
+      to {
+        stroke-dashoffset: -40;
+      }
+    }
+    .flow-line {
+      stroke-dasharray: 8, 12;
+      animation: dash 2s linear infinite;
+    }
+    .flow-reverse {
+      stroke-dasharray: 8, 12;
+      animation: dash 2s linear infinite reverse;
+    }
+    
+    /* Pulsing nodes */
+    @keyframes pulse-dot {
+      0% { r: 3; opacity: 0.5; }
+      50% { r: 6; opacity: 1; }
+      100% { r: 3; opacity: 0.5; }
+    }
+    .pulse-indicator {
+      animation: pulse-dot 2s infinite;
+    }
+  </style>
+
+  <!-- Background Grid -->
+  <rect width="800" height="480" fill="#020617" />
+  <path d="M0 40 H800 M0 80 H800 M0 120 H800 M0 160 H800 M0 200 H800 M0 240 H800 M0 280 H800 M0 320 H800 M0 360 H800 M0 400 H800 M0 440 H800 M80 0 V480 M160 0 V480 M240 0 V480 M320 0 V480 M400 0 V480 M480 0 V480 M560 0 V480 M640 0 V480 M720 0 V480" 
+        stroke="rgba(255,255,255,0.015)" stroke-width="1" />
+  <rect x="10" y="10" width="780" height="460" rx="12" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="2" />
+
+  <!-- HEADER -->
+  <text x="30" y="40" font-size="20" font-weight="900" fill="url(#accent-gold)" letter-spacing="1">PAWVAIDYA ARCHITECTURE ECOSYSTEM</text>
+  <text x="30" y="60" font-size="12" fill="#64748b">Interactive flow map of MERN stack &amp; live WebSocket micro-components</text>
+
+  <!-- CONNECTION FLOW LINES (PLACED UNDERNEATH CARDS) -->
+  <!-- Portals to Backend -->
+  <path d="M 180 130 L 360 210" fill="none" stroke="#3b82f6" stroke-width="2" class="flow-line" />
+  <path d="M 180 230 L 360 230" fill="none" stroke="#10b981" stroke-width="2" class="flow-line" />
+  <path d="M 180 330 L 360 250" fill="none" stroke="#f59e0b" stroke-width="2" class="flow-line" />
+  
+  <!-- Backend to Services & DB -->
+  <path d="M 480 210 L 620 120" fill="none" stroke="#8b5cf6" stroke-width="2" class="flow-line" />
+  <path d="M 480 230 L 620 230" fill="none" stroke="#22c55e" stroke-width="2" class="flow-line" stroke-dasharray="10,10" />
+  <path d="M 480 250 L 620 340" fill="none" stroke="#ef4444" stroke-width="2" class="flow-line" />
+
+  <!-- Real-time feedback loop (Socket.IO) -->
+  <path d="M 680 150 Q 560 300 480 260" fill="none" stroke="#3b82f6" stroke-width="1.5" stroke-dasharray="4,6" class="flow-reverse" />
+
+  <!-- CLIENT PORTALS LAYER -->
+  <text x="40" y="95" font-size="11" font-weight="800" fill="#64748b" letter-spacing="2">CLIENT APPLICATIONS</text>
+
+  <!-- User Portal Card -->
+  <g transform="translate(30, 110)">
+    <rect class="node-rect" width="150" height="55" rx="8" stroke="#3b82f6" />
+    <circle cx="20" cy="27" r="4" fill="#3b82f6" class="pulse-indicator" />
+    <text x="35" y="25" class="title-text">User Portal</text>
+    <text x="35" y="38" class="subtitle-text">Vite + Tailwind CSS</text>
+  </g>
+
+  <!-- CS Support Portal Card -->
+  <g transform="translate(30, 202)">
+    <rect class="node-rect" width="150" height="55" rx="8" stroke="#10b981" />
+    <circle cx="20" cy="27" r="4" fill="#10b981" class="pulse-indicator" />
+    <text x="35" y="25" class="title-text">CS 360 Portal</text>
+    <text x="35" y="38" class="subtitle-text">Face ID + Telemetry</text>
+  </g>
+
+  <!-- Admin Panel Card -->
+  <g transform="translate(30, 295)">
+    <rect class="node-rect" width="150" height="55" rx="8" stroke="#f59e0b" />
+    <circle cx="20" cy="27" r="4" fill="#f59e0b" class="pulse-indicator" />
+    <text x="35" y="25" class="title-text">Admin Center</text>
+    <text x="35" y="38" class="subtitle-text">Deployment Monitor</text>
+  </g>
+
+
+  <!-- API GATEWAY / BACKEND LAYER -->
+  <text x="370" y="165" font-size="11" font-weight="800" fill="#64748b" letter-spacing="2">CORE SYSTEM</text>
+
+  <!-- Node Express Backend Server -->
+  <g transform="translate(360, 180)">
+    <rect class="node-rect" width="120" height="100" rx="10" stroke="#f43f5e" stroke-width="2" />
+    <!-- Mini Server Rack Drawing -->
+    <rect x="15" y="20" width="90" height="15" rx="3" fill="#1e293b" stroke="#f43f5e" stroke-width="0.5" />
+    <circle cx="25" cy="27" r="2.5" fill="#f43f5e" />
+    <line x1="35" y1="27" x2="95" y2="27" stroke="#64748b" stroke-width="2" />
+    
+    <rect x="15" y="42" width="90" height="15" rx="3" fill="#1e293b" stroke="#f43f5e" stroke-width="0.5" />
+    <circle cx="25" cy="49" r="2.5" fill="#ef4444" />
+    <line x1="35" y1="49" x2="95" y2="49" stroke="#64748b" stroke-width="2" />
+
+    <rect x="15" y="64" width="90" height="15" rx="3" fill="#1e293b" stroke="#f43f5e" stroke-width="0.5" />
+    <circle cx="25" cy="71" r="2.5" fill="#ef4444" />
+    <line x1="35" y1="71" x2="95" y2="71" stroke="#64748b" stroke-width="2" />
+
+    <text x="60" y="93" fill="#f8fafc" font-size="10" font-weight="800" text-anchor="middle">Express Engine</text>
+  </g>
+
+
+  <!-- DATA & INTEGRATED SERVICES LAYER -->
+  <text x="630" y="85" font-size="11" font-weight="800" fill="#64748b" letter-spacing="2">SERVICES &amp; DB</text>
+
+  <!-- Gemini AI & WebSockets Card -->
+  <g transform="translate(620, 100)">
+    <rect class="node-rect" width="150" height="65" rx="8" stroke="#8b5cf6" />
+    <circle cx="20" cy="32" r="4" fill="#8b5cf6" class="pulse-indicator" />
+    <text x="35" y="24" class="title-text">Gemini AI / Socket.io</text>
+    <text x="35" y="37" class="subtitle-text">Real-time chats &amp; bots</text>
+    <text x="35" y="49" class="subtitle-text">Typing Indicators &amp; Bans</text>
+  </g>
+
+  <!-- Database Card (MongoDB Cylinder shape) -->
+  <g transform="translate(620, 195)">
+    <rect class="node-rect" width="150" height="70" rx="8" stroke="#22c55e" />
+    <path d="M 630 205 A 15 5 0 0 0 760 205" fill="none" stroke="#22c55e" stroke-width="1" />
+    <circle cx="20" cy="35" r="4" fill="#22c55e" class="pulse-indicator" />
+    <text x="35" y="28" class="title-text">MongoDB Atlas</text>
+    <text x="35" y="42" class="subtitle-text">User, Vet, Chat &amp;</text>
+    <text x="35" y="55" class="subtitle-text">Report Data Storage</text>
+  </g>
+
+  <!-- Cloud Services (ZegoCloud, Cloudinary, Twilio, Razorpay) -->
+  <g transform="translate(620, 295)">
+    <rect class="node-rect" width="150" height="75" rx="8" stroke="#ef4444" />
+    <circle cx="20" cy="37" r="4" fill="#ef4444" class="pulse-indicator" />
+    <text x="35" y="25" class="title-text">Cloud Utilities</text>
+    <text x="35" y="38" class="subtitle-text">ZegoCloud (Video)</text>
+    <text x="35" y="50" class="subtitle-text">Cloudinary (Media upload)</text>
+    <text x="35" y="62" class="subtitle-text">Razorpay &amp; Supabase</text>
+  </g>
+
+  <!-- SYSTEM LEGEND -->
+  <rect x="30" y="390" width="740" height="60" rx="6" fill="#0b1329" stroke="rgba(255,255,255,0.05)" stroke-width="1" />
+  
+  <text x="45" y="412" font-size="10" font-weight="800" fill="#94a3b8">NEWLY ADDED FEATURES CAPABILITIES LAYER:</text>
+  
+  <!-- Legend badging -->
+  <circle cx="50" cy="432" r="5" fill="#3b82f6" />
+  <text x="62" y="435" font-size="10" fill="#cbd5e1" font-weight="700">Real-Time Chat &amp; Media Preview</text>
+
+  <circle cx="260" cy="432" r="5" fill="#10b981" />
+  <text x="272" y="435" font-size="10" fill="#cbd5e1" font-weight="700">CS Face ID &amp; Breaks</text>
+
+  <circle cx="430" cy="432" r="5" fill="#f59e0b" />
+  <text x="442" y="435" font-size="10" fill="#cbd5e1" font-weight="700">Doctor Schedule &amp; Blog Suite</text>
+
+  <circle cx="620" cy="432" r="5" fill="#ef4444" />
+  <text x="632" y="435" font-size="10" fill="#cbd5e1" font-weight="700">Real-Time Ban Auto-Logouts</text>
+
+</svg>

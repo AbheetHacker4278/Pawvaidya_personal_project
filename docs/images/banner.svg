@@ -1,0 +1,171 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 280" width="100%" height="100%" style="background: #030712; border-radius: 20px; overflow: hidden; font-family: system-ui, -apple-system, sans-serif;">
+  <defs>
+    <!-- Background Glow Gradients -->
+    <radialGradient id="glow-gold" cx="70%" cy="30%" r="50%">
+      <stop offset="0%" stop-color="#eab308" stop-opacity="0.15" />
+      <stop offset="100%" stop-color="#eab308" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="glow-blue" cx="20%" cy="70%" r="60%">
+      <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.15" />
+      <stop offset="100%" stop-color="#3b82f6" stop-opacity="0" />
+    </radialGradient>
+    
+    <!-- Text Gradients -->
+    <linearGradient id="grad-gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a" />
+      <stop offset="50%" stop-color="#eab308" />
+      <stop offset="100%" stop-color="#ca8a04" />
+    </linearGradient>
+    <linearGradient id="grad-blue" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#93c5fd" />
+      <stop offset="100%" stop-color="#3b82f6" />
+    </linearGradient>
+    <linearGradient id="line-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#3b82f6" />
+      <stop offset="50%" stop-color="#eab308" />
+      <stop offset="100%" stop-color="#ef4444" />
+    </linearGradient>
+
+    <!-- Filter for neon glow -->
+    <filter id="neon-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+
+  <style>
+    /* CSS Keyframe Animations */
+    @keyframes float {
+      0% { transform: translateY(0px); }
+      50% { transform: translateY(-8px); }
+      100% { transform: translateY(0px); }
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 0.8; }
+      50% { transform: scale(1.05); opacity: 1; filter: drop-shadow(0 0 15px rgba(234, 179, 8, 0.6)); }
+      100% { transform: scale(1); opacity: 0.8; }
+    }
+    @keyframes drift-fast {
+      0% { transform: translate(0, 0); }
+      50% { transform: translate(30px, -20px); }
+      100% { transform: translate(0, 0); }
+    }
+    @keyframes drift-slow {
+      0% { transform: translate(0, 0); }
+      50% { transform: translate(-40px, 15px); }
+      100% { transform: translate(0, 0); }
+    }
+    @keyframes ecg-draw {
+      0% { stroke-dashoffset: 1600; }
+      100% { stroke-dashoffset: 0; }
+    }
+    @keyframes text-shine {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    @keyframes heartbeat {
+      0% { transform: scale(1); }
+      14% { transform: scale(1.15); }
+      28% { transform: scale(1); }
+      42% { transform: scale(1.15); }
+      70% { transform: scale(1); }
+    }
+
+    .bg-glow-1 { animation: drift-fast 12s ease-in-out infinite; }
+    .bg-glow-2 { animation: drift-slow 18s ease-in-out infinite; }
+    .floating-logo { animation: float 6s ease-in-out infinite; transform-origin: 140px 140px; }
+    .pulse-paw { animation: heartbeat 2.5s infinite; transform-origin: 140px 115px; }
+    .pulse-glow { animation: pulse 3s ease-in-out infinite; }
+    .ecg-line {
+      stroke-dasharray: 800;
+      stroke-dashoffset: 800;
+      animation: ecg-draw 5s linear infinite;
+    }
+  </style>
+
+  <!-- Background Layer -->
+  <rect width="800" height="280" fill="#020617" />
+  
+  <!-- Glowing Background Orbs -->
+  <circle class="bg-glow-1" cx="650" cy="80" r="180" fill="url(#glow-gold)" />
+  <circle class="bg-glow-2" cx="150" cy="200" r="220" fill="url(#glow-blue)" />
+
+  <!-- Grid Pattern Overlay -->
+  <path d="M0 40 H800 M0 80 H800 M0 120 H800 M0 160 H800 M0 200 H800 M0 240 H800 M80 0 V280 M160 0 V280 M240 0 V280 M320 0 V280 M400 0 V280 M480 0 V280 M560 0 V280 M640 0 V280 M720 0 V280" 
+        stroke="rgba(255,255,255,0.015)" stroke-width="1" />
+
+  <!-- Decorative Border Lines -->
+  <rect x="10" y="10" width="780" height="260" rx="12" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="2" />
+  <line x1="30" y1="20" x2="100" y2="20" stroke="#eab308" stroke-width="3" stroke-linecap="round" />
+  <line x1="20" y1="30" x2="20" y2="80" stroke="#3b82f6" stroke-width="3" stroke-linecap="round" />
+
+  <!-- ECG Heartbeat Flow Line (at the bottom) -->
+  <path class="ecg-line" d="M 20 220 L 120 220 L 140 220 L 145 200 L 152 250 L 160 180 L 168 230 L 173 220 L 180 220 L 260 220 L 280 220 L 285 190 L 292 260 L 300 160 L 308 240 L 313 220 L 320 220 L 500 220 L 520 220 L 525 200 L 532 250 L 540 180 L 548 230 L 553 220 L 560 220 L 780 220" 
+        fill="none" stroke="url(#line-grad)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.4" />
+
+  <!-- Paw Print Icon (Floating and Pulsing) -->
+  <g class="floating-logo">
+    <!-- Outer Glow Ring -->
+    <circle cx="140" cy="115" r="45" fill="none" stroke="rgba(234, 179, 8, 0.15)" stroke-width="2" class="pulse-glow" />
+    <circle cx="140" cy="115" r="55" fill="none" stroke="rgba(59, 130, 246, 0.1)" stroke-width="1" class="pulse-glow" />
+    
+    <!-- Paw Shapes -->
+    <g class="pulse-paw" fill="url(#grad-gold)">
+      <!-- Top Left Toe -->
+      <circle cx="118" cy="92" r="13" />
+      <!-- Top Right Toe -->
+      <circle cx="162" cy="92" r="13" />
+      <!-- Outer Left Toe -->
+      <circle cx="103" cy="116" r="11" />
+      <!-- Outer Right Toe -->
+      <circle cx="177" cy="116" r="11" />
+      <!-- Main Pad -->
+      <path d="M 140 108 C 122 108, 114 125, 120 137 C 124 145, 133 148, 140 148 C 147 148, 156 145, 160 137 C 166 125, 158 108, 140 108 Z" />
+    </g>
+  </g>
+
+  <!-- Title & Subtitle Group -->
+  <g transform="translate(230, 85)">
+    <!-- Brand Title -->
+    <text x="0" y="30" font-size="44" font-weight="900" letter-spacing="2" fill="url(#grad-gold)" filter="drop-shadow(0 4px 10px rgba(0,0,0,0.5))">
+      PawVaidya
+    </text>
+    
+    <!-- Animated Checkmark/Verification Spark -->
+    <g transform="translate(245, 3)" fill="#3b82f6" filter="url(#neon-glow)">
+      <path d="M 9 -6 L 12 -3 L 20 -11 L 22 -9 L 12 1 L 7 -4 Z" transform="scale(1.8)" />
+    </g>
+
+    <!-- Subtitle / Tagline -->
+    <text x="0" y="65" font-size="16" font-weight="600" fill="#94a3b8" letter-spacing="5" text-transform="uppercase">
+      Veterinary Intelligence
+    </text>
+
+    <!-- Features Badges inside Header -->
+    <g transform="translate(0, 85)">
+      <!-- AI Engine -->
+      <rect x="0" y="0" width="95" height="24" rx="12" fill="rgba(147, 51, 234, 0.2)" stroke="rgba(147, 51, 234, 0.4)" stroke-width="1" />
+      <circle cx="12" cy="12" r="4" fill="#a855f7" />
+      <text x="24" y="17" font-size="11" font-weight="700" fill="#c084fc">Gemini AI</text>
+
+      <!-- Real-Time -->
+      <rect x="105" y="0" width="105" height="24" rx="12" fill="rgba(59, 130, 246, 0.2)" stroke="rgba(59, 130, 246, 0.4)" stroke-width="1" />
+      <circle cx="117" cy="12" r="4" fill="#3b82f6" />
+      <text x="129" y="17" font-size="11" font-weight="700" fill="#60a5fa">WebSockets</text>
+
+      <!-- MERN Stack -->
+      <rect x="220" y="0" width="90" height="24" rx="12" fill="rgba(34, 197, 94, 0.2)" stroke="rgba(34, 197, 94, 0.4)" stroke-width="1" />
+      <circle cx="232" cy="12" r="4" fill="#22c55e" />
+      <text x="244" y="17" font-size="11" font-weight="700" fill="#4ade80">MERN Stack</text>
+    </g>
+  </g>
+
+  <!-- Glowing pulse indicators on the ECG path to show flow -->
+  <circle cx="160" cy="180" r="3" fill="#ef4444" filter="url(#neon-glow)" />
+  <circle cx="300" cy="160" r="3" fill="#eab308" filter="url(#neon-glow)" />
+  <circle cx="540" cy="180" r="3" fill="#3b82f6" filter="url(#neon-glow)" />
+</svg>

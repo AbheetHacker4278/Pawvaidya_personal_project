@@ -10,6 +10,7 @@ const AdminDeployments = () => {
     const [backendStatus, setBackendStatus] = useState(null);
     const [frontendStatus, setFrontendStatus] = useState(null);
     const [adminStatus, setAdminStatus] = useState(null);
+    const [csAgentStatus, setCsAgentStatus] = useState(null);
 
     const [activeLogs, setActiveLogs] = useState(null);
     const [activeMetrics, setActiveMetrics] = useState(null);
@@ -26,15 +27,16 @@ const AdminDeployments = () => {
         setLoadingStatus(true);
         try {
             // Create an array of promises for concurrent fetching
-            const requests = ['backend', 'frontend', 'admin'].map(type =>
+            const requests = ['backend', 'frontend', 'admin', 'cs-agent'].map(type =>
                 axios.get(`${backendurl}/api/admin/render/${type}/status`, { headers: { atoken } }).catch(e => ({ error: true, type, msg: e.message }))
             );
 
-            const [bRes, fRes, adminRes] = await Promise.all(requests);
+            const [bRes, fRes, adminRes, csRes] = await Promise.all(requests);
 
             if (!bRes.error && bRes.data.success) setBackendStatus({ serviceCategory: 'backend', ...bRes.data.status });
             if (!fRes.error && fRes.data.success) setFrontendStatus({ serviceCategory: 'frontend', ...fRes.data.status });
             if (!adminRes.error && adminRes.data.success) setAdminStatus({ serviceCategory: 'admin', ...adminRes.data.status });
+            if (!csRes.error && csRes.data.success) setCsAgentStatus({ serviceCategory: 'cs-agent', ...csRes.data.status });
 
         } catch (error) {
             console.error("Error fetching render statuses", error);
@@ -134,7 +136,9 @@ const AdminDeployments = () => {
                             <Server className="w-6 h-6" />
                         </div>
                         <div>
-                            <h3 className="text-lg font-bold text-slate-800 capitalize leading-tight">{service.serviceCategory} Service</h3>
+                            <h3 className="text-lg font-bold text-slate-800 capitalize leading-tight">
+                                {service.serviceCategory === 'cs-agent' ? 'CS Agent' : service.serviceCategory} Service
+                            </h3>
                             <div className="flex items-center gap-2 mt-0.5">
                                 <span className={`w-2 h-2 rounded-full ${isLive ? 'bg-emerald-500' : 'bg-rose-500'} animate-pulse`} />
                                 <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{service.serviceName || 'Service'}</p>
@@ -240,10 +244,11 @@ const AdminDeployments = () => {
             </div>
 
             {/* Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 <ServiceCard service={backendStatus} />
                 <ServiceCard service={frontendStatus} />
                 <ServiceCard service={adminStatus} />
+                <ServiceCard service={csAgentStatus} />
             </div>
 
             {/* Terminal Details Block */}
@@ -489,7 +494,13 @@ const AdminDeployments = () => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-50">
-                                {((logsServiceType === 'backend' ? backendStatus : (logsServiceType === 'frontend' ? frontendStatus : adminStatus))?.recentDeploys || []).map((dep) => {
+                                {((logsServiceType === 'backend'
+                                    ? backendStatus
+                                    : logsServiceType === 'frontend'
+                                        ? frontendStatus
+                                        : logsServiceType === 'admin'
+                                            ? adminStatus
+                                            : csAgentStatus)?.recentDeploys || []).map((dep) => {
                                     const created = new Date(dep.createdAt);
                                     const finished = dep.finishedAt ? new Date(dep.finishedAt) : null;
                                     const duration = finished ? Math.round((finished - created) / 1000) : null;

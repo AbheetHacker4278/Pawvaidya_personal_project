@@ -961,7 +961,9 @@ export const uploadScreenRecording = async (req, res) => {
             console.error('Firebase upload failed, using local backup storage:', firebaseErr.message);
             isFallback = true;
 
-            const backendUrl = process.env.VITE_BACKEND_URL || 'http://localhost:4000';
+            const host = req.get('host');
+            const protocol = req.protocol;
+            const backendUrl = `${protocol}://${host}`;
             publicUrl = `${backendUrl}/uploads/${filename}`;
         }
 

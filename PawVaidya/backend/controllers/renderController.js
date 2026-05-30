@@ -10,6 +10,8 @@ const getServiceStatus = async (req, res) => {
             case 'backend': serviceId = process.env.RENDER_BACKEND_SERVICE_ID; break;
             case 'frontend': serviceId = process.env.RENDER_FRONTEND_SERVICE_ID; break;
             case 'admin': serviceId = process.env.RENDER_ADMIN_SERVICE_ID; break;
+            case 'cs-agent':
+            case 'cs-portal': serviceId = process.env.RENDER_CS_AGENT_SERVICE_ID || process.env.RENDER_CS_PORTAL_SERVICE_ID; break;
             default: return res.status(400).json({ success: false, message: 'Invalid service type' });
         }
 
@@ -91,6 +93,8 @@ const getServiceLogs = async (req, res) => {
             case 'backend': serviceId = process.env.RENDER_BACKEND_SERVICE_ID; break;
             case 'frontend': serviceId = process.env.RENDER_FRONTEND_SERVICE_ID; break;
             case 'admin': serviceId = process.env.RENDER_ADMIN_SERVICE_ID; break;
+            case 'cs-agent':
+            case 'cs-portal': serviceId = process.env.RENDER_CS_AGENT_SERVICE_ID || process.env.RENDER_CS_PORTAL_SERVICE_ID; break;
             default: return res.status(400).json({ success: false, message: `Invalid service type: ${serviceType}` });
         }
 
@@ -136,6 +140,8 @@ const getServiceMetrics = async (req, res) => {
             case 'backend': serviceId = process.env.RENDER_BACKEND_SERVICE_ID; break;
             case 'frontend': serviceId = process.env.RENDER_FRONTEND_SERVICE_ID; break;
             case 'admin': serviceId = process.env.RENDER_ADMIN_SERVICE_ID; break;
+            case 'cs-agent':
+            case 'cs-portal': serviceId = process.env.RENDER_CS_AGENT_SERVICE_ID || process.env.RENDER_CS_PORTAL_SERVICE_ID; break;
             default: return res.status(400).json({ success: false, message: 'Invalid service type' });
         }
 

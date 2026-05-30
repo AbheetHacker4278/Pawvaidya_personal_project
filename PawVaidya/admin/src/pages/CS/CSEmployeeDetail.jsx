@@ -132,6 +132,14 @@ const CSEmployeeDetail = () => {
     const { employee, metrics, recentReviews, loginHistory } = stats;
     const breakHistory = employee.breakHistory || [];
 
+    const getRecordingUrl = (url) => {
+        if (!url) return '';
+        if (url.includes('localhost:4000') && backendurl && !backendurl.includes('localhost:4000')) {
+            return url.replace(/https?:\/\/localhost:4000/i, backendurl);
+        }
+        return url;
+    };
+
     const renderTime = (dateStr) => {
         if (!dateStr) return '-';
         const d = new Date(dateStr);
@@ -738,7 +746,7 @@ const CSEmployeeDetail = () => {
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <a 
-                                                    href={recording.url} 
+                                                    href={getRecordingUrl(recording.url)} 
                                                     target="_blank" 
                                                     rel="noopener noreferrer" 
                                                     className="inline-flex items-center gap-2 px-3 py-1.5 bg-rose-50 border border-rose-100 text-rose-600 rounded-lg text-xs font-bold hover:bg-rose-100 transition-colors"

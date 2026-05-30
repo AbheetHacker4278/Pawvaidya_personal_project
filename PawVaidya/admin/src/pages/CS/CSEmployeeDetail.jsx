@@ -132,12 +132,33 @@ const CSEmployeeDetail = () => {
     const { employee, metrics, recentReviews, loginHistory } = stats;
     const breakHistory = employee.breakHistory || [];
 
-    const getRecordingUrl = (url) => {
-        if (!url) return '';
-        if (url.includes('localhost:4000') && backendurl && !backendurl.includes('localhost:4000')) {
-            return url.replace(/https?:\/\/localhost:4000/i, backendurl);
+    const handleViewRecording = async (recordingUrl) => {
+        if (!recordingUrl) return;
+        
+        let targetUrl = recordingUrl;
+        
+        if (targetUrl.includes('localhost:4000')) {
+            if (backendurl && !backendurl.includes('localhost:4000')) {
+                targetUrl = targetUrl.replace(/https?:\/\/localhost:4000/i, backendurl);
+                window.open(targetUrl, '_blank', 'noopener,noreferrer');
+            } else {
+                // Open blank tab immediately to avoid popup blocker
+                const newTab = window.open('about:blank', '_blank');
+                try {
+                    const response = await fetch(targetUrl, { method: 'HEAD' });
+                    if (!response.ok) {
+                        throw new Error('Not found locally');
+                    }
+                    if (newTab) newTab.location.href = targetUrl;
+                } catch (err) {
+                    const prodBackend = 'https://pawvaidya-admin-uy9o.onrender.com';
+                    const fallbackUrl = targetUrl.replace(/https?:\/\/localhost:4000/i, prodBackend);
+                    if (newTab) newTab.location.href = fallbackUrl;
+                }
+            }
+        } else {
+            window.open(targetUrl, '_blank', 'noopener,noreferrer');
         }
-        return url;
     };
 
     const renderTime = (dateStr) => {
@@ -745,15 +766,13 @@ const CSEmployeeDetail = () => {
                                                 {durationStr}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                <a 
-                                                    href={getRecordingUrl(recording.url)} 
-                                                    target="_blank" 
-                                                    rel="noopener noreferrer" 
+                                                <button 
+                                                    onClick={() => handleViewRecording(recording.url)}
                                                     className="inline-flex items-center gap-2 px-3 py-1.5 bg-rose-50 border border-rose-100 text-rose-600 rounded-lg text-xs font-bold hover:bg-rose-100 transition-colors"
                                                 >
                                                     <FaVideo size={12} />
                                                     View Recording
-                                                </a>
+                                                </button>
                                             </td>
                                         </tr>
                                     );

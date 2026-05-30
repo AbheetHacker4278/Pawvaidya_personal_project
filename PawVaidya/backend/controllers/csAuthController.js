@@ -963,7 +963,8 @@ export const uploadScreenRecording = async (req, res) => {
 
             const host = req.get('host');
             const protocol = req.protocol;
-            const backendUrl = `${protocol}://${host}`;
+            const requestBackendUrl = `${protocol}://${host}`;
+            const backendUrl = process.env.BACKEND_URL || process.env.VITE_BACKEND_URL || requestBackendUrl;
             publicUrl = `${backendUrl}/uploads/${filename}`;
         }
 

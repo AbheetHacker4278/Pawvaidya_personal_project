@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" width="100%" height="100%" style="background: #070a13; border-radius: 20px; font-family: system-ui, -apple-system, sans-serif;">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" width="800" height="480" style="background: #070a13; border-radius: 20px; font-family: system-ui, -apple-system, sans-serif;">
   <defs>
     <!-- Card Gradients -->
     <linearGradient id="card-grad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -29,20 +29,15 @@
   </defs>
 
   <style>
-    /* CSS Styling & Animations */
+    /* CSS Animations */
     .node-rect {
-      stroke-width: 1.5;
-      fill: url(#card-grad);
       transition: all 0.3s ease;
     }
     .node-rect:hover {
       stroke-width: 2.5;
       filter: drop-shadow(0 0 10px rgba(59, 130, 246, 0.3));
     }
-    .title-text { fill: #f8fafc; font-size: 14px; font-weight: 700; }
-    .subtitle-text { fill: #94a3b8; font-size: 11px; }
     
-    /* Flow Animation along paths */
     @keyframes dash {
       to {
         stroke-dashoffset: -40;
@@ -57,7 +52,6 @@
       animation: dash 2s linear infinite reverse;
     }
     
-    /* Pulsing nodes */
     @keyframes pulse-dot {
       0% { r: 3; opacity: 0.5; }
       50% { r: 6; opacity: 1; }
@@ -97,26 +91,26 @@
 
   <!-- User Portal Card -->
   <g transform="translate(30, 110)">
-    <rect class="node-rect" width="150" height="55" rx="8" stroke="#3b82f6" />
+    <rect class="node-rect" width="150" height="55" rx="8" fill="url(#card-grad)" stroke="#3b82f6" stroke-width="1.5" />
     <circle cx="20" cy="27" r="4" fill="#3b82f6" class="pulse-indicator" />
-    <text x="35" y="25" class="title-text">User Portal</text>
-    <text x="35" y="38" class="subtitle-text">Vite + Tailwind CSS</text>
+    <text x="35" y="25" fill="#f8fafc" font-size="14" font-weight="700">User Portal</text>
+    <text x="35" y="38" fill="#94a3b8" font-size="11">Vite + Tailwind CSS</text>
   </g>
 
   <!-- CS Support Portal Card -->
   <g transform="translate(30, 202)">
-    <rect class="node-rect" width="150" height="55" rx="8" stroke="#10b981" />
+    <rect class="node-rect" width="150" height="55" rx="8" fill="url(#card-grad)" stroke="#10b981" stroke-width="1.5" />
     <circle cx="20" cy="27" r="4" fill="#10b981" class="pulse-indicator" />
-    <text x="35" y="25" class="title-text">CS 360 Portal</text>
-    <text x="35" y="38" class="subtitle-text">Face ID + Telemetry</text>
+    <text x="35" y="25" fill="#f8fafc" font-size="14" font-weight="700">CS 360 Portal</text>
+    <text x="35" y="38" fill="#94a3b8" font-size="11">Face ID + Telemetry</text>
   </g>
 
   <!-- Admin Panel Card -->
   <g transform="translate(30, 295)">
-    <rect class="node-rect" width="150" height="55" rx="8" stroke="#f59e0b" />
+    <rect class="node-rect" width="150" height="55" rx="8" fill="url(#card-grad)" stroke="#f59e0b" stroke-width="1.5" />
     <circle cx="20" cy="27" r="4" fill="#f59e0b" class="pulse-indicator" />
-    <text x="35" y="25" class="title-text">Admin Center</text>
-    <text x="35" y="38" class="subtitle-text">Deployment Monitor</text>
+    <text x="35" y="25" fill="#f8fafc" font-size="14" font-weight="700">Admin Center</text>
+    <text x="35" y="38" fill="#94a3b8" font-size="11">Deployment Monitor</text>
   </g>
 
 
@@ -125,7 +119,7 @@
 
   <!-- Node Express Backend Server -->
   <g transform="translate(360, 180)">
-    <rect class="node-rect" width="120" height="100" rx="10" stroke="#f43f5e" stroke-width="2" />
+    <rect class="node-rect" width="120" height="100" rx="10" fill="url(#card-grad)" stroke="#f43f5e" stroke-width="2" />
     <!-- Mini Server Rack Drawing -->
     <rect x="15" y="20" width="90" height="15" rx="3" fill="#1e293b" stroke="#f43f5e" stroke-width="0.5" />
     <circle cx="25" cy="27" r="2.5" fill="#f43f5e" />
@@ -148,49 +142,51 @@
 
   <!-- Gemini AI & WebSockets Card -->
   <g transform="translate(620, 100)">
-    <rect class="node-rect" width="150" height="65" rx="8" stroke="#8b5cf6" />
+    <rect class="node-rect" width="150" height="65" rx="8" fill="url(#card-grad)" stroke="#8b5cf6" stroke-width="1.5" />
     <circle cx="20" cy="32" r="4" fill="#8b5cf6" class="pulse-indicator" />
-    <text x="35" y="24" class="title-text">Gemini AI / Socket.io</text>
-    <text x="35" y="37" class="subtitle-text">Real-time chats &amp; bots</text>
-    <text x="35" y="49" class="subtitle-text">Typing Indicators &amp; Bans</text>
+    <text x="35" y="24" fill="#f8fafc" font-size="14" font-weight="700">Gemini AI / Socket.io</text>
+    <text x="35" y="37" fill="#94a3b8" font-size="11">Real-time chats &amp; bots</text>
+    <text x="35" y="49" fill="#94a3b8" font-size="11">Typing Indicators &amp; Bans</text>
   </g>
 
   <!-- Database Card (MongoDB Cylinder shape) -->
   <g transform="translate(620, 195)">
-    <rect class="node-rect" width="150" height="70" rx="8" stroke="#22c55e" />
-    <path d="M 630 205 A 15 5 0 0 0 760 205" fill="none" stroke="#22c55e" stroke-width="1" />
+    <rect class="node-rect" width="150" height="70" rx="8" fill="url(#card-grad)" stroke="#22c55e" stroke-width="1.5" />
+    <!-- Draw a 3D cylinder top ellipse and bottom curve -->
+    <ellipse cx="75" cy="15" rx="60" ry="8" fill="none" stroke="#22c55e" stroke-width="1" />
+    <path d="M 15 15 L 15 55 A 60 8 0 0 0 135 55 L 135 15" fill="none" stroke="#22c55e" stroke-width="1" />
     <circle cx="20" cy="35" r="4" fill="#22c55e" class="pulse-indicator" />
-    <text x="35" y="28" class="title-text">MongoDB Atlas</text>
-    <text x="35" y="42" class="subtitle-text">User, Vet, Chat &amp;</text>
-    <text x="35" y="55" class="subtitle-text">Report Data Storage</text>
+    <text x="35" y="30" fill="#f8fafc" font-size="14" font-weight="700">MongoDB Atlas</text>
+    <text x="35" y="44" fill="#94a3b8" font-size="11">User, Vet, Chat &amp;</text>
+    <text x="35" y="57" fill="#94a3b8" font-size="11">Report Data Storage</text>
   </g>
 
   <!-- Cloud Services (ZegoCloud, Cloudinary, Twilio, Razorpay) -->
   <g transform="translate(620, 295)">
-    <rect class="node-rect" width="150" height="75" rx="8" stroke="#ef4444" />
+    <rect class="node-rect" width="150" height="75" rx="8" fill="url(#card-grad)" stroke="#ef4444" stroke-width="1.5" />
     <circle cx="20" cy="37" r="4" fill="#ef4444" class="pulse-indicator" />
-    <text x="35" y="25" class="title-text">Cloud Utilities</text>
-    <text x="35" y="38" class="subtitle-text">ZegoCloud (Video)</text>
-    <text x="35" y="50" class="subtitle-text">Cloudinary (Media upload)</text>
-    <text x="35" y="62" class="subtitle-text">Razorpay &amp; Supabase</text>
+    <text x="35" y="25" fill="#f8fafc" font-size="14" font-weight="700">Cloud Utilities</text>
+    <text x="35" y="38" fill="#94a3b8" font-size="11">ZegoCloud (Video)</text>
+    <text x="35" y="50" fill="#94a3b8" font-size="11">Cloudinary (Media)</text>
+    <text x="35" y="62" fill="#94a3b8" font-size="11">Razorpay &amp; Supabase</text>
   </g>
 
   <!-- SYSTEM LEGEND -->
   <rect x="30" y="390" width="740" height="60" rx="6" fill="#0b1329" stroke="rgba(255,255,255,0.05)" stroke-width="1" />
   
-  <text x="45" y="412" font-size="10" font-weight="800" fill="#94a3b8">NEWLY ADDED FEATURES CAPABILITIES LAYER:</text>
+  <text x="45" y="412" fill="#94a3b8" font-size="10" font-weight="800">NEWLY ADDED FEATURES CAPABILITIES LAYER:</text>
   
   <!-- Legend badging -->
   <circle cx="50" cy="432" r="5" fill="#3b82f6" />
-  <text x="62" y="435" font-size="10" fill="#cbd5e1" font-weight="700">Real-Time Chat &amp; Media Preview</text>
+  <text x="62" y="435" fill="#cbd5e1" font-size="10" font-weight="700">Real-Time Chat &amp; Media Preview</text>
 
   <circle cx="260" cy="432" r="5" fill="#10b981" />
-  <text x="272" y="435" font-size="10" fill="#cbd5e1" font-weight="700">CS Face ID &amp; Breaks</text>
+  <text x="272" y="435" fill="#cbd5e1" font-size="10" font-weight="700">CS Face ID &amp; Breaks</text>
 
   <circle cx="430" cy="432" r="5" fill="#f59e0b" />
-  <text x="442" y="435" font-size="10" fill="#cbd5e1" font-weight="700">Doctor Schedule &amp; Blog Suite</text>
+  <text x="442" y="435" fill="#cbd5e1" font-size="10" font-weight="700">Doctor Schedule &amp; Blog Suite</text>
 
   <circle cx="620" cy="432" r="5" fill="#ef4444" />
-  <text x="632" y="435" font-size="10" fill="#cbd5e1" font-weight="700">Real-Time Ban Auto-Logouts</text>
+  <text x="632" y="435" fill="#cbd5e1" font-size="10" font-weight="700">Real-Time Ban Auto-Logouts</text>
 
 </svg>

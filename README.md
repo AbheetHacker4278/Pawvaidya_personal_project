@@ -1,8 +1,6 @@
 # 🐾 PawVaidya - #1 Veterinary Intelligence Platform in India
 
-<p align="center">
-  <img src="./docs/images/banner.svg" alt="PawVaidya Banner" width="100%">
-</p>
+![PawVaidya Banner](docs/images/banner.svg)
 
 <p align="center">
   <a href="https://www.mongodb.com/mern-stack"><img src="https://img.shields.io/badge/MERN-Stack-green.svg" alt="MERN Stack"></a>
@@ -21,9 +19,7 @@
 
 The following diagram illustrates the data flow, real-time feedback loops, and integrations across the PawVaidya platform:
 
-<p align="center">
-  <img src="./docs/images/architecture.svg" alt="PawVaidya Architecture Map" width="100%">
-</p>
+![PawVaidya Architecture Map](docs/images/architecture.svg)
 
 ### Architecture Breakdown
 - **Frontend Clients:** React applications bundled with Vite, styled with Tailwind CSS, and animated with Framer Motion.

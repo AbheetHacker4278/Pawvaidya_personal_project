@@ -15,7 +15,7 @@
 
 ---
 
-## 🏛️ System Architecture
+## 🏛️ System Architectures
 
 The following diagram illustrates the data flow, real-time feedback loops, and integrations across the PawVaidya platform:
 

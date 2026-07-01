@@ -110,7 +110,8 @@ const corsOptions = {
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'token', 'atoken', 'dtoken'],
+  // No allowedHeaders restriction — cors will mirror back Access-Control-Request-Headers
+  // This allows all custom headers (x-client-longitude, x-client-latitude, token, etc.)
   optionsSuccessStatus: 200,
 };
 

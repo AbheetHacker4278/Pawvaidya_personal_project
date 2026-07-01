@@ -7,7 +7,7 @@ import { assets } from '../assets/assets_admin/assets';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, Search, User, LogOut, ChevronDown, Bell, Settings, Home, MessageSquare, RefreshCw, Sun, Moon } from 'lucide-react';
 import EmergencyAlertBell from './EmergencyAlertBell';
-import logoDark from '../../../../../../../.gemini/antigravity/brain/2c8c08d8-cb34-4a8b-aa5e-86a98b9d10ea/media__1781351753796.png';
+import logoDark from '../assets/assets_admin/pawvaidya_logo.png';
 
 const Navbar = ({ toggleSidebar }) => {
   const { atoken, setatoken, getAdminProfile, adminProfile, syncLegacyFiles, broadcastReuploadDocs } = useContext(AdminContext);

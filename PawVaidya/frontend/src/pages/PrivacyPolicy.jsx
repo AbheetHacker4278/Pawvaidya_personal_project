@@ -147,7 +147,7 @@ const PrivacyPolicy = () => {
         >
           <p className="text-sm" style={{ color: B.light }}>
             {t('privacyPolicy.cantFind')}{' '}
-            <a href="/contact"
+            <a href="/about?tab=contact"
               className="font-semibold underline underline-offset-2 transition-colors hover:opacity-80"
               style={{ color: B.mid }}>
               {t('privacyPolicy.contactSupport')}

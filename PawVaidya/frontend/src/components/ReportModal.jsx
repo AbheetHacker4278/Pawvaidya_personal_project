@@ -9,6 +9,7 @@ import { translateSpeciality } from '../utils/translateSpeciality';
 
 const ReportModal = ({ appointment, onClose }) => {
   const { backendurl, token, userdata } = useContext(AppContext);
+  const isObsidian = userdata?.subscription?.plan === 'Obsidian';
   const { t } = useTranslation();
   const [reason, setReason] = useState('');
   const [description, setDescription] = useState('');
@@ -121,24 +122,24 @@ const ReportModal = ({ appointment, onClose }) => {
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.9, opacity: 0 }}
-          className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+          className={`rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border ${isObsidian ? 'bg-[#121212] border-zinc-800' : 'bg-white'}`}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="bg-gradient-to-r from-red-600 to-rose-600 text-white p-6 rounded-t-2xl">
+          <div className={`p-6 rounded-t-2xl text-white ${isObsidian ? 'bg-gradient-to-r from-zinc-950 via-[#121212] to-zinc-950 border-b border-zinc-800' : 'bg-gradient-to-r from-red-600 to-rose-600'}`}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <Flag className="w-6 h-6" />
+                <Flag className={`w-6 h-6 ${isObsidian ? 'text-[#E6C97A]' : 'text-white'}`} />
                 <h2 className="text-2xl font-bold">Report Doctor</h2>
               </div>
               <button
                 onClick={onClose}
-                className="p-2 hover:bg-white/20 rounded-full transition-colors"
+                className={`p-2 rounded-full transition-colors ${isObsidian ? 'hover:bg-zinc-800 text-white' : 'hover:bg-white/20'}`}
               >
                 <X className="w-6 h-6" />
               </button>
             </div>
-            <p className="mt-2 text-red-100">
+            <p className={`mt-2 ${isObsidian ? 'text-[#E6C97A]' : 'text-red-100'}`}>
               Report inappropriate behavior or violations
             </p>
           </div>
@@ -149,14 +150,14 @@ const ReportModal = ({ appointment, onClose }) => {
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
-                className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4"
+                className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 ${isObsidian ? 'bg-zinc-900 border border-zinc-800' : 'bg-green-100'}`}
               >
-                <CheckCircle className="w-12 h-12 text-green-600" />
+                <CheckCircle className={`w-12 h-12 ${isObsidian ? 'text-[#E6C97A]' : 'text-green-600'}`} />
               </motion.div>
-              <h3 className="text-2xl font-bold text-gray-800 mb-2">
+              <h3 className={`text-2xl font-bold mb-2 ${isObsidian ? 'text-white' : 'text-gray-800'}`}>
                 Report Submitted!
               </h3>
-              <p className="text-gray-600">
+              <p className={isObsidian ? 'text-neutral-400' : 'text-gray-600'}>
                 Thank you for reporting. Our team will review this case and take appropriate action.
               </p>
             </div>
@@ -164,8 +165,8 @@ const ReportModal = ({ appointment, onClose }) => {
             /* Report Form */
             <form onSubmit={handleSubmit} className="p-6 space-y-6">
               {/* Doctor Info */}
-              <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
-                <h3 className="font-semibold text-gray-800 mb-2">Reporting:</h3>
+              <div className={`p-4 rounded-xl border ${isObsidian ? 'bg-zinc-900 border-zinc-800' : 'bg-gray-50 border-gray-200'}`}>
+                <h3 className={`font-semibold mb-2 ${isObsidian ? 'text-white' : 'text-gray-800'}`}>Reporting:</h3>
                 <div className="flex items-center gap-3">
                   <img
                     src={appointment.docData.image}
@@ -173,10 +174,10 @@ const ReportModal = ({ appointment, onClose }) => {
                     className="w-12 h-12 rounded-full object-cover"
                   />
                   <div>
-                    <p className="font-semibold text-gray-800">
+                    <p className={`font-semibold ${isObsidian ? 'text-white' : 'text-gray-800'}`}>
                       Dr. {appointment.docData.name}
                     </p>
-                    <p className="text-sm text-gray-600">
+                    <p className={`text-sm ${isObsidian ? 'text-neutral-450' : 'text-gray-600'}`}>
                       {translateSpeciality(appointment.docData.speciality, t)}
                     </p>
                   </div>
@@ -184,9 +185,9 @@ const ReportModal = ({ appointment, onClose }) => {
               </div>
 
               {/* Warning */}
-              <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 flex gap-3">
-                <AlertTriangle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-                <div className="text-sm text-yellow-800">
+              <div className={`border rounded-xl p-4 flex gap-3 ${isObsidian ? 'bg-amber-950/20 border-amber-900/50 text-amber-200' : 'bg-yellow-50 border-yellow-200 text-yellow-800'}`}>
+                <AlertTriangle className={`w-5 h-5 flex-shrink-0 mt-0.5 ${isObsidian ? 'text-amber-500' : 'text-yellow-600'}`} />
+                <div className={`text-sm ${isObsidian ? 'text-amber-200/90' : 'text-yellow-800'}`}>
                   <p className="font-semibold mb-1">Important:</p>
                   <p>
                     False reports may result in action against your account. Please provide accurate information.
@@ -196,18 +197,18 @@ const ReportModal = ({ appointment, onClose }) => {
 
               {/* Reason */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className={`block text-sm font-semibold mb-2 ${isObsidian ? 'text-neutral-200' : 'text-gray-700'}`}>
                   Reason for Report <span className="text-red-500">*</span>
                 </label>
                 <select
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:border-transparent ${isObsidian ? 'bg-zinc-900 border-zinc-800 text-white focus:ring-[#E6C97A]' : 'bg-white border-gray-300 focus:ring-red-500'}`}
                   required
                 >
-                  <option value="">Select a reason</option>
+                  <option value="" className={isObsidian ? 'bg-zinc-900' : ''}>Select a reason</option>
                   {reportReasons.map((r) => (
-                    <option key={r.value} value={r.value}>
+                    <option key={r.value} value={r.value} className={isObsidian ? 'bg-zinc-900' : ''}>
                       {r.label}
                     </option>
                   ))}
@@ -216,23 +217,23 @@ const ReportModal = ({ appointment, onClose }) => {
 
               {/* Description */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className={`block text-sm font-semibold mb-2 ${isObsidian ? 'text-neutral-200' : 'text-gray-700'}`}>
                   Detailed Description <span className="text-red-500">*</span>
                 </label>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Please provide detailed information about the incident (minimum 20 characters)..."
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none"
+                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:border-transparent resize-none ${isObsidian ? 'bg-zinc-900 border-zinc-800 text-white focus:ring-[#E6C97A]' : 'bg-white border-gray-300 focus:ring-red-500'}`}
                   rows="5"
                   maxLength="1000"
                   required
                 />
                 <div className="flex justify-between items-center mt-2">
-                  <p className="text-sm text-gray-500">
+                  <p className={`text-sm ${isObsidian ? 'text-neutral-500' : 'text-gray-500'}`}>
                     Minimum 20 characters
                   </p>
-                  <p className="text-sm text-gray-500">
+                  <p className={`text-sm ${isObsidian ? 'text-neutral-500' : 'text-gray-500'}`}>
                     {description.length}/1000
                   </p>
                 </div>
@@ -240,10 +241,10 @@ const ReportModal = ({ appointment, onClose }) => {
 
               {/* Evidence Upload */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className={`block text-sm font-semibold mb-2 ${isObsidian ? 'text-neutral-200' : 'text-gray-700'}`}>
                   Evidence (Optional)
                 </label>
-                <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-red-500 transition-colors">
+                <div className={`border-2 border-dashed rounded-xl p-6 text-center transition-colors ${isObsidian ? 'border-zinc-800 hover:border-[#E6C97A]' : 'border-gray-300 hover:border-red-500'}`}>
                   <input
                     type="file"
                     onChange={handleFileChange}
@@ -255,16 +256,16 @@ const ReportModal = ({ appointment, onClose }) => {
                     htmlFor="evidence-upload"
                     className="cursor-pointer flex flex-col items-center gap-2"
                   >
-                    <Upload className="w-10 h-10 text-gray-400" />
-                    <p className="text-sm font-semibold text-gray-700">
+                    <Upload className={`w-10 h-10 ${isObsidian ? 'text-zinc-600' : 'text-gray-400'}`} />
+                    <p className={`text-sm font-semibold ${isObsidian ? 'text-neutral-300' : 'text-gray-700'}`}>
                       Upload Screenshot or Document
                     </p>
-                    <p className="text-xs text-gray-500">
+                    <p className={`text-xs ${isObsidian ? 'text-neutral-500' : 'text-gray-500'}`}>
                       PNG, JPG, PDF, DOC (Max 10MB)
                     </p>
                   </label>
                   {evidence && (
-                    <div className="mt-3 text-sm text-green-600 font-semibold">
+                    <div className={`mt-3 text-sm font-semibold ${isObsidian ? 'text-[#E6C97A]' : 'text-green-600'}`}>
                       ✓ {evidence.name}
                     </div>
                   )}
@@ -276,14 +277,14 @@ const ReportModal = ({ appointment, onClose }) => {
                 <button
                   type="button"
                   onClick={onClose}
-                  className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-colors"
+                  className={`flex-1 px-6 py-3 border-2 font-semibold rounded-xl transition-colors ${isObsidian ? 'border-zinc-800 text-neutral-300 hover:bg-zinc-900' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
                   disabled={isSubmitting}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-6 py-3 bg-gradient-to-r from-red-600 to-rose-600 text-white font-semibold rounded-xl hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className={`flex-1 px-6 py-3 font-semibold rounded-xl hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed ${isObsidian ? 'bg-gradient-to-r from-red-750 to-rose-750 text-white shadow-red-900/10' : 'bg-gradient-to-r from-red-600 to-rose-600 text-white'}`}
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? (

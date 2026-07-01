@@ -26,11 +26,11 @@ const startContinuousSiren = (sirenActiveRef) => {
         osc.stop(start + dur);
       };
       const now = ctx.currentTime;
-      schedule(880,  now,        0.2);
-      schedule(660,  now + 0.25, 0.2);
-      schedule(880,  now + 0.5,  0.15);
-      schedule(1046, now + 0.7,  0.3);
-      schedule(880,  now + 1.05, 0.35);
+      schedule(880, now, 0.2);
+      schedule(660, now + 0.25, 0.2);
+      schedule(880, now + 0.5, 0.15);
+      schedule(1046, now + 0.7, 0.3);
+      schedule(880, now + 1.05, 0.35);
 
       // Schedule next cycle after 2.5s gap (total ~5s cycle)
       timeoutId = setTimeout(() => {
@@ -49,9 +49,9 @@ const startContinuousSiren = (sirenActiveRef) => {
 const getSubscriptionBadge = (plan) => {
   const p = (plan || '').toLowerCase();
   if (p.includes('platinum')) return { label: 'Platinum', color: 'bg-indigo-100 text-indigo-700', fee: '₹200' };
-  if (p.includes('gold'))     return { label: 'Gold',     color: 'bg-amber-100 text-amber-700',   fee: '₹300' };
-  if (p.includes('silver'))   return { label: 'Silver',   color: 'bg-slate-100 text-slate-700',   fee: '₹400' };
-  return                                { label: 'No Sub', color: 'bg-rose-100 text-rose-700',     fee: '₹500' };
+  if (p.includes('gold')) return { label: 'Gold', color: 'bg-amber-100 text-amber-700', fee: '₹300' };
+  if (p.includes('silver')) return { label: 'Silver', color: 'bg-slate-100 text-slate-700', fee: '₹400' };
+  return { label: 'No Sub', color: 'bg-rose-100 text-rose-700', fee: '₹500' };
 };
 
 const EmergencyAlertBell = () => {

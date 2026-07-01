@@ -1,5 +1,6 @@
 import adminCouponModel from "../models/adminCouponModel.js";
 import { logActivity } from "../utils/activityLogger.js";
+import userModel from "../models/userModel.js";
 
 // Add a new global coupon (Admin Only)
 export const createCoupon = async (req, res) => {
@@ -90,10 +91,26 @@ export const validateAdminCoupon = async (req, res) => {
             return res.json({ success: false, message: "Coupon code is required" });
         }
 
+        const now = new Date();
+        await adminCouponModel.deleteMany({
+            code: { $in: ['HEALTHYPET15', 'FREEWELLNESS'] },
+            expiryDate: { $lte: now }
+        });
+
         const coupon = await adminCouponModel.findOne({ code: code.toUpperCase(), isActive: true });
 
         if (!coupon) {
             return res.json({ success: false, message: "Invalid or inactive coupon" });
+        }
+
+        const userId = req.body.userId || req.userId;
+        const user = await userModel.findById(userId);
+        const userEmail = user ? user.email : null;
+
+        if (coupon.recipientEmails && coupon.recipientEmails.length > 0) {
+            if (!userEmail || !coupon.recipientEmails.includes(userEmail)) {
+                return res.json({ success: false, message: "This coupon is not valid for your account" });
+            }
         }
 
         if (new Date(coupon.expiryDate) < new Date()) {
@@ -139,13 +156,27 @@ export const validateAdminCoupon = async (req, res) => {
 // Get all active coupons for users (Public/User)
 export const getActiveAdminCoupons = async (req, res) => {
     try {
+        const now = new Date();
+        await adminCouponModel.deleteMany({
+            code: { $in: ['HEALTHYPET15', 'FREEWELLNESS'] },
+            expiryDate: { $lte: now }
+        });
+
         const coupons = await adminCouponModel.find({
             isActive: true,
-            expiryDate: { $gte: new Date() }
-        }).select('code discountType discountValue minAmount maxDiscount expiryDate usedCount usageLimit');
+            expiryDate: { $gte: now }
+        }).select('code discountType discountValue minAmount maxDiscount expiryDate usedCount usageLimit recipientEmails');
 
-        // Filter out coupons that have reached usage limit
-        const availableCoupons = coupons.filter(c => c.usageLimit === 0 || c.usedCount < c.usageLimit);
+        const userId = req.body.userId || req.userId;
+        const user = await userModel.findById(userId);
+        const userEmail = user ? user.email : null;
+
+        // Filter out coupons that have reached usage limit or are restricted to other users
+        const availableCoupons = coupons.filter(c => {
+            const limitNotReached = c.usageLimit === 0 || c.usedCount < c.usageLimit;
+            const isAllowed = !c.recipientEmails || c.recipientEmails.length === 0 || (userEmail && c.recipientEmails.includes(userEmail));
+            return limitNotReached && isAllowed;
+        });
 
         res.json({ success: true, coupons: availableCoupons });
     } catch (error) {

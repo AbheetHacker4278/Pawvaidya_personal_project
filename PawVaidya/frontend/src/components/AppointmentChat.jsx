@@ -9,7 +9,8 @@ import { translateSpeciality } from '../utils/translateSpeciality';
 import RunningDogLoader from './RunningDogLoader';
 
 const AppointmentChat = ({ appointment, onClose }) => {
-  const { backendurl, token, userdata } = useContext(AppContext);
+  const { backendurl, token, userdata, systemConfig } = useContext(AppContext);
+  const isObsidian = userdata?.subscription?.plan === 'Obsidian';
   const { t } = useTranslation();
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
@@ -84,6 +85,7 @@ const AppointmentChat = ({ appointment, onClose }) => {
   // Load existing messages
   useEffect(() => {
     const loadMessages = async () => {
+      if (systemConfig?.maintenanceMode || systemConfig?.killSwitch) return;
       try {
         const { data } = await axios.get(
           `${backendurl}/api/chat/messages/${appointment._id}`,
@@ -115,7 +117,12 @@ const AppointmentChat = ({ appointment, onClose }) => {
 
   // Auto-scroll to bottom
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTo({
+        top: chatContainerRef.current.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
   }, [messages]);
 
   // Send message
@@ -280,15 +287,15 @@ const AppointmentChat = ({ appointment, onClose }) => {
         className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
         onClick={onClose}
       >
-        <div className="bg-white rounded-3xl p-8 text-center max-w-md">
+        <div className={`rounded-3xl p-8 text-center max-w-md ${isObsidian ? 'bg-zinc-900 border border-zinc-800 text-white' : 'bg-white text-gray-600'}`}>
           <div className="flex justify-center">
             <RunningDogLoader />
           </div>
-          <p className="mt-4 text-gray-600 font-semibold">Loading your profile...</p>
-          <p className="mt-2 text-sm text-gray-500">If this takes too long, please refresh the page</p>
+          <p className={`mt-4 font-semibold ${isObsidian ? 'text-neutral-200' : 'text-gray-600'}`}>Loading your profile...</p>
+          <p className={`mt-2 text-sm ${isObsidian ? 'text-neutral-450' : 'text-gray-500'}`}>If this takes too long, please refresh the page</p>
           <button
             onClick={onClose}
-            className="mt-4 px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg text-sm"
+            className={`mt-4 px-4 py-2 rounded-lg text-sm ${isObsidian ? 'bg-zinc-800 text-white hover:bg-zinc-700' : 'bg-gray-200 hover:bg-gray-300'}`}
           >
             Close
           </button>
@@ -310,28 +317,28 @@ const AppointmentChat = ({ appointment, onClose }) => {
         animate={{ scale: 1, y: 0 }}
         exit={{ scale: 0.9, y: 20 }}
         onClick={(e) => e.stopPropagation()}
-        className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl h-[600px] flex flex-col overflow-hidden"
+        className={`rounded-3xl shadow-2xl w-full max-w-2xl h-[600px] flex flex-col overflow-hidden border ${isObsidian ? 'bg-[#121212] border-zinc-800' : 'bg-white border-gray-100'}`}
       >
         {/* Header */}
-        <div className="bg-gradient-to-r from-[#5A4035] to-[#7a5a48] p-6 text-white">
+        <div className={`p-6 text-white ${isObsidian ? 'bg-gradient-to-r from-zinc-950 via-[#121212] to-zinc-950 border-b border-zinc-800' : 'bg-gradient-to-r from-[#5A4035] to-[#7a5a48]'}`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="relative">
                 <img
                   src={appointment.docData.image}
                   alt={appointment.docData.name}
-                  className="w-12 h-12 rounded-full border-2 border-white object-cover"
+                  className={`w-12 h-12 rounded-full border-2 object-cover ${isObsidian ? 'border-[#E6C97A]' : 'border-white'}`}
                 />
                 <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-white"></div>
               </div>
               <div>
                 <h3 className="font-bold text-lg">Dr. {appointment.docData.name}</h3>
-                <p className="text-sm text-amber-100">{translateSpeciality(appointment.docData.speciality, t)}</p>
+                <p className={`text-sm ${isObsidian ? 'text-[#E6C97A]' : 'text-amber-100'}`}>{translateSpeciality(appointment.docData.speciality, t)}</p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-white/20 rounded-full transition-colors"
+              className={`p-2 rounded-full transition-colors ${isObsidian ? 'hover:bg-zinc-800 text-white' : 'hover:bg-white/20'}`}
             >
               <X className="w-6 h-6" />
             </button>
@@ -341,7 +348,7 @@ const AppointmentChat = ({ appointment, onClose }) => {
         {/* Messages Container */}
         <div
           ref={chatContainerRef}
-          className="flex-1 overflow-y-auto p-6 space-y-4 bg-gradient-to-b from-amber-50/30 to-white"
+          className={`flex-1 overflow-y-auto p-6 space-y-4 ${isObsidian ? 'bg-[#0A0A0A]' : 'bg-gradient-to-b from-amber-50/30 to-white'}`}
         >
           <AnimatePresence>
             {messages && messages.length > 0 ? messages.map((msg, index) => {
@@ -355,20 +362,19 @@ const AppointmentChat = ({ appointment, onClose }) => {
                   className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}
                 >
                   <div className={`flex gap-2 max-w-[70%] ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
-                    <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${isUser ? 'bg-[#5A4035]' : 'bg-green-500'
-                      }`}>
+                    <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${isUser ? (isObsidian ? 'bg-[#E6C97A] text-black' : 'bg-[#5A4035] text-white') : 'bg-green-600 text-white'}`}>
                       {isUser ? (
-                        <User className="w-4 h-4 text-white" />
+                        <User className="w-4 h-4" />
                       ) : (
                         <Stethoscope className="w-4 h-4 text-white" />
                       )}
                     </div>
                     <div>
-                      <div className={`rounded-2xl overflow-hidden ${(!msg.messageType || msg.messageType === 'text') && !msg.fileUrl ? 'px-4 py-2' : 'p-0'
-                        } ${isUser
-                          ? 'bg-gradient-to-r from-[#5A4035] to-[#7a5a48] text-white'
-                          : 'bg-white border border-gray-200 text-gray-800'
-                        }`}>
+                      <div className={`rounded-2xl overflow-hidden ${(!msg.messageType || msg.messageType === 'text') && !msg.fileUrl ? 'px-4 py-2' : 'p-0'} ${
+                        isUser
+                          ? (isObsidian ? 'bg-gradient-to-r from-amber-600 to-[#E6C97A] text-black font-semibold' : 'bg-gradient-to-r from-[#5A4035] to-[#7a5a48] text-white')
+                          : (isObsidian ? 'bg-zinc-900 border border-zinc-800 text-white' : 'bg-white border border-gray-200 text-gray-800')
+                      }`}>
                         {/* Text Message */}
                         {(!msg.messageType || msg.messageType === 'text') && !msg.fileUrl && (
                           <p className="text-sm">{msg.message}</p>
@@ -447,7 +453,7 @@ const AppointmentChat = ({ appointment, onClose }) => {
                           </a>
                         )}
                       </div>
-                      <p className={`text-xs text-gray-500 mt-1 ${isUser ? 'text-right' : 'text-left'}`}>
+                      <p className={`text-xs mt-1 ${isUser ? 'text-right' : 'text-left'} ${isObsidian ? 'text-neutral-450' : 'text-gray-500'}`}>
                         {new Date(msg.timestamp).toLocaleTimeString([], {
                           hour: '2-digit',
                           minute: '2-digit'
@@ -458,7 +464,7 @@ const AppointmentChat = ({ appointment, onClose }) => {
                 </motion.div>
               );
             }) : (
-              <div className="flex items-center justify-center h-full text-gray-500">
+              <div className={`flex items-center justify-center h-full ${isObsidian ? 'text-neutral-500' : 'text-gray-500'}`}>
                 <p>No messages yet. Start the conversation!</p>
               </div>
             )}
@@ -477,22 +483,22 @@ const AppointmentChat = ({ appointment, onClose }) => {
                   <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-green-500">
                     <Stethoscope className="w-4 h-4 text-white" />
                   </div>
-                  <div className="bg-white border border-gray-200 rounded-2xl px-4 py-2">
+                  <div className={`rounded-2xl px-4 py-2 ${isObsidian ? 'bg-zinc-900 border border-zinc-800' : 'bg-white border border-gray-200'}`}>
                     <div className="flex gap-1">
                       <motion.div
                         animate={{ scale: [1, 1.2, 1] }}
                         transition={{ duration: 0.6, repeat: Infinity, delay: 0 }}
-                        className="w-2 h-2 bg-gray-400 rounded-full"
+                        className={`w-2 h-2 rounded-full ${isObsidian ? 'bg-zinc-550' : 'bg-gray-400'}`}
                       />
                       <motion.div
                         animate={{ scale: [1, 1.2, 1] }}
                         transition={{ duration: 0.6, repeat: Infinity, delay: 0.2 }}
-                        className="w-2 h-2 bg-gray-400 rounded-full"
+                        className={`w-2 h-2 rounded-full ${isObsidian ? 'bg-zinc-550' : 'bg-gray-400'}`}
                       />
                       <motion.div
                         animate={{ scale: [1, 1.2, 1] }}
                         transition={{ duration: 0.6, repeat: Infinity, delay: 0.4 }}
-                        className="w-2 h-2 bg-gray-400 rounded-full"
+                        className={`w-2 h-2 rounded-full ${isObsidian ? 'bg-zinc-550' : 'bg-gray-400'}`}
                       />
                     </div>
                   </div>
@@ -501,13 +507,12 @@ const AppointmentChat = ({ appointment, onClose }) => {
             )}
           </AnimatePresence>
 
-          <div ref={messagesEndRef} />
         </div>
 
         {/* Input Area */}
-        <div className="p-4 bg-white border-t border-gray-200">
+        <div className={`p-4 border-t ${isObsidian ? 'bg-[#121212] border-zinc-800 text-white' : 'bg-white border-gray-200'}`}>
           {isTyping && (
-            <p className="text-xs text-gray-500 mb-2 ml-2">Dr. {appointment.docData.name} is typing...</p>
+            <p className={`text-xs mb-2 ml-2 ${isObsidian ? 'text-neutral-450' : 'text-gray-500'}`}>Dr. {appointment.docData.name} is typing...</p>
           )}
           <div className="flex gap-2">
             {/* Hidden file input */}
@@ -525,10 +530,10 @@ const AppointmentChat = ({ appointment, onClose }) => {
               whileTap={{ scale: 0.95 }}
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
-              className="p-3 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors disabled:opacity-50"
+              className={`p-3 rounded-full transition-colors disabled:opacity-50 ${isObsidian ? 'bg-zinc-800 hover:bg-zinc-700 text-neutral-300' : 'bg-gray-100 hover:bg-gray-200 text-gray-600'}`}
               title="Attach file"
             >
-              <Paperclip className="w-5 h-5 text-gray-600" />
+              <Paperclip className={`w-5 h-5 ${isObsidian ? 'text-white' : 'text-gray-600'}`} />
             </motion.button>
 
             <input
@@ -541,14 +546,14 @@ const AppointmentChat = ({ appointment, onClose }) => {
               onKeyPress={handleKeyPress}
               placeholder={uploading ? "Uploading..." : "Type your message..."}
               disabled={uploading}
-              className="flex-1 px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-[#5A4035] focus:border-transparent disabled:opacity-50"
+              className={`flex-1 px-4 py-3 border rounded-full focus:outline-none focus:ring-2 focus:border-transparent disabled:opacity-50 ${isObsidian ? 'bg-zinc-900 border-zinc-800 text-white focus:ring-[#E6C97A]' : 'border-gray-300 focus:ring-[#5A4035]'}`}
             />
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={handleSendMessage}
               disabled={uploading}
-              className="px-6 py-3 bg-gradient-to-r from-[#5A4035] to-[#7a5a48] text-white rounded-full font-semibold flex items-center gap-2 shadow-lg hover:shadow-xl transition-shadow disabled:opacity-50"
+              className={`px-6 py-3 rounded-full font-bold flex items-center gap-2 shadow-lg hover:shadow-xl transition-all disabled:opacity-50 ${isObsidian ? 'bg-gradient-to-r from-amber-600 to-[#E6C97A] text-black shadow-amber-550/20' : 'bg-gradient-to-r from-[#5A4035] to-[#7a5a48] text-white'}`}
             >
               <Send className="w-5 h-5" />
               Send

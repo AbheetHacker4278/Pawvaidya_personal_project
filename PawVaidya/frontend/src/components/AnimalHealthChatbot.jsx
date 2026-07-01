@@ -4,6 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Send, X, Minimize2, Maximize2, RotateCcw, Sparkles, Zap } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
+import LLM from '../utils/llm';
+import assets from '../assets/assets_frontend/assets';
 
 // ─── Premium SVG Paw Icon ─────────────────────────────────────────────────────
 const PawIcon = ({ size = 28, color = 'white' }) => (
@@ -82,7 +84,7 @@ const AnimalHealthChatbot = () => {
   const [agentStatus, setAgentStatus] = useState(null);
   const [showChips, setShowChips] = useState(true);
   const [showPopup, setShowPopup] = useState(false);
-  const bottomRef = useRef(null);
+  const messagesContainerRef = useRef(null);
   const inputRef = useRef(null);
   const navigate = useNavigate();
   const { userdata, token } = useContext(AppContext);
@@ -106,7 +108,12 @@ const AnimalHealthChatbot = () => {
 
   // ── Scroll to bottom ──────────────────────────────────────────────────────
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTo({
+        top: messagesContainerRef.current.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
   }, [messages, isLoading]);
 
   // ── Focus input ───────────────────────────────────────────────────────────
@@ -150,29 +157,19 @@ const AnimalHealthChatbot = () => {
     setAgentStatus(getStatusFromMessage(trimmed));
 
     try {
-      // Build history in the format the backend expects
+      // Build history in the format expected by the LLM helper
       const history = messages.map(m => ({
         role: m.role === 'user' ? 'user' : 'assistant',
         content: m.text,
       }));
 
-      const headers = { 'Content-Type': 'application/json' };
-      if (token) headers['token'] = token; // authUser middleware reads this
-
-      const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/bot/query-frontend`,
-        { message: trimmed, history },
-        { headers }
-      );
+      const responseText = await LLM(trimmed, {
+        messages: history
+      });
 
       setAgentStatus(null);
-
-      if (response.data.success) {
-        const cleaned = processNavigation(response.data.response);
-        setMessages(prev => [...prev, { role: 'bot', text: cleaned, ts: Date.now() }]);
-      } else {
-        throw new Error(response.data.message);
-      }
+      const cleaned = processNavigation(responseText);
+      setMessages(prev => [...prev, { role: 'bot', text: cleaned, ts: Date.now() }]);
     } catch (err) {
       console.error('PawBot error:', err);
       setAgentStatus(null);
@@ -251,8 +248,8 @@ const AnimalHealthChatbot = () => {
             {/* Header */}
             <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-5 py-4 flex items-center gap-3 flex-shrink-0">
               <div className="relative">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)' }}>
-                  <PawIcon size={22} color="white" />
+                <div className="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden bg-white/10 backdrop-blur-md">
+                  <img src={assets.chatbot_logo} alt="PawBot Logo" className="w-full h-full object-contain" />
                 </div>
                 <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-400 border-2 border-indigo-600" />
               </div>
@@ -288,7 +285,7 @@ const AnimalHealthChatbot = () => {
             {!isMinimized && (
               <>
                 {/* Messages */}
-                <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-gray-50/50" style={{ minHeight: 0 }}>
+                <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-gray-50/50" style={{ minHeight: 0 }}>
                   <AnimatePresence initial={false}>
                     {messages.map((msg, i) => (
                       <motion.div key={i}
@@ -298,8 +295,8 @@ const AnimalHealthChatbot = () => {
                         className={`flex items-end gap-2 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                       >
                         {msg.role === 'bot' && (
-                          <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm" style={{ background: 'linear-gradient(135deg, #7c3aed, #4f46e5)' }}>
-                            <PawIcon size={14} color="white" />
+                          <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm overflow-hidden bg-transparent">
+                            <img src={assets.chatbot_logo} alt="PawBot Logo" className="w-full h-full object-contain" />
                           </div>
                         )}
                         <div className={`max-w-[82%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed shadow-sm ${msg.role === 'user'
@@ -324,7 +321,9 @@ const AnimalHealthChatbot = () => {
                   {/* Typing indicator */}
                   {isLoading && (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-end gap-2">
-                      <div className="w-7 h-7 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-sm flex-shrink-0">🐾</div>
+                      <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden bg-transparent">
+                        <img src={assets.chatbot_logo} alt="PawBot Logo" className="w-full h-full object-contain" />
+                      </div>
                       <div className="bg-white border border-gray-100 rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm">
                         <TypingDots />
                       </div>
@@ -343,8 +342,6 @@ const AnimalHealthChatbot = () => {
                       ))}
                     </motion.div>
                   )}
-
-                  <div ref={bottomRef} />
                 </div>
 
                 {/* Agent Status Banner */}
@@ -375,7 +372,7 @@ const AnimalHealthChatbot = () => {
                     </motion.button>
                   </div>
                   <p className="text-center text-gray-400 text-[10px] mt-2 flex items-center justify-center gap-1">
-                    <Sparkles className="w-3 h-3" /> Powered by Google Cloud GenAI · Gemini
+                    <Sparkles className="w-3 h-3" /> Powered by NVIDIA NIM · DeepSeek v4 Pro
                   </p>
                 </div>
               </>
@@ -390,37 +387,31 @@ const AnimalHealthChatbot = () => {
         {!isOpen && (
           <motion.div
             className="absolute inset-0 rounded-full"
-            style={{ background: 'radial-gradient(circle, rgba(139,92,246,0.4) 0%, transparent 70%)' }}
+            style={{ background: 'radial-gradient(circle, rgba(230, 201, 122, 0.4) 0%, transparent 70%)' }}
             animate={{ scale: [1, 1.5, 1], opacity: [0.6, 0, 0.6] }}
             transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
           />
         )}
         <motion.button
           onClick={toggleOpen}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.92 }}
+          whileHover={{ scale: 1.08 }}
+          whileTap={{ scale: 0.94 }}
           className="relative w-16 h-16 rounded-full flex items-center justify-center"
           style={{
-            background: 'linear-gradient(145deg, #7c3aed, #4f46e5)',
-            boxShadow: '0 8px 32px rgba(109,40,217,0.5), 0 2px 8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.15)',
+            background: 'transparent',
+            boxShadow: isOpen ? 'none' : '0 8px 32px rgba(212, 175, 55, 0.25)',
           }}
         >
-          {/* Frosted glass inner ring */}
-          <div className="absolute inset-1 rounded-full" style={{ background: 'rgba(255,255,255,0.08)', backdropFilter: 'blur(4px)' }} />
           <AnimatePresence mode="wait">
             {isOpen
-              ? <motion.div key="close" initial={{ rotate: -90, opacity: 0, scale: 0.5 }} animate={{ rotate: 0, opacity: 1, scale: 1 }} exit={{ rotate: 90, opacity: 0, scale: 0.5 }} transition={{ duration: 0.2 }} className="relative z-10">
-                <X className="w-6 h-6 text-white" strokeWidth={2.5} />
+              ? <motion.div key="close" initial={{ rotate: -90, opacity: 0, scale: 0.5 }} animate={{ rotate: 0, opacity: 1, scale: 1 }} exit={{ rotate: 90, opacity: 0, scale: 0.5 }} transition={{ duration: 0.2 }} className="relative z-10 w-12 h-12 bg-gradient-to-br from-[#c8860a] to-[#7a5a48] rounded-full flex items-center justify-center shadow-lg">
+                <X className="w-5 h-5 text-white" strokeWidth={2.5} />
               </motion.div>
-              : <motion.div key="open" initial={{ rotate: 90, opacity: 0, scale: 0.5 }} animate={{ rotate: 0, opacity: 1, scale: 1 }} exit={{ rotate: -90, opacity: 0, scale: 0.5 }} transition={{ duration: 0.2 }} className="relative z-10">
-                <PawIcon size={30} color="white" />
+              : <motion.div key="open" initial={{ rotate: 90, opacity: 0, scale: 0.5 }} animate={{ rotate: 0, opacity: 1, scale: 1 }} exit={{ rotate: -90, opacity: 0, scale: 0.5 }} transition={{ duration: 0.2 }} className="relative z-10 w-16 h-16">
+                <img src={assets.chatbot_logo} alt="PawBot Launcher" className="w-full h-full object-contain" />
               </motion.div>
             }
           </AnimatePresence>
-          {/* Online dot */}
-          {!isOpen && (
-            <span className="absolute top-1 right-1 w-3.5 h-3.5 rounded-full bg-emerald-400 border-2 border-white shadow-sm" />
-          )}
         </motion.button>
       </div>
     </div>

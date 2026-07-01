@@ -32,6 +32,20 @@ const authAdmin = async (req, res, next) => {
             const admin = await import('../models/adminModel.js').then(m => m.default.findOne({ email: token_decode.email }));
 
             if (!admin) {
+                const csEmployeeModel = await import('../models/csEmployeeModel.js').then(m => m.default);
+                const employee = await csEmployeeModel.findOne({ email: token_decode.email, isMaster: true, status: 'active' });
+                if (employee) {
+                    req.admin = {
+                        email: employee.email,
+                        role: 'master_cs_agent',
+                        permissions: ['cs_employees', 'cs_chat', 'cs_tickets', 'misbehavior_reports', 'cruelty_reports', 'cs_reports', 'chat_with_admin'],
+                        id: employee._id,
+                        _id: employee._id,
+                        name: employee.name
+                    };
+                    return next();
+                }
+
                 return res.json({
                     success: false,
                     message: "not authorized to login"
@@ -42,7 +56,8 @@ const authAdmin = async (req, res, next) => {
                 email: admin.email,
                 role: 'admin',
                 permissions: admin.permissions || [],
-                id: admin._id
+                id: admin._id,
+                _id: admin._id
             };
             next();
         }
@@ -59,6 +74,6 @@ const authAdmin = async (req, res, next) => {
             message: error.message
         });
     }
-}
+};
 
-export default authAdmin
+export default authAdmin;

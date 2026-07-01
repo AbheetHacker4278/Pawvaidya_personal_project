@@ -63,11 +63,11 @@ const RoomDetail = () => {
                 }
             } else {
                 toast.error(data.message);
-                navigate('/community-blogs');
+                navigate('/community?tab=blogs');
             }
         } catch (error) {
             toast.error('Error fetching room details');
-            navigate('/community-blogs');
+            navigate('/community?tab=blogs');
         } finally {
             setLoading(false);
         }
@@ -139,7 +139,7 @@ const RoomDetail = () => {
             const { data } = await axios.delete(`${backendurl}/api/rooms/${roomId}`, { headers: { token } });
             if (data.success) {
                 toast.success('Room deleted successfully');
-                navigate('/community-blogs');
+                navigate('/community?tab=blogs');
             } else {
                 toast.error(data.message);
             }
@@ -268,7 +268,7 @@ const RoomDetail = () => {
             <div className="pt-8 pb-12 px-4 shadow-sm relative overflow-hidden" style={{ background: `linear-gradient(135deg, ${B.dark} 0%, ${B.mid} 100%)` }}>
                 <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
                 <div className="max-w-4xl mx-auto relative z-10">
-                    <button onClick={() => navigate('/community-blogs')} className="flex items-center gap-2 text-white/80 hover:text-white mb-6 text-sm font-bold transition-colors">
+                    <button onClick={() => navigate('/community?tab=blogs')} className="flex items-center gap-2 text-white/80 hover:text-white mb-6 text-sm font-bold transition-colors">
                         <ArrowLeftIcon className="w-4 h-4" /> Back to Hub
                     </button>
 

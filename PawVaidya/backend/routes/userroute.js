@@ -10,6 +10,7 @@ import upload from '../middleware/multer.js';
 import { uploadBlogFiles } from '../middleware/multerBlogs.js';
 import securityMonitor from '../middleware/securityMonitor.js';
 import { socialAuth, linkSocialAccount, connectSocialProfile, disconnectSocialProfile } from '../controllers/userController.js';
+import { getVcoDetails, dispatchMobileIcu, getIcuStatus, cancelIcuDispatch, getOverdraftDetails, runMultiModalDiagnostics, getCreditDetails, spendCredit, repayCredit, bookVco, rateDriver, reportTipDemand } from '../controllers/obsidianController.js';
 
 export const userRouter = express.Router()
 
@@ -79,5 +80,19 @@ userRouter.post('/vote-poll', authuser, voteInPoll)
 userRouter.post('/wallet/topup-order', authuser, topUpWalletOrder)
 userRouter.post('/wallet/verify-topup', authuser, verifyTopUpWalletPayment)
 userRouter.post('/subscription-usage', authuser, getUserSubscriptionUsage)
+
+// Obsidian Signature Pass Exclusive Routes
+userRouter.get('/obsidian/vco', authuser, getVcoDetails)
+userRouter.post('/obsidian/dispatch-icu', authuser, dispatchMobileIcu)
+userRouter.get('/obsidian/icu-status', authuser, getIcuStatus)
+userRouter.post('/obsidian/cancel-icu', authuser, cancelIcuDispatch)
+userRouter.get('/obsidian/overdraft', authuser, getOverdraftDetails)
+userRouter.post('/obsidian/diagnostics', authuser, upload.single('image'), runMultiModalDiagnostics)
+userRouter.get('/obsidian/credit-details', authuser, getCreditDetails)
+userRouter.post('/obsidian/spend-credit', authuser, spendCredit)
+userRouter.post('/obsidian/repay-credit', authuser, repayCredit)
+userRouter.post('/obsidian/book-vco', authuser, bookVco)
+userRouter.post('/obsidian/rate-driver', authuser, rateDriver)
+userRouter.post('/obsidian/report-tip-demand', authuser, reportTipDemand)
 
 export default userRouter

@@ -57,6 +57,10 @@ const animalDiseaseSchema = new mongoose.Schema({
         type: Number,
         default: 3
     },
+    aiAnalysis: {
+        type: String,
+        default: ""
+    },
     emergencyAlertTriggered: {
         type: Boolean,
         default: false

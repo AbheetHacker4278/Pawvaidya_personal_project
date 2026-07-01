@@ -58,6 +58,9 @@ const appointmentSchema = new mongoose.Schema({
         slotDate: String,
         slotTime: String
     },
+    isVcoBooking: { type: Boolean, default: false },
+    vcoVisitType: { type: String, enum: ['Home Visit', 'Clinic Visit', 'none'], default: 'none' },
+    preemptedAppointments: { type: [String], default: [] },
     subscriptionDiscount: {
         plan: String,
         discountPercentage: Number,

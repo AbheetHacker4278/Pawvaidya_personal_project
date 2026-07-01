@@ -33,7 +33,7 @@ const MLPrediction = () => {
     const [history, setHistory] = useState([]);
     const [historyLoading, setHistoryLoading] = useState(false);
     const [expandedLogId, setExpandedLogId] = useState(null);
-    
+
     // Checked items for dynamic care protocol list
     const [checkedPrecautions, setCheckedPrecautions] = useState({});
 
@@ -60,7 +60,7 @@ const MLPrediction = () => {
         Goat: { temp: "101.5 - 103.5 °F", pulse: "70 - 90 bpm", resp: "12 - 20 bpm" }
     };
 
-    const isPlatinum = userdata?.subscription?.plan === 'Platinum' && userdata?.subscription?.status === 'Active';
+    const isPlatinum = (userdata?.subscription?.plan === 'Platinum' || userdata?.subscription?.plan === 'Obsidian') && userdata?.subscription?.status === 'Active';
 
     useEffect(() => {
         if (token && isPlatinum) {
@@ -84,7 +84,7 @@ const MLPrediction = () => {
         if (selectedPet) {
             setPetName(selectedPet.name);
             setAge(selectedPet.age || '1');
-            
+
             // Map pet species
             const type = selectedPet.type ? selectedPet.type.toLowerCase() : '';
             if (type.includes('dog')) {
@@ -177,11 +177,11 @@ const MLPrediction = () => {
             };
 
             const { data } = await axios.post(`${backendurl}/api/ml-prediction/predict`, payload, { headers: { token } });
-            
+
             if (data.success) {
                 setPredictionResult(data.prediction);
                 toast.success(`Analysis Complete! You earned +${data.earnedPawPoints} PawPoints!`);
-                
+
                 // Clear checklists
                 setCheckedPrecautions({});
                 fetchHistory(); // Refresh historical diagnostics list
@@ -248,11 +248,11 @@ const MLPrediction = () => {
                         <span className="px-4 py-1.5 rounded-full bg-[#d4a017]/10 border border-[#d4a017]/40 text-[#d4a017] text-xs font-black tracking-widest uppercase mb-4">
                             Premium Membership Portal
                         </span>
-                        
+
                         <h1 className="text-3xl sm:text-5xl font-black tracking-tight leading-tight max-w-2xl mb-4">
                             Unlock AI-Powered Animal Health Predictive Diagnostics
                         </h1>
-                        
+
                         <p className="text-[#e8d5b0] text-sm sm:text-base font-medium max-w-xl mb-12">
                             Access our veterinary diagnostics framework. Formulate high-accuracy vitals analysis, predict medical conditions, and generate custom care precautions.
                         </p>
@@ -293,7 +293,7 @@ const MLPrediction = () => {
                                 Upgrade to Platinum Membership <Award size={20} className="fill-current" />
                             </button>
                         )}
-                        
+
                         <p className="text-xs text-white/40 mt-6 font-medium">
                             Already purchased a pass? Allow a few seconds to verify your active plan settings.
                         </p>
@@ -306,7 +306,7 @@ const MLPrediction = () => {
     return (
         <div className="min-h-screen pb-16">
             <div className="max-w-6xl mx-auto">
-                
+
                 {/* VIP Header Banner */}
                 <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-12 border-b border-[#e8d5b0] pb-8">
                     <div>
@@ -331,7 +331,7 @@ const MLPrediction = () => {
 
                 {/* Main Content Layout */}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-                    
+
                     {/* Diagnosis Form Panel */}
                     <div className="lg:col-span-7 space-y-6">
                         <div className="p-8 rounded-[2.5rem] bg-white border border-[#e8d5b0] shadow-xl relative overflow-hidden">
@@ -546,7 +546,7 @@ const MLPrediction = () => {
                     {/* Diagnostics Result Panel */}
                     <div className="lg:col-span-5 space-y-6">
                         <AnimatePresence mode="wait">
-                            
+
                             {/* Loading Diagnostics Sequence */}
                             {loading && (
                                 <motion.div
@@ -607,7 +607,7 @@ const MLPrediction = () => {
                                     {/* Circular speedo gauge box */}
                                     <div className="p-8 rounded-[2.5rem] bg-white border border-[#e8d5b0] shadow-xl relative overflow-hidden flex flex-col items-center">
                                         <span className="text-xs font-black uppercase text-gray-400 tracking-wider mb-6">Calculated Health Index</span>
-                                        
+
                                         {/* Radial SVG Gauge */}
                                         <div className="relative w-48 h-48 flex items-center justify-center mb-4">
                                             <svg className="w-full h-full rotate-[-90deg]">

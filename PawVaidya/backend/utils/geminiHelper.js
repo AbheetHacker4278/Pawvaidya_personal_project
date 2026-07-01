@@ -35,9 +35,13 @@ export const generateGeminiContent = async ({ prompt, image = null, jsonMode = f
             
             const contents = [];
             if (image) {
-                contents.push(image); // Add visual part
+                if (Array.isArray(image)) {
+                    contents.push(...image);
+                } else {
+                    contents.push(image);
+                }
             }
-            contents.push(prompt); // Add text prompt
+            contents.push(prompt);
 
             const config = {};
             if (jsonMode) {

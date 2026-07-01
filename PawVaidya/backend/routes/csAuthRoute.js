@@ -19,12 +19,18 @@ import {
     getShiftStatus,
     getUser360,
     issueRefund,
+    reclaimRefund,
     revokeSubscription,
     grantSubscription,
     getCSMessages,
     markCSMessageAsRead,
     triggerEmergencyAlert,
-    uploadScreenRecording
+    uploadScreenRecording,
+    uploadVoiceCallRecording,
+    csForgotPassword,
+    logIdleTime,
+    generateCompensationCoupon,
+    getTicketCoupons
 } from '../controllers/csAuthController.js';
 import {
     initiateDigilockerLink,
@@ -40,6 +46,7 @@ const router = express.Router();
 
 // Public auth routes
 router.post('/login', csLogin);
+router.post('/forgot-password', csForgotPassword);
 router.post('/face-register', faceRegister);
 router.post('/face-verify', faceVerify);
 router.post('/logout', authCSEmployee, csLogout);
@@ -97,13 +104,18 @@ router.post('/shift/sync', authCSEmployee, syncShift);
 router.post('/shift/complete', authCSEmployee, completeShift);
 router.get('/shift/status', authCSEmployee, getShiftStatus);
 router.post('/upload-recording', authCSEmployee, upload.single('recording'), uploadScreenRecording);
+router.post('/upload-voice-call', authCSEmployee, upload.single('audio'), uploadVoiceCallRecording);
+router.post('/log-idle', authCSEmployee, logIdleTime);
 
 // Customer 360 & Refunds
 router.get('/user-360/:email', authCSEmployee, getUser360);
 router.post('/refund', authCSEmployee, issueRefund);
+router.post('/reclaim-refund', authCSEmployee, reclaimRefund);
 router.post('/revoke-subscription', authCSEmployee, revokeSubscription);
 router.post('/grant-subscription', authCSEmployee, grantSubscription);
 router.post('/trigger-emergency', authCSEmployee, triggerEmergencyAlert);
+router.post('/generate-compensation-coupon', authCSEmployee, generateCompensationCoupon);
+router.get('/ticket-coupons/:ticketId', authCSEmployee, getTicketCoupons);
 
 // Admin notification routes
 router.get('/messages', authCSEmployee, getCSMessages);

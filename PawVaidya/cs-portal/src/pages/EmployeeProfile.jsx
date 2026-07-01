@@ -7,7 +7,7 @@ import FaceCamera from '../components/FaceCamera';
 import DigiLockerSection from '../components/DigiLockerSection';
 
 const EmployeeProfile = () => {
-    const { employee, setEmployee, cstoken, backendUrl } = useContext(CSContext);
+    const { employee, setEmployee, cstoken, backendUrl, performanceData, fetchPerformance } = useContext(CSContext);
     const [uploading, setUploading] = useState(false);
     const [showFaceModal, setShowFaceModal] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
@@ -33,6 +33,12 @@ const EmployeeProfile = () => {
             setBio(employee.bio || '');
         }
     }, [employee, isEditing]);
+
+    React.useEffect(() => {
+        if (cstoken && employee) {
+            fetchPerformance();
+        }
+    }, [cstoken, employee]);
 
     if (!employee) return null;
 
@@ -388,6 +394,98 @@ const EmployeeProfile = () => {
                         )}
                     </div>
                 </div>
+            </div>
+
+            {/* QA Audits & Coaching Feedback Section */}
+            <div className="bg-white shadow rounded-lg px-4 py-5 sm:p-6 border border-slate-200 text-slate-800">
+                <h3 className="text-lg font-bold border-b border-slate-200 pb-4 mb-4 flex items-center justify-between">
+                    <span className="flex items-center">
+                        <span className="text-xl mr-2">📊</span> QA Audits & Coaching History
+                    </span>
+                    {performanceData?.position && (
+                        <span className="text-xs bg-indigo-50 border border-indigo-100 text-indigo-700 px-3 py-1 rounded-full font-bold">
+                            Leaderboard Rank: #{performanceData.position}
+                        </span>
+                    )}
+                </h3>
+
+                {performanceData?.recentQA && performanceData.recentQA.length > 0 ? (
+                    <div className="space-y-4">
+                        {performanceData.recentQA.map((qa) => {
+                            const isAiAudited = !qa.adminId;
+                            const scoreColor = qa.score >= 90 ? 'text-emerald-600 bg-emerald-50 border-emerald-100' : 
+                                               qa.score >= 80 ? 'text-amber-600 bg-amber-50 border-amber-100' : 
+                                               'text-rose-600 bg-rose-50 border-rose-100';
+                            return (
+                                <div key={qa._id} className="p-5 border border-slate-100 rounded-xl bg-slate-50/30 hover:bg-slate-50/70 transition-all">
+                                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+                                        <div className="flex items-center gap-2">
+                                            <span className={`text-2xl font-black px-3 py-1 rounded-lg border ${scoreColor}`}>
+                                                {qa.score}%
+                                            </span>
+                                            <div>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-sm font-bold text-slate-800">QA Evaluation Report</span>
+                                                    {isAiAudited ? (
+                                                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black uppercase bg-indigo-100 text-indigo-700 border border-indigo-200/50">
+                                                            🤖 AI Audit
+                                                        </span>
+                                                    ) : (
+                                                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black uppercase bg-slate-200 text-slate-700 border border-slate-300/50">
+                                                            👤 Admin Audit
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <p className="text-[11px] text-slate-400 font-medium">
+                                                    Evaluated on: {new Date(qa.createdAt).toLocaleString()}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        {qa.ticketId && (
+                                            <span className="text-xs bg-slate-100 text-slate-600 px-2.5 py-1 rounded-md font-semibold border border-slate-200/50">
+                                                Ticket: {qa.ticketId.title || qa.ticketId.category || 'General'}
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    {qa.kpis && (
+                                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
+                                            <div className="bg-white border border-slate-100 p-2.5 rounded-lg text-center shadow-sm">
+                                                <span className="block text-[9px] uppercase tracking-wide text-slate-400 font-bold">Communication</span>
+                                                <span className="text-sm font-black text-slate-700">{qa.kpis.communication}/10</span>
+                                            </div>
+                                            <div className="bg-white border border-slate-100 p-2.5 rounded-lg text-center shadow-sm">
+                                                <span className="block text-[9px] uppercase tracking-wide text-slate-400 font-bold">Technical Knowledge</span>
+                                                <span className="text-sm font-black text-slate-700">{qa.kpis.technicalKnowledge}/10</span>
+                                            </div>
+                                            <div className="bg-white border border-slate-100 p-2.5 rounded-lg text-center shadow-sm">
+                                                <span className="block text-[9px] uppercase tracking-wide text-slate-400 font-bold">Empathy</span>
+                                                <span className="text-sm font-black text-slate-700">{qa.kpis.empathy}/10</span>
+                                            </div>
+                                            <div className="bg-white border border-slate-100 p-2.5 rounded-lg text-center shadow-sm">
+                                                <span className="block text-[9px] uppercase tracking-wide text-slate-400 font-bold">Resolution Quality</span>
+                                                <span className="text-sm font-black text-slate-700">{qa.kpis.resolutionQuality}/10</span>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {qa.feedback && (
+                                        <div className="mt-3 bg-white border border-slate-100 p-3.5 rounded-lg text-xs text-slate-600 leading-relaxed shadow-sm">
+                                            <strong className="block text-[10px] text-slate-400 uppercase font-black tracking-wider mb-1">Coaching Feedback</strong>
+                                            {qa.feedback}
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+                ) : (
+                    <div className="text-center py-10 border-2 border-dashed border-slate-100 rounded-xl bg-slate-50/20">
+                        <span className="text-4xl block mb-3">📋</span>
+                        <p className="text-sm text-slate-400 font-bold">No QA evaluations logged yet.</p>
+                        <p className="text-xs text-slate-300 mt-1">Evaluations appear automatically when resolved tickets are audited by AI or administrators.</p>
+                    </div>
+                )}
             </div>
 
             {/* DigiLocker Integration Section */}

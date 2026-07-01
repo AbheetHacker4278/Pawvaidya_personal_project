@@ -1,2 +1,28 @@
 RAG-chatbot-API/__pycache__/
 RAG-chatbot-API/.env
+
+# Environment files - never commit secrets
+**/.env
+**/.env.local
+**/.env.production
+
+# Node modules
+**/node_modules/
+
+# Uploads folder - large user-generated files, not for Git
+**/uploads/
+
+# Build outputs
+**/dist/
+**/build/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Scratch/temp files
+**/scratch/

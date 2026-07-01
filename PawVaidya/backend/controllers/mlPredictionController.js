@@ -2,6 +2,12 @@ import userModel from '../models/userModel.js';
 import petModel from '../models/petModel.js';
 import mlPredictionModel from '../models/mlPredictionModel.js';
 import { runAgentLoop } from '../services/agentOrchestrator.js';
+import OpenAI from 'openai';
+
+const openai = new OpenAI({
+    apiKey: process.env.NVIDIA_NIM_API_KEY,
+    baseURL: 'https://integrate.api.nvidia.com/v1',
+});
 
 // Vitals normal range reference dictionary
 const normalRanges = {
@@ -60,7 +66,7 @@ export const predictHealth = async (req, res) => {
             });
         }
 
-        const isPlatinum = user.subscription?.plan === 'Platinum' && user.subscription?.status === 'Active';
+        const isPlatinum = (user.subscription?.plan === 'Platinum' || user.subscription?.plan === 'Obsidian') && user.subscription?.status === 'Active';
         if (!isPlatinum) {
             return res.json({
                 success: false,
@@ -105,10 +111,10 @@ export const predictHealth = async (req, res) => {
 
         // Deduct from 100 base score
         let score = 100;
-        
+
         // Temperature penalty: -8 per degree of deviation (capped at 30)
         score -= Math.min(30, tempDiff * 8);
-        
+
         // Pulse penalty: -0.5 per unit of deviation (capped at 25)
         score -= Math.min(25, pulseDiff * 0.5);
 
@@ -295,15 +301,10 @@ export const predictHealth = async (req, res) => {
             }
         }
 
-        // 4. Premium AI-Orchestrated Insights (NVIDIA NIM with Gemini Fallback)
+        // 4. Premium AI-Orchestrated Insights (NVIDIA DeepSeek with NIM fallback)
         let aiAnalysis = "";
-        const apiKeyAvailable = process.env.NVIDIA_NIM_API_KEY || process.env.GEMINI_API_KEY;
 
-        if (apiKeyAvailable) {
-            try {
-                console.log("[ML Controller] Dispatching vitals and symptoms to AI Agent Orchestrator for Premium VIP Precaution Plan...");
-                
-                const systemPrompt = `You are a world-class veterinary consultant and clinical AI diagnostic analyst for PawVaidya.
+        const systemPrompt = `You are a world-class veterinary consultant and clinical AI diagnostic analyst for PawVaidya.
 Your role is to analyze a pet's raw clinical vitals and symptoms alongside our ML classifier's raw predictions and formulate a highly professional, caring, and clinical-grade diagnostic explanation.
 Always address the pet parent with empathy and scientific clarity. 
 
@@ -316,7 +317,7 @@ Provide a structured analysis in markdown containing:
 
 Keep the tone encouraging, expert-level, and professional. Always clarify that while you are a highly advanced AI system, an in-person veterinary physical exam is the gold standard. Use markdown formatting beautifully.`;
 
-                const userMessage = `My pet ${petName} is a ${animalType} (Age: ${age || 'N/A'}).
+        const userMessage = `My pet ${petName} is a ${animalType} (Age: ${age || 'N/A'}).
 The reported vitals are:
 - Body Temperature: ${temperature} °F
 - Pulse / Heart Rate: ${pulseRate} bpm
@@ -331,22 +332,41 @@ Our Machine Learning Vitals Classifier has calculated:
 
 Please write a custom, luxury clinical-grade medical advice report and action steps for me.`;
 
-                // Call our resilient agent orchestrator
-                aiAnalysis = await runAgentLoop({
-                    systemPrompt,
-                    userMessage,
-                    maxIterations: 1, // No tools needed for this analytical summary
-                    temperature: 0.3
-                });
-
-                console.log("[ML Controller] Premium AI analysis generated successfully.");
-            } catch (aiErr) {
-                console.error("[ML Controller] AI analysis failed, falling back to local static template:", aiErr.message);
+        try {
+            console.log("[ML Controller] Dispatching to NVIDIA DeepSeek API for Premium VIP Precaution Plan...");
+            const completion = await openai.chat.completions.create({
+                model: "deepseek-ai/deepseek-v4-pro",
+                messages: [
+                    { role: "system", content: systemPrompt },
+                    { role: "user", content: userMessage }
+                ],
+                temperature: 1,
+                top_p: 0.95,
+                max_tokens: 16384,
+                chat_template_kwargs: { "thinking": false },
+                stream: false
+            });
+            aiAnalysis = completion.choices[0]?.message?.content || "";
+            console.log("[ML Controller] Premium NVIDIA DeepSeek AI analysis generated successfully.");
+        } catch (openaiErr) {
+            console.warn("[ML Controller] NVIDIA DeepSeek API direct call failed, falling back to agent orchestrator:", openaiErr.message);
+            const apiKeyAvailable = process.env.NVIDIA_NIM_API_KEY || process.env.GEMINI_API_KEY;
+            if (apiKeyAvailable) {
+                try {
+                    aiAnalysis = await runAgentLoop({
+                        systemPrompt,
+                        userMessage,
+                        maxIterations: 1,
+                        temperature: 0.3
+                    });
+                    console.log("[ML Controller] Fallback AI analysis generated successfully via agent loop.");
+                } catch (aiErr) {
+                    console.error("[ML Controller] Fallback AI analysis failed, using local static template:", aiErr.message);
+                    aiAnalysis = `Our veterinary system has performed a clinical analysis of ${petName}'s vitals. The combination of temperature (${temperature} °F) and respiration (${respirationRate} bpm) shows active physiological stress, indicating a potential risk of **${predictedCondition}**. Please review the detailed precautions in the checklist below and contact a PawVaidya specialist if symptoms worsen.`;
+                }
+            } else {
                 aiAnalysis = `Our veterinary system has performed a clinical analysis of ${petName}'s vitals. The combination of temperature (${temperature} °F) and respiration (${respirationRate} bpm) shows active physiological stress, indicating a potential risk of **${predictedCondition}**. Please review the detailed precautions in the checklist below and contact a PawVaidya specialist if symptoms worsen.`;
             }
-        } else {
-            // Local fallback template
-            aiAnalysis = `Our veterinary system has performed a clinical analysis of ${petName}'s vitals. The combination of temperature (${temperature} °F) and respiration (${respirationRate} bpm) shows active physiological stress, indicating a potential risk of **${predictedCondition}**. Please review the detailed precautions in the checklist below and contact a PawVaidya specialist if symptoms worsen.`;
         }
 
         // 5. Save Record to Database
@@ -408,7 +428,7 @@ export const getPredictionHistory = async (req, res) => {
             });
         }
 
-        const isPlatinum = user.subscription?.plan === 'Platinum' && user.subscription?.status === 'Active';
+        const isPlatinum = (user.subscription?.plan === 'Platinum' || user.subscription?.plan === 'Obsidian') && user.subscription?.status === 'Active';
         if (!isPlatinum) {
             return res.json({
                 success: false,
@@ -450,7 +470,7 @@ export const getPredictionDetail = async (req, res) => {
             });
         }
 
-        const isPlatinum = user.subscription?.plan === 'Platinum' && user.subscription?.status === 'Active';
+        const isPlatinum = (user.subscription?.plan === 'Platinum' || user.subscription?.plan === 'Obsidian') && user.subscription?.status === 'Active';
         if (!isPlatinum) {
             return res.json({
                 success: false,

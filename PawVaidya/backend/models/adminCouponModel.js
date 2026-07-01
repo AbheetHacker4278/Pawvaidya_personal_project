@@ -10,6 +10,11 @@ const adminCouponSchema = new mongoose.Schema({
     isActive: { type: Boolean, default: true },
     usageLimit: { type: Number, default: 0 }, // 0 for unlimited
     usedCount: { type: Number, default: 0 },
+    recipientEmails: { type: [String], default: [] },
+    generatedBy: { type: String, default: null },
+    generationReason: { type: String, default: '' },
+    ticketId: { type: String, default: null },
+    compensationType: { type: String, enum: ['refund', 'gifted', null], default: null },
     createdAt: { type: Date, default: Date.now }
 });
 

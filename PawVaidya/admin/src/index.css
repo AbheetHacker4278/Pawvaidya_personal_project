@@ -40,6 +40,157 @@ html, body {
     scrollbar-color: #5A4035 #f1f1f1;
 }
 
+.dark .custom-scrollbar::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(16, 185, 129, 0.3);
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(16, 185, 129, 0.5);
+}
+
+.dark {
+    color: #f1f5f9;
+}
+
+/* Global root level background overrides for all page views */
+.dark body,
+.dark .bg-\[\#fdfaf7\],
+.dark .bg-\[\#fdf9f6\] {
+    background-color: #050811 !important;
+    color: #e2e8f0;
+}
+
+/* Navbar & Sidebar shell — deepest dark, highest priority */
+.dark .dark-shell {
+    background-color: #060b14 !important;
+    border-color: #111827 !important;
+}
+
+/* Card Backgrounds & Glassmorphism (exclude .dark-shell elements) */
+.dark .bg-white:not(.dark-shell),
+.dark .bg-white\/80:not(.dark-shell),
+.dark .bg-white\/50:not(.dark-shell),
+.dark .bg-white\/40:not(.dark-shell),
+.dark .bg-white\/60:not(.dark-shell),
+.dark .bg-white\/70:not(.dark-shell),
+.dark .bg-white\/90:not(.dark-shell),
+.dark .bg-white\/95:not(.dark-shell) {
+    background-color: #0a1020 !important;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+}
+
+/* Inner elements / secondary backgrounds */
+.dark .bg-slate-50,
+.dark .bg-slate-50\/50,
+.dark .bg-slate-100,
+.dark .bg-slate-100\/50,
+.dark .bg-gray-50,
+.dark .bg-gray-100 {
+    background-color: #060b14 !important;
+}
+
+/* Border overrides */
+.dark .border-white\/50,
+.dark .border-white\/20,
+.dark .border-white\/10,
+.dark .border-slate-100,
+.dark .border-slate-200,
+.dark .border-emerald-50,
+.dark .border-emerald-100 {
+    border-color: #111827 !important;
+}
+
+/* Text Colors */
+.dark .text-slate-900,
+.dark .text-slate-800,
+.dark .text-slate-700,
+.dark .text-gray-900,
+.dark .text-gray-800,
+.dark .text-gray-700 {
+    color: #f8fafc !important;
+}
+
+.dark .text-slate-600,
+.dark .text-slate-500,
+.dark .text-gray-600,
+.dark .text-gray-500 {
+    color: #e2e8f0 !important;
+}
+
+.dark .text-slate-400,
+.dark .text-gray-400 {
+    color: #cbd5e1 !important;
+}
+
+.dark .text-slate-300,
+.dark .text-gray-300 {
+    color: #f1f5f9 !important;
+}
+
+/* Focus and inputs */
+.dark input,
+.dark select,
+.dark textarea {
+    background-color: #060b14 !important;
+    border: 1px solid #111827 !important;
+    color: #f8fafc !important;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+    color: #475569 !important;
+}
+
+/* Form focus ring overlay support */
+.dark .focus\:ring-indigo-100:focus {
+    --tw-ring-color: rgba(99, 102, 241, 0.15) !important;
+}
+
+/* Shadow overrides */
+.dark .shadow-2xl,
+.dark .shadow-xl,
+.dark .shadow-lg,
+.dark .shadow-md,
+.dark .shadow-sm {
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.7), 0 8px 10px -6px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Badges and tags override */
+.dark .bg-emerald-100 {
+    background-color: rgba(16, 185, 129, 0.15) !important;
+    color: #34d399 !important;
+}
+.dark .bg-amber-100\/50,
+.dark .bg-amber-100 {
+    background-color: rgba(245, 158, 11, 0.15) !important;
+    color: #fbbf24 !important;
+    border-color: rgba(245, 158, 11, 0.2) !important;
+}
+.dark .bg-rose-100 {
+    background-color: rgba(244, 63, 94, 0.15) !important;
+    color: #f87171 !important;
+}
+.dark .bg-indigo-100 {
+    background-color: rgba(99, 102, 241, 0.15) !important;
+    color: #818cf8 !important;
+}
+
+/* Dividers & lines */
+.dark .bg-slate-200 {
+    background-color: #111827 !important;
+}
+
+/* Recharts grid overrides */
+.dark .recharts-cartesian-grid-horizontal line,
+.dark .recharts-cartesian-grid-vertical line {
+    stroke: #111827 !important;
+}
+
 *{
     font-family: Outfit
 }

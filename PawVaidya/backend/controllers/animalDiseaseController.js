@@ -1,6 +1,12 @@
 import userModel from '../models/userModel.js';
 import petModel from '../models/petModel.js';
 import animalDiseaseModel from '../models/animalDiseaseModel.js';
+import OpenAI from 'openai';
+
+const openai = new OpenAI({
+    apiKey: process.env.NVIDIA_NIM_API_KEY,
+    baseURL: 'https://integrate.api.nvidia.com/v1',
+});
 
 // Multi-species clinical symptom-severity weight matrix profiles
 const diseaseProfiles = [
@@ -112,11 +118,11 @@ export const predictAnimalDisease = async (req, res) => {
             return res.status(404).json({ success: false, message: "User not found." });
         }
 
-        const isAuthorized = (user.subscription?.plan === 'Gold' || user.subscription?.plan === 'Platinum') && user.subscription?.status === 'Active';
+        const isAuthorized = (user.subscription?.plan === 'Gold' || user.subscription?.plan === 'Platinum' || user.subscription?.plan === 'Obsidian') && user.subscription?.status === 'Active';
         if (!isAuthorized) {
-            return res.status(403).json({ 
-                success: false, 
-                message: "Access restricted. Gold or Platinum Active Membership is required for this diagnostic module." 
+            return res.status(403).json({
+                success: false,
+                message: "Access restricted. Gold or Platinum Active Membership is required for this diagnostic module."
             });
         }
 
@@ -174,6 +180,40 @@ export const predictAnimalDisease = async (req, res) => {
             initialStatus = 'Requires Vet';
         }
 
+        // Generate clinical diagnostic summary via NVIDIA NIM DeepSeek API
+        let aiAnalysis = "";
+        try {
+            const systemPrompt = `You are a professional veterinary specialist diagnostic agent for PawVaidya.
+Provide a detailed clinical analysis of the disease prediction case in markdown format. Address the pet parent with care and clinical clarity. Include:
+1. **Symptom & Severity Assessment**: Explain the observed symptoms and how they present in a ${animalType}.
+2. **Differential Diagnosis Analysis**: Discuss the top predicted conditions (${predictionResults.slice(0, 3).map(p => `${p.condition} with ${p.confidence}% confidence`).join(', ')}) and explain the pathology.
+3. **Immediate Care & Quarantine Protocol**: Practical steps to comfort and manage the pet, including isolation if contagious.
+4. **Emergency Red Flags**: When to seek urgent physical veterinary care immediately.`;
+
+            const userMessage = `Pet Name: ${petName}
+Species: ${animalType}
+Age: ${age} years old
+Symptoms: ${symptoms.map(s => `${s.name} (severity: ${s.severity}/5)`).join(', ')}
+Probabilistic Matches: ${predictionResults.map(p => `${p.condition} (${p.confidence}%)`).join(', ')}`;
+
+            const completion = await openai.chat.completions.create({
+                model: "deepseek-ai/deepseek-v4-pro",
+                messages: [
+                    { role: "system", content: systemPrompt },
+                    { role: "user", content: userMessage }
+                ],
+                temperature: 1,
+                top_p: 0.95,
+                max_tokens: 16384,
+                chat_template_kwargs: { "thinking": false },
+                stream: false
+            });
+            aiAnalysis = completion.choices[0]?.message?.content || "";
+        } catch (aiErr) {
+            console.error("AI Analysis failed for disease prediction:", aiErr.message);
+            aiAnalysis = `Clinical diagnostics show a potential match of ${predictionResults[0]?.condition || "unknown illness"} at ${predictionResults[0]?.confidence || 0}% confidence. Please monitor closely for changes in activity, feeding, and symptoms, and consult a veterinary professional.`;
+        }
+
         // 3. Save Case to Database
         const newDiseaseCase = new animalDiseaseModel({
             userId,
@@ -184,6 +224,7 @@ export const predictAnimalDisease = async (req, res) => {
             symptoms,
             predictions: predictionResults,
             caseStatus: initialStatus,
+            aiAnalysis,
             trackingLogs: [{
                 note: `Initial Case Diagnosis compiled. Top Match: ${predictionResults[0].condition} with ${predictionResults[0].confidence}% confidence.`,
                 statusAtLog: initialStatus
@@ -215,7 +256,7 @@ export const predictAnimalDisease = async (req, res) => {
 export const getDiseaseHistory = async (req, res) => {
     try {
         const { userId } = req.body;
-        
+
         const history = await animalDiseaseModel.find({ userId })
             .sort({ createdAt: -1 })
             .populate('petId');

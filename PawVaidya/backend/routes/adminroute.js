@@ -1,5 +1,6 @@
 import express from 'express';
-import { addDoctor, allDoctors, loginAdmin, verifyAdminOTP, registerFace, loginWithFace, logAdminActivity, getAdminActivityLogs, getDoctorAttendanceLogs, appointmenetsAdmin, Appointmentcancel, admindashboard, allUsers, deleteUser, editUser, deleteDoctor, makeAllDoctorsAvailable, makeAllDoctorsUnavailable, getUserDetailsWithPassword, getDoctorDetailsWithPassword, getAllUsersWithPasswords, getAllDoctorsWithPasswords, getActivityLogs, getRealtimeActivityLogs, sendVerificationEmailToUser, createAdminMessage, getAllAdminMessages, updateAdminMessage, deleteAdminMessage, getBlogReports, updateBlogReportStatus, banFromBlogging, unbanFromBlogging, getUnbanRequests, handleUnbanRequest, deleteBlogReport, bulkDeleteBlogReports, addAdmin, allAdmins, updateAdmin, deleteAdmin, sendBroadcastEmail, sendIndividualEmail, getDoctorRankings, giveIncentive, omniSearch, sendBroadcastAlert, getSystemConfig, updateSystemConfig, getCloudinaryAssets, deleteCloudinaryAsset, getSystemSettings, getFraudAlerts, updateCommissionRules, sendEmergencyBroadcast, getSupabaseHealth, getDeletionRequests, processDeletionRequest, blacklistEmails, getBlacklist, removeFromBlacklist, exportDataToWord, getSecurityIncidents, resolveSecurityIncident, getUnreadSecurityIncidentCount, approveAdminLogin, disapproveAdminLogin, getUserPaymentDetails, getPaymentUsers, getAllSubscriptions, revokeSubscription, giftSubscription, getRedisStats, getRedisHistory, syncLegacyFiles, getFirebaseStorageStatsEndpoint, broadcastReuploadDocs } from '../controllers/adminController.js';
+import { addDoctor, allDoctors, loginAdmin, verifyAdminOTP, registerFace, loginWithFace, logAdminActivity, getAdminActivityLogs, getDoctorAttendanceLogs, appointmenetsAdmin, Appointmentcancel, admindashboard, allUsers, deleteUser, editUser, deleteDoctor, makeAllDoctorsAvailable, makeAllDoctorsUnavailable, getUserDetailsWithPassword, getDoctorDetailsWithPassword, getAllUsersWithPasswords, getAllDoctorsWithPasswords, getActivityLogs, getRealtimeActivityLogs, sendVerificationEmailToUser, createAdminMessage, getAllAdminMessages, updateAdminMessage, deleteAdminMessage, getBlogReports, updateBlogReportStatus, banFromBlogging, unbanFromBlogging, getUnbanRequests, handleUnbanRequest, deleteBlogReport, bulkDeleteBlogReports, addAdmin, allAdmins, updateAdmin, deleteAdmin, sendBroadcastEmail, sendIndividualEmail, getDoctorRankings, giveIncentive, omniSearch, sendBroadcastAlert, getSystemConfig, updateSystemConfig, getCloudinaryAssets, deleteCloudinaryAsset, getSystemSettings, getFraudAlerts, updateCommissionRules, sendEmergencyBroadcast, getSupabaseHealth, getDeletionRequests, processDeletionRequest, blacklistEmails, getBlacklist, removeFromBlacklist, exportDataToWord, getSecurityIncidents, resolveSecurityIncident, getUnreadSecurityIncidentCount, approveAdminLogin, disapproveAdminLogin, getUserPaymentDetails, getPaymentUsers, getAllSubscriptions, revokeSubscription, giftSubscription, approveObsidianPass, rejectObsidianPass, analyzeObsidianUser, getRedisStats, getRedisHistory, syncLegacyFiles, getFirebaseStorageStatsEndpoint, broadcastReuploadDocs, predictChurn } from '../controllers/adminController.js';
+import { createAdminCreditTopupOrder, verifyAdminCreditTopup, getAdminCreditStats, getAllIcuDispatches, getAllVans, createVan, updateVan, deleteVan, getAllDrivers, getDriverDetails, updateDriverDetails, banDriver, unbanDriver, handleAppeal, deleteDriver } from '../controllers/obsidianController.js';
 import { getContentViolations, resolveContentViolation, banIpAddress, getBannedIps, unbanIpAddress, banFromViolation } from '../controllers/contentModerationController.js';
 import { createCoupon, getAllCoupons, toggleCouponStatus, deleteCoupon } from '../controllers/couponController.js';
 import { getServiceHealth } from '../controllers/serviceHealthController.js';
@@ -11,8 +12,32 @@ import authAdmin from '../middleware/authAdmin.js';
 import securityMonitor from '../middleware/securityMonitor.js';
 import changeavailablity from '../controllers/doctorController.js';
 import { getAdminDoctorDocuments, verifyDoctorDocument, adminDeleteDoctorDocument } from '../controllers/doctorDocumentController.js';
+import {
+  getUserTrustScores,
+  getDuplicateAccounts,
+  flagDuplicateUser,
+  getReferralStats,
+  updateReferralReward,
+  getGdprRequests,
+  processGdprRequest,
+  getChurnAnalysis,
+  getCouponRoiAnalytics,
+  getDoctorPayouts,
+  processDoctorPayout
+} from '../controllers/trustRevenueController.js';
+import ipAllowlistMiddleware from '../middleware/ipAllowlistMiddleware.js';
+import {
+  getAllowedIps,
+  addAllowedIp,
+  deleteAllowedIp,
+  get2faPolicyAndCompliance,
+  update2faPolicy,
+  getSimulatedPermissionPages
+} from '../controllers/securityComplianceController.js';
 
 const adminRouter = express.Router();
+adminRouter.use(ipAllowlistMiddleware);
+
 
 adminRouter.post('/add-doctor', authAdmin, upload.single('image'), securityMonitor, addDoctor);
 adminRouter.post('/login', loginAdmin)
@@ -147,6 +172,25 @@ adminRouter.get('/all-subscriptions', authAdmin, getAllSubscriptions);
 adminRouter.get('/payment-users', authAdmin, getPaymentUsers);
 adminRouter.post('/revoke-subscription', authAdmin, revokeSubscription);
 adminRouter.post('/gift-subscription', authAdmin, giftSubscription);
+adminRouter.post('/approve-obsidian', authAdmin, approveObsidianPass);
+adminRouter.post('/reject-obsidian', authAdmin, rejectObsidianPass);
+adminRouter.get('/analyze-obsidian-user/:subscriptionId', authAdmin, analyzeObsidianUser);
+adminRouter.post('/obsidian/admin/credit-topup-order', authAdmin, createAdminCreditTopupOrder);
+adminRouter.post('/obsidian/admin/verify-credit-topup', authAdmin, verifyAdminCreditTopup);
+adminRouter.get('/obsidian/admin/credit-stats', authAdmin, getAdminCreditStats);
+adminRouter.get('/obsidian/admin/icu-dispatches', authAdmin, getAllIcuDispatches);
+adminRouter.get('/obsidian/admin/vans', authAdmin, getAllVans);
+adminRouter.post('/obsidian/admin/vans', authAdmin, createVan);
+adminRouter.put('/obsidian/admin/vans/:vanId', authAdmin, updateVan);
+adminRouter.delete('/obsidian/admin/vans/:vanId', authAdmin, deleteVan);
+adminRouter.get('/obsidian/admin/drivers', authAdmin, getAllDrivers);
+adminRouter.get('/obsidian/admin/drivers/:driverId', authAdmin, getDriverDetails);
+adminRouter.put('/obsidian/admin/drivers/:driverId', authAdmin, updateDriverDetails);
+adminRouter.post('/obsidian/admin/drivers/:driverId/ban', authAdmin, banDriver);
+adminRouter.post('/obsidian/admin/drivers/:driverId/unban', authAdmin, unbanDriver);
+adminRouter.post('/obsidian/admin/drivers/:driverId/appeal', authAdmin, handleAppeal);
+adminRouter.delete('/obsidian/admin/drivers/:driverId', authAdmin, deleteDriver);
+adminRouter.post('/predict-churn', authAdmin, predictChurn);
 adminRouter.get('/redis-stats', authAdmin, getRedisStats);
 adminRouter.get('/redis-history', authAdmin, getRedisHistory);
 adminRouter.get('/user-payment-details/:userId', authAdmin, getUserPaymentDetails);
@@ -162,7 +206,71 @@ adminRouter.post('/doctor-documents/verify', authAdmin, verifyDoctorDocument);
 adminRouter.post('/doctor-documents/delete', authAdmin, adminDeleteDoctorDocument);
 
 // Financial Calculations Route
-import { getFinancialCalculations } from '../controllers/adminFinanceController.js';
-adminRouter.get('/financial-calculations', authAdmin, getFinancialCalculations);
+import { getFinancialCalculations, getFinancialAnalysis } from '../controllers/adminFinanceController.js';
+import { getUser360, issueRefund, reclaimRefund, grantSubscription, triggerEmergencyAlert } from '../controllers/csAuthController.js';
 
-export default adminRouter
+adminRouter.get('/financial-calculations', authAdmin, getFinancialCalculations);
+adminRouter.get('/financial-analysis', authAdmin, getFinancialAnalysis);
+
+// Customer 360 routes for Admin
+adminRouter.get('/user-360/:email', authAdmin, getUser360);
+adminRouter.post('/refund', authAdmin, issueRefund);
+adminRouter.post('/reclaim-refund', authAdmin, reclaimRefund);
+adminRouter.post('/grant-subscription', authAdmin, grantSubscription);
+adminRouter.post('/trigger-emergency', authAdmin, triggerEmergencyAlert);
+
+// Trust & Revenue Analytics endpoints
+adminRouter.get('/trust-scores', authAdmin, getUserTrustScores);
+adminRouter.get('/duplicate-accounts', authAdmin, getDuplicateAccounts);
+adminRouter.post('/flag-duplicate', authAdmin, flagDuplicateUser);
+adminRouter.get('/referral-stats', authAdmin, getReferralStats);
+adminRouter.post('/referral-reward', authAdmin, updateReferralReward);
+adminRouter.get('/gdpr-requests', authAdmin, getGdprRequests);
+adminRouter.post('/process-gdpr', authAdmin, processGdprRequest);
+adminRouter.get('/churn-analysis', authAdmin, getChurnAnalysis);
+adminRouter.get('/coupon-roi', authAdmin, getCouponRoiAnalytics);
+adminRouter.get('/doctor-payouts', authAdmin, getDoctorPayouts);
+adminRouter.post('/process-doctor-payout', authAdmin, processDoctorPayout);
+
+// Security & Compliance endpoints
+adminRouter.get('/allowed-ips', authAdmin, getAllowedIps);
+adminRouter.post('/allowed-ips', authAdmin, addAllowedIp);
+adminRouter.delete('/allowed-ips/:ipId', authAdmin, deleteAllowedIp);
+adminRouter.get('/2fa-policy', authAdmin, get2faPolicyAndCompliance);
+adminRouter.post('/2fa-policy', authAdmin, update2faPolicy);
+adminRouter.get('/simulated-permissions', authAdmin, getSimulatedPermissionPages);
+
+import axios from 'axios';
+adminRouter.post('/generate-ai-content', authAdmin, async (req, res) => {
+  try {
+    const { prompt, max_tokens } = req.body;
+    const apiKey = process.env.NVIDIA_API_KEY_FRONTEND;
+    if (!apiKey) return res.status(500).json({ success: false, message: "NVIDIA API key not configured" });
+
+    const invokeUrl = "https://integrate.api.nvidia.com/v1/chat/completions";
+    const payload = {
+      model: "minimaxai/minimax-m3",
+      messages: [{ role: "user", content: prompt }],
+      max_tokens: max_tokens || 1024,
+      temperature: 1.00,
+      top_p: 0.95,
+      stream: false
+    };
+    
+    const response = await axios.post(invokeUrl, payload, {
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Accept": "application/json",
+        "Content-Type": "application/json"
+      }
+    });
+
+    res.json({ success: true, data: response.data });
+  } catch (error) {
+    console.error("AI Generation Error:", error?.response?.data || error.message);
+    res.status(500).json({ success: false, message: "AI generation failed" });
+  }
+});
+
+export default adminRouter;
+

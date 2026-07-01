@@ -39,10 +39,10 @@ const Footer = () => {
     const companyLinks = [
         { label: t('footer.home'), path: '/' },
         { label: t('footer.aboutUs'), path: '/about' },
-        { label: t('footer.contactUs'), path: '/contact' },
+        { label: t('footer.contactUs'), path: '/about?tab=contact' },
         { label: t('footer.privacyPolicy'), path: '/privacy-policy' },
         { label: t('footer.faqs'), path: '/faqs' },
-        { label: t('footer.reportIssue'), path: '/report-issue' },
+        { label: t('footer.reportIssue'), path: '/support?tab=issue' },
         { label: 'Report Cruelty', path: '/report-cruelty' },
     ];
 
@@ -85,16 +85,18 @@ const Footer = () => {
         },
     ];
 
+    const isObsidian = userdata?.subscription?.plan === 'Obsidian';
+
     return (
         <footer
-            className="relative overflow-hidden rounded-3xl mx-4 md:mx-6 mb-6 mt-4"
-            style={{ background: `linear-gradient(135deg, ${B.dark} 0%, ${B.mid} 60%, ${B.light} 100%)` }}
+            className={`relative overflow-hidden rounded-3xl mx-4 md:mx-6 mb-6 mt-4 border transition-all duration-300 ${isObsidian ? 'bg-[#0A0A0A] border-[#E6C97A]/15 shadow-[0_0_30px_rgba(230,201,122,0.03)]' : ''}`}
+            style={isObsidian ? {} : { background: `linear-gradient(135deg, ${B.dark} 0%, ${B.mid} 60%, ${B.light} 100%)` }}
         >
             {/* Decorative blobs */}
-            <div className="absolute -top-16 -left-16 w-64 h-64 rounded-full blur-3xl opacity-10"
-                style={{ background: B.cream }} />
-            <div className="absolute -bottom-12 -right-12 w-72 h-72 rounded-full blur-3xl opacity-08"
-                style={{ background: B.amber }} />
+            <div className={`absolute -top-16 -left-16 w-64 h-64 rounded-full blur-3xl ${isObsidian ? 'opacity-[0.03]' : 'opacity-10'}`}
+                style={{ background: isObsidian ? '#E6C97A' : B.cream }} />
+            <div className={`absolute -bottom-12 -right-12 w-72 h-72 rounded-full blur-3xl ${isObsidian ? 'opacity-[0.03]' : 'opacity-08'}`}
+                style={{ background: isObsidian ? '#E6C97A' : B.amber }} />
             <div className="absolute inset-0 opacity-[0.04]"
                 style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '28px 28px' }} />
 
@@ -111,8 +113,8 @@ const Footer = () => {
                         transition={{ duration: 0.5 }}
                         className="lg:col-span-1"
                     >
-                        <img src={brandedLogo || footerLogo} alt="PawVaidya" className="w-36 mb-4" />
-                        <p className="text-sm leading-relaxed mb-5" style={{ color: '#d4b896' }}>
+                        <img src={brandedLogo || footerLogo} alt="PawVaidya" className={`w-36 mb-4 ${isObsidian ? 'brightness-125 saturate-120 filter drop-shadow-[0_0_4px_rgba(230,201,122,0.3)]' : ''}`} />
+                        <p className="text-sm leading-relaxed mb-5" style={{ color: isObsidian ? '#a3a3a3' : '#d4b896' }}>
                             {t('footer.description')}
                         </p>
                         {/* Social icons */}
@@ -124,10 +126,22 @@ const Footer = () => {
                                     aria-label={s.label}
                                     whileHover={{ scale: 1.15, y: -2 }}
                                     whileTap={{ scale: 0.95 }}
-                                    className="w-9 h-9 rounded-xl flex items-center justify-center border border-white/15 transition-colors"
-                                    style={{ background: 'rgba(255,255,255,0.08)', color: '#d4b896' }}
-                                    onMouseEnter={e => e.currentTarget.style.background = `rgba(200,134,10,0.25)`}
-                                    onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
+                                    className={`w-9 h-9 rounded-xl flex items-center justify-center border transition-colors ${isObsidian ? 'border-[#E6C97A]/30 text-[#E6C97A]' : 'border-white/15'}`}
+                                    style={isObsidian ? { background: 'transparent' } : { background: 'rgba(255,255,255,0.08)', color: '#d4b896' }}
+                                    onMouseEnter={e => {
+                                        if (isObsidian) {
+                                            e.currentTarget.style.background = 'rgba(230,201,122,0.1)';
+                                        } else {
+                                            e.currentTarget.style.background = `rgba(200,134,10,0.25)`;
+                                        }
+                                    }}
+                                    onMouseLeave={e => {
+                                        if (isObsidian) {
+                                            e.currentTarget.style.background = 'transparent';
+                                        } else {
+                                            e.currentTarget.style.background = 'rgba(255,255,255,0.08)';
+                                        }
+                                    }}
                                 >
                                     {s.icon}
                                 </motion.a>
@@ -142,9 +156,20 @@ const Footer = () => {
                         viewport={{ once: true }}
                         transition={{ delay: 0.1, duration: 0.5 }}
                     >
-                        <h3 className="text-sm font-bold uppercase tracking-widest mb-5" style={{ color: B.amber }}>
-                            {t('footer.company')}
-                        </h3>
+                        {isObsidian ? (
+                            <div className="relative mb-5">
+                                <h3 className="text-sm font-bold uppercase tracking-widest text-[#E6C97A] mb-1">
+                                    {t('footer.company')}
+                                </h3>
+                                <div className="h-[2px] w-24 bg-gradient-to-r from-transparent via-[#E6C97A] to-transparent relative">
+                                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_8px_#fff,0_0_12px_#E6C97A] blur-[0.5px]"></div>
+                                </div>
+                            </div>
+                        ) : (
+                            <h3 className="text-sm font-bold uppercase tracking-widest mb-5" style={{ color: B.amber }}>
+                                {t('footer.company')}
+                            </h3>
+                        )}
                         <ul className="flex flex-col gap-2.5">
                             {companyLinks.map((link, i) => (
                                 <motion.li
@@ -153,9 +178,13 @@ const Footer = () => {
                                     transition={{ duration: 0.2 }}
                                     onClick={() => { navigate(link.path); scrollTo(0, 0); }}
                                     className="flex items-center gap-2 text-sm cursor-pointer group transition-colors"
-                                    style={{ color: '#d4b896' }}
+                                    style={{ color: isObsidian ? '#a3a3a3' : '#d4b896' }}
                                 >
-                                    <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: B.amber }} />
+                                    {isObsidian ? (
+                                        <span className="text-[#E6C97A] text-xs font-bold mr-1.5 transition-transform group-hover:translate-x-0.5">&gt;</span>
+                                    ) : (
+                                        <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: B.amber }} />
+                                    )}
                                     <span className="group-hover:text-white transition-colors">{link.label}</span>
                                 </motion.li>
                             ))}
@@ -169,21 +198,32 @@ const Footer = () => {
                         viewport={{ once: true }}
                         transition={{ delay: 0.2, duration: 0.5 }}
                     >
-                        <h3 className="text-sm font-bold uppercase tracking-widest mb-5" style={{ color: B.amber }}>
-                            {t('footer.getInTouch')}
-                        </h3>
+                        {isObsidian ? (
+                            <div className="relative mb-5">
+                                <h3 className="text-sm font-bold uppercase tracking-widest text-[#E6C97A] mb-1">
+                                    {t('footer.getInTouch')}
+                                </h3>
+                                <div className="h-[2px] w-24 bg-gradient-to-r from-transparent via-[#E6C97A] to-transparent relative">
+                                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_8px_#fff,0_0_12px_#E6C97A] blur-[0.5px]"></div>
+                                </div>
+                            </div>
+                        ) : (
+                            <h3 className="text-sm font-bold uppercase tracking-widest mb-5" style={{ color: B.amber }}>
+                                {t('footer.getInTouch')}
+                            </h3>
+                        )}
                         <ul className="flex flex-col gap-3">
-                            <li className="flex items-start gap-3 text-sm" style={{ color: '#d4b896' }}>
-                                <Phone className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: B.amber }} />
-                                <span>+91 99999 99999</span>
+                            <li className="flex items-start gap-3 text-sm" style={{ color: isObsidian ? '#a3a3a3' : '#d4b896' }}>
+                                <Phone className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: isObsidian ? '#E6C97A' : B.amber }} />
+                                <span className={isObsidian ? 'hover:text-white transition-colors' : ''}>+91 99999 99999</span>
                             </li>
-                            <li className="flex items-start gap-3 text-sm" style={{ color: '#d4b896' }}>
-                                <Mail className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: B.amber }} />
-                                <span>support@pawvaidya.com</span>
+                            <li className="flex items-start gap-3 text-sm" style={{ color: isObsidian ? '#a3a3a3' : '#d4b896' }}>
+                                <Mail className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: isObsidian ? '#E6C97A' : B.amber }} />
+                                <span className={isObsidian ? 'hover:text-white transition-colors' : ''}>support@pawvaidya.com</span>
                             </li>
-                            <li className="flex items-start gap-3 text-sm" style={{ color: '#d4b896' }}>
-                                <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: B.amber }} />
-                                <span>100+ Cities across India</span>
+                            <li className="flex items-start gap-3 text-sm" style={{ color: isObsidian ? '#a3a3a3' : '#d4b896' }}>
+                                <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: isObsidian ? '#E6C97A' : B.amber }} />
+                                <span className={isObsidian ? 'hover:text-white transition-colors' : ''}>100+ Cities across India</span>
                             </li>
                         </ul>
                     </motion.div>
@@ -195,44 +235,95 @@ const Footer = () => {
                         viewport={{ once: true }}
                         transition={{ delay: 0.3, duration: 0.5 }}
                     >
-                        <h3 className="text-sm font-bold uppercase tracking-widest mb-5" style={{ color: B.amber }}>
-                            {t('footer.bookAVet')}
-                        </h3>
-                        <p className="text-sm mb-4" style={{ color: '#d4b896' }}>
+                        {isObsidian ? (
+                            <div className="relative mb-5">
+                                <h3 className="text-sm font-bold uppercase tracking-widest text-[#E6C97A] mb-1">
+                                    {t('footer.bookAVet')}
+                                </h3>
+                                <div className="h-[2px] w-24 bg-gradient-to-r from-transparent via-[#E6C97A] to-transparent relative">
+                                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_8px_#fff,0_0_12px_#E6C97A] blur-[0.5px]"></div>
+                                </div>
+                            </div>
+                        ) : (
+                            <h3 className="text-sm font-bold uppercase tracking-widest mb-5" style={{ color: B.amber }}>
+                                {t('footer.bookAVet')}
+                            </h3>
+                        )}
+                        <p className="text-sm mb-4" style={{ color: isObsidian ? '#a3a3a3' : '#d4b896' }}>
                             {t('footer.findVetSub')}
                         </p>
-                        <motion.button
-                            whileHover={{ scale: 1.04, boxShadow: `0 8px 24px ${B.amber}55` }}
-                            whileTap={{ scale: 0.97 }}
-                            onClick={() => { navigate('/doctors'); scrollTo(0, 0); }}
-                            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white shadow-lg"
-                            style={{ background: `linear-gradient(135deg, ${B.amber}, #e8a020)` }}
-                        >
-                            {t('footer.findADoctor')} <ArrowRight className="w-4 h-4" />
-                        </motion.button>
+                        {isObsidian ? (
+                            <motion.button
+                                whileHover={{ scale: 1.03 }}
+                                whileTap={{ scale: 0.97 }}
+                                onClick={() => { navigate('/doctors'); scrollTo(0, 0); }}
+                                className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-extrabold text-black w-full bg-gradient-to-r from-amber-600 via-[#E6C97A] to-amber-600 hover:brightness-110 shadow-lg shadow-amber-500/10 transition-all"
+                            >
+                                {t('footer.findADoctor')} <ArrowRight className="w-4 h-4 text-black stroke-[3px]" />
+                            </motion.button>
+                        ) : (
+                            <motion.button
+                                whileHover={{ scale: 1.04, boxShadow: `0 8px 24px ${B.amber}55` }}
+                                whileTap={{ scale: 0.97 }}
+                                onClick={() => { navigate('/doctors'); scrollTo(0, 0); }}
+                                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white shadow-lg"
+                                style={{ background: `linear-gradient(135deg, ${B.amber}, #e8a020)` }}
+                            >
+                                {t('footer.findADoctor')} <ArrowRight className="w-4 h-4" />
+                            </motion.button>
+                        )}
 
                         {/* Trust badge */}
-                        <div className="mt-5 flex items-center gap-2 px-3 py-2 rounded-xl border border-white/10 w-fit"
-                            style={{ background: 'rgba(255,255,255,0.06)' }}>
-                            <span className="text-lg">🐾</span>
-                            <div>
-                                <p className="text-xs font-bold text-white">{t('footer.happyPets')}</p>
-                                <p className="text-xs" style={{ color: '#d4b896' }}>{t('footer.servedIndia')}</p>
+                        {isObsidian ? (
+                            <div className="mt-5 flex items-center gap-3 px-4 py-3.5 rounded-xl border border-[#E6C97A]/20 w-full bg-[#0d0d0d]">
+                                <span className="text-2xl text-[#E6C97A] filter drop-shadow-[0_0_8px_rgba(230,201,122,0.4)]">🐾</span>
+                                <div>
+                                    <p className="text-xs font-black text-white tracking-wide">{t('footer.happyPets')}</p>
+                                    <p className="text-[10px] font-bold text-neutral-500 mt-0.5">{t('footer.servedIndia')}</p>
+                                </div>
                             </div>
-                        </div>
+                        ) : (
+                            <div className="mt-5 flex items-center gap-2 px-3 py-2 rounded-xl border border-white/10 w-fit"
+                                style={{ background: 'rgba(255,255,255,0.06)' }}>
+                                <span className="text-lg">🐾</span>
+                                <div>
+                                    <p className="text-xs font-bold text-white">{t('footer.happyPets')}</p>
+                                    <p className="text-xs" style={{ color: '#d4b896' }}>{t('footer.servedIndia')}</p>
+                                </div>
+                            </div>
+                        )}
                     </motion.div>
                 </div>
 
                 {/* ── Divider ───────────────────────────────────────────────────── */}
-                <div className="h-px mb-5" style={{ background: 'linear-gradient(to right, transparent, rgba(255,255,255,0.15), transparent)' }} />
+                <div 
+                    className="h-px mb-5 relative" 
+                    style={{ 
+                        background: isObsidian 
+                            ? 'linear-gradient(to right, transparent, rgba(230,201,122,0.4), transparent)' 
+                            : 'linear-gradient(to right, transparent, rgba(255,255,255,0.15), transparent)' 
+                    }} 
+                >
+                    {isObsidian && (
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-1 bg-white rounded-full shadow-[0_0_8px_#fff,0_0_12px_#E6C97A] blur-[1px]"></div>
+                    )}
+                </div>
 
                 {/* ── Bottom bar ────────────────────────────────────────────────── */}
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-                    <p className="text-xs" style={{ color: '#a08060' }}>
+                    <p className="text-xs" style={{ color: isObsidian ? '#52525b' : '#a08060' }}>
                         {t('footer.copyright')}
                     </p>
-                    <p className="text-xs flex items-center gap-1" style={{ color: '#a08060' }}>
-                        Made with <Heart className="w-3 h-3 text-red-400 fill-red-400" /> for pets everywhere
+                    <p className="text-xs flex items-center gap-1" style={{ color: isObsidian ? '#52525b' : '#a08060' }}>
+                        {isObsidian ? (
+                            <>
+                                Made with <span className="text-[#E6C97A] text-sm leading-none filter drop-shadow-[0_0_4px_rgba(230,201,122,0.4)]">💛</span> for pets everywhere
+                            </>
+                        ) : (
+                            <>
+                                Made with <Heart className="w-3 h-3 text-red-400 fill-red-400" /> for pets everywhere
+                            </>
+                        )}
                     </p>
                 </div>
             </div>

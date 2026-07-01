@@ -15,6 +15,7 @@ import { trackRedisMetrics } from './redisTracker.js';
 import emergencyPaymentDueModel from '../models/emergencyPaymentDueModel.js';
 import emergencyRequestModel from '../models/emergencyRequestModel.js';
 import adminMessageModel from '../models/adminMessageModel.js';
+import adminCouponModel from '../models/adminCouponModel.js';
 import { getIO } from '../socketServer.js';
 
 
@@ -59,6 +60,16 @@ const initScheduler = () => {
                 await doctor.save();
             }
             console.log('Expired incentives deactivated successfully.');
+        }
+    }));
+
+    // Run every minute to prune expired Obsidian subscription approvals (24-hour limit)
+    cron.schedule('* * * * *', () => observeJob('Obsidian Approval Expiry', async () => {
+        try {
+            const { cleanupExpiredApprovals } = await import('../controllers/subscriptionController.js');
+            await cleanupExpiredApprovals();
+        } catch (err) {
+            console.error('Error in Obsidian Approval Expiry scheduler:', err.message);
         }
     }));
 
@@ -516,6 +527,91 @@ const initScheduler = () => {
             }
         } catch (err) {
             console.error("Error in Check Emergency Late Dues & Bans cron job:", err.message);
+        }
+    }));
+
+    // Interest-Free Credit Line (IFCL) Enforcement Job
+    cron.schedule('*/5 * * * *', () => observeJob('Interest-Free Credit Line Enforcement', async () => {
+        try {
+            const now = new Date();
+            const delinquentUsers = await userModel.find({
+                "subscription.plan": "Obsidian",
+                "creditLine.spent": { $gt: 0 },
+                "creditLine.repaymentDeadline": { $lte: now },
+                "creditLine.status": "Active"
+            });
+
+            if (delinquentUsers.length > 0) {
+                console.log(`[Credit Line Enforcement] Found ${delinquentUsers.length} delinquent users. Suspending credit lines...`);
+                for (const user of delinquentUsers) {
+                    user.creditLine.status = 'Suspended';
+                    await user.save();
+
+                    // Create in-app system notification message
+                    try {
+                        await adminMessageModel.create({
+                            title: "⚠️ Obsidian Credit Line Suspended",
+                            message: `Your Obsidian Interest-Free Credit Line has been suspended due to non-payment of ₹${user.creditLine.spent} by the deadline. Please repay immediately to restore access.`,
+                            sender: "System",
+                            receivers: [user.email],
+                            createdAt: new Date(),
+                            expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+                        });
+                    } catch (msgErr) {
+                        console.error("Failed to create delinquent credit system message:", msgErr.message);
+                    }
+
+                    // Send email
+                    const mailOptions = {
+                        from: process.env.SENDER_EMAIL,
+                        to: user.email,
+                        subject: '⚠️ ACTION REQUIRED: Obsidian Credit Line Suspended - PawVaidya',
+                        html: `
+                            <div style="font-family: Arial, sans-serif; padding: 20px; border: 2px solid #dc3545; border-radius: 8px;">
+                                <h2 style="color: #dc3545; text-align: center;">⚠️ OBSIDIAN CREDIT LINE SUSPENDED</h2>
+                                <p>Dear <strong>${user.name}</strong>,</p>
+                                <p>Your Obsidian Interest-Free Credit Line has been suspended because you did not repay your outstanding balance of <strong>₹${user.creditLine.spent}</strong> by the weekly deadline.</p>
+                                <p style="color: #721c24; background-color: #f8d7da; padding: 12px; border-radius: 4px; border: 1px solid #f5c6cb;">
+                                    <strong>Access Blocked:</strong> You cannot spend any more from your Credit Line, and Obsidian benefits are frozen until this balance is fully cleared.
+                                </p>
+                                <p>Please log in to your account, top up your Paw Wallet, and click <strong>Repay Credit Dues</strong> in the Obsidian Command Center.</p>
+                                <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;"/>
+                                <p style="color: #6c757d; font-size: 12px; text-align: center;">PawVaidya Auto-Billing Network &copy; 2026</p>
+                            </div>
+                        `
+                    };
+                    if (notificationQueue && typeof notificationQueue.enqueueMail === 'function') {
+                        notificationQueue.enqueueMail(mailOptions);
+                    }
+                }
+            }
+        } catch (err) {
+            console.error("Error in Interest-Free Credit Line Enforcement cron job:", err.message);
+        }
+    }));
+
+    // Prune Expired Outreach Coupons and Admin Messages every minute
+    cron.schedule('* * * * *', () => observeJob('Prune Expired Outreach Coupons and Messages', async () => {
+        try {
+            const now = new Date();
+            // Delete expired specific coupons
+            const deletedCoupons = await adminCouponModel.deleteMany({
+                code: { $in: ['HEALTHYPET15', 'FREEWELLNESS'] },
+                expiryDate: { $lte: now }
+            });
+            if (deletedCoupons.deletedCount > 0) {
+                console.log(`[Outreach Pruner] Deleted ${deletedCoupons.deletedCount} expired outreach coupons.`);
+            }
+
+            // Delete expired admin messages
+            const deletedMessages = await adminMessageModel.deleteMany({
+                expiresAt: { $lte: now }
+            });
+            if (deletedMessages.deletedCount > 0) {
+                console.log(`[Outreach Pruner] Deleted ${deletedMessages.deletedCount} expired admin messages.`);
+            }
+        } catch (err) {
+            console.error("Error in Prune Expired Outreach Coupons and Messages cron job:", err.message);
         }
     }));
 };

@@ -10,7 +10,7 @@ const nutritionPlanSchema = new mongoose.Schema({
     weight: { type: Number, default: 5 }, // in kg
     activityLevel: {
         type: String,
-        enum: ['Low', 'Moderate', 'Active', 'Athletic'],
+        enum: ['Low', 'Normal', 'Moderate', 'Active', 'Athletic'],
         default: 'Moderate'
     },
     medicalConditions: [{ type: String }],

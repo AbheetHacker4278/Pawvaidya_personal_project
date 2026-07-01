@@ -20,7 +20,7 @@ const DietNutritionPlanner = () => {
     const [breed, setBreed] = useState('');
     const [age, setAge] = useState('');
     const [weight, setWeight] = useState('');
-    const [activityLevel, setActivityLevel] = useState('Normal');
+    const [activityLevel, setActivityLevel] = useState('Moderate');
     const [medicalConditions, setMedicalConditions] = useState('');
     const [goals, setGoals] = useState('');
 
@@ -35,9 +35,9 @@ const DietNutritionPlanner = () => {
     const [calcPortions, setCalcPortions] = useState(1); // multiplier
     const [customCalorieInput, setCustomCalorieInput] = useState('');
 
-    // Check tier eligibility: Gold or Platinum active
+    // Check tier eligibility: Gold, Platinum or Obsidian active
     const isGoldOrPlatinum = userdata?.subscription?.status === 'Active' &&
-        (userdata?.subscription?.plan === 'Gold' || userdata?.subscription?.plan === 'Platinum');
+        (userdata?.subscription?.plan === 'Gold' || userdata?.subscription?.plan === 'Platinum' || userdata?.subscription?.plan === 'Obsidian');
 
     useEffect(() => {
         if (token && isGoldOrPlatinum) {
@@ -389,8 +389,8 @@ const DietNutritionPlanner = () => {
 
                                 <div>
                                     <label className="block text-xs font-black uppercase text-gray-400 mb-2">Activity Level</label>
-                                    <div className="grid grid-cols-3 gap-2">
-                                        {['Low', 'Normal', 'Active'].map((lvl) => (
+                                    <div className="grid grid-cols-4 gap-2">
+                                        {['Low', 'Moderate', 'Active', 'Athletic'].map((lvl) => (
                                             <button
                                                 key={lvl}
                                                 type="button"

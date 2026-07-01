@@ -285,6 +285,8 @@ export const loginAdmin = async (req, res) => {
     try {
         const { email, password, secretCode } = req.body;
         let admin = null;
+        let isCsMaster = false;
+        let csEmployee = null;
 
         // 1. Check Master Admin Credentials (from Env)
         if (email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD) {
@@ -335,12 +337,33 @@ export const loginAdmin = async (req, res) => {
                     }
                     admin = null;
                 }
+            } else {
+                // 3. Check if Master CS Agent (from csEmployeeModel)
+                const csEmployeeModel = (await import('../models/csEmployeeModel.js')).default;
+                csEmployee = await csEmployeeModel.findOne({ email, isMaster: true, status: 'active' });
+                if (csEmployee) {
+                    const isMatch = await bcryptjs.compare(password, csEmployee.password);
+                    if (isMatch) {
+                        isCsMaster = true;
+                    } else {
+                        csEmployee.failedLoginAttempts = (csEmployee.failedLoginAttempts || 0) + 1;
+                        csEmployee.lastFailedLoginAt = new Date();
+                        await csEmployee.save();
+                        csEmployee = null;
+                    }
+                }
             }
         }
 
-        if (admin) {
+        if (admin || isCsMaster) {
+            const userObj = admin || csEmployee;
             // Reset failed login attempts on successful password verification
-            admin.failedLoginAttempts = 0;
+            userObj.failedLoginAttempts = 0;
+            if (!isCsMaster) {
+                await admin.save();
+            } else {
+                await csEmployee.save();
+            }
 
             // Check geolocation
             const ipAddress = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
@@ -350,7 +373,7 @@ export const loginAdmin = async (req, res) => {
             const whitelistedIPs = ['192.168.29.160', '49.36.89.198', '::1', '127.0.0.1'];
             const isWhitelistedIP = whitelistedIPs.includes(ipAddress);
 
-            if (!isWhitelistedIP && locationStr !== 'Local/Unknown' && !admin.trustedGeolocations.includes(locationStr)) {
+            if (!isCsMaster && !isWhitelistedIP && locationStr !== 'Local/Unknown' && !admin.trustedGeolocations.includes(locationStr)) {
                 // Geolocation is new, trigger approval flow
                 const token = crypto.randomBytes(32).toString('hex');
                 const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 mins
@@ -393,21 +416,25 @@ export const loginAdmin = async (req, res) => {
             const secretBypassCode = process.env.ADMIN_LOGIN_SECRET || '4278';
             if (secretCode === secretBypassCode) {
                 // Bypass OTP and Geolocation check - direct login
-                admin.otp = null;
-                admin.otpExpires = null;
-                admin.lastLogin = new Date();
-                await admin.save();
+                userObj.otp = null;
+                userObj.otpExpires = null;
+                userObj.lastLogin = new Date();
+                if (!isCsMaster) {
+                    await admin.save();
+                } else {
+                    await csEmployee.save();
+                }
 
-                const token = jwt.sign({ email: admin.email }, process.env.JWT_SECRET, { expiresIn: '1h' });
+                const token = jwt.sign({ email: userObj.email }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
-                await logActivity(admin._id, 'admin', 'login', `Logged in via Secret Code bypass`, req, { method: 'secret_code' });
+                await logActivity(userObj._id, isCsMaster ? 'master_cs_agent' : 'admin', 'login', `Logged in via Secret Code bypass`, req, { method: 'secret_code' });
 
                 return res.json({
                     success: true,
                     token,
-                    role: admin.role,
-                    permissions: admin.permissions,
-                    name: admin.name,
+                    role: isCsMaster ? 'master_cs_agent' : admin.role,
+                    permissions: isCsMaster ? ['cs_employees', 'cs_chat', 'cs_tickets', 'misbehavior_reports', 'cruelty_reports', 'cs_reports', 'chat_with_admin'] : admin.permissions,
+                    name: userObj.name,
                     message: "Logged in via secret code bypass."
                 });
             }
@@ -416,15 +443,19 @@ export const loginAdmin = async (req, res) => {
             const otp = Math.floor(100000 + Math.random() * 900000).toString();
             const otpExpires = new Date(Date.now() + 90 * 1000); // 90 seconds
 
-            admin.otp = otp;
-            admin.otpExpires = otpExpires;
-            await admin.save();
+            userObj.otp = otp;
+            userObj.otpExpires = otpExpires;
+            if (!isCsMaster) {
+                await admin.save();
+            } else {
+                await csEmployee.save();
+            }
 
             // Send OTP Email
             try {
                 await transporter.sendMail({
                     from: process.env.SENDER_EMAIL,
-                    to: admin.email,
+                    to: userObj.email,
                     subject: 'Admin Login Security Code',
                     html: ADMIN_OTP_TEMPLATE.replace('{otp}', otp)
                 });
@@ -458,28 +489,48 @@ export const loginAdmin = async (req, res) => {
 export const verifyAdminOTP = async (req, res) => {
     try {
         const { email, otp } = req.body;
+        let admin = null;
+        let isCsMaster = false;
+        let csEmployee = null;
 
-        const admin = await adminModel.findOne({ email });
-        if (!admin || !admin.otp || !admin.otpExpires) {
+        admin = await adminModel.findOne({ email });
+        if (!admin) {
+            const csEmployeeModel = (await import('../models/csEmployeeModel.js')).default;
+            csEmployee = await csEmployeeModel.findOne({ email, isMaster: true, status: 'active' });
+            if (csEmployee) {
+                isCsMaster = true;
+            }
+        }
+
+        const userObj = admin || csEmployee;
+        if (!userObj || !userObj.otp || !userObj.otpExpires) {
             return res.json({ success: false, message: "Invalid session. Please login again." });
         }
 
-        if (new Date() > admin.otpExpires) {
-            admin.otp = null;
-            admin.otpExpires = null;
-            await admin.save();
+        if (new Date() > userObj.otpExpires) {
+            userObj.otp = null;
+            userObj.otpExpires = null;
+            if (!isCsMaster) {
+                await admin.save();
+            } else {
+                await csEmployee.save();
+            }
             return res.json({ success: false, message: "Security code expired. Please request a new one." });
         }
 
-        if (admin.otp !== otp) {
+        if (userObj.otp !== otp) {
             return res.json({ success: false, message: "Incorrect security code." });
         }
 
         // OTP Verified
-        admin.otp = null;
-        admin.otpExpires = null;
-        admin.lastLogin = new Date();
-        await admin.save();
+        userObj.otp = null;
+        userObj.otpExpires = null;
+        userObj.lastLogin = new Date();
+        if (!isCsMaster) {
+            await admin.save();
+        } else {
+            await csEmployee.save();
+        }
 
         const ipAddress = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
         const locationData = await getLocationFromIP(ipAddress);
@@ -488,7 +539,7 @@ export const verifyAdminOTP = async (req, res) => {
         try {
             await transporter.sendMail({
                 from: process.env.SENDER_EMAIL,
-                to: admin.email,
+                to: userObj.email,
                 subject: 'Successful Admin Login Alert',
                 html: ADMIN_LOGIN_SUCCESS_TEMPLATE
                     .replace('{time}', new Date().toLocaleString())
@@ -499,16 +550,16 @@ export const verifyAdminOTP = async (req, res) => {
             console.error("Failed to send success email:", mailErr);
         }
 
-        const token = jwt.sign({ email: admin.email }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        const token = jwt.sign({ email: userObj.email }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
-        await logActivity(admin._id, 'admin', 'login', `Logged in via ${req.body.method || 'Email'} after 2FA`, req, { method: req.body.method || 'email' });
+        await logActivity(userObj._id, isCsMaster ? 'master_cs_agent' : 'admin', 'login', `Logged in via ${req.body.method || 'Email'} after 2FA`, req, { method: req.body.method || 'email' });
 
         res.json({
             success: true,
             token,
-            role: admin.role,
-            permissions: admin.permissions,
-            name: admin.name
+            role: isCsMaster ? 'master_cs_agent' : admin.role,
+            permissions: isCsMaster ? ['cs_employees', 'cs_chat', 'cs_tickets', 'misbehavior_reports', 'cruelty_reports', 'cs_reports', 'chat_with_admin'] : admin.permissions,
+            name: userObj.name
         });
 
     } catch (error) {
@@ -516,6 +567,7 @@ export const verifyAdminOTP = async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 };
+
 
 export const approveAdminLogin = async (req, res) => {
     try {
@@ -1413,10 +1465,10 @@ export const admindashboard = async (req, res) => {
                     monthlyRevenue: {
                         $push: {
                             amount: {
-                                        $subtract: [
-                                            { $multiply: [{ $add: [{ $ifNull: ["$amount", 0] }, { $ifNull: ["$walletDeduction", 0] }, { $ifNull: ["$pawpointsDeduction", 0] }, { $ifNull: ["$adminDiscountApplied.amount", 0] }] }, commissionRate] },
-                                            { $ifNull: ["$adminDiscountApplied.amount", 0] }
-                                        ]
+                                $subtract: [
+                                    { $multiply: [{ $add: [{ $ifNull: ["$amount", 0] }, { $ifNull: ["$walletDeduction", 0] }, { $ifNull: ["$pawpointsDeduction", 0] }, { $ifNull: ["$adminDiscountApplied.amount", 0] }] }, commissionRate] },
+                                    { $ifNull: ["$adminDiscountApplied.amount", 0] }
+                                ]
                             },
                             date: "$date"
                         }
@@ -2174,8 +2226,8 @@ export const createAdminMessage = async (req, res) => {
                 const uploadResult = await uploadFile(file, 'admin_messages');
 
                 // Determine file type for admin message compatibility
-                const fileType = file.mimetype.toLowerCase().startsWith('image/') ? 'image' : 
-                                 (file.mimetype.toLowerCase().startsWith('video/') ? 'video' : 'file');
+                const fileType = file.mimetype.toLowerCase().startsWith('image/') ? 'image' :
+                    (file.mimetype.toLowerCase().startsWith('video/') ? 'video' : 'file');
 
                 attachments.push({
                     url: uploadResult.url,
@@ -2256,8 +2308,8 @@ export const updateAdminMessage = async (req, res) => {
                 // Upload using helper
                 const uploadResult = await uploadFile(file, 'admin_messages');
 
-                const fileType = file.mimetype.toLowerCase().startsWith('image/') ? 'image' : 
-                                 (file.mimetype.toLowerCase().startsWith('video/') ? 'video' : 'file');
+                const fileType = file.mimetype.toLowerCase().startsWith('image/') ? 'image' :
+                    (file.mimetype.toLowerCase().startsWith('video/') ? 'video' : 'file');
 
                 attachments.push({
                     url: uploadResult.url,
@@ -2764,6 +2816,81 @@ export const sendIndividualEmail = async (req, res) => {
             return res.json({ success: false, message: "Missing required fields" });
         }
 
+        // Verify if target exists for re-engagement outreach campaign
+        const isCampaignEmail = message.includes('HEALTHYPET15') || subject.includes('HEALTHYPET15') ||
+            message.includes('FREEWELLNESS') || subject.includes('FREEWELLNESS') ||
+            message.includes('completely free general wellness consultation') || subject.includes('Complimentary Pet Wellness Checkup');
+        
+        if (isCampaignEmail) {
+            const recipientUser = await userModel.findOne({ email });
+            if (!recipientUser) {
+                return res.json({ success: false, message: "Target subscriber not found in system" });
+            }
+
+            const expiryDate = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000); // 2 days
+
+            // Gating coupon codes dynamically
+            if (message.includes('HEALTHYPET15') || subject.includes('HEALTHYPET15')) {
+                let coupon = await adminCouponModel.findOne({ code: 'HEALTHYPET15' });
+                if (coupon) {
+                    coupon.expiryDate = expiryDate;
+                    if (!coupon.recipientEmails.includes(email)) {
+                        coupon.recipientEmails.push(email);
+                    }
+                    await coupon.save();
+                } else {
+                    coupon = new adminCouponModel({
+                        code: 'HEALTHYPET15',
+                        discountType: 'percentage',
+                        discountValue: 15,
+                        minAmount: 0,
+                        expiryDate: expiryDate,
+                        isActive: true,
+                        usageLimit: 0,
+                        recipientEmails: [email]
+                    });
+                    await coupon.save();
+                }
+            }
+
+            if (message.includes('FREEWELLNESS') || subject.includes('FREEWELLNESS') || message.includes('completely free general wellness consultation') || subject.includes('Complimentary Pet Wellness Checkup')) {
+                let coupon = await adminCouponModel.findOne({ code: 'FREEWELLNESS' });
+                if (coupon) {
+                    coupon.expiryDate = expiryDate;
+                    if (!coupon.recipientEmails.includes(email)) {
+                        coupon.recipientEmails.push(email);
+                    }
+                    await coupon.save();
+                } else {
+                    coupon = new adminCouponModel({
+                        code: 'FREEWELLNESS',
+                        discountType: 'percentage',
+                        discountValue: 100, // 100% discount
+                        minAmount: 0,
+                        expiryDate: expiryDate,
+                        isActive: true,
+                        usageLimit: 0,
+                        recipientEmails: [email]
+                    });
+                    await coupon.save();
+                }
+            }
+
+            // Create a message in adminMessageModel so it's visible in http://localhost:5173/messages
+            const newAdminMsg = new adminMessageModel({
+                title: subject,
+                message: message,
+                targetType: 'specific',
+                targetIds: [recipientUser._id.toString()],
+                createdBy: 'Admin',
+                isActive: true,
+                createdAt: new Date(),
+                expiresAt: expiryDate, // Expires in 2 days
+                priority: 'high'
+            });
+            await newAdminMsg.save();
+        }
+
         // Format attachments for Nodemailer
         const mailAttachments = attachments.map(file => ({
             filename: file.originalname,
@@ -3074,6 +3201,9 @@ export const updateSystemConfig = async (req, res) => {
                 timestamp: new Date()
             });
         }
+
+        // Unconditionally notify all clients that system configuration has been updated
+        io.emit('system-config-update');
 
         res.json({ success: true, message: "System configuration updated", config });
     } catch (error) {
@@ -3818,6 +3948,324 @@ export const revokeSubscription = async (req, res) => {
     }
 };
 
+// API to approve (Accept) a pending Obsidian subscription request
+export const approveObsidianPass = async (req, res) => {
+    try {
+        const { subscriptionId } = req.body;
+
+        const subscription = await subscriptionModel.findById(subscriptionId);
+        if (!subscription) {
+            return res.json({ success: false, message: "Subscription request not found" });
+        }
+
+        if (subscription.plan !== 'Obsidian' || subscription.status !== 'Pending') {
+            return res.json({ success: false, message: "Subscription is not a pending Obsidian request" });
+        }
+
+        const user = await userModel.findById(subscription.userId);
+        if (!user) {
+            return res.json({ success: false, message: "User not found" });
+        }
+
+        const now = new Date();
+
+        // Update user subscription state to Approved
+        // BUT do not overwrite any running active wellness subscriptions (Silver, Gold, Platinum)
+        const hasActiveWellness = user.subscription &&
+            ['Silver', 'Gold', 'Platinum'].includes(user.subscription.plan) &&
+            user.subscription.status === 'Active';
+
+        if (!hasActiveWellness) {
+            user.subscription = {
+                plan: 'Obsidian',
+                status: 'Approved',
+                expiryDate: subscription.expiryDate,
+                approvedAt: now
+            };
+            await user.save();
+        }
+
+        // Update subscription record to Approved
+        subscription.status = 'Approved';
+        subscription.approvedAt = now;
+        await subscription.save();
+
+        // Invalidate cache
+        try {
+            await deleteCache(`user_profile_${user._id}`);
+        } catch (cacheErr) {
+            console.warn('Cache invalidation failed after approve:', cacheErr.message);
+        }
+
+        // Emit config update socket event just to refresh state across clients
+        try {
+            const io = getIO();
+            io.emit('system-config-update');
+        } catch (ioErr) {
+            console.warn('Socket emit failed:', ioErr.message);
+        }
+
+        // Send Email to the user about acceptance
+        const mailOptions = {
+            from: process.env.SENDER_EMAIL,
+            to: user.email,
+            subject: '🎉 Obsidian Signature Pass Application Accepted!',
+            html: `
+                <div style="font-family: Arial, sans-serif; padding: 20px; border: 2px solid #D4AF37; border-radius: 8px;">
+                    <h2 style="color: #D4AF37; text-align: center;">💎 CONGRATULATIONS! YOUR APPLICATION IS ACCEPTED</h2>
+                    <p>Dear <strong>${user.name}</strong>,</p>
+                    <p>We are pleased to inform you that your request for the elite <strong>PawVaidya Obsidian Signature Pass</strong> has been reviewed and accepted by our system administrators.</p>
+                    <p><strong>⚠️ Final Action Required:</strong></p>
+                    <p>You have <strong>24 hours</strong> from the time of this email to complete your payment and activate your premium benefits. If the payment is not completed within 24 hours, the acceptance will automatically expire and you will need to apply again.</p>
+                    <p>To pay, please log in to PawVaidya, go to your <strong>Membership / Subscriptions</strong> page, and complete the transaction.</p>
+                    <p>Best regards,<br/>The PawVaidya Admin Team</p>
+                </div>
+            `
+        };
+        try {
+            await transporter.sendMail(mailOptions);
+        } catch (emailError) {
+            console.error("Failed to send acceptance email:", emailError.message);
+        }
+
+        res.json({ success: true, message: "Obsidian Signature Pass request accepted successfully. User has 24 hours to complete payment." });
+    } catch (error) {
+        console.error("Error approving Obsidian pass:", error.message);
+        res.status(500).json({ success: false, message: "Failed to approve subscription", error: error.message });
+    }
+};
+
+// API to reject a pending Obsidian subscription request
+export const rejectObsidianPass = async (req, res) => {
+    try {
+        const { subscriptionId, reason } = req.body;
+
+        const subscription = await subscriptionModel.findById(subscriptionId);
+        if (!subscription) {
+            return res.json({ success: false, message: "Subscription request not found" });
+        }
+
+        if (subscription.plan !== 'Obsidian' || !['Pending', 'Approved'].includes(subscription.status)) {
+            return res.json({ success: false, message: "Subscription is not a pending/approved Obsidian request" });
+        }
+
+        const user = await userModel.findById(subscription.userId);
+        if (user) {
+            // Revert user model subscription state if it is pending/approved
+            if (user.subscription && user.subscription.plan === 'Obsidian' && ['Pending Approval', 'Approved'].includes(user.subscription.status)) {
+                user.subscription = {
+                    plan: 'None',
+                    status: 'None',
+                    expiryDate: null,
+                    approvedAt: null
+                };
+                await user.save();
+            }
+        }
+
+        // Cancel subscription record
+        subscription.status = 'Cancelled';
+        subscription.cancellationReason = reason || 'Rejected by Admin';
+        await subscription.save();
+
+        // Invalidate cache
+        if (user) {
+            try {
+                await deleteCache(`user_profile_${user._id}`);
+            } catch (cacheErr) {
+                console.warn('Cache invalidation failed after reject:', cacheErr.message);
+            }
+        }
+
+        // Send Rejection/Cancellation Email
+        if (user) {
+            const mailOptions = {
+                from: process.env.SENDER_EMAIL,
+                to: user.email,
+                subject: 'Obsidian Signature Pass Request Update',
+                html: `
+                    <div style="font-family: Arial, sans-serif; padding: 20px; border: 2px solid #dc3545; border-radius: 8px;">
+                        <h2 style="color: #dc3545; text-align: center;">Obsidian Pass Request Rejected</h2>
+                        <p>Dear <strong>${user.name}</strong>,</p>
+                        <p>Thank you for your interest in the elite <strong>Obsidian Signature Pass</strong>.</p>
+                        <p>After a careful review of your account standing and platform behavior, our administrative team has decided to reject your request at this time.</p>
+                        <p><strong>Reason for decision:</strong> ${reason || 'Does not meet our premium behavior/activity guidelines.'}</p>
+                        <p>You may continue using your current subscription tier or contact support if you believe this is in error.</p>
+                        <p>Best regards,<br/>The PawVaidya Support Team</p>
+                    </div>
+                `
+            };
+            try {
+                await transporter.sendMail(mailOptions);
+            } catch (emailError) {
+                console.error("Failed to send rejection email:", emailError.message);
+            }
+        }
+
+        res.json({ success: true, message: "Obsidian Signature Pass request rejected successfully" });
+    } catch (error) {
+        console.error("Error rejecting Obsidian pass:", error.message);
+        res.status(500).json({ success: false, message: "Failed to reject subscription", error: error.message });
+    }
+};
+
+// API to analyze eligibility of user for Obsidian Pass using LLM
+export const analyzeObsidianUser = async (req, res) => {
+    try {
+        const { subscriptionId } = req.params;
+        const subscription = await subscriptionModel.findById(subscriptionId);
+        if (!subscription) {
+            return res.json({ success: false, message: "Subscription request not found" });
+        }
+
+        const user = await userModel.findById(subscription.userId);
+        if (!user) {
+            return res.json({ success: false, message: "User not found" });
+        }
+
+        // Gather statistics:
+        // 1. Pets count
+        const petCount = await petModel.countDocuments({ ownerId: user._id });
+        const pets = await petModel.find({ ownerId: user._id }).select('name type breed age');
+
+        // 2. Bookings count
+        const totalBookings = await appointmentModel.countDocuments({ userId: user._id });
+        const completedBookings = await appointmentModel.countDocuments({ userId: user._id, status: 'Completed' });
+        const cancelledBookings = await appointmentModel.countDocuments({ userId: user._id, status: 'Cancelled' });
+
+        // 3. CS Tickets behavior
+        const ComplaintTicketModule = await import('../models/complaintTicketModel.js');
+        const ComplaintTicket = ComplaintTicketModule.default;
+        const totalTickets = await ComplaintTicket.countDocuments({ userId: user._id });
+        const tickets = await ComplaintTicket.find({ userId: user._id }).select('title description status severity category agentRating feedback').limit(10);
+
+        // 4. Misbehavior reports
+        const UserMisbehaviorReportModule = await import('../models/userMisbehaviorReportModel.js');
+        const UserMisbehaviorReport = UserMisbehaviorReportModule.default;
+        const misbehaviorCount = await UserMisbehaviorReport.countDocuments({ userId: user._id });
+        const misbehaviorReports = await UserMisbehaviorReport.find({ userId: user._id }).select('reason evidence status').limit(5);
+
+        // Import LLM dynamically to avoid any top-level ES module import issues
+        const LLMModule = await import('../services/llm.js');
+        const LLM = LLMModule.default;
+
+        const prompt = `
+You are the PawVaidya AI Audit System. Analyze the eligibility of user ${user.name} for the elite "Obsidian Signature Pass" (the highest-tier membership priced up to ₹3,000,000).
+Here is the user profile and behavioral data:
+- Name: ${user.name}
+- Email: ${user.email}
+- Account Wallet Balance: ₹${user.pawWallet || 0}
+- Total Pets Owned: ${petCount} (${pets.map(p => `${p.name} (${p.type}, ${p.breed})`).join(', ') || 'No pets registered'})
+- Booking History: Total Bookings: ${totalBookings}, Completed: ${completedBookings}, Cancelled: ${cancelledBookings}
+- Customer Service (CS) Tickets Filed: Total Tickets: ${totalTickets}
+  Details of recent tickets: ${JSON.stringify(tickets)}
+- Misbehavior/Warning Reports Filed by CS Agents: Total Reports: ${misbehaviorCount}
+  Details of reports: ${JSON.stringify(misbehaviorReports)}
+
+Provide a structured assessment report. Format your output in Markdown with the following sections:
+1. **Summary & Overview**: A concise summary of the user's history and overall platform standing.
+2. **Behavioral Risk Assessment**: Evaluate behavior with CS agents, customer tickets, and warning/misbehavior reports. Give a risk rating (Low, Medium, High).
+3. **Engagement & Value Analysis**: Evaluate bookings, pet counts, and prospective tier fit.
+4. **AI Recommendation Score**: An eligibility score from 0 to 100, and a final recommendation: APPROVE (if safe, highly active, and premium fit) or REJECT (if high risk, warning history, or suspicious behavior). Keep it professional, objective, and detailed.
+`;
+
+        let aiAnalysis;
+        try {
+            const { default: OpenAI } = await import('openai');
+            const client = new OpenAI({
+                baseURL: "https://integrate.api.nvidia.com/v1",
+                apiKey: process.env.NVIDIA_NIM_API_KEY
+            });
+
+            const completion = await client.chat.completions.create({
+                model: "z-ai/glm-5.1",
+                messages: [{ role: "user", content: prompt }],
+                temperature: 1,
+                top_p: 1,
+                max_tokens: 16384,
+                stream: true
+            });
+
+            aiAnalysis = "";
+            for await (const chunk of completion) {
+                const content = chunk.choices[0]?.delta?.content;
+                if (content) {
+                    aiAnalysis += content;
+                }
+            }
+        } catch (llmError) {
+            console.warn("[Obsidian AI Audit] LLM analysis failed, falling back to rule-based analysis:", llmError.message);
+            
+            // Calculate a score based on rules
+            let score = 70; // Base score
+            let recommendations = [];
+            let risks = [];
+            
+            if (petCount >= 3) {
+                score += 10;
+                recommendations.push(`High pet owner engagement (owns ${petCount} pets).`);
+            } else if (petCount === 0) {
+                score -= 15;
+                risks.push("No pets registered on the platform.");
+            }
+            
+            if (completedBookings >= 5) {
+                score += 15;
+                recommendations.push(`Excellent booking frequency (${completedBookings} completed bookings).`);
+            } else if (totalBookings === 0) {
+                score -= 10;
+                risks.push("No booking history on the platform.");
+            }
+            
+            if (misbehaviorCount > 0) {
+                score -= 30;
+                risks.push(`Warning: ${misbehaviorCount} misbehavior reports filed by CS agents.`);
+            }
+            
+            if (totalTickets > 0) {
+                const hasHighSeverity = tickets.some(t => t.severity === 'High' || t.severity === 'Critical');
+                if (hasHighSeverity) {
+                    score -= 10;
+                    risks.push("Frequent high-severity complaints filed.");
+                }
+            }
+            
+            score = Math.max(0, Math.min(100, score));
+            const recommendationStatus = score >= 50 && misbehaviorCount === 0 ? "APPROVE" : "REJECT";
+            
+            aiAnalysis = `### PawVaidya AI Audit System (Rule-based Fallback Assessment)
+
+1. **Summary & Overview**
+The user **${user.name}** has submitted a request for the elite **Obsidian Signature Pass**.
+- **Wallet Balance**: ₹${user.pawWallet || 0}
+- **Pets registered**: ${petCount}
+- **Total bookings**: ${totalBookings} (Completed: ${completedBookings}, Cancelled: ${cancelledBookings})
+
+2. **Behavioral Risk Assessment**
+- **Risk Rating**: ${misbehaviorCount > 0 ? 'HIGH' : (totalTickets > 3 ? 'MEDIUM' : 'LOW')}
+- **CS Warning Reports**: ${misbehaviorCount}
+- **CS Tickets**: ${totalTickets}
+- **Risks Identified**:
+${risks.map(r => `  - ${r}`).join('\n') || '  - None identified. User is in good behavioral standing.'}
+
+3. **Engagement & Value Analysis**
+- **Engagement Fit**: ${completedBookings > 3 ? 'Excellent' : 'Moderate'}
+- **Loyalty Indicator**: User shows standard interaction patterns.
+- **Strengths**:
+${recommendations.map(rec => `  - ${rec}`).join('\n') || '  - Standard user profile.'}
+
+4. **AI Recommendation Score**
+- **Eligibility Score**: **${score}/100**
+- **Final Recommendation**: **${recommendationStatus}** (Due to rule-based fallback verification)`;
+        }
+
+        res.json({ success: true, analysis: aiAnalysis });
+    } catch (error) {
+        console.error("Error analyzing Obsidian user:", error.message);
+        res.status(500).json({ success: false, message: "AI Analysis failed", error: error.message });
+    }
+};
+
 // API to gift subscription (Individual or All Users)
 export const giftSubscription = async (req, res) => {
     try {
@@ -3848,8 +4296,8 @@ export const giftSubscription = async (req, res) => {
         }
 
         const SUBSCRIPTION_PLANS = {
-            Silver: 199,
-            Gold: 499,
+            Silver: 599,
+            Gold: 699,
             Platinum: 999
         };
 
@@ -4127,9 +4575,9 @@ export const syncLegacyFiles = async (req, res) => {
         let errors = 0;
 
         // 1. Chat Messages
-        const chatMsgs = await chatMessageModel.find({ 
+        const chatMsgs = await chatMessageModel.find({
             messageType: 'file',
-            fileUrl: { $regex: /^https?:\/\// } 
+            fileUrl: { $regex: /^https?:\/\// }
         });
         for (const msg of chatMsgs) {
             if (isNonImageFile(msg.fileUrl)) {
@@ -4338,4 +4786,108 @@ export const broadcastReuploadDocs = async (req, res) => {
         });
     }
 };
+
+// AI Churn Prediction controller using NVIDIA Nim Kimi K2.6
+export const predictChurn = async (req, res) => {
+    try {
+        // Fetch active subscriptions from DB directly to prevent PayloadTooLarge error
+        const activeSubscriptions = await subscriptionModel.find({ status: 'Active' })
+            .populate('userId', 'name email');
+
+        if (!activeSubscriptions || activeSubscriptions.length === 0) {
+            return res.json({ success: true, predictions: [] });
+        }
+
+        // Fetch appointments from DB directly
+        const appointments = await appointmentModel.find({});
+
+        // Format data to keep the payload clean and light
+        const formattedSubs = activeSubscriptions.map(sub => {
+            const userIdStr = sub.userId?._id ? sub.userId._id.toString() : (sub.userId ? sub.userId.toString() : '');
+            const userApps = appointments 
+                ? appointments.filter(app => {
+                    const appUserIdStr = app.userId ? app.userId.toString() : '';
+                    return appUserIdStr === userIdStr;
+                  })
+                : [];
+            
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            const recentBookings = userApps.filter(app => {
+                const appDate = new Date(app.date || app.createdAt);
+                return appDate >= thirtyDaysAgo;
+            }).length;
+
+            const expiryDate = new Date(sub.expiryDate);
+            const now = new Date();
+            const diffDays = Math.ceil((expiryDate - now) / (1000 * 60 * 60 * 24));
+
+            return {
+                id: sub._id,
+                name: sub.userId?.name || 'User',
+                email: sub.userId?.email || '',
+                plan: sub.plan,
+                amount: sub.amount,
+                isAutoRenew: sub.isAutoRenew,
+                diffDays: diffDays,
+                recentBookings: recentBookings
+            };
+        });
+
+        // Prompt for Kimi
+        const prompt = `You are a Retention & Churn AI model. Analyze the following subscriber data and return a JSON object with predictions.
+Return ONLY valid JSON. The output must be an object with a single key "predictions" which maps to an array. Each element in the array must correspond to one subscriber ID and contain:
+- "id": string (the subscriber ID)
+- "score": number (0 to 100, estimated churn risk score)
+- "level": string ("High", "Medium", or "Low")
+- "reasons": array of strings (explaining the risk factors like low booking rate, expiring soon, auto-renew disabled)
+- "customDiscountSubject": string (A highly personalized, engaging subject line for a loyalty discount outreach email, tailored to their plan and activity status. Use the recipient's name.)
+- "customDiscountMessage": string (A highly personalized, warm, and professional email body for a loyalty discount. Acknowledge their plan, their specific usage/booking status, and why they are receiving this offer. Remind them to use the coupon code HEALTHYPET15 for a 15% discount. Sign as 'The PawVaidya Care Team'.)
+- "customWellnessSubject": string (A highly personalized, caring subject line for a complimentary wellness checkup outreach email. Use the recipient's name.)
+- "customWellnessMessage": string (A highly personalized, caring email body inviting them to make the most of their membership. Tailor it to their plan and activity status. Remind them to book a free checkup using the coupon code FREEWELLNESS at checkout. Sign as 'The PawVaidya Veterinary Panel'.)
+
+Subscriber Data:
+${JSON.stringify(formattedSubs, null, 2)}
+
+Ensure the JSON is strictly parsable. Do not include markdown code block syntax (like \`\`\`json) or any conversational text around the JSON.`;
+
+        const invoke_url = "https://integrate.api.nvidia.com/v1/chat/completions";
+        const headers = {
+            "Authorization": `Bearer ${process.env.NVIDIA_NIM_API_KEY}`,
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+        };
+
+        const payload = {
+            "model": "moonshotai/kimi-k2.6",
+            "messages": [
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ],
+            "max_tokens": 16384,
+            "temperature": 1.00,
+            "top_p": 1.00,
+            "stream": false
+        };
+
+        const axios = (await import('axios')).default;
+        const response = await axios.post(invoke_url, payload, { headers });
+        let content = response.data.choices[0].message.content.trim();
+        
+        // Strip out any markdown wrapper if model returns it
+        if (content.startsWith("```")) {
+            content = content.replace(/^```json\s*/, "").replace(/```$/, "").trim();
+        }
+
+        const predictionData = JSON.parse(content);
+        res.json({ success: true, predictions: predictionData.predictions || [] });
+
+    } catch (error) {
+        console.error("AI Churn Prediction Error:", error);
+        res.status(500).json({ success: false, message: error.message || "Failed to fetch AI churn predictions" });
+    }
+};
+
 

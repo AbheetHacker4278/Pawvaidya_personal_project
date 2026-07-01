@@ -99,18 +99,55 @@ const ManageAdmins = () => {
         }
     };
 
-    // Available Permissions
+    // Available Permissions — grouped by sidebar section
     const AVAILABLE_PERMISSIONS = [
-        { id: 'all', label: 'All Permissions' },
-        { id: 'appointments', label: 'Manage Appointments' },
-        { id: 'add_doctor', label: 'Add Doctor' },
-        { id: 'doctors', label: 'Manage Doctors' },
-        { id: 'users', label: 'Manage Users' },
-        { id: 'messages', label: 'Messages' },
-        { id: 'reports', label: 'Reports' },
-        { id: 'unban', label: 'Unban Requests' },
-        { id: 'trash', label: 'Trash' },
-        { id: 'chat', label: 'Chat' }
+        // ── Master Toggle ───────────────────────────────────
+        { id: 'all',              label: 'All Permissions',      category: 'master',        desc: 'Full access to everything' },
+
+        // ── Insights ────────────────────────────────────────
+        { id: 'financials',       label: 'Financials',           category: 'Insights',      desc: 'Treasury & loss reports' },
+        { id: 'deployments',      label: 'Deployments Monitor',  category: 'Insights',      desc: 'Render Status tracker' },
+        { id: 'redis_monitor',    label: 'Redis Monitor',        category: 'Insights',      desc: 'Cache performance metrics' },
+
+        // ── Management ──────────────────────────────────────
+        { id: 'appointments',     label: 'Appointments',         category: 'Management',    desc: 'View & manage all bookings' },
+        { id: 'add_doctor',       label: 'Add Doctor',           category: 'Management',    desc: 'Onboard new vets' },
+        { id: 'doctors',          label: 'Doctor List & Rankings', category: 'Management', desc: 'Browse & rank doctors' },
+        { id: 'users',            label: 'Total Users',          category: 'Management',    desc: 'View user registry' },
+        { id: 'customer360',      label: 'Customer 360',         category: 'Management',    desc: '360° profile lookup' },
+        { id: 'payment_details',  label: 'Payment Details',      category: 'Management',    desc: 'Transaction history' },
+        { id: 'subscriptions',    label: 'All Subscriptions',    category: 'Management',    desc: 'Membership & retention' },
+        { id: 'emergency_panel',  label: 'Emergency Panel',      category: 'Management',    desc: 'Ecosystem analytics' },
+        { id: 'stray_campaigns',  label: 'Stray Campaigns',      category: 'Management',    desc: 'Monitor & support' },
+        { id: 'polls',            label: 'Polls',                category: 'Management',    desc: 'Manage riddles & polls' },
+        { id: 'beta_access',      label: 'Beta Access Manager',  category: 'Management',    desc: 'Early Tester program' },
+        { id: 'media_registry',   label: 'Media Registry',       category: 'Management',    desc: 'Cloud assets manager' },
+        { id: 'blacklist',        label: 'Blacklist Manager',    category: 'Management',    desc: 'Email blacklist' },
+        { id: 'coupons',          label: 'Coupons Manager',      category: 'Management',    desc: 'Admin discount subsidy' },
+        { id: 'security_monitor', label: 'Security Monitor',     category: 'Management',    desc: 'System threat alerts' },
+        { id: 'manage_admins',    label: 'Manage Admins (Super)', category: 'Management',    desc: 'Create/Edit admins & roles' },
+
+        // ── Communication ────────────────────────────────────
+        { id: 'live_streams',     label: 'Live Streams',         category: 'Communication', desc: 'Active broadcasters' },
+        { id: 'messages',         label: 'Messages',             category: 'Communication', desc: 'Support inbox' },
+        { id: 'broadcast_email',  label: 'Broadcast Email',      category: 'Communication', desc: 'Mass campaigns' },
+        { id: 'reports',          label: 'All Reports',          category: 'Communication', desc: 'System flags & reports' },
+        { id: 'app_issues',       label: 'App Issue Reports',    category: 'Communication', desc: 'Bugs & UI feedback' },
+        { id: 'unban',            label: 'Unban Requests',       category: 'Communication', desc: 'Appeals portal' },
+        { id: 'deletion_requests', label: 'Deletion Requests',   category: 'Communication', desc: 'User account removal' },
+
+        // ── Support Service ───────────────────────────────────
+        { id: 'cs_employees',     label: 'CS Agents',            category: 'Support',       desc: 'Manage CS staff' },
+        { id: 'cs_complaints',    label: 'CS Complaints',        category: 'Support',       desc: 'Agent grievance tickets' },
+        { id: 'cs_chat',          label: 'CS Agent Chat',        category: 'Support',       desc: 'Support agent chat room' },
+        { id: 'cs_tickets',       label: 'CS Tickets',           category: 'Support',       desc: 'Global ticket view' },
+        { id: 'cruelty_reports',  label: 'Cruelty Reports',      category: 'Support',       desc: 'Animal abuse logs' },
+        { id: 'misbehavior_reports', label: 'Misbehavior Reports', category: 'Support',       desc: 'User misbehavior reports' },
+        { id: 'cs_reports',       label: 'CS Reports',           category: 'Support',       desc: 'Agent performance metrics' },
+
+        // ── Settings ─────────────────────────────────────────
+        { id: 'trash',            label: 'Trash',                category: 'Settings',      desc: 'Archived/deleted data' },
+        { id: 'chat',             label: 'Doctor Chat',          category: 'Settings',      desc: 'Internal comms' },
     ];
 
     // Fetch Admins
@@ -304,90 +341,150 @@ const ManageAdmins = () => {
             {/* Modal */}
             {showModal && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden animate-fadeIn">
-                        <div className="p-6 border-b flex justify-between items-center bg-gray-50">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col animate-fadeIn">
+                        <div className="p-6 border-b flex justify-between items-center bg-gray-50/50 shrink-0">
                             <h2 className="text-xl font-bold text-gray-800">
                                 {isEdit ? 'Edit Admin' : 'Add New Admin'}
                             </h2>
-                            <button onClick={() => setShowModal(false)} className="text-gray-500 hover:text-gray-700">
+                            <button onClick={() => setShowModal(false)} className="text-gray-500 hover:text-gray-700 transition-colors">
                                 <X size={24} />
                             </button>
                         </div>
 
-                        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                                <input
-                                    type="text"
-                                    name="name"
-                                    value={formData.name}
-                                    onChange={handleInputChange}
-                                    required
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
-                                    placeholder="Admin Name"
-                                />
-                            </div>
+                        <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden">
+                            <div className="flex-1 overflow-y-auto p-6 space-y-5">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-1">Name</label>
+                                        <input
+                                            type="text"
+                                            name="name"
+                                            value={formData.name}
+                                            onChange={handleInputChange}
+                                            required
+                                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-sm"
+                                            placeholder="Admin Name"
+                                        />
+                                    </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                                <input
-                                    type="email"
-                                    name="email"
-                                    value={formData.email}
-                                    onChange={handleInputChange}
-                                    required
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
-                                    placeholder="admin@example.com"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number (SMS Alerting)</label>
-                                <input
-                                    type="text"
-                                    name="phone"
-                                    value={formData.phone}
-                                    onChange={handleInputChange}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:primary focus:border-transparent outline-none transition-all font-mono"
-                                    placeholder="+1234567890"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    {isEdit ? 'Password (leave blank to keep current)' : 'Password'}
-                                </label>
-                                <input
-                                    type="password"
-                                    name="password"
-                                    value={formData.password}
-                                    onChange={handleInputChange}
-                                    required={!isEdit}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
-                                    placeholder="••••••••"
-                                    minLength={8}
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Permissions</label>
-                                <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto p-2 border rounded-lg mb-4">
-                                    {AVAILABLE_PERMISSIONS.map((perm) => (
-                                        <div key={perm.id} className="flex items-center">
-                                            <input
-                                                type="checkbox"
-                                                id={`perm-${perm.id}`}
-                                                checked={formData.permissions.includes(perm.id)}
-                                                onChange={() => handlePermissionChange(perm.id)}
-                                                className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-600"
-                                            />
-                                            <label htmlFor={`perm-${perm.id}`} className="ml-2 text-sm text-gray-700 cursor-pointer">
-                                                {perm.label}
-                                            </label>
-                                        </div>
-                                    ))}
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-1">Email</label>
+                                        <input
+                                            type="email"
+                                            name="email"
+                                            value={formData.email}
+                                            onChange={handleInputChange}
+                                            required
+                                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-sm"
+                                            placeholder="admin@example.com"
+                                        />
+                                    </div>
                                 </div>
-                                <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-1">Phone Number (SMS Alerting)</label>
+                                        <input
+                                            type="text"
+                                            name="phone"
+                                            value={formData.phone}
+                                            onChange={handleInputChange}
+                                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all font-mono text-sm"
+                                            placeholder="+1234567890"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-1">
+                                            {isEdit ? 'Password (leave blank to keep)' : 'Password'}
+                                        </label>
+                                        <input
+                                            type="password"
+                                            name="password"
+                                            value={formData.password}
+                                            onChange={handleInputChange}
+                                            required={!isEdit}
+                                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-sm"
+                                            placeholder="••••••••"
+                                            minLength={8}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="border-t border-gray-100 pt-4">
+                                    <label className="block text-sm font-black text-gray-800 mb-3 uppercase tracking-wider text-[11px]">Permissions Matrix</label>
+
+                                    {/* Master toggle */}
+                                    <div className="mb-4 p-3.5 bg-gradient-to-r from-emerald-50 to-green-50/30 border border-emerald-100 rounded-xl flex items-center gap-3">
+                                        <input
+                                            type="checkbox"
+                                            id="perm-all"
+                                            checked={formData.permissions.includes('all')}
+                                            onChange={() => handlePermissionChange('all')}
+                                            className="w-5 h-5 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500"
+                                        />
+                                        <div>
+                                            <label htmlFor="perm-all" className="text-sm font-black text-emerald-800 cursor-pointer">⚡ All Permissions</label>
+                                            <p className="text-xs text-emerald-600 font-medium">Grant full access to all sections and operations</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Grouped permissions */}
+                                    <div className="space-y-4">
+                                        {['Insights', 'Management', 'Communication', 'Finance', 'Support', 'Settings'].map(category => {
+                                            const perms = AVAILABLE_PERMISSIONS.filter(p => p.category === category);
+                                            if (!perms.length) return null;
+                                            const categoryColors = {
+                                                Insights: 'bg-teal-50 border-teal-100 text-teal-700',
+                                                Management: 'bg-blue-50 border-blue-100 text-blue-700',
+                                                Communication: 'bg-purple-50 border-purple-100 text-purple-700',
+                                                Finance: 'bg-amber-50 border-amber-100 text-amber-700',
+                                                Support: 'bg-rose-50 border-rose-100 text-rose-700',
+                                                Settings: 'bg-slate-50 border-slate-100 text-slate-700',
+                                            };
+                                            return (
+                                                <div key={category} className="p-3 bg-gray-50/50 rounded-xl border border-gray-100">
+                                                    <p className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md inline-block mb-3 border ${categoryColors[category]}`}>{category}</p>
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        {perms.map((perm) => (
+                                                            <div key={perm.id} className={`flex items-start gap-2.5 p-2.5 rounded-lg border transition-all cursor-pointer ${
+                                                                formData.permissions.includes(perm.id) || formData.permissions.includes('all')
+                                                                    ? 'bg-emerald-50/40 border-emerald-200/80 shadow-sm shadow-emerald-50'
+                                                                    : 'bg-white border-gray-200/60 hover:border-gray-300'
+                                                            }`}
+                                                            onClick={() => handlePermissionChange(perm.id)}
+                                                            >
+                                                                <input
+                                                                    type="checkbox"
+                                                                    id={`perm-${perm.id}`}
+                                                                    checked={formData.permissions.includes(perm.id) || formData.permissions.includes('all')}
+                                                                    onChange={() => handlePermissionChange(perm.id)}
+                                                                    disabled={formData.permissions.includes('all') && perm.id !== 'all'}
+                                                                    className="w-4 h-4 mt-0.5 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500 shrink-0"
+                                                                    onClick={e => e.stopPropagation()}
+                                                                />
+                                                                <div>
+                                                                    <label htmlFor={`perm-${perm.id}`} className="text-xs font-black text-gray-800 cursor-pointer leading-tight block">{perm.label}</label>
+                                                                    <p className="text-[10px] text-gray-400 font-medium leading-tight mt-0.5">{perm.desc}</p>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+
+                                    {/* Selected count */}
+                                    <p className="text-xs text-slate-400 mt-3 font-semibold text-right">
+                                        {formData.permissions.includes('all')
+                                            ? '✅ All permissions selected'
+                                            : `${formData.permissions.length} permission${formData.permissions.length !== 1 ? 's' : ''} selected`
+                                        }
+                                    </p>
+                                </div>
+
+                                <div className="p-4 bg-amber-50/50 border border-amber-200/60 rounded-xl">
                                     <div className="flex items-center">
                                         <input
                                             type="checkbox"
@@ -401,29 +498,29 @@ const ManageAdmins = () => {
                                                     permissions: isMaster ? ['all'] : []
                                                 }));
                                             }}
-                                            className="w-5 h-5 text-yellow-600 border-gray-300 rounded focus:ring-yellow-500"
+                                            className="w-5 h-5 text-amber-600 border-gray-300 rounded focus:ring-amber-500"
                                         />
-                                        <label htmlFor="make-master" className="ml-2 font-medium text-gray-900 cursor-pointer">
+                                        <label htmlFor="make-master" className="ml-2 font-bold text-sm text-gray-900 cursor-pointer">
                                             Promote to Master Admin
                                         </label>
                                     </div>
-                                    <p className="mt-1 text-xs text-yellow-700 ml-7">
+                                    <p className="mt-1 text-xs text-amber-700/80 ml-7 font-medium leading-normal">
                                         Warning: This will transfer Master privileges to this user. You may lose your Master status if you are not the system administrator.
                                     </p>
                                 </div>
                             </div>
 
-                            <div className="pt-4 flex justify-end gap-3">
+                            <div className="p-6 border-t bg-gray-50/50 shrink-0 flex justify-end gap-3">
                                 <button
                                     type="button"
                                     onClick={() => setShowModal(false)}
-                                    className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                                    className="px-4 py-2 text-sm font-semibold text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
-                                    className="px-4 py-2 text-white bg-green-600 rounded-lg hover:bg-green-700 flex items-center gap-2"
+                                    className="px-5 py-2 text-sm font-bold text-white bg-green-600 rounded-lg hover:bg-green-700 transition-all shadow-sm"
                                 >
                                     {isEdit ? 'Update Admin' : 'Create Admin'}
                                 </button>

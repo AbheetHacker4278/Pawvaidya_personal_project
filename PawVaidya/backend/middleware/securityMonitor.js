@@ -81,27 +81,35 @@ const patterns = {
     XSS: [
         /<script\b[^>]*>([\s\S]*?)<\/script>/im,
         /<script\b[^>]*>/im,
-        /on\w+\s*=\s*['"].*?['"]/im,
-        /javascript:\s*/im,
+        // Match inline handlers inside HTML tags only to avoid matching common words/sentences
+        /<[^>]*\bon[a-zA-Z]+\s*=\s*['"].*?['"]/im,
+        /href\s*=\s*['"]\s*javascript:/im,
         /<iframe\b[^>]*>([\s\S]*?)<\/iframe>/im,
         /<object\b[^>]*>([\s\S]*?)<\/object>/im,
         /<embed\b[^>]*>([\s\S]*?)<\/embed>/im,
         /<svg\b[^>]*on[a-z]+\s*=/im,
         /<img\b[^>]*onerror\s*=/im,
         /style\s*=\s*(['"])[^'"]*expression\s*\(/im,
-        /<link\b[^>]*rel\s*=\s*(['"])stylesheet\1[^>]*href\s*=\s*(['"])javascript:/im,
     ],
     SQLi: [
-        /(\%27)|(\')|(\-\-)|(\%23)|(#)/im,
-        /((\%3D)|(=))[^\n]*((\%27)|(\')|(\-\-)|(\%3B)|(;))/im,
-        /\w*((\%27)|(\'))((\%6F)|o|(\%4F))((\%72)|r|(\%52))/im,
-        /exec(\s|\+)+(s|x)p\w+/im,
-        /union(\s|\+)+select/im,
-        /drop(\s|\+)+table/im,
-        /SELECT\s+.*\s+FROM/im,
-        /INSERT\s+INTO\s+.*\s+VALUES/im,
-        /UPDATE\s+.*\s+SET/im,
-        /DELETE\s+FROM/im,
+        // Classic boolean bypass queries (e.g. "OR 1=1" or "AND 'a'='a'")
+        /\b(OR|AND)\b\s+['"]?[\w\d]+['"]?\s*=\s*['"]?[\w\d]+['"]?/i,
+        // Union SQL Injection: "UNION SELECT ..."
+        /\bUNION\b\s+(?:ALL\s+)?\bSELECT\b/i,
+        // Common DB administrative and command executions
+        /\b(EXEC|EXECUTE)\b\s+(?:xp_cmdshell|sp_executesql|sp_prepexec)/i,
+        // Semicolon query stacking with destructive SQL statements
+        /;\s*(DROP|DELETE|UPDATE|INSERT|TRUNCATE|ALTER)\b/i,
+        // Distinct destructive table operations
+        /\b(DROP|TRUNCATE)\b\s+\bTABLE\b/i,
+        // Distinct SQL INSERT queries
+        /\bINSERT\b\s+\bINTO\b\s+[\s\S]*?\s+\bVALUES\b/i,
+        // Distinct SQL DELETE queries
+        /\bDELETE\b\s+\bFROM\b\s+\w+/i,
+        // SQL comments coupled with query boundaries
+        /['"`;]\s*--/i,
+        // MySQL comment hash coupled with query boundaries
+        /['"`;]\s*#/i
     ]
 };
 

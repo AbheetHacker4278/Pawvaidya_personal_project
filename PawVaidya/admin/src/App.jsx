@@ -63,12 +63,26 @@ import CSTicketsOverview from './pages/CS/CSTicketsOverview';
 import CSReports from './pages/CS/CSReports';
 import CSAgentChat from './pages/CS/CSAgentChat';
 import FinancialCalculations from './pages/CS/FinancialCalculations';
+import CSComplaints from './pages/CS/CSComplaints';
 import DoctorEmergencies from './pages/Doctor/DoctorEmergencies';
 import DoctorScanner from './pages/Doctor/DoctorScanner';
+import DoctorVcoAssignment from './pages/Doctor/DoctorVcoAssignment';
 import MisbehaviorReports from './pages/MisbehaviorReports';
 import CrueltyReports from './pages/Admin/CrueltyReports';
 import StrayCampaigns from './pages/Admin/StrayCampaigns';
 import DoctorCrowdfunding from './pages/Doctor/DoctorCrowdfunding';
+import BetaAccessManager from './pages/Admin/BetaAccessManager';
+import Customer360 from './pages/Admin/Customer360';
+import UserTrustSuite from './pages/Admin/UserTrustSuite';
+import RevenueBusinessSuite from './pages/Admin/RevenueBusinessSuite';
+import SecurityComplianceSuite from './pages/Admin/SecurityComplianceSuite';
+import CSGamificationArena from './pages/CS/CSGamificationArena';
+import CSAdvancedGamification from './pages/CS/CSAdvancedGamification';
+import MobileIcuDashboard from './pages/Admin/MobileIcuDashboard';
+
+
+
+
 
 const App = () => {
   const { atoken, adminProfile } = useContext(AdminContext)
@@ -108,12 +122,35 @@ const App = () => {
     }
   }, [backendurl])
 
+  useEffect(() => {
+    const interceptor = axios.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        if (error.response && error.response.status === 503) {
+          const data = error.response.data;
+          if (data && (data.maintenance || data.killSwitch)) {
+            setSystemConfig({
+              maintenanceMode: !!data.maintenance,
+              killSwitch: !!data.killSwitch,
+              maintenanceMessage: data.message || ""
+            });
+            toast.dismiss();
+          }
+        }
+        return Promise.reject(error);
+      }
+    );
+    return () => {
+      axios.interceptors.response.eject(interceptor);
+    };
+  }, []);
+
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen)
   }
 
   return atoken || dtoken ? (
-    <div className='min-h-screen bg-gradient-to-br from-gray-50 via-green-50/20 to-emerald-50/30'>
+    <div className='min-h-screen bg-gradient-to-br from-gray-50 via-green-50/20 to-emerald-50/30 dark:from-[#050811] dark:via-[#091020] dark:to-[#050811] dark:text-slate-100 transition-colors duration-500'>
       {(systemConfig.maintenanceMode || systemConfig.killSwitch) && (
         <MaintenanceMode
           isKillSwitch={systemConfig.killSwitch}
@@ -175,14 +212,26 @@ const App = () => {
               <Route path='/financial-calculations' element={<FinancialCalculations />} />
 
               <Route path='/cs-employees' element={<CSEmployees />} />
+              <Route path='/cs-gamification-arena' element={<CSGamificationArena />} />
               <Route path='/cs-employee/:id' element={<CSEmployeeDetail />} />
               <Route path='/cs-chat' element={<CSAgentChat />} />
               <Route path='/cs-chat/:id' element={<CSAgentChat />} />
               <Route path='/cs-tickets' element={<CSTicketsOverview />} />
               <Route path='/cs-reports' element={<CSReports />} />
+              <Route path='/cs-complaints' element={<CSComplaints />} />
+              <Route path='/cs-advanced-gamification' element={<CSAdvancedGamification />} />
               <Route path='/misbehavior-reports' element={<MisbehaviorReports />} />
               <Route path='/cruelty-reports' element={<CrueltyReports />} />
               <Route path='/stray-campaigns' element={<StrayCampaigns />} />
+              <Route path='/beta-access-manager' element={<BetaAccessManager />} />
+              <Route path='/customer-360' element={<Customer360 />} />
+              <Route path='/user-trust-suite' element={<UserTrustSuite />} />
+              <Route path='/revenue-business-suite' element={<RevenueBusinessSuite />} />
+              <Route path='/security-compliance-suite' element={<SecurityComplianceSuite />} />
+              <Route path='/mobile-icu-dashboard' element={<MobileIcuDashboard />} />
+
+
+
               <Route path='/doctor-dashboard' element={<DoctorDashboard />} />
               <Route path='/doctor-appointments' element={<DoctorAppointments />} />
               <Route path='/doctor-profile' element={<DoctorProfile />} />
@@ -197,6 +246,7 @@ const App = () => {
               <Route path='/patient-records' element={<PatientRecords />} />
               <Route path='/doctor-video-call/:appointmentId' element={<DoctorVideoCall />} />
               <Route path='/doctor-emergencies' element={<DoctorEmergencies />} />
+              <Route path='/doctor-vco-assignment' element={<DoctorVcoAssignment />} />
               <Route path='/doctor-crowdfunding' element={<DoctorCrowdfunding />} />
             </Routes>
           </div>

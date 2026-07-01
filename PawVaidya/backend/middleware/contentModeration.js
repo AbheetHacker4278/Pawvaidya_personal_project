@@ -12,27 +12,25 @@ try {
 
 // ── Custom bad-words list (primary detection layer — always works) ─────────────
 const CUSTOM_BAD_WORDS = [
-    // English profanity
+    // English severe profanity & obscenity
     'fuck', 'fucking', 'fucked', 'fucker', 'fucks', 'shit', 'shitting', 'shitty',
-    'ass', 'asshole', 'ass hole', 'a s s', 'asses', 'bastard', 'bitch', 'bitches', 'bitching',
+    'asshole', 'ass hole', 'bastard', 'bitch', 'bitches', 'bitching',
     'cunt', 'cunts', 'dick', 'dicks', 'dickhead', 'cock', 'cocks', 'cocksucker',
-    'pussy', 'pussies', 'whore', 'whores', 'slut', 'sluts', 'nigger', 'nigga',
-    'faggot', 'fag', 'retard', 'retarded', 'motherfucker', 'motherfucking', 'mother fucker',
-    'damn', 'damned', 'hell', 'piss', 'pissed', 'prick', 'wanker', 'wank',
-    'bollocks', 'bugger', 'crap', 'twat', 'arsehole', 'arse',
+    'pussy', 'pussies', 'whore', 'whores', 'slut', 'sluts', 
+    'motherfucker', 'motherfucking', 'mother fucker',
+    'prick', 'wanker', 'twat', 'arsehole',
     // Common evasions/variations
-    'f*ck', 'f**k', 'sh*t', 'b*tch', 'a**', 'a**hole', 'c**t', 'd*ck',
-    // Hindi/Hinglish abuses
-    'madarchod', 'behenchod', 'bhenchod', 'mc', 'bc', 'bhosdike', 'bhosdika',
-    'chutiya', 'chutiye', 'teri maa', 'sala', 'saala', 'haramzada', 'harami',
+    'f*ck', 'f**k', 'sh*t', 'b*tch', 'a**hole', 'c**t', 'd*ck',
+    // Hindi/Hinglish severe abuses
+    'madarchod', 'behenchod', 'bhenchod', 'bhosdike', 'bhosdika',
+    'chutiya', 'chutiye', 'haramzada', 'harami',
     'gandu', 'gaand', 'randi', 'madar chod', 'behen chod', 'bakchod',
-    'maderchod', 'kutte', 'kuttiya', 'lavde', 'lund', 'lauda',
-    // Racial / hate slurs
+    'maderchod', 'kuttiya', 'lavde', 'lund', 'lauda',
+    // Racial / hate slurs & slurs against disabled people
+    'nigger', 'nigga', 'faggot', 'fag', 'retard', 'retarded',
     'spic', 'kike', 'chink', 'wetback', 'cracker', 'gook', 'coon', 'jigaboo',
-    // Threats
-    'i will kill', 'ill kill', 'kill yourself', 'go die', 'i hate you',
-    // Generic abuses
-    'idiot', 'stupid', 'moron', 'loser', 'jerk', 'creep', 'pervert', 'pedophile',
+    // Severe threats of violence
+    'i will kill', 'ill kill', 'kill yourself', 'go die', 'pedophile'
 ];
 
 /**

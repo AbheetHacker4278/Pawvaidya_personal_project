@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import doctorModel from "../models/doctorModel.js"
 import userModel from '../models/userModel.js';
 import systemConfigModel from '../models/systemConfigModel.js';
+import transactionModel from '../models/transactionModel.js';
 import { transporter } from '../config/nodemailer.js';
 import argon2 from 'argon2'
 import jwt from 'jsonwebtoken'
@@ -467,6 +468,11 @@ export const appointmentComplete = async (req, res) => {
 
         // Update appointment status
         await appointmentModel.findByIdAndUpdate(appointmentId, { isCompleted: true });
+
+        if (appointmentData.isVcoBooking && appointmentData.preemptedAppointments?.length > 0) {
+            const { reschedulePreemptedAppointments } = await import("./obsidianController.js");
+            await reschedulePreemptedAppointments(appointmentData.preemptedAppointments, docId);
+        }
 
         // Auto-delete chat files from Cloudinary
         autoDeleteFilesOnCompletion(appointmentId).catch(err => {
@@ -1715,8 +1721,14 @@ export const processQrWalletPayment = async (req, res) => {
         const doctor = await doctorModel.findById(docId).select('name');
         const walletBalance = owner.pawWallet || 0;
 
+        const isObsidian = owner.subscription?.plan === 'Obsidian' && owner.subscription?.status === 'Active';
+        const creditLimit = isObsidian ? (owner.creditLine?.limit || 50000) : 0;
+        const creditSpent = isObsidian ? (owner.creditLine?.spent || 0) : 0;
+        const availableCredit = creditLimit - creditSpent;
+        const creditStatus = owner.creditLine?.status || 'None';
+
         // Check if wallet has sufficient balance
-        if (walletBalance < amountToPay) {
+        if (walletBalance < amountToPay && (!isObsidian || creditStatus !== 'Active' || (walletBalance + availableCredit) < amountToPay)) {
             // DECLINED — Insufficient funds
             // Send declined email
             try {
@@ -1745,15 +1757,50 @@ export const processQrWalletPayment = async (req, res) => {
             });
         }
 
-        // SUCCESS — Deduct from wallet
+        // Calculate credit details if overdraft is used
+        let creditUsed = 0;
+        if (walletBalance < amountToPay && isObsidian) {
+            creditUsed = amountToPay - walletBalance;
+
+            // Verify global credit pool
+            let config = await systemConfigModel.findOne();
+            if (!config) config = new systemConfigModel();
+            if (!config.creditLinePool) {
+                config.creditLinePool = { limit: 100000000, spent: 0, balance: 100000000 };
+            }
+            if (config.creditLinePool.balance < creditUsed) {
+                return res.json({ success: false, message: "Global Credit Line pool has insufficient funds." });
+            }
+
+            // Deduct from global pool
+            config.creditLinePool.spent += creditUsed;
+            config.creditLinePool.balance -= creditUsed;
+            await config.save();
+
+            // Update user credit line
+            if (!owner.creditLine || owner.creditLine.status === 'None') {
+                owner.creditLine = { limit: 50000, spent: 0, lastUsed: null, repaymentDeadline: null, status: 'Active' };
+            }
+            if (owner.creditLine.spent === 0) {
+                owner.creditLine.repaymentDeadline = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+            }
+            owner.creditLine.spent += creditUsed;
+            owner.creditLine.lastUsed = new Date();
+            await owner.save();
+        }
+
+        // SUCCESS — Deduct from wallet (can go negative if credit line is used)
         const newBalance = walletBalance - amountToPay;
-        await userModel.findByIdAndUpdate(owner._id, { pawWallet: newBalance });
+        await userModel.findByIdAndUpdate(owner._id, { 
+            pawWallet: newBalance,
+            creditLine: owner.creditLine
+        });
         await deleteCache(`user_profile_${owner._id}`);
 
         // Update appointment as paid via wallet and mark completed
         await appointmentModel.findByIdAndUpdate(appointmentId, {
             payment: true,
-            paymentMethod: 'Wallet',
+            paymentMethod: creditUsed > 0 ? 'Credit Line' : 'Wallet',
             walletDeduction: (appointment.walletDeduction || 0) + amountToPay,
             isCompleted: true
         });
@@ -1765,6 +1812,22 @@ export const processQrWalletPayment = async (req, res) => {
             });
         } catch (error) {
             console.error('Failed to trigger file cleanup:', error);
+        }
+
+        // Log transaction
+        try {
+            const transaction = new transactionModel({
+                userId: owner._id,
+                type: 'Debit',
+                amount: amountToPay,
+                description: `QR scan payment for appointment with Dr. ${doctor?.name || 'N/A'} (Credit Line utilized: ₹${creditUsed})`,
+                paymentMethod: creditUsed > 0 ? 'Credit Line' : 'Wallet',
+                isOverdraftUsed: creditUsed > 0,
+                overdraftAmount: creditUsed
+            });
+            await transaction.save();
+        } catch (txnErr) {
+            console.error("Failed to log scan payment transaction:", txnErr.message);
         }
 
         // Send success email
@@ -1791,7 +1854,9 @@ export const processQrWalletPayment = async (req, res) => {
 
         res.json({
             success: true,
-            message: `Payment of ₹${amountToPay} successfully deducted from wallet. Remaining balance: ₹${newBalance}`,
+            message: creditUsed > 0 
+                ? `Payment of ₹${amountToPay} completed. Interest-Free Credit Line used: ₹${creditUsed}. Remaining wallet balance: ₹${newBalance}`
+                : `Payment of ₹${amountToPay} successfully deducted from wallet. Remaining balance: ₹${newBalance}`,
             amountDeducted: amountToPay,
             remainingBalance: newBalance
         });
@@ -1951,6 +2016,42 @@ export const toggleVideoSlotStatus = async (req, res) => {
             res.json({ success: false, message: 'Slot not found or unauthorized.' });
         }
     } catch (error) {
+        res.json({ success: false, message: error.message });
+    }
+};
+
+export const getVcoClients = async (req, res) => {
+    try {
+        const docId = req.body.docId || req.docId;
+        if (!docId) {
+            return res.json({ success: false, message: "Doctor ID is missing or unauthorized." });
+        }
+
+        // Find all users assigned to this VCO
+        const users = await userModel.find({ vcoId: docId }).select('name email phone address image subscription createdAt pawWallet pawpoints creditLine emergencyPaymentStatus');
+        
+        const clientsWithPets = [];
+        for (const user of users) {
+            const pets = await petModel.find({ ownerId: user._id }).select('name petType breed age gender image qrToken');
+            
+            // Fetch appointments for this user with this doctor
+            const appointments = await appointmentModel.find({ userId: user._id, docId: docId })
+                .select('slotDate slotTime amount status isVcoBooking vcoVisitType payment paymentId preemptedAppointments createdAt')
+                .sort({ createdAt: -1 });
+
+            clientsWithPets.push({
+                ...user.toObject(),
+                pets,
+                appointments
+            });
+        }
+
+        res.json({
+            success: true,
+            clients: clientsWithPets
+        });
+    } catch (error) {
+        console.error("Error in getVcoClients:", error);
         res.json({ success: false, message: error.message });
     }
 };

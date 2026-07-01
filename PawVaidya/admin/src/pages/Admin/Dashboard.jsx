@@ -82,35 +82,35 @@ const StatCard = ({ title, value, icon, colorClass, delay = 0 }) => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay }}
-      className="bg-white/80 backdrop-blur-xl p-6 rounded-[2.2rem] border border-white/50 shadow-2xl shadow-slate-200/40 relative overflow-hidden group hover:-translate-y-1 transition-all duration-300"
+      className="bg-white/80 dark:bg-[#0c1325]/80 backdrop-blur-xl p-6 rounded-[2.2rem] border border-white/50 dark:border-white/10 shadow-2xl shadow-slate-200/40 dark:shadow-none relative overflow-hidden group hover:-translate-y-1 transition-all duration-300"
     >
       <div className={`w-14 h-14 rounded-2xl ${colorClass} flex items-center justify-center mb-6 relative z-10 group-hover:rotate-6 transition-transform shadow-lg shadow-inner`}>
         <span className="text-2xl">{icon}</span>
       </div>
       <div className="relative z-10">
-        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">{title}</p>
-        <h3 className="text-3xl font-black text-slate-900 tracking-tighter tabular-nums">{count.toLocaleString()}</h3>
+        <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-1">{title}</p>
+        <h3 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter tabular-nums">{count.toLocaleString()}</h3>
         <div className="mt-4 flex items-center gap-2">
-          <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-[10px] font-black text-emerald-600 uppercase">Live</span>
-          <span className="text-[10px] font-black text-slate-300 uppercase tracking-tighter">Real-time sync</span>
+          <span className="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/50 text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase">Live</span>
+          <span className="text-[10px] font-black text-slate-300 dark:text-slate-500 uppercase tracking-tighter">Real-time sync</span>
         </div>
       </div>
-      <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-slate-50 rounded-full opacity-50 group-hover:scale-150 transition-transform duration-700" />
+      <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-slate-50 dark:bg-slate-900/40 rounded-full opacity-50 group-hover:scale-150 transition-transform duration-700 pointer-events-none" />
     </motion.div>
   )
 }
 
 // ─── Section card ─────────────────────────────────────────────────────────────
 const SectionCard = ({ title, subtitle, icon, children, className = '' }) => (
-  <div className={`bg-white/80 backdrop-blur-md rounded-[2.5rem] border border-white/50 shadow-xl shadow-slate-200/30 overflow-hidden group hover:shadow-2xl transition-all duration-500 ${className}`}>
-    <div className="flex items-center justify-between px-8 py-6 border-b border-slate-50">
+  <div className={`bg-white/80 dark:bg-[#0c1325]/80 backdrop-blur-md rounded-[2.5rem] border border-white/50 dark:border-white/10 shadow-xl shadow-slate-200/30 dark:shadow-none overflow-hidden group hover:shadow-2xl transition-all duration-500 ${className}`}>
+    <div className="flex items-center justify-between px-8 py-6 border-b border-slate-50 dark:border-white/5">
       <div className="flex items-center gap-4">
-        <div className="p-3 bg-slate-50 rounded-2xl text-slate-400 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300">
+        <div className="p-3 bg-slate-50 dark:bg-slate-900 rounded-2xl text-slate-400 dark:text-slate-500 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300">
           {icon}
         </div>
         <div>
-          <h3 className="font-black text-slate-900 text-[11px] uppercase tracking-widest">{title}</h3>
-          {subtitle && <p className="text-slate-400 text-[10px] font-bold mt-0.5">{subtitle}</p>}
+          <h3 className="font-black text-slate-900 dark:text-white text-[11px] uppercase tracking-widest">{title}</h3>
+          {subtitle && <p className="text-slate-400 dark:text-slate-500 text-[10px] font-bold mt-0.5">{subtitle}</p>}
         </div>
       </div>
     </div>
@@ -120,23 +120,23 @@ const SectionCard = ({ title, subtitle, icon, children, className = '' }) => (
 
 // ─── Mini metric tile ─────────────────────────────────────────────────────────
 const MetricTile = ({ label, value, icon, colorClass }) => (
-  <div className={`flex flex-col gap-3 p-5 rounded-3xl bg-white border border-slate-100 hover:border-indigo-200 hover:shadow-lg transition-all duration-300 group`}>
+  <div className={`flex flex-col gap-3 p-5 rounded-3xl bg-white dark:bg-[#080f1e]/80 border border-slate-100 dark:border-white/5 hover:border-indigo-200 dark:hover:border-indigo-500/30 hover:shadow-lg transition-all duration-300 group`}>
     <div className={`w-10 h-10 rounded-xl ${colorClass} flex items-center justify-center text-xl group-hover:scale-110 transition-transform`}>
       {icon}
     </div>
     <div>
-      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1.5">{label}</p>
-      <p className="text-2xl font-black text-slate-900 tabular-nums">{(value ?? 0).toLocaleString()}</p>
+      <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none mb-1.5">{label}</p>
+      <p className="text-2xl font-black text-slate-900 dark:text-white tabular-nums">{(value ?? 0).toLocaleString()}</p>
     </div>
   </div>
 )
 
 // ─── Appointment row ──────────────────────────────────────────────────────────
 const ApptRow = ({ item, slotDateFormat }) => (
-  <div className="flex items-center gap-4 py-4 px-2 hover:bg-slate-50 transition-all duration-300 rounded-[1.2rem] group border border-transparent hover:border-slate-100">
+  <div className="flex items-center gap-4 py-4 px-2 hover:bg-slate-50 dark:hover:bg-slate-900 transition-all duration-300 rounded-[1.2rem] group border border-transparent hover:border-slate-100 dark:hover:border-white/5">
     <div className="relative flex-shrink-0">
       <img
-        className="w-11 h-11 rounded-full object-cover border-2 border-white shadow-md relative z-10"
+        className="w-11 h-11 rounded-full object-cover border-2 border-white dark:border-slate-900 shadow-md relative z-10"
         src={item.docData.image}
         alt={item.docData.name}
         onError={e => { e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHZpZXdCb3g9IjAgMCA0OCA0OCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIGZpbGw9IiNlMGUwZTAiLz48L3N2Zz4=' }}
@@ -144,11 +144,11 @@ const ApptRow = ({ item, slotDateFormat }) => (
       <div className="absolute -inset-1 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-full blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity" />
     </div>
     <div className="flex-1 min-w-0">
-      <p className="text-[11px] font-black text-slate-900 truncate tracking-tight">{item.docData.name}</p>
-      <p className="text-[10px] font-bold text-slate-400 mt-0.5">{slotDateFormat(item.slotDate)}</p>
+      <p className="text-[11px] font-black text-slate-900 dark:text-slate-100 truncate tracking-tight">{item.docData.name}</p>
+      <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mt-0.5">{slotDateFormat(item.slotDate)}</p>
     </div>
     <div className="flex flex-col items-end gap-1">
-      <span className="text-[9px] font-black text-slate-800 uppercase tracking-tighter bg-slate-100 px-2 py-0.5 rounded-full">{item.slotTime}</span>
+      <span className="text-[9px] font-black text-slate-800 dark:text-slate-200 uppercase tracking-tighter bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">{item.slotTime}</span>
       <div className={`w-1.5 h-1.5 rounded-full ${item.cancelled ? 'bg-rose-500' : item.isCompleted ? 'bg-emerald-500' : 'bg-amber-500'}`} />
     </div>
   </div>
@@ -158,14 +158,14 @@ const ApptRow = ({ item, slotDateFormat }) => (
 const HealthPulsar = ({ status, label }) => {
   const isHealthy = status === 'Healthy'
   return (
-    <div className="flex items-center gap-3 px-4 py-2 rounded-2xl bg-white/50 backdrop-blur-md border border-slate-100 shadow-sm transition-all hover:bg-white group cursor-help">
+    <div className="flex items-center gap-3 px-4 py-2 rounded-2xl bg-white/50 dark:bg-[#0c1325]/50 backdrop-blur-md border border-slate-100 dark:border-white/10 shadow-sm transition-all hover:bg-white dark:hover:bg-[#0c1325] group cursor-help">
       <div className="relative">
         <div className={`w-2.5 h-2.5 rounded-full ${isHealthy ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] animate-pulse' : 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.5)]'}`} />
         {isHealthy && <div className="absolute inset-0 w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping opacity-20" />}
       </div>
       <div className="flex flex-col">
-        <span className="text-[8px] font-black uppercase tracking-[0.15em] text-slate-400 leading-none mb-0.5">{label}</span>
-        <span className={`text-[10px] font-black uppercase tracking-wider ${isHealthy ? 'text-emerald-700' : 'text-rose-700'}`}>{status}</span>
+        <span className="text-[8px] font-black uppercase tracking-[0.15em] text-slate-400 dark:text-slate-500 leading-none mb-0.5">{label}</span>
+        <span className={`text-[10px] font-black uppercase tracking-wider ${isHealthy ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'}`}>{status}</span>
       </div>
     </div>
   )
@@ -237,25 +237,30 @@ const GeoGrid = ({ data }) => {
 }
 
 // ─── Latency Pulse Chart ──────────────────────────────────────────────────────
-const LatencyPulse = ({ data }) => (
-  <ResponsiveContainer width="100%" height={160}>
-    <LineChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
-      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-      <XAxis dataKey="hour" hide />
-      <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} unit="ms" />
-      <Tooltip content={<CustomTooltip />} />
-      <Line
-        type="monotone"
-        dataKey="latency"
-        stroke="#6366f1"
-        strokeWidth={3}
-        dot={{ r: 3, fill: '#6366f1', strokeWidth: 2, stroke: '#fff' }}
-        activeDot={{ r: 5 }}
-        animationDuration={1500}
-      />
-    </LineChart>
-  </ResponsiveContainer>
-)
+const LatencyPulse = ({ data }) => {
+  const { theme } = React.useContext(AppContext);
+  const strokeColor = theme === 'dark' ? 'rgba(255,255,255,0.05)' : '#f1f5f9';
+  const textColor = theme === 'dark' ? '#64748b' : '#94a3b8';
+  return (
+    <ResponsiveContainer width="100%" height={160}>
+      <LineChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke={strokeColor} vertical={false} />
+        <XAxis dataKey="hour" hide />
+        <YAxis tick={{ fontSize: 10, fill: textColor }} axisLine={false} tickLine={false} unit="ms" />
+        <Tooltip content={<CustomTooltip />} />
+        <Line
+          type="monotone"
+          dataKey="latency"
+          stroke="#6366f1"
+          strokeWidth={3}
+          dot={{ r: 3, fill: '#6366f1', strokeWidth: 2, stroke: '#fff' }}
+          activeDot={{ r: 5 }}
+          animationDuration={1500}
+        />
+      </LineChart>
+    </ResponsiveContainer>
+  );
+}
 
 // ─── Error Sentinel Console ───────────────────────────────────────────────────
 const ErrorSentinel = ({ failures, rate, breakdown }) => {
@@ -648,23 +653,28 @@ const StatusCodePie = ({ data }) => (
 );
 
 // ─── Activity Trend Bar ──────────────────────────────────────────────────────
-const ActivityTrendChart = ({ data }) => (
-  <ResponsiveContainer width="100%" height={180}>
-    <BarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 20 }}>
-      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-      <XAxis
-        dataKey="name"
-        tick={{ fontSize: 9, fill: '#64748b' }}
-        angle={-25}
-        textAnchor="end"
-        interval={0}
-      />
-      <YAxis tick={{ fontSize: 9, fill: '#94a3b8' }} />
-      <Tooltip content={<CustomTooltip />} />
-      <Bar dataKey="value" fill="#6366f1" radius={[4, 4, 0, 0]} barSize={15} />
-    </BarChart>
-  </ResponsiveContainer>
-);
+const ActivityTrendChart = ({ data }) => {
+  const { theme } = React.useContext(AppContext);
+  const strokeColor = theme === 'dark' ? 'rgba(255,255,255,0.05)' : '#f1f5f9';
+  const textColor = theme === 'dark' ? '#64748b' : '#94a3b8';
+  return (
+    <ResponsiveContainer width="100%" height={180}>
+      <BarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 20 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke={strokeColor} vertical={false} />
+        <XAxis
+          dataKey="name"
+          tick={{ fontSize: 9, fill: textColor }}
+          angle={-25}
+          textAnchor="end"
+          interval={0}
+        />
+        <YAxis tick={{ fontSize: 9, fill: textColor }} />
+        <Tooltip content={<CustomTooltip />} />
+        <Bar dataKey="value" fill="#6366f1" radius={[4, 4, 0, 0]} barSize={15} />
+      </BarChart>
+    </ResponsiveContainer>
+  );
+};
 
 // ─── Supabase Record Monitor ──────────────────────────────────────────────────
 const SupabaseRecordMonitor = ({ counts }) => (
@@ -687,6 +697,103 @@ const SupabaseRecordMonitor = ({ counts }) => (
     </div>
   </div>
 );
+
+// ─── NVIDIA API Health Monitor ───────────────────────────────────────────────
+const NvidiaApiMonitor = () => {
+  return (
+    <div className="bg-slate-900 rounded-[2.5rem] p-8 border border-slate-800 shadow-2xl relative overflow-hidden mb-6 group transition-all duration-500">
+      <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-[80px] group-hover:scale-150 transition-transform duration-1000" />
+      
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-6 relative z-10">
+        <div className="p-3 bg-emerald-500/20 text-emerald-400 rounded-2xl shadow-inner border border-emerald-500/20">
+          <Cpu className="w-6 h-6" />
+        </div>
+        <div>
+          <h3 className="text-white font-black text-sm uppercase tracking-widest">NVIDIA NIM Operations</h3>
+          <p className="text-slate-400 text-[10px] font-bold mt-1 uppercase tracking-wider">Active AI Models & Integrations</p>
+        </div>
+        <div className="sm:ml-auto flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 px-3 py-1.5 rounded-full mt-3 sm:mt-0 shadow-[0_0_15px_rgba(16,185,129,0.1)]">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
+          <span className="text-emerald-400 text-[10px] font-black uppercase tracking-widest">API Online</span>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 relative z-10">
+        <div className="xl:col-span-2 bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6 hover:bg-slate-800 transition-colors shadow-lg">
+          <div className="flex justify-between items-start mb-6">
+            <div className="flex items-center gap-4">
+              <span className="text-3xl p-3 bg-slate-900/50 rounded-2xl border border-white/5 shadow-inner">🧠</span>
+              <div>
+                <h4 className="text-white text-sm font-black tracking-widest uppercase">MINIMAX-M3 & GEMMA-3</h4>
+                <p className="text-slate-500 text-[10px] font-mono mt-1">NVIDIA NIM Infrastructure</p>
+              </div>
+            </div>
+            <span className="px-3 py-1.5 bg-emerald-500/20 text-emerald-400 text-[9px] font-black uppercase tracking-widest rounded-lg border border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.2)]">Healthy</span>
+          </div>
+
+          <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-4 flex items-center gap-2 border-b border-slate-700/50 pb-3">
+            <ActivityIcon className="w-3 h-3" /> Deployed Ecosystem Modules
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Admin Side */}
+            <div className="space-y-2">
+              <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest pl-1">Admin Operations</span>
+              <div className="flex items-center gap-3 text-slate-300 text-[10px] bg-slate-900/60 border border-slate-700/50 px-4 py-2.5 rounded-xl hover:border-indigo-500/50 transition-colors">
+                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                <span className="font-medium tracking-wide">AI Poll Automation Engine</span>
+              </div>
+              <div className="flex items-center gap-3 text-slate-300 text-[10px] bg-slate-900/60 border border-slate-700/50 px-4 py-2.5 rounded-xl hover:border-indigo-500/50 transition-colors">
+                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                <span className="font-medium tracking-wide">Gamification Exec Summaries</span>
+              </div>
+            </div>
+
+            {/* User Side */}
+            <div className="space-y-2">
+              <span className="text-[9px] font-black text-amber-400 uppercase tracking-widest pl-1">User Portals (Premium)</span>
+              <div className="flex items-center gap-3 text-slate-300 text-[10px] bg-slate-900/60 border border-slate-700/50 px-4 py-2.5 rounded-xl hover:border-amber-500/50 transition-colors">
+                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                <span className="font-medium tracking-wide">Gemma-3 Vitals Health Predictor</span>
+              </div>
+              <div className="flex items-center gap-3 text-slate-300 text-[10px] bg-slate-900/60 border border-slate-700/50 px-4 py-2.5 rounded-xl hover:border-amber-500/50 transition-colors">
+                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                <span className="font-medium tracking-wide">AI Diet & Nutrition Planner</span>
+              </div>
+            </div>
+
+            {/* Doctor Side */}
+            <div className="space-y-2">
+              <span className="text-[9px] font-black text-blue-400 uppercase tracking-widest pl-1">Doctor Telemetry</span>
+              <div className="flex items-center gap-3 text-slate-300 text-[10px] bg-slate-900/60 border border-slate-700/50 px-4 py-2.5 rounded-xl hover:border-blue-500/50 transition-colors">
+                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                <span className="font-medium tracking-wide">Random Forest Disease Predictor</span>
+              </div>
+            </div>
+
+            {/* CS Agent Side */}
+            <div className="space-y-2">
+              <span className="text-[9px] font-black text-rose-400 uppercase tracking-widest pl-1">CS Agent Command</span>
+              <div className="flex items-center gap-3 text-slate-300 text-[10px] bg-slate-900/60 border border-slate-700/50 px-4 py-2.5 rounded-xl hover:border-rose-500/50 transition-colors">
+                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                <span className="font-medium tracking-wide">Mentorship Matching Matrix</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-slate-800/30 border border-slate-700/30 rounded-2xl p-8 hover:bg-slate-800/50 transition-colors flex flex-col justify-center items-center text-center shadow-inner h-full">
+          <div className="w-16 h-16 bg-slate-900/50 border border-slate-700/50 rounded-full flex items-center justify-center mb-6 shadow-inner relative">
+            <div className="w-8 h-8 border-2 border-dashed border-slate-400 rounded-full animate-[spin_5s_linear_infinite]" />
+            <div className="absolute inset-0 bg-emerald-500/10 rounded-full blur animate-pulse" />
+          </div>
+          <p className="text-slate-400 text-xs font-black uppercase tracking-widest mb-3">Expansion Ready</p>
+          <p className="text-slate-500 text-[10px] font-medium max-w-[220px] leading-relaxed">Infrastructure primed to deploy additional NVIDIA NIM visual/LLM models across all platform verticals.</p>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 const Dashboard = () => {
@@ -849,6 +956,11 @@ const Dashboard = () => {
           <div className="mb-6">
             <ServiceHealthDashboard />
           </div>
+        )}
+
+        {/* ── NVIDIA NIM API Health Monitor ─────────────────────────────── */}
+        {adminProfile?.role === 'master' && (
+          <NvidiaApiMonitor />
         )}
 
         {/* ── Platform Activity & Blog Metrics ─────────────────────────────── */}

@@ -154,7 +154,8 @@ export const createEmergencyRequest = async (req, res) => {
             if (expiryDate > new Date()) {
                 hasActiveSubscription = true;
                 const plan = (user.subscription.plan || '').toLowerCase();
-                if (plan.includes('platinum'))      finalAmount = 200;
+                if (plan.includes('obsidian'))      finalAmount = 0;
+                else if (plan.includes('platinum')) finalAmount = 200;
                 else if (plan.includes('gold'))     finalAmount = 300;
                 else if (plan.includes('silver'))   finalAmount = 400;
             }
@@ -898,10 +899,14 @@ export const repayEmergencyDues = async (req, res) => {
             });
         }
 
-        if (user.pawWallet < due.amountDue) {
+        const isObsidian = user.subscription?.plan === 'Obsidian' && user.subscription?.status === 'Active';
+        const overdraftLimit = 50000;
+        const availableAmount = isObsidian ? (user.pawWallet + overdraftLimit) : user.pawWallet;
+
+        if (availableAmount < due.amountDue) {
             return res.json({
                 success: false,
-                message: `Insufficient Paw Wallet balance. You need ₹${due.amountDue} but only have ₹${user.pawWallet}. Please add funds to your wallet.`
+                message: `Insufficient Paw Wallet balance. You need ₹${due.amountDue} but only have ₹${user.pawWallet} (with ₹${isObsidian ? overdraftLimit : 0} overdraft limit). Please add funds to your wallet.`
             });
         }
 

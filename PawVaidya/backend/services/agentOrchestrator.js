@@ -1,4 +1,17 @@
-import { GoogleGenAI } from "@google/genai";
+import LLM from "./llm.js";
+
+/**
+ * Calls NVIDIA's DeepSeek-v4-pro completion engine using llm.js.
+ */
+async function callDeepSeek(messages) {
+    console.log("[NVIDIA NIM] Dispatching query to DeepSeek-v4-pro via llm.js...");
+    return await LLM(messages, {
+        service: "openai",
+        model: "deepseek-ai/deepseek-v4-pro",
+        temperature: 1,
+        max_tokens: 16384,
+    });
+}
 
 /**
  * Local Heuristic Fallback Engine
@@ -52,11 +65,6 @@ For booking appointments, viewing your pet records, checking rewards, or contact
  * Iterates through available model list to resolve model-specific version support 404 errors.
  */
 async function callGemini(messages, systemPrompt) {
-    const apiKey = process.env.GOOGLE_CLOUD_API_KEY || process.env.GEMINI_API_KEY;
-    if (!apiKey) throw new Error("GOOGLE_CLOUD_API_KEY or GEMINI_API_KEY is missing in environment variables.");
-
-    const ai = new GoogleGenAI({ apiKey });
-
     // Dynamic fallback sequence to prevent version-specific API model 404s
     const modelsToTry = [
         "gemini-3.5-flash",
@@ -70,76 +78,20 @@ async function callGemini(messages, systemPrompt) {
 
     for (const modelId of modelsToTry) {
         try {
-            console.log(`[Google Cloud GenAI] Attempting generation with model: ${modelId}...`);
-
-            // Format chat messages for Gemini:
-            // Gemini expects alternating user and model roles.
-            // Filter system messages and merge consecutive identical roles to comply with Gemini API.
-            const filtered = messages.filter(m => m.role !== "system");
-            const contents = [];
-
-            for (const m of filtered) {
-                const role = m.role === "assistant" ? "model" : "user";
-                if (contents.length > 0 && contents[contents.length - 1].role === role) {
-                    // Merge consecutive messages of the same role
-                    contents[contents.length - 1].parts[0].text += "\n" + (m.content || "");
-                } else {
-                    contents.push({
-                        role,
-                        parts: [{ text: m.content || "..." }],
-                    });
-                }
-            }
-
-            // Gemini requires the first message to be from the 'user' role.
-            if (contents.length > 0 && contents[0].role === "model") {
-                contents.shift();
-            }
-
-            // Ensure there is at least one message
-            if (contents.length === 0) {
-                contents.push({ role: "user", parts: [{ text: "Hello" }] });
-            }
-
-            console.log(`[Orchestrator Fallback] Dispatching history to Google Cloud GenAI (${modelId})...`);
-            
-            const response = await ai.models.generateContent({
+            console.log(`[Google Cloud GenAI] Attempting generation with model: ${modelId} via llm.js...`);
+            return await LLM(messages, {
+                service: "google",
                 model: modelId,
-                contents: contents,
-                config: {
-                    systemInstruction: {
-                        parts: [{ text: systemPrompt }]
-                    },
-                    safetySettings: [
-                        {
-                            category: 'HARM_CATEGORY_HATE_SPEECH',
-                            threshold: 'OFF',
-                        },
-                        {
-                            category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
-                            threshold: 'OFF',
-                        },
-                        {
-                            category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
-                            threshold: 'OFF',
-                        },
-                        {
-                            category: 'HARM_CATEGORY_HARASSMENT',
-                            threshold: 'OFF',
-                        }
-                    ],
-                }
+                systemPrompt: systemPrompt,
+                temperature: 0.2,
             });
-
-            return response.text;
         } catch (err) {
             console.warn(`[Google Cloud GenAI] Model ${modelId} failed:`, err.message);
             lastError = err;
-            // Move to next model if this one is not found or unsupported
             if (err.message.includes("404") || err.message.includes("not found") || err.message.includes("not supported") || err.message.includes("model")) {
                 continue;
             } else {
-                throw err; // Throw other critical errors directly (like auth/quota errors)
+                throw err;
             }
         }
     }
@@ -223,17 +175,25 @@ export const runAgentLoop = async ({
         let callSuccess = false;
 
         try {
-            console.log(`[Orchestrator] Dispatching to Google Cloud GenAI (Iteration ${iterations})...`);
-            aiResponse = await callGemini(messages, systemPrompt);
-            console.log("[Orchestrator] Google Cloud GenAI responded successfully.");
+            console.log(`[Orchestrator] Dispatching to NVIDIA DeepSeek API (Iteration ${iterations})...`);
+            aiResponse = await callDeepSeek(messages);
+            console.log("[Orchestrator] NVIDIA DeepSeek API responded successfully.");
             callSuccess = true;
-        } catch (error) {
-            console.error(`[Orchestrator] Google Cloud GenAI failed (Iteration ${iterations}):`, error.message);
-            
-            // Final Heuristic Offline Response Fallback Layer
-            console.log("[Orchestrator] Engaging final Heuristic Offline Response Fallback...");
-            aiResponse = getLocalHeuristicResponse(userMessage, systemPrompt);
-            callSuccess = true;
+        } catch (dsError) {
+            console.warn(`[Orchestrator] NVIDIA DeepSeek API failed (Iteration ${iterations}):`, dsError.message);
+            try {
+                console.log(`[Orchestrator] Falling back to Google Cloud GenAI (Iteration ${iterations})...`);
+                aiResponse = await callGemini(messages, systemPrompt);
+                console.log("[Orchestrator] Google Cloud GenAI responded successfully.");
+                callSuccess = true;
+            } catch (error) {
+                console.error(`[Orchestrator] Google Cloud GenAI failed (Iteration ${iterations}):`, error.message);
+                
+                // Final Heuristic Offline Response Fallback Layer
+                console.log("[Orchestrator] Engaging final Heuristic Offline Response Fallback...");
+                aiResponse = getLocalHeuristicResponse(userMessage, systemPrompt);
+                callSuccess = true;
+            }
         }
 
         // Try to extract JSON tool calls from the response using brace-balancing

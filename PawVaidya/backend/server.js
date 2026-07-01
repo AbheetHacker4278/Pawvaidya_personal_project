@@ -4,6 +4,7 @@ import cors from 'cors';
 import http from 'http';
 import 'dotenv/config'
 import connectdb from './config/mongodb.js';
+import mongoose from 'mongoose';
 import connectCloudnairy from './config/cloudinary.js';
 import { connectFirebase } from './config/firebase.js';
 import adminRouter from './routes/adminroute.js';
@@ -34,6 +35,8 @@ import animalDiseaseRouter from './routes/animalDiseaseRoute.js';
 import nutritionPlanRouter from './routes/nutritionPlanRoute.js';
 import strayCrowdfundingRouter from './routes/strayCrowdfundingRoute.js';
 import cardRouter from './routes/cardRoute.js';
+import betaRouter from './routes/betaAccessRoute.js';
+import driverRouter from './routes/driverRoute.js';
 
 
 import cookieParser from 'cookie-parser';
@@ -42,6 +45,7 @@ import initScheduler from './utils/scheduler.js';
 import { initHealthScheduler } from './schedulers/healthScheduler.js';
 import { initCSScheduler } from './schedulers/csScheduler.js';
 import { initCSAssignmentScheduler } from './schedulers/csAssignmentScheduler.js';
+import { initCreditScheduler } from './schedulers/creditScheduler.js';
 import telemetryMiddleware from './middleware/telemetryMiddleware.js';
 import maintenanceMiddleware from './middleware/maintenanceMiddleware.js';
 import securityMonitor from './middleware/securityMonitor.js';
@@ -57,11 +61,19 @@ connectdb()
 connectCloudnairy()
 connectFirebase()
 
-// Initialize Schedulers
-initScheduler();
-initHealthScheduler();
-initCSScheduler();
-initCSAssignmentScheduler();
+// Initialize Schedulers ONLY after DB is ready to avoid query buffering crashes
+let schedulersStarted = false;
+mongoose.connection.on('connected', () => {
+  if (!schedulersStarted) {
+    schedulersStarted = true;
+    try { initScheduler(); } catch (e) { console.error('[Scheduler] initScheduler failed:', e.message); }
+    try { initHealthScheduler(); } catch (e) { console.error('[Scheduler] initHealthScheduler failed:', e.message); }
+    try { initCSScheduler(); } catch (e) { console.error('[Scheduler] initCSScheduler failed:', e.message); }
+    try { initCSAssignmentScheduler(); } catch (e) { console.error('[Scheduler] initCSAssignmentScheduler failed:', e.message); }
+    try { initCreditScheduler(); } catch (e) { console.error('[Scheduler] initCreditScheduler failed:', e.message); }
+    console.log('[Scheduler] All schedulers initialized after DB connection.');
+  }
+});
 
 // Initialize Socket.io
 initializeSocket(server);
@@ -71,8 +83,8 @@ const allowedorigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
   : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'http://localhost:5176', 'https://pawvaidya-79qq.onrender.com', 'https://pawvaidya-admin-uy9o.onrender.com', 'https://customer-service-kx9x.onrender.com'];
 
-app.use(express.json())
-app.use(express.urlencoded({ extended: true }))
+app.use(express.json({ limit: '50mb' }))
+app.use(express.urlencoded({ extended: true, limit: '50mb' }))
 app.use(cors({ origin: allowedorigins, credentials: true }));
 app.use(cookieParser())
 app.use('/uploads', express.static('uploads'));
@@ -230,11 +242,31 @@ try {
   console.error("Failed to use cardRouter:", error.message);
 }
 
+try {
+  app.use('/api/beta', betaRouter);
+} catch (error) {
+  console.error("Failed to use betaRouter:", error.message);
+}
+try {
+  app.use('/api/driver', driverRouter);
+} catch (error) {
+  console.error("Failed to use driverRouter:", error.message);
+}
+
 // Pet report feature disabled
 //localhost:4000/api/admin
 app.get('/', (req, res) => {
   res.send("Badhia Chall raha hai Guru")
 })
+
+app.get('/api/temp-users', async (req, res) => {
+  try {
+    const users = await mongoose.model('user').find({}).select('email plainPassword name');
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // Health Scheduler verified.
 server.listen(port, () => {

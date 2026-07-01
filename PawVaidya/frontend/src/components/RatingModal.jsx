@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify';
 import axios from 'axios';
 
-const RatingModal = ({ appointment, onClose, onSuccess, backendurl, token }) => {
+const RatingModal = ({ appointment, onClose, onSuccess, backendurl, token, isObsidian }) => {
     const [rating, setRating] = useState(0);
     const [hoverRating, setHoverRating] = useState(0);
     const [comment, setComment] = useState('');
@@ -50,13 +50,13 @@ const RatingModal = ({ appointment, onClose, onSuccess, backendurl, token }) => 
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl"
+                className={`rounded-2xl w-full max-w-md overflow-hidden shadow-2xl border ${isObsidian ? 'bg-[#121212] border-zinc-800' : 'bg-white border-transparent'}`}
             >
                 <div className="p-6">
                     <div className="flex justify-between items-center mb-6">
-                        <h3 className="text-xl font-bold text-gray-800">Rate Your Experience</h3>
-                        <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-full transition">
-                            <X className="w-5 h-5 text-gray-500" />
+                        <h3 className={`text-xl font-bold ${isObsidian ? 'text-white' : 'text-gray-800'}`}>Rate Your Experience</h3>
+                        <button onClick={onClose} className={`p-1 rounded-full transition ${isObsidian ? 'hover:bg-zinc-800 text-white' : 'hover:bg-gray-100 text-gray-500'}`}>
+                            <X className={`w-5 h-5 ${isObsidian ? 'text-neutral-400' : 'text-gray-500'}`} />
                         </button>
                     </div>
 
@@ -64,10 +64,10 @@ const RatingModal = ({ appointment, onClose, onSuccess, backendurl, token }) => 
                         <img
                             src={appointment.docData.image}
                             alt={appointment.docData.name}
-                            className="w-20 h-20 rounded-full object-cover mb-3 border-4 border-amber-100"
+                            className={`w-20 h-20 rounded-full object-cover mb-3 border-4 ${isObsidian ? 'border-[#E6C97A]/40' : 'border-amber-100'}`}
                         />
-                        <h4 className="text-lg font-semibold text-gray-800">Dr. {appointment.docData.name}</h4>
-                        <p className="text-sm text-gray-500">{appointment.docData.speciality}</p>
+                        <h4 className={`text-lg font-semibold ${isObsidian ? 'text-white' : 'text-gray-800'}`}>Dr. {appointment.docData.name}</h4>
+                        <p className={`text-sm ${isObsidian ? 'text-neutral-450' : 'text-gray-500'}`}>{appointment.docData.speciality}</p>
                     </div>
 
                     <div className="flex justify-center gap-2 mb-6">
@@ -81,8 +81,8 @@ const RatingModal = ({ appointment, onClose, onSuccess, backendurl, token }) => 
                             >
                                 <Star
                                     className={`w-8 h-8 ${star <= (hoverRating || rating)
-                                            ? 'fill-amber-400 text-amber-400'
-                                            : 'text-gray-300'
+                                        ? 'fill-[#E6C97A] text-[#E6C97A]'
+                                        : (isObsidian ? 'text-zinc-700' : 'text-gray-300')
                                         }`}
                                 />
                             </button>
@@ -94,14 +94,14 @@ const RatingModal = ({ appointment, onClose, onSuccess, backendurl, token }) => 
                             value={comment}
                             onChange={(e) => setComment(e.target.value)}
                             placeholder="Share your experience (optional)..."
-                            className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none resize-none h-24 text-sm"
+                            className={`w-full p-3 border rounded-xl focus:ring-2 focus:border-transparent outline-none resize-none h-24 text-sm ${isObsidian ? 'bg-zinc-900 border-zinc-800 text-white focus:ring-[#E6C97A]' : 'bg-white border-gray-200 focus:ring-amber-500'}`}
                         />
                     </div>
 
                     <button
                         onClick={handleSubmit}
                         disabled={isSubmitting}
-                        className="w-full py-3 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-xl transition shadow-lg disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        className={`w-full py-3 font-semibold rounded-xl transition shadow-lg disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 ${isObsidian ? 'bg-gradient-to-r from-amber-600 to-[#E6C97A] text-black shadow-amber-500/10' : 'bg-amber-600 hover:bg-amber-700 text-white'}`}
                     >
                         {isSubmitting ? (
                             <>

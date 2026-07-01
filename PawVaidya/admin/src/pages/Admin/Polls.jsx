@@ -36,6 +36,46 @@ const Polls = () => {
         target: 'all',
         options: ['', '']
     });
+    const [isAILoading, setIsAILoading] = useState(false);
+
+    const handleAIGenerate = async () => {
+        setIsAILoading(true);
+        
+        const prompt = `As an AI for PawVaidya, a smart healthcare and pet care app, generate an engaging poll about user behavior, recent bookings, or most used app features. Return strictly a JSON object with this structure: {"question": "string", "category": "Question|Riddle|Feedback|Other", "target": "all|user|doctor", "options": ["option1", "option2", "option3", "option4"]}. Do not include markdown formatting or backticks.`;
+
+        try {
+            const { data } = await axios.post(backendurl + '/api/admin/generate-ai-content', { prompt, max_tokens: 1024 }, { headers: { atoken } });
+            
+            if (!data.success) throw new Error(data.message);
+            
+            let content = data.data?.choices?.[0]?.message?.content || "";
+            
+            // Extract JSON robustly
+            const startIdx = content.indexOf('{');
+            const endIdx = content.lastIndexOf('}');
+            if (startIdx === -1 || endIdx === -1) throw new Error("No JSON object found");
+            
+            const jsonStr = content.substring(startIdx, endIdx + 1);
+            const parsed = JSON.parse(jsonStr);
+            
+            if(parsed.question && parsed.options) {
+                setFormData({
+                    question: parsed.question,
+                    category: ['Question', 'Riddle', 'Feedback', 'Other'].includes(parsed.category) ? parsed.category : 'Question',
+                    target: ['all', 'user', 'doctor'].includes(parsed.target) ? parsed.target : 'all',
+                    options: parsed.options.slice(0, 6)
+                });
+                toast.success("AI generated an intelligent poll!");
+            } else {
+                throw new Error("Invalid format");
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error("AI failed: " + (error.message || "Parse Error"));
+        } finally {
+            setIsAILoading(false);
+        }
+    };
 
     const fetchPolls = async () => {
         setLoading(true);
@@ -335,6 +375,21 @@ const Polls = () => {
                             </div>
 
                             <form onSubmit={handleCreate} className="p-8 space-y-6 max-h-[70vh] overflow-y-auto scrollbar-none">
+                                <div className="flex justify-end mb-2">
+                                    <button
+                                        type="button"
+                                        onClick={handleAIGenerate}
+                                        disabled={isAILoading}
+                                        className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-bold rounded-xl transition shadow-lg shadow-purple-900/20 disabled:opacity-50"
+                                    >
+                                        {isAILoading ? (
+                                            <div className="animate-spin rounded-full h-3 w-3 border-2 border-white border-t-transparent"></div>
+                                        ) : (
+                                            <BrainCircuit className="w-4 h-4" />
+                                        )}
+                                        {isAILoading ? 'AI is Thinking...' : 'Auto-Generate with AI'}
+                                    </button>
+                                </div>
                                 <div>
                                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] block mb-2 px-1">Question / Riddle</label>
                                     <textarea

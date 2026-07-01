@@ -37,6 +37,7 @@ import Pediatricians from './Pediatricians.svg'
 import gold_logo from './Gold.svg'
 import platinum_logo from './Platinum.svg'
 import silver_logo from './Silver.svg'
+import chatbot_logo from './chatbot_logo.png'
 
 
 export const assets = {
@@ -60,6 +61,7 @@ export const assets = {
     gold_logo,
     platinum_logo,
     silver_logo,
+    chatbot_logo,
 }
 
 export const specialityData = [

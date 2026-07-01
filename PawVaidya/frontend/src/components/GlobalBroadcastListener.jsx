@@ -28,6 +28,15 @@ const GlobalBroadcastListener = () => {
     const [activeTicket, setActiveTicket] = useState(null);
     const socketRef = useRef(null);
 
+    // Advanced Co-Browsing states
+    const [allowAnnotations, setAllowAnnotations] = useState(true);
+    const [agentMouse, setAgentMouse] = useState(null);
+    const [isRouteProtected, setIsRouteProtected] = useState(false);
+
+    const canvasRef = useRef(null);
+    const linesBuffer = useRef([]);
+    const lastActivityRef = useRef(Date.now());
+
     // Helper: Collect styles to re-apply in the agent's iframe sandbox
     const getStylesheets = () => {
         const styles = [];
@@ -41,8 +50,23 @@ const GlobalBroadcastListener = () => {
         return styles;
     };
 
+    const isSensitiveRoute = (path) => {
+        const sensitivePaths = ['/checkout', '/payment', '/payment-success', '/profile/settings', '/wallet', '/admin', '/reset-password'];
+        return sensitivePaths.some(p => path.toLowerCase().includes(p));
+    };
+
     // Helper: Clone, Sanitize, and Serialize the DOM
     const serializeDOM = () => {
+        if (isSensitiveRoute(window.location.pathname)) {
+            return `
+                <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; font-family:sans-serif; color:#475569; background:#f8fafc; text-align:center; padding: 24px;">
+                    <div style="font-size:64px; margin-bottom:16px;">🛡️</div>
+                    <h2 style="margin:0 0 8px 0; font-weight:800; font-size:22px; color:#1e293b;">Privacy Shield Active</h2>
+                    <p style="margin:0; font-size:13px; color:#64748b; max-width:280px; line-height:1.5;">This view is temporarily hidden because the customer is on a secure payment or sensitive settings route.</p>
+                </div>
+            `;
+        }
+
         const root = document.getElementById('root');
         if (!root) return '';
 
@@ -51,15 +75,28 @@ const GlobalBroadcastListener = () => {
         // Strip scripts to prevent code execution in sandbox
         clone.querySelectorAll('script').forEach(el => el.remove());
 
-        // Redact sensitive inputs (passwords, card credentials, personal data keys)
+        // Redact sensitive inputs (passwords, card credentials, personal data keys, addresses, phone numbers)
         clone.querySelectorAll('input, textarea, select').forEach(el => {
             const isSensitive = el.type === 'password' || 
                                 el.name?.toLowerCase().includes('card') || 
                                 el.name?.toLowerCase().includes('cvv') ||
                                 el.name?.toLowerCase().includes('pass') ||
+                                el.name?.toLowerCase().includes('address') ||
+                                el.name?.toLowerCase().includes('phone') ||
+                                el.name?.toLowerCase().includes('email') ||
+                                el.name?.toLowerCase().includes('ssn') ||
+                                el.name?.toLowerCase().includes('aadhaar') ||
+                                el.name?.toLowerCase().includes('upi') ||
+                                el.name?.toLowerCase().includes('pin') ||
                                 el.placeholder?.toLowerCase().includes('password') ||
+                                el.placeholder?.toLowerCase().includes('card') ||
+                                el.placeholder?.toLowerCase().includes('email') ||
+                                el.placeholder?.toLowerCase().includes('phone') ||
+                                el.placeholder?.toLowerCase().includes('pin') ||
                                 el.classList.contains('private') ||
-                                el.getAttribute('data-private') !== null;
+                                el.classList.contains('data-cobrowse-private') ||
+                                el.getAttribute('data-private') !== null ||
+                                el.getAttribute('data-cobrowse-private') !== null;
             
             if (isSensitive) {
                 el.setAttribute('value', '••••••••');
@@ -228,6 +265,8 @@ const GlobalBroadcastListener = () => {
             sessionStorage.removeItem('coBrowseTicketId');
             const beacon = document.getElementById('cobrowse-highlight-beacon');
             if (beacon) beacon.remove();
+            setAgentMouse(null);
+            linesBuffer.current = [];
             toast.info('Co-browsing support session ended by the agent.');
         });
 
@@ -236,6 +275,25 @@ const GlobalBroadcastListener = () => {
             if (data.pctX !== undefined && data.pctY !== undefined) {
                 showHighlightBeacon(data.pctX, data.pctY);
             }
+        });
+
+        socket.on('co-browse-mouse-move', (data) => {
+            if (data.pctX !== undefined && data.pctY !== undefined) {
+                const docWidth = document.documentElement.scrollWidth;
+                const docHeight = document.documentElement.scrollHeight;
+                setAgentMouse({
+                    x: data.pctX * docWidth,
+                    y: data.pctY * docHeight
+                });
+            }
+        });
+
+        socket.on('co-browse-draw-line', (data) => {
+            linesBuffer.current.push({
+                points: data.points,
+                color: data.color || '#ef4444',
+                timestamp: Date.now()
+            });
         });
 
         return () => {
@@ -247,10 +305,113 @@ const GlobalBroadcastListener = () => {
             socket.off('co-browse-request');
             socket.off('co-browse-stop');
             socket.off('co-browse-highlight');
+            socket.off('co-browse-mouse-move');
+            socket.off('co-browse-draw-line');
             socket.disconnect();
             socketRef.current = null;
         };
     }, [backendurl, userdata?.id, userdata?._id]);
+
+    // Track route change to update isRouteProtected
+    useEffect(() => {
+        setIsRouteProtected(isSensitiveRoute(location.pathname));
+    }, [location.pathname]);
+
+    // Canvas drawing and fading loop
+    useEffect(() => {
+        if (!isCoSharing || !allowAnnotations) {
+            linesBuffer.current = [];
+            setAgentMouse(null);
+            return;
+        }
+
+        let animFrame;
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
+
+        const updateCanvasSize = () => {
+            canvas.width = document.documentElement.scrollWidth;
+            canvas.height = document.documentElement.scrollHeight;
+        };
+
+        updateCanvasSize();
+        window.addEventListener('resize', updateCanvasSize);
+
+        const drawLoop = () => {
+            if (!ctx) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const now = Date.now();
+            linesBuffer.current = linesBuffer.current.filter(line => now - line.timestamp < 3500);
+
+            linesBuffer.current.forEach(line => {
+                if (line.points.length < 2) return;
+                
+                const age = now - line.timestamp;
+                const opacity = Math.max(0, 1 - age / 3500);
+
+                ctx.beginPath();
+                ctx.strokeStyle = line.color;
+                ctx.lineWidth = 4;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.globalAlpha = opacity;
+
+                const firstPoint = line.points[0];
+                const docWidth = document.documentElement.scrollWidth;
+                const docHeight = document.documentElement.scrollHeight;
+
+                ctx.moveTo(firstPoint.pctX * docWidth, firstPoint.pctY * docHeight);
+                for (let i = 1; i < line.points.length; i++) {
+                    ctx.lineTo(line.points[i].pctX * docWidth, line.points[i].pctY * docHeight);
+                }
+                ctx.stroke();
+            });
+
+            animFrame = requestAnimationFrame(drawLoop);
+        };
+
+        drawLoop();
+
+        return () => {
+            window.removeEventListener('resize', updateCanvasSize);
+            cancelAnimationFrame(animFrame);
+        };
+    }, [isCoSharing, allowAnnotations]);
+
+    // Inactivity timeout tracking
+    useEffect(() => {
+        if (!isCoSharing) return;
+
+        lastActivityRef.current = Date.now();
+
+        const updateActivity = () => {
+            lastActivityRef.current = Date.now();
+        };
+
+        const checkInactivity = setInterval(() => {
+            const idleTime = Date.now() - lastActivityRef.current;
+            if (idleTime >= 90000) { // 90 seconds
+                toast.warning('Co-browsing session closed due to inactivity.');
+                stopCoBrowsingSession();
+            }
+        }, 5000);
+
+        window.addEventListener('mousemove', updateActivity);
+        window.addEventListener('scroll', updateActivity);
+        window.addEventListener('keydown', updateActivity);
+        window.addEventListener('click', updateActivity);
+
+        return () => {
+            clearInterval(checkInactivity);
+            window.removeEventListener('mousemove', updateActivity);
+            window.removeEventListener('scroll', updateActivity);
+            window.removeEventListener('keydown', updateActivity);
+            window.removeEventListener('click', updateActivity);
+        };
+    }, [isCoSharing]);
 
     // Co-Browsing DOM & Interaction Sync Engine
     useEffect(() => {
@@ -269,18 +430,16 @@ const GlobalBroadcastListener = () => {
                 height: window.innerHeight,
                 scrollWidth: document.documentElement.scrollWidth,
                 scrollHeight: document.documentElement.scrollHeight,
+                routeProtected: isSensitiveRoute(window.location.pathname),
                 timestamp: Date.now()
             };
             socketRef.current.emit('co-browse-sync', payload);
         };
 
-        // Send baseline DOM immediately on route/mount change
         performSync();
 
-        // Throttled sync for scroll & value typing
         const throttledSync = throttle(performSync, 400);
 
-        // Throttled cursor position sender (to keep bandwidth lightweight)
         const handleMouseMove = throttle((e) => {
             if (!socketRef.current) return;
             socketRef.current.emit('co-browse-sync', {
@@ -295,7 +454,6 @@ const GlobalBroadcastListener = () => {
         document.addEventListener('input', throttledSync);
         window.addEventListener('mousemove', handleMouseMove);
 
-        // Fallback keepalive heartbeat
         const heartbeat = setInterval(performSync, 3000);
 
         return () => {
@@ -312,7 +470,11 @@ const GlobalBroadcastListener = () => {
 
         const userId = userdata?.id || userdata?._id;
         socketRef.current.emit('join-room', `ticket-${ticketId}`);
-        socketRef.current.emit('co-browse-accept', { ticketId, userId });
+        socketRef.current.emit('co-browse-accept', { 
+            ticketId, 
+            userId,
+            allowAnnotations 
+        });
 
         setActiveTicket(ticketId);
         setIsCoSharing(true);
@@ -338,6 +500,8 @@ const GlobalBroadcastListener = () => {
         sessionStorage.removeItem('coBrowseTicketId');
         const beacon = document.getElementById('cobrowse-highlight-beacon');
         if (beacon) beacon.remove();
+        setAgentMouse(null);
+        linesBuffer.current = [];
         toast.info('Co-browsing session terminated.');
     };
 
@@ -377,6 +541,20 @@ const GlobalBroadcastListener = () => {
                                     <p className="text-xs text-slate-700"><strong className="text-slate-900 font-bold">Full Control:</strong> You can cancel sharing at any time by clicking the disconnect badge.</p>
                                 </div>
                             </div>
+
+                            {/* Dual-Consent Interactive Options */}
+                            <div className="flex items-center gap-3 mt-4 px-1 py-1 bg-amber-50/50 rounded-lg border border-amber-100/50">
+                                <input
+                                    type="checkbox"
+                                    id="allow-annotations-check"
+                                    checked={allowAnnotations}
+                                    onChange={(e) => setAllowAnnotations(e.target.checked)}
+                                    className="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500 cursor-pointer"
+                                />
+                                <label htmlFor="allow-annotations-check" className="text-xs font-bold text-slate-700 select-none cursor-pointer">
+                                    Allow agent to draw & highlight on my screen
+                                </label>
+                            </div>
                         </div>
 
                         <div className="flex gap-3 mt-6">
@@ -407,7 +585,9 @@ const GlobalBroadcastListener = () => {
                         </span>
                         <div className="text-left">
                             <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">Co-Browsing Active</p>
-                            <p className="text-xs font-semibold text-slate-200">Sharing screen with Agent</p>
+                            <p className="text-xs font-semibold text-slate-200">
+                                {isRouteProtected ? '🔒 Sensitive Page Redacted' : 'Sharing screen with Agent'}
+                            </p>
                         </div>
                     </div>
                     <button
@@ -416,6 +596,51 @@ const GlobalBroadcastListener = () => {
                     >
                         Disconnect
                     </button>
+                </div>
+            )}
+
+            {/* Fading Canvas Annotation Overlay */}
+            {isCoSharing && allowAnnotations && (
+                <canvas
+                    ref={canvasRef}
+                    style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        pointerEvents: 'none',
+                        zIndex: 9999998
+                    }}
+                />
+            )}
+
+            {/* Pulse Agent Laser Pointer Overlay */}
+            {isCoSharing && allowAnnotations && agentMouse && (
+                <div
+                    style={{
+                        position: 'absolute',
+                        left: `${agentMouse.x}px`,
+                        top: `${agentMouse.y}px`,
+                        width: '20px',
+                        height: '20px',
+                        borderRadius: '50%',
+                        background: 'rgba(244, 63, 94, 0.4)',
+                        border: '2px solid #f43f5e',
+                        boxShadow: '0 0 12px #f43f5e',
+                        pointerEvents: 'none',
+                        zIndex: 9999999,
+                        transform: 'translate(-50%, -50%)',
+                        transition: 'left 0.12s ease-out, top 0.12s ease-out',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                    }}
+                >
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-600 animate-ping" />
+                    <div className="absolute top-6 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded shadow whitespace-nowrap uppercase tracking-wider">
+                        Agent Pointer
+                    </div>
                 </div>
             )}
         </>

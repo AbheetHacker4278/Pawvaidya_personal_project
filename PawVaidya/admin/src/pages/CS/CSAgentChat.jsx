@@ -5,9 +5,9 @@ import { toast } from 'react-toastify';
 import { io } from 'socket.io-client';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  MessageSquare, Search, Send, User, Shield, Lock, 
-  MoreVertical, ChevronLeft, Image as ImageIcon, Smile, FileText, CheckCircle2 
+import {
+    MessageSquare, Search, Send, User, Shield, Lock,
+    MoreVertical, ChevronLeft, Image as ImageIcon, Smile, FileText, CheckCircle2
 } from 'lucide-react';
 
 const CSAgentChat = () => {
@@ -86,10 +86,10 @@ const CSAgentChat = () => {
     const fetchHistory = async () => {
         try {
             if (!adminId || !selectedAgent) return;
-            
+
             socket?.off('receive-direct-message');
             socket?.on('receive-direct-message', (message) => {
-                if (message.senderId.toString() === selectedAgent._id.toString() || 
+                if (message.senderId.toString() === selectedAgent._id.toString() ||
                     message.receiverId.toString() === selectedAgent._id.toString()) {
                     setMessages((prev) => {
                         const exists = prev.some(m => m._id === message._id);
@@ -218,7 +218,7 @@ const CSAgentChat = () => {
     }, [id]);
 
     return (
-        <motion.div 
+        <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="flex h-[calc(100vh-120px)] bg-white rounded-2xl shadow-2xl overflow-hidden m-4 lg:m-6 border border-slate-100"
@@ -280,7 +280,7 @@ const CSAgentChat = () => {
                                             {agent.lastMessage || <span className="italic opacity-40 font-normal">Start a new conversation</span>}
                                         </p>
                                         {agent.unreadCount > 0 && (
-                                            <motion.span 
+                                            <motion.span
                                                 initial={{ scale: 0 }}
                                                 animate={{ scale: 1 }}
                                                 className="bg-emerald-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full shadow-lg"
@@ -309,7 +309,7 @@ const CSAgentChat = () => {
             `}>
                 <AnimatePresence mode="wait">
                     {selectedAgent ? (
-                        <motion.div 
+                        <motion.div
                             key="chat"
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
@@ -319,7 +319,7 @@ const CSAgentChat = () => {
                             {/* Chat Header */}
                             <div className="p-4 bg-white border-b border-slate-100 flex items-center justify-between shadow-sm z-10">
                                 <div className="flex items-center gap-4">
-                                    <button 
+                                    <button
                                         onClick={() => setShowMobileSidebar(true)}
                                         className="md:hidden p-2 -ml-2 text-slate-400 hover:text-slate-600"
                                     >
@@ -357,11 +357,10 @@ const CSAgentChat = () => {
                                         animate={{ opacity: 1, x: 0 }}
                                         className={`flex ${msg.senderModel === 'Admin' ? 'justify-end' : 'justify-start'}`}
                                     >
-                                        <div className={`max-w-[80%] sm:max-w-[70%] rounded-2xl px-5 py-3.5 shadow-sm transition-all hover:shadow-md ${
-                                            msg.senderModel === 'Admin' 
-                                            ? 'bg-slate-900 text-white rounded-tr-none' 
-                                            : 'bg-white text-slate-800 rounded-tl-none border border-slate-100'
-                                        }`}>
+                                        <div className={`max-w-[80%] sm:max-w-[70%] rounded-2xl px-5 py-3.5 shadow-sm transition-all hover:shadow-md ${msg.senderModel === 'Admin'
+                                                ? 'bg-slate-900 text-white rounded-tr-none'
+                                                : 'bg-white text-slate-800 rounded-tl-none border border-slate-100'
+                                            }`}>
                                             {msg.fileUrl && (
                                                 <div className="mb-2">
                                                     {msg.fileType === 'image' ? (
@@ -425,17 +424,17 @@ const CSAgentChat = () => {
                             </div>
                         </motion.div>
                     ) : (
-                        <motion.div 
+                        <motion.div
                             key="placeholder"
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
                             className="flex-1 flex flex-col items-center justify-center text-slate-400 p-12 text-center"
                         >
                             <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center shadow-xl mb-8 relative">
-                                <motion.div 
+                                <motion.div
                                     animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }}
                                     transition={{ duration: 3, repeat: Infinity }}
-                                    className="absolute inset-0 bg-emerald-100 rounded-full" 
+                                    className="absolute inset-0 bg-emerald-100 rounded-full"
                                 />
                                 <MessageSquare size={56} className="text-emerald-500 relative z-10" />
                             </div>

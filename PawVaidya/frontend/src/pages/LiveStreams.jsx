@@ -1,16 +1,17 @@
-
 import React, { useContext, useEffect, useState, useRef } from 'react';
 import { AppContext } from '../context/AppContext';
 import { ZegoUIKitPrebuilt } from '@zegocloud/zego-uikit-prebuilt';
 import { useParams, useNavigate } from 'react-router-dom';
-import { LayoutGrid, Users } from 'lucide-react';
+import { LayoutGrid, Users, ArrowLeft } from 'lucide-react';
 import { io } from 'socket.io-client';
 
-const LiveStreams = () => {
+const LiveStreams = ({ hideHeader = false }) => {
     const { doctors, userdata, backendurl } = useContext(AppContext);
     const navigate = useNavigate();
     const [activeStreams, setActiveStreams] = useState([]);
     const [activeAdminStreams, setActiveAdminStreams] = useState([]);
+
+    const isObsidian = userdata?.subscription?.status === 'Active' && userdata?.subscription?.plan === 'Obsidian';
 
     // Socket Listener for Active Streams
     useEffect(() => {
@@ -100,14 +101,20 @@ const LiveStreams = () => {
 
     if (streamID) {
         return (
-            <div className='my-10 mx-4 md:mx-[10%]'>
+            <div className={hideHeader ? 'py-4' : 'my-10 mx-4 md:mx-[10%]'}>
                 <button
-                    onClick={() => navigate('/live-streams')}
-                    className="mb-4 text-gray-600 hover:text-green-600 flex items-center gap-2"
+                    onClick={() => navigate('/community?tab=live')}
+                    className={`mb-4 flex items-center gap-2 font-bold transition-colors ${
+                        isObsidian ? 'text-neutral-400 hover:text-[#E6C97A]' : 'text-gray-600 hover:text-green-600'
+                    }`}
                 >
-                    ← Back to Channels
+                    <ArrowLeft size={16} /> Back to Channels
                 </button>
-                <div className='mb-4 bg-yellow-50 p-2 rounded text-sm text-yellow-700'>
+                <div className={`mb-4 p-3 rounded-xl text-sm font-semibold border ${
+                    isObsidian 
+                        ? 'bg-[#E6C97A]/15 border-[#E6C97A]/25 text-[#E6C97A]' 
+                        : 'bg-yellow-50 border-yellow-100 text-yellow-700'
+                }`}>
                     Debug: Joined Room ID: {streamID}
                 </div>
                 <div
@@ -123,19 +130,21 @@ const LiveStreams = () => {
 
     // List of "Channels" (Doctors)
     return (
-        <div className='my-10 mx-4 md:mx-[10%]'>
-            <div className='text-center mb-12'>
-                <h1 className='text-3xl font-bold text-gray-800 flex items-center justify-center gap-3'>
-                    <Users className='w-8 h-8 text-red-500' />
-                    Live Channels
-                </h1>
-                <p className='text-gray-600 mt-2'>Join a doctor's live stream to get real-time advice.</p>
-            </div>
-
+        <div className={hideHeader ? 'py-4' : 'my-10 mx-4 md:mx-[10%]'}>
+            {!hideHeader && (
+                <div className='text-center mb-12'>
+                    <h1 className={`text-3xl font-black flex items-center justify-center gap-3 ${isObsidian ? 'text-white' : 'text-gray-800'}`}>
+                        <Users className={`w-8 h-8 ${isObsidian ? 'text-[#E6C97A]' : 'text-red-500'}`} />
+                        Live Channels
+                    </h1>
+                    <p className={`mt-2 ${isObsidian ? 'text-neutral-400' : 'text-gray-600'}`}>Join a doctor's live stream to get real-time advice.</p>
+                </div>
+            )}
+            
             {/* Admin Streams Section */}
             {activeAdminStreams.length > 0 && (
                 <div className="mb-12">
-                    <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                    <h2 className={`text-xl font-bold mb-4 flex items-center gap-2 ${isObsidian ? 'text-white' : 'text-gray-800'}`}>
                         <span className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></span>
                         Official Admin Streams
                     </h2>
@@ -144,9 +153,13 @@ const LiveStreams = () => {
                             <div
                                 key={index}
                                 onClick={() => navigate(`/live-stream/${adminId}`)}
-                                className='bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-100 rounded-xl overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group relative'
+                                className={`rounded-xl overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group relative border ${
+                                    isObsidian 
+                                        ? 'bg-[#0E0E0E] border-zinc-800/80 text-white hover:border-[#E6C97A]/40 shadow-2xl' 
+                                        : 'bg-gradient-to-br from-indigo-50 to-purple-50 border-indigo-100'
+                                }`}
                             >
-                                <div className='h-48 flex items-center justify-center bg-indigo-100'>
+                                <div className={`h-48 flex items-center justify-center ${isObsidian ? 'bg-[#151515]' : 'bg-indigo-100'}`}>
                                     <img
                                         src="https://cdn-icons-png.flaticon.com/512/2206/2206368.png"
                                         alt="Admin Stream"
@@ -158,8 +171,8 @@ const LiveStreams = () => {
                                     LIVE
                                 </div>
                                 <div className='p-4'>
-                                    <p className='text-lg font-bold text-indigo-900'>PawVaidya Official</p>
-                                    <p className='text-indigo-600 text-sm'>Admin Broadcast</p>
+                                    <p className={`text-lg font-black ${isObsidian ? 'text-white' : 'text-indigo-900'}`}>PawVaidya Official</p>
+                                    <p className={`text-sm ${isObsidian ? 'text-[#E6C97A]' : 'text-indigo-600'}`}>Admin Broadcast</p>
                                 </div>
                             </div>
                         ))}
@@ -167,10 +180,12 @@ const LiveStreams = () => {
                 </div>
             )}
 
-            <h2 className="text-xl font-bold text-gray-800 mb-4">Doctor Streams</h2>
+            <h2 className={`text-xl font-bold mb-4 ${isObsidian ? 'text-white' : 'text-gray-800'}`}>Doctor Streams</h2>
             {activeDoctors.length === 0 ? (
-                <div className="text-center text-gray-500 py-10 border-2 border-dashed border-gray-200 rounded-xl">
-                    <p>No doctors are currently live.</p>
+                <div className={`text-center py-12 border-2 border-dashed rounded-2xl ${
+                    isObsidian ? 'bg-[#0E0E0E] border-zinc-800/80 text-neutral-400 shadow-2xl' : 'border-gray-200 text-gray-500'
+                }`}>
+                    <p className="font-semibold">No doctors are currently live.</p>
                 </div>
             ) : (
                 <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6'>
@@ -178,9 +193,13 @@ const LiveStreams = () => {
                         <div
                             key={index}
                             onClick={() => navigate(`/live-stream/${item._id}`)}
-                            className='bg-white border border-gray-100 rounded-xl overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group'
+                            className={`rounded-xl overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group border ${
+                                isObsidian 
+                                    ? 'bg-[#0E0E0E] border-zinc-800/80 text-white hover:border-[#E6C97A]/40 shadow-2xl' 
+                                    : 'bg-white border-gray-100'
+                            }`}
                         >
-                            <div className='relative'>
+                            <div className='relative overflow-hidden'>
                                 <img className='w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500' src={item.image} alt="" />
                                 <div className='absolute top-3 right-3 bg-red-500 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1 opacity-100 transition-opacity'>
                                     <span className='w-2 h-2 bg-white rounded-full animate-pulse'></span>
@@ -192,8 +211,8 @@ const LiveStreams = () => {
                                     <span className='w-2 h-2 bg-red-500 rounded-full animate-pulse'></span>
                                     <p className="text-red-500">Live Now</p>
                                 </div>
-                                <p className='text-lg font-bold text-gray-900 line-clamp-1'>{item.name}</p>
-                                <p className='text-gray-500 text-sm'>{item.speciality}</p>
+                                <p className={`text-lg font-black line-clamp-1 ${isObsidian ? 'text-white' : 'text-gray-900'}`}>{item.name}</p>
+                                <p className={`text-sm ${isObsidian ? 'text-neutral-400' : 'text-gray-500'}`}>{item.speciality}</p>
                             </div>
                         </div>
                     ))}

@@ -52,7 +52,7 @@ const AnimalDiseasePredictor = () => {
         { name: "Drop in Milk Production", category: "Oral/Mammary", species: ["Cow", "Sheep", "Goat"] }
     ];
 
-    const isGoldOrPlatinum = (userdata?.subscription?.plan === 'Gold' || userdata?.subscription?.plan === 'Platinum') && userdata?.subscription?.status === 'Active';
+    const isGoldOrPlatinum = (userdata?.subscription?.plan === 'Gold' || userdata?.subscription?.plan === 'Platinum' || userdata?.subscription?.plan === 'Obsidian') && userdata?.subscription?.status === 'Active';
 
     useEffect(() => {
         if (token && isGoldOrPlatinum) {
@@ -724,6 +724,17 @@ const AnimalDiseasePredictor = () => {
                                                 {predictionResult.caseStatus}
                                             </span>
                                         </div>
+
+                                        {predictionResult.aiAnalysis && (
+                                            <div className="mt-6 p-5 rounded-2xl bg-amber-50/30 border border-[#e8d5b0]/30 space-y-2">
+                                                <h4 className="text-xs font-black text-amber-800 uppercase flex items-center gap-1.5">
+                                                    <Sparkles size={13} className="text-amber-600" /> Premium DeepSeek AI Analysis
+                                                </h4>
+                                                <div className="text-xs text-[#5A4035] leading-relaxed whitespace-pre-wrap font-medium">
+                                                    {predictionResult.aiAnalysis}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 </motion.div>
                             )}
@@ -811,7 +822,6 @@ const AnimalDiseasePredictor = () => {
                                                 </button>
                                             </div>
                                         </div>
-
                                         {/* Brief Top Match Indicator */}
                                         <div className="p-4 rounded-xl bg-white border flex items-center justify-between text-[11px]">
                                             <span className="text-gray-400">Primary Predicted Condition:</span>
@@ -825,6 +835,17 @@ const AnimalDiseasePredictor = () => {
                                                 animate={{ height: "auto", opacity: 1 }}
                                                 className="pt-4 border-t border-dashed border-gray-200 space-y-4"
                                             >
+                                                {item.aiAnalysis && (
+                                                    <div className="p-5 rounded-2xl bg-amber-50/30 border border-[#e8d5b0]/30 space-y-2">
+                                                        <h5 className="text-[10px] font-black text-amber-800 uppercase flex items-center gap-1.5">
+                                                            <Sparkles size={12} className="text-amber-600" /> DeepSeek AI Clinical Insight
+                                                        </h5>
+                                                        <div className="text-xs text-[#5A4035] leading-relaxed whitespace-pre-wrap font-medium">
+                                                            {item.aiAnalysis}
+                                                        </div>
+                                                    </div>
+                                                )}
+
                                                 {/* Historic Tracking Comment Threads */}
                                                 <div>
                                                     <h5 className="font-black text-gray-400 uppercase text-[9px] mb-2.5">Veterinary Progression Chronicle</h5>

@@ -29,7 +29,7 @@ const adminSchema = new mongoose.Schema({
     role: {
         type: String,
         default: 'admin',
-        enum: ['admin', 'master'] // 'master' is implicitly handled via env but good to have in schema if we ever store it
+        enum: ['admin', 'master', 'master_cs_agent'] // 'master' is implicitly handled via env but good to have in schema if we ever store it
     },
     permissions: {
         type: [String],

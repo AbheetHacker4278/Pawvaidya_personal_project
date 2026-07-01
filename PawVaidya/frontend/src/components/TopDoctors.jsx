@@ -19,7 +19,7 @@ const B = {
 };
 
 // ─── Individual tilt card ─────────────────────────────────────────────────────
-const DoctorCard = ({ item, index, onClick, t }) => {
+const DoctorCard = ({ item, index, onClick, t, isObsidian }) => {
 
   const [hovered, setHovered] = useState(false);
   const x = useMotionValue(0);
@@ -50,13 +50,13 @@ const DoctorCard = ({ item, index, onClick, t }) => {
       }}
       style={{
         rotateX, rotateY, transformStyle: 'preserve-3d', perspective: 1000,
-        background: 'rgba(237, 228, 216, 0.85)',
+        background: isObsidian ? 'rgba(13, 13, 13, 0.85)' : 'rgba(237, 228, 216, 0.85)',
         backdropFilter: 'blur(16px)',
         WebkitBackdropFilter: 'blur(16px)',
-        border: '1px solid rgba(232,213,176,0.6)',
+        border: isObsidian ? '1px solid rgba(212,175,55,0.25)' : '1px solid rgba(232,213,176,0.6)',
         boxShadow: hovered
-          ? '0 24px 48px rgba(61,43,31,0.18), 0 8px 16px rgba(61,43,31,0.10)'
-          : '0 8px 24px rgba(61,43,31,0.10), 0 2px 8px rgba(61,43,31,0.07)',
+          ? (isObsidian ? '0 24px 50px rgba(0,0,0,0.95), 0 0 20px rgba(212,175,55,0.15)' : '0 24px 48px rgba(61,43,31,0.18), 0 8px 16px rgba(61,43,31,0.10)')
+          : (isObsidian ? '0 8px 32px rgba(0,0,0,0.8), 0 0 8px rgba(212,175,55,0.05)' : '0 8px 24px rgba(61,43,31,0.10), 0 2px 8px rgba(61,43,31,0.07)'),
         transition: 'box-shadow 0.4s ease',
       }}
       className="relative cursor-pointer rounded-[24px] overflow-hidden w-full max-w-[260px] mx-auto"
@@ -71,7 +71,9 @@ const DoctorCard = ({ item, index, onClick, t }) => {
         className="absolute -inset-px rounded-[24px] z-0 pointer-events-none"
         animate={{
           opacity: hovered ? 1 : 0,
-          background: `radial-gradient(ellipse at 60% 0%, rgba(200,134,10,0.18) 0%, transparent 70%)`
+          background: isObsidian 
+            ? `radial-gradient(ellipse at 60% 0%, rgba(212,175,55,0.25) 0%, transparent 70%)`
+            : `radial-gradient(ellipse at 60% 0%, rgba(200,134,10,0.18) 0%, transparent 70%)`
         }}
         transition={{ duration: 0.4 }}
       />
@@ -81,7 +83,7 @@ const DoctorCard = ({ item, index, onClick, t }) => {
         className="relative overflow-hidden"
         style={{
           height: 200,
-          background: `linear-gradient(145deg, ${B.sand}80, ${B.pale})`,
+          background: isObsidian ? 'linear-gradient(145deg, #121212, #1f1f1f)' : `linear-gradient(145deg, ${B.sand}80, ${B.pale})`,
         }}
       >
         <motion.img
@@ -95,7 +97,7 @@ const DoctorCard = ({ item, index, onClick, t }) => {
         {/* Frosted bottom gradient over image */}
         <div
           className="absolute bottom-0 left-0 right-0 h-20 pointer-events-none"
-          style={{ background: 'linear-gradient(to top, rgba(255,255,255,0.9) 0%, transparent 100%)' }}
+          style={{ background: isObsidian ? 'linear-gradient(to top, rgba(13,13,13,0.95) 0%, transparent 100%)' : 'linear-gradient(to top, rgba(255,255,255,0.9) 0%, transparent 100%)' }}
         />
 
         {/* ── Availability badge ── */}
@@ -140,8 +142,8 @@ const DoctorCard = ({ item, index, onClick, t }) => {
         {/* Name */}
         <motion.h3
           className="text-[17px] font-extrabold leading-tight line-clamp-1"
-          style={{ color: B.dark }}
-          animate={{ color: hovered ? B.amber : B.dark }}
+          style={isObsidian ? { color: '#F5F2EA' } : { color: B.dark }}
+          animate={{ color: hovered ? (isObsidian ? '#E6C97A' : B.amber) : (isObsidian ? '#F5F2EA' : B.dark) }}
           transition={{ duration: 0.3 }}
         >
           {item.name}
@@ -149,8 +151,8 @@ const DoctorCard = ({ item, index, onClick, t }) => {
 
         {/* Speciality */}
         <div className="flex items-center gap-2">
-          <GraduationCap size={14} style={{ color: B.amber }} strokeWidth={2.2} />
-          <span className="text-[13px] font-semibold" style={{ color: B.light }}>
+          <GraduationCap size={14} style={{ color: isObsidian ? '#D4AF37' : B.amber }} strokeWidth={2.2} />
+          <span className="text-[13px] font-semibold" style={isObsidian ? { color: '#8A8A8A' } : { color: B.light }}>
             {translateSpeciality(item.speciality, t)}
           </span>
         </div>
@@ -159,14 +161,14 @@ const DoctorCard = ({ item, index, onClick, t }) => {
         <div className="flex flex-wrap gap-1.5">
           <span
             className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold"
-            style={{ background: '#f5ede8', color: B.mid, border: `1px solid ${B.sand}` }}
+            style={isObsidian ? { background: 'rgba(212,175,55,0.08)', color: '#E6C97A', border: '1px solid rgba(212,175,55,0.2)' } : { background: '#f5ede8', color: B.mid, border: `1px solid ${B.sand}` }}
           >
             <MapPin size={10} strokeWidth={2.5} />
             {item.address?.Location}
           </span>
           <span
             className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold"
-            style={{ background: '#fff8e6', color: B.amber, border: '1px solid #f0d080' }}
+            style={isObsidian ? { background: 'rgba(212,175,55,0.12)', color: '#D4AF37', border: '1px solid rgba(212,175,55,0.35)' } : { background: '#fff8e6', color: B.amber, border: '1px solid #f0d080' }}
           >
             {item.address?.line}
           </span>
@@ -175,7 +177,7 @@ const DoctorCard = ({ item, index, onClick, t }) => {
         {/* ── Divider line (animates in on hover) ── */}
         <motion.div
           className="h-px w-full rounded-full"
-          style={{ background: `linear-gradient(to right, ${B.sand}, transparent)` }}
+          style={{ background: isObsidian ? 'linear-gradient(to right, rgba(212,175,55,0.25), transparent)' : `linear-gradient(to right, ${B.sand}, transparent)` }}
           animate={{ opacity: hovered ? 1 : 0.4 }}
           transition={{ duration: 0.3 }}
         />
@@ -184,7 +186,7 @@ const DoctorCard = ({ item, index, onClick, t }) => {
         <div className="flex items-center justify-between">
           <motion.span
             className="text-[12px] font-bold tracking-wide"
-            style={{ color: B.mid }}
+            style={isObsidian ? { color: '#E6C97A' } : { color: B.mid }}
             animate={{ opacity: hovered ? 1 : 0, x: hovered ? 0 : -8 }}
             transition={{ duration: 0.3 }}
           >
@@ -194,12 +196,12 @@ const DoctorCard = ({ item, index, onClick, t }) => {
           {/* Arrow button */}
           <motion.div
             className="flex items-center justify-center w-8 h-8 rounded-full"
-            style={{ background: `linear-gradient(135deg, ${B.mid}, ${B.amber})` }}
+            style={{ background: isObsidian ? 'linear-gradient(135deg, #D4AF37, #8C6D23)' : `linear-gradient(135deg, ${B.mid}, ${B.amber})` }}
             animate={{
               scale: hovered ? 1.15 : 1,
               boxShadow: hovered
-                ? '0 6px 16px rgba(200,134,10,0.45)'
-                : '0 2px 6px rgba(200,134,10,0.2)',
+                ? (isObsidian ? '0 6px 20px rgba(212,175,55,0.45)' : '0 6px 16px rgba(200,134,10,0.45)')
+                : (isObsidian ? '0 2px 8px rgba(212,175,55,0.2)' : '0 2px 6px rgba(200,134,10,0.2)'),
             }}
             transition={{ duration: 0.3 }}
           >
@@ -207,7 +209,7 @@ const DoctorCard = ({ item, index, onClick, t }) => {
               animate={{ x: hovered ? 2 : 0 }}
               transition={{ duration: 0.25 }}
             >
-              <ArrowRight size={14} color="#fff" strokeWidth={2.5} />
+              <ArrowRight size={14} color={isObsidian ? '#050505' : '#fff'} strokeWidth={2.5} />
             </motion.div>
           </motion.div>
         </div>
@@ -216,7 +218,7 @@ const DoctorCard = ({ item, index, onClick, t }) => {
       {/* ── Bottom accent bar ── */}
       <motion.div
         className="absolute bottom-0 left-0 right-0 h-[3px] rounded-b-[24px]"
-        style={{ background: `linear-gradient(to right, ${B.mid}, ${B.amber}, ${B.mid})` }}
+        style={{ background: isObsidian ? 'linear-gradient(to right, #8C6D23, #D4AF37, #8C6D23)' : `linear-gradient(to right, ${B.mid}, ${B.amber}, ${B.mid})` }}
         animate={{ scaleX: hovered ? 1 : 0, opacity: hovered ? 1 : 0 }}
         initial={{ scaleX: 0, opacity: 0 }}
         transition={{ duration: 0.4 }}
@@ -229,7 +231,8 @@ const DoctorCard = ({ item, index, onClick, t }) => {
 const TopDoctors = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { doctors, isDoctorsLoading } = useContext(AppContext);
+  const { doctors, isDoctorsLoading, userdata } = useContext(AppContext);
+  const isObsidian = userdata?.subscription?.plan === 'Obsidian' && userdata?.subscription?.status === 'Active';
 
   return (
     <div className="flex flex-col gap-10 my-20 md:mx-10 px-4 overflow-hidden">
@@ -246,30 +249,30 @@ const TopDoctors = () => {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.1 }}
           className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest border"
-          style={{ background: B.pale, borderColor: B.sand, color: B.mid }}
+          style={isObsidian ? { background: 'rgba(212,175,55,0.15)', borderColor: 'rgba(212,175,55,0.3)', color: '#E6C97A' } : { background: B.pale, borderColor: B.sand, color: B.mid }}
         >
-          <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: B.amber }} />
+          <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: isObsidian ? '#D4AF37' : B.amber }} />
           {t('home.topDoctors') || 'Our Top Vets'}
         </motion.div>
 
         <motion.h2
-          className="text-3xl sm:text-4xl md:text-5xl font-extrabold"
-          style={{ color: B.dark }}
+          className={`text-3xl sm:text-4xl md:text-5xl font-extrabold ${isObsidian ? 'font-serif text-[#F5F2EA]' : ''}`}
+          style={isObsidian ? {} : { color: B.dark }}
         >
-          Trusted <span style={{ color: B.amber }}>Veterinary</span> Experts
+          Trusted <span style={{ color: isObsidian ? '#D4AF37' : B.amber }}>Veterinary</span> Experts
         </motion.h2>
 
         <motion.div
           className="h-1 rounded-full"
-          style={{ background: `linear-gradient(to right, ${B.mid}, ${B.amber})` }}
+          style={{ background: isObsidian ? 'linear-gradient(to right, #8C6D23, #D4AF37)' : `linear-gradient(to right, ${B.mid}, ${B.amber})` }}
           initial={{ width: 0 }}
           animate={{ width: 80 }}
           transition={{ duration: 0.8, delay: 0.3 }}
         />
 
         <motion.p
-          className="text-sm max-w-xs sm:max-w-md text-center"
-          style={{ color: B.light }}
+          className="text-sm max-w-xs sm:max-w-md text-center font-medium"
+          style={isObsidian ? { color: '#8A8A8A' } : { color: B.light }}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
@@ -293,16 +296,20 @@ const TopDoctors = () => {
             Array.from({ length: 5 }).map((_, i) => (
               <div
                 key={`sk-top-${i}`}
-                className="rounded-[24px] overflow-hidden border border-[rgba(232,213,176,0.6)] animate-pulse"
-                style={{ background: 'rgba(237, 228, 216, 0.85)', minHeight: '360px' }}
+                className="rounded-[24px] overflow-hidden animate-pulse border"
+                style={{ 
+                  background: isObsidian ? 'rgba(13, 13, 13, 0.85)' : 'rgba(237, 228, 216, 0.85)', 
+                  borderColor: isObsidian ? 'rgba(212,175,55,0.2)' : 'rgba(232,213,176,0.6)', 
+                  minHeight: '360px' 
+                }}
               >
-                <div className="h-[200px]" style={{ background: B.sand }} />
+                <div className="h-[200px]" style={{ background: isObsidian ? '#1e1e1e' : B.sand }} />
                 <div className="p-5 space-y-4">
-                  <div className="h-6 w-3/4 rounded-lg" style={{ background: B.sand }} />
-                  <div className="h-4 w-1/2 rounded-lg" style={{ background: B.sand }} />
+                  <div className="h-6 w-3/4 rounded-lg" style={{ background: isObsidian ? '#1e1e1e' : B.sand }} />
+                  <div className="h-4 w-1/2 rounded-lg" style={{ background: isObsidian ? '#1e1e1e' : B.sand }} />
                   <div className="flex gap-2">
-                    <div className="h-5 w-16 rounded-full" style={{ background: B.sand }} />
-                    <div className="h-5 w-20 rounded-full" style={{ background: B.sand }} />
+                    <div className="h-5 w-16 rounded-full" style={{ background: isObsidian ? '#1e1e1e' : B.sand }} />
+                    <div className="h-5 w-20 rounded-full" style={{ background: isObsidian ? '#1e1e1e' : B.sand }} />
                   </div>
                 </div>
               </div>
@@ -314,6 +321,7 @@ const TopDoctors = () => {
                 item={item}
                 index={index}
                 t={t}
+                isObsidian={isObsidian}
                 onClick={() => { navigate(`/appointment/${item._id}`); scrollTo(0, 0); }}
               />
             ))
@@ -329,11 +337,14 @@ const TopDoctors = () => {
         transition={{ delay: 0.8 }}
       >
         <motion.button
-          whileHover={{ scale: 1.05, boxShadow: '0 20px 40px rgba(90,64,53,0.35)' }}
+          whileHover={{ scale: 1.05, boxShadow: isObsidian ? '0 20px 45px rgba(212,175,55,0.2)' : '0 20px 40px rgba(90,64,53,0.35)' }}
           whileTap={{ scale: 0.97 }}
           onClick={() => { navigate('/doctors'); scrollTo(0, 0); }}
-          className="relative px-12 py-4 rounded-full text-white text-[15px] font-bold overflow-hidden shadow-xl"
-          style={{ background: `linear-gradient(135deg, ${B.mid}, ${B.amber})` }}
+          className={`relative px-12 py-4 rounded-full text-[15px] font-bold overflow-hidden shadow-xl ${isObsidian ? 'hover:opacity-95' : ''}`}
+          style={{ 
+            background: isObsidian ? 'linear-gradient(135deg, #D4AF37, #8C6D23)' : `linear-gradient(135deg, ${B.mid}, ${B.amber})`,
+            color: isObsidian ? '#050505' : '#fff'
+          }}
         >
           {/* Shimmer sweep */}
           <motion.div
@@ -348,7 +359,7 @@ const TopDoctors = () => {
               animate={{ x: [0, 6, 0] }}
               transition={{ duration: 1.4, repeat: Infinity }}
             >
-              <ArrowRight size={18} strokeWidth={2.5} />
+              <ArrowRight size={18} strokeWidth={2.5} color={isObsidian ? '#050505' : '#fff'} />
             </motion.div>
           </span>
         </motion.button>

@@ -389,6 +389,22 @@ const DoctorContextProvider = (props) => {
         }
     }, [dtoken, profileData]);
 
+    const getVcoClients = async () => {
+        try {
+            const { data } = await axios.get(backendurl + '/api/doctor/vco-clients', { headers: { dtoken } });
+            if (data.success) {
+                return data.clients;
+            } else {
+                toast.error(data.message);
+                return [];
+            }
+        } catch (error) {
+            toast.error(error.message);
+            console.error("Error fetching VCO clients:", error);
+            return [];
+        }
+    };
+
     const value = {
         dtoken, setdtoken, backendurl, appointments, setAppointments, getAppointments,
         completeAppointment, cancelAppointment, getdashdata, dashdata, setdashdata,
@@ -396,7 +412,8 @@ const DoctorContextProvider = (props) => {
         createReminder, getDoctorReminders, updateReminder, deleteReminder, getDailyEarnings,
         getPetReports, createPetReport, addVisitNote, uploadMedicalDocument, addVaccination, getPetHealthCard, getPetHealthCardById, updateVideoStatus,
         videoSlots, getVideoSlots, addVideoSlot,
-        doctorMessages, unreadDoctorMessagesCount, getDoctorMessages, markDoctorMessageAsRead
+        doctorMessages, unreadDoctorMessagesCount, getDoctorMessages, markDoctorMessageAsRead,
+        getVcoClients
     }
 
 

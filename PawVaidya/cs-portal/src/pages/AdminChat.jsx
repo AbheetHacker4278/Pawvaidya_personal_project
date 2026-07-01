@@ -13,7 +13,7 @@ const AdminChat = () => {
     const [socket, setSocket] = useState(null);
     const [isUploading, setIsUploading] = useState(false);
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-    const chatEndRef = useRef(null);
+    const messagesContainerRef = useRef(null);
     const fileInputRef = useRef(null);
 
     const commonEmojis = ['😊', '😂', '👍', '🙏', '❤️', '🔥', '✨', '✅', '❌', '👋', '🙌', '🐱', '🐶'];
@@ -82,9 +82,12 @@ const AdminChat = () => {
     }, [socket, adminId]);
 
     const scrollToBottom = () => {
-        setTimeout(() => {
-            chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-        }, 100);
+        if (messagesContainerRef.current) {
+            messagesContainerRef.current.scrollTo({
+                top: messagesContainerRef.current.scrollHeight,
+                behavior: "smooth"
+            });
+        }
     };
 
     useEffect(() => {
@@ -182,7 +185,7 @@ const AdminChat = () => {
             </div>
 
             {/* Messages Area */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-50/50 scrollbar-thin scrollbar-thumb-slate-200">
+            <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-50/50 scrollbar-thin scrollbar-thumb-slate-200">
                 {messages.length === 0 && (
                     <div className="h-full flex flex-col items-center justify-center opacity-40">
                         <FaCommentAlt size={40} className="mb-3 text-slate-300" />
@@ -222,7 +225,6 @@ const AdminChat = () => {
                         </div>
                     </div>
                 ))}
-                <div ref={chatEndRef} />
             </div>
 
             {/* Input Area */}

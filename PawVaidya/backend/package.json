@@ -47,6 +47,7 @@
     "nodemailer": "^8.0.9",
     "nodemon": "^3.1.7",
     "openai": "^4.75.0",
+    "@themaximalist/llm.js": "^1.0.3",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
     "passport-instagram": "^1.0.0",

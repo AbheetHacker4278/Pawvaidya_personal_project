@@ -37,11 +37,10 @@ const RequestTimer = ({ createdAt, onTimeout }) => {
   const seconds = timeLeft % 60;
 
   return (
-    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-black border transition-all ${
-      timeLeft < 60 
+    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-black border transition-all ${timeLeft < 60
         ? 'bg-rose-50 border-rose-200 text-rose-600 animate-pulse scale-105 shadow-sm shadow-rose-100'
         : 'bg-amber-50 border-amber-200 text-[#c8860a]'
-    }`}>
+      }`}>
       <Clock className={`w-3.5 h-3.5 ${timeLeft < 60 ? 'animate-spin' : ''}`} />
       {timeLeft > 0 ? `${minutes}:${seconds < 10 ? '0' : ''}${seconds} Window` : 'Expired'}
     </span>
@@ -66,11 +65,11 @@ const playEmergencySiren = () => {
       osc.stop(startTime + duration);
     };
     const now = audioCtx.currentTime;
-    playTone(880, now,        0.25); // High A - urgent burst
-    playTone(660, now + 0.3,  0.25); // Lower  - response drop
-    playTone(880, now + 0.6,  0.15); // High A - second burst
+    playTone(880, now, 0.25); // High A - urgent burst
+    playTone(660, now + 0.3, 0.25); // Lower  - response drop
+    playTone(880, now + 0.6, 0.15); // High A - second burst
     playTone(1046, now + 0.8, 0.35); // C6     - peak alert
-    playTone(880, now + 1.2,  0.4);  // Final A - hold
+    playTone(880, now + 1.2, 0.4);  // Final A - hold
   } catch (err) {
     console.warn('Web Audio API siren blocked (requires user gesture first):', err.message);
   }
@@ -183,8 +182,8 @@ const DoctorEmergencies = () => {
     socket.on('new-emergency-alert', ({ request }) => {
       // Safety check: ensure doctor is still on this route before firing toast
       if (window.location.pathname !== '/doctor-emergencies') {
-          console.log("Websocket: Suppressing emergency alert as doctor is not on the emergency desk.");
-          return;
+        console.log("Websocket: Suppressing emergency alert as doctor is not on the emergency desk.");
+        return;
       }
 
       console.log("Websocket: New emergency in district alert received!", request);
@@ -347,24 +346,24 @@ const DoctorEmergencies = () => {
   };
 
   // Filters logic
-  const pendingRequests = requests.filter(r => 
-    ['Pending', 'Waiting for Doctor Approval'].includes(r.status) && 
+  const pendingRequests = requests.filter(r =>
+    ['Pending', 'Waiting for Doctor Approval'].includes(r.status) &&
     (!r.docId || r.docId._id === profileData?._id)
   );
 
-  const activeConsultations = requests.filter(r => 
-    ['Payment Pending', 'Approved', 'Active'].includes(r.status) && 
+  const activeConsultations = requests.filter(r =>
+    ['Payment Pending', 'Approved', 'Active'].includes(r.status) &&
     r.docId?._id === profileData?._id
   );
 
-  const completedCases = requests.filter(r => 
-    ['Completed', 'Rejected'].includes(r.status) && 
+  const completedCases = requests.filter(r =>
+    ['Completed', 'Rejected'].includes(r.status) &&
     r.docId?._id === profileData?._id
   );
 
   return (
     <div className="m-6 animate-fadeIn">
-      
+
       {/* HEADER BAR */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 border-b border-gray-100 pb-6">
         <div className="flex items-center gap-4">
@@ -394,11 +393,10 @@ const DoctorEmergencies = () => {
       <div className="flex gap-2 p-1.5 bg-slate-100 rounded-2xl mb-8 max-w-xl shadow-inner border border-slate-200/40">
         <button
           onClick={() => setActiveTab('pending')}
-          className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-black rounded-xl transition-all ${
-            activeTab === 'pending'
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-black rounded-xl transition-all ${activeTab === 'pending'
               ? 'bg-white text-rose-600 shadow-md'
               : 'text-slate-600 hover:text-slate-950 hover:bg-white/40'
-          }`}
+            }`}
         >
           <AlertCircle className="w-4 h-4" />
           Pending Alerts
@@ -411,11 +409,10 @@ const DoctorEmergencies = () => {
 
         <button
           onClick={() => setActiveTab('active')}
-          className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-black rounded-xl transition-all ${
-            activeTab === 'active'
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-black rounded-xl transition-all ${activeTab === 'active'
               ? 'bg-white text-amber-600 shadow-md'
               : 'text-slate-600 hover:text-slate-950 hover:bg-white/40'
-          }`}
+            }`}
         >
           <Activity className="w-4 h-4" />
           In Session
@@ -428,11 +425,10 @@ const DoctorEmergencies = () => {
 
         <button
           onClick={() => setActiveTab('completed')}
-          className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-black rounded-xl transition-all ${
-            activeTab === 'completed'
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-black rounded-xl transition-all ${activeTab === 'completed'
               ? 'bg-white text-emerald-600 shadow-md'
               : 'text-slate-600 hover:text-slate-950 hover:bg-white/40'
-          }`}
+            }`}
         >
           <CheckCircle className="w-4 h-4" />
           Resolved Cases
@@ -445,11 +441,10 @@ const DoctorEmergencies = () => {
 
         <button
           onClick={() => setActiveTab('settings')}
-          className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-black rounded-xl transition-all ${
-            activeTab === 'settings'
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-black rounded-xl transition-all ${activeTab === 'settings'
               ? 'bg-white text-indigo-600 shadow-md'
               : 'text-slate-600 hover:text-slate-950 hover:bg-white/40'
-          }`}
+            }`}
         >
           <Settings className="w-4 h-4" />
           Desk Settings
@@ -465,7 +460,7 @@ const DoctorEmergencies = () => {
           exit={{ opacity: 0, y: -15 }}
           transition={{ duration: 0.2 }}
         >
-          
+
           {/* PENDING ALERTS TAB */}
           {activeTab === 'pending' && (
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
@@ -488,7 +483,7 @@ const DoctorEmergencies = () => {
                   >
                     {/* Urgency header backdrop */}
                     <div className="absolute top-0 right-0 left-0 h-1.5 bg-gradient-to-r from-rose-500 to-amber-500" />
-                    
+
                     <div>
                       {/* Top status headers */}
                       <div className="flex flex-wrap items-center justify-between gap-3 mb-4 mt-2">
@@ -597,15 +592,14 @@ const DoctorEmergencies = () => {
                     <div>
                       {/* Top indicators */}
                       <div className="flex flex-wrap items-center justify-between gap-3 mb-4 mt-2">
-                        <span className={`px-3 py-1 rounded-xl text-[10px] font-black border uppercase tracking-wide flex items-center gap-1 ${
-                          req.status === 'Payment Pending'
+                        <span className={`px-3 py-1 rounded-xl text-[10px] font-black border uppercase tracking-wide flex items-center gap-1 ${req.status === 'Payment Pending'
                             ? 'bg-rose-50 border-rose-200 text-rose-600 animate-pulse'
                             : 'bg-emerald-50 border-emerald-200 text-emerald-600'
-                        }`}>
+                          }`}>
                           <span className="w-1.5 h-1.5 rounded-full bg-current animate-ping" />
                           {req.status === 'Payment Pending' ? 'Awaiting User Payment' : 'Live Consultation Session'}
                         </span>
-                        
+
                         <span className="text-xs font-bold text-slate-400">
                           ID: #{req._id.substring(req._id.length - 6).toUpperCase()}
                         </span>
@@ -631,7 +625,7 @@ const DoctorEmergencies = () => {
                       {/* Contact Channels */}
                       <div className="bg-slate-50 border border-slate-100 p-4 rounded-2xl mb-6 space-y-3.5">
                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Medical Case & Contact Sheet</p>
-                        
+
                         <div className="flex items-center justify-between text-xs font-bold text-slate-700">
                           <span className="text-slate-400 font-medium">Emergency Classification:</span>
                           <span className="text-rose-600">{req.emergencyType}</span>
@@ -671,15 +665,15 @@ const DoctorEmergencies = () => {
                     <div className="mt-4 pt-4 border-t border-gray-100 flex flex-col gap-2.5">
                       <div className="flex gap-2">
                         {req.userId?.phone && (
-                          <a 
+                          <a
                             href={`tel:${req.userId.phone}`}
                             className="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-black text-slate-700 transition"
                           >
                             <Phone className="w-4 h-4" /> Direct Phone Line
                           </a>
                         )}
-                        <a 
-                          href={`${window.location.protocol}//${window.location.host}/doctor-chat`} 
+                        <a
+                          href={`${window.location.protocol}//${window.location.host}/doctor-chat`}
                           target="_blank"
                           rel="noreferrer"
                           className="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-xs font-black text-slate-700 transition"
@@ -737,7 +731,7 @@ const DoctorEmergencies = () => {
                         <input
                           type="text"
                           value={emergencySettings.activeDistrict}
-                          onChange={(e) => setEmergencySettings({...emergencySettings, activeDistrict: e.target.value})}
+                          onChange={(e) => setEmergencySettings({ ...emergencySettings, activeDistrict: e.target.value })}
                           className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition"
                           placeholder="e.g. SURAT"
                           required
@@ -753,7 +747,7 @@ const DoctorEmergencies = () => {
                         <input
                           type="text"
                           value={emergencySettings.activeState}
-                          onChange={(e) => setEmergencySettings({...emergencySettings, activeState: e.target.value})}
+                          onChange={(e) => setEmergencySettings({ ...emergencySettings, activeState: e.target.value })}
                           className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition"
                           placeholder="e.g. GUJARAT"
                           required
@@ -770,7 +764,7 @@ const DoctorEmergencies = () => {
                           min="1"
                           max="10"
                           value={emergencySettings.maxConcurrentEmergencies}
-                          onChange={(e) => setEmergencySettings({...emergencySettings, maxConcurrentEmergencies: parseInt(e.target.value)})}
+                          onChange={(e) => setEmergencySettings({ ...emergencySettings, maxConcurrentEmergencies: parseInt(e.target.value) })}
                           className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition"
                           required
                         />
@@ -785,7 +779,7 @@ const DoctorEmergencies = () => {
                       </div>
                       <button
                         type="button"
-                        onClick={() => setEmergencySettings({...emergencySettings, isEmergencyAvailable: !emergencySettings.isEmergencyAvailable})}
+                        onClick={() => setEmergencySettings({ ...emergencySettings, isEmergencyAvailable: !emergencySettings.isEmergencyAvailable })}
                         className={`w-12 h-6 rounded-full relative transition-colors ${emergencySettings.isEmergencyAvailable ? 'bg-emerald-500' : 'bg-slate-300'}`}
                       >
                         <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${emergencySettings.isEmergencyAvailable ? 'right-1' : 'left-1'}`} />
@@ -801,7 +795,7 @@ const DoctorEmergencies = () => {
                     >
                       {updatingSettings ? <RefreshCw className="w-5 h-5 animate-spin mx-auto" /> : "Save Desk Configuration"}
                     </button>
-                    
+
                     <button
                       type="button"
                       onClick={() => {
@@ -841,14 +835,13 @@ const DoctorEmergencies = () => {
                     <div>
                       {/* Top tags */}
                       <div className="flex flex-wrap items-center justify-between gap-3 mb-4 mt-1">
-                        <span className={`px-2.5 py-1 rounded-xl text-[10px] font-black border uppercase tracking-wide flex items-center gap-1 ${
-                          req.status === 'Completed'
+                        <span className={`px-2.5 py-1 rounded-xl text-[10px] font-black border uppercase tracking-wide flex items-center gap-1 ${req.status === 'Completed'
                             ? 'bg-emerald-50 border-emerald-200 text-emerald-600'
                             : 'bg-rose-50 border-rose-200 text-rose-600'
-                        }`}>
+                          }`}>
                           {req.status === 'Completed' ? 'RESOLVED & COMPLETED' : 'DECLINED / REJECTED'}
                         </span>
-                        
+
                         <span className="text-xs font-semibold text-slate-400">
                           Date: {new Date(req.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
                         </span>

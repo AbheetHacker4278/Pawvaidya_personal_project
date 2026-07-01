@@ -33,6 +33,7 @@
     "nodemailer": "^7.0.10",
     "nsfwjs": "^4.3.0",
     "openai": "^4.73.1",
+    "@themaximalist/llm.js": "^1.0.3",
     "papaparse": "^5.5.2",
     "qrcode.react": "^4.2.0",
     "react": "^18.3.1",

@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import specialityimage from '../assets/New/Speciality_Doctors.png';
+import { AppContext } from '../context/AppContext';
 
 // ─── Brand palette ────────────────────────────────────────────────────────────
 const B = {
@@ -16,6 +17,8 @@ const B = {
 
 const SpecialityMenu = () => {
   const { t } = useTranslation();
+  const { userdata } = useContext(AppContext);
+  const isObsidian = userdata?.subscription?.plan === 'Obsidian' && userdata?.subscription?.status === 'Active';
 
   return (
     <motion.div
@@ -33,9 +36,9 @@ const SpecialityMenu = () => {
         viewport={{ once: true }}
         transition={{ delay: 0.1, duration: 0.5 }}
         className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest border"
-        style={{ background: B.pale, borderColor: B.sand, color: B.mid }}
+        style={isObsidian ? { background: 'rgba(212,175,55,0.15)', borderColor: 'rgba(212,175,55,0.3)', color: '#E6C97A' } : { background: B.pale, borderColor: B.sand, color: B.mid }}
       >
-        <span className="w-1.5 h-1.5 rounded-full" style={{ background: B.amber }} />
+        <span className="w-1.5 h-1.5 rounded-full" style={{ background: isObsidian ? '#D4AF37' : B.amber }} />
         {t('home.specialityLabel')}
       </motion.div>
 
@@ -44,8 +47,8 @@ const SpecialityMenu = () => {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         transition={{ delay: 0.2, duration: 0.6 }}
-        className="text-2xl sm:text-3xl font-bold text-center"
-        style={{ color: B.dark }}
+        className={`text-2xl sm:text-3xl font-bold text-center ${isObsidian ? 'font-serif text-[#F5F2EA]' : ''}`}
+        style={isObsidian ? {} : { color: B.dark }}
       >
         {t('home.findBySpeciality')}
       </motion.h2>
@@ -57,7 +60,7 @@ const SpecialityMenu = () => {
         viewport={{ once: true }}
         transition={{ delay: 0.3, duration: 0.6 }}
         className="h-1 rounded-full"
-        style={{ background: `linear-gradient(to right, ${B.mid}, ${B.amber})` }}
+        style={{ background: isObsidian ? 'linear-gradient(to right, #8C6D23, #D4AF37)' : `linear-gradient(to right, ${B.mid}, ${B.amber})` }}
       />
 
       <motion.p
@@ -66,7 +69,7 @@ const SpecialityMenu = () => {
         viewport={{ once: true }}
         transition={{ delay: 0.35, duration: 0.5 }}
         className="w-full sm:w-2/3 lg:w-1/3 text-center text-sm"
-        style={{ color: B.light }}
+        style={isObsidian ? { color: '#8A8A8A' } : { color: B.light }}
       >
         {t('home.trustedDoctors')} {t('home.scheduleAppointment')}
       </motion.p>
@@ -79,11 +82,11 @@ const SpecialityMenu = () => {
         transition={{ delay: 0.45, duration: 0.8, ease: 'easeOut' }}
         whileHover={{ scale: 1.02 }}
         className="relative rounded-3xl overflow-hidden shadow-xl border"
-        style={{ borderColor: B.sand }}
+        style={isObsidian ? { borderColor: 'rgba(212,175,55,0.25)', boxShadow: '0 25px 50px rgba(0,0,0,0.95)' } : { borderColor: B.sand }}
       >
         {/* Warm tint overlay */}
         <div className="absolute inset-0 pointer-events-none"
-          style={{ background: `linear-gradient(135deg, ${B.mid}10, transparent 60%, ${B.amber}08)` }} />
+          style={{ background: isObsidian ? 'linear-gradient(135deg, rgba(212,175,55,0.08), transparent 60%)' : `linear-gradient(135deg, ${B.mid}10, transparent 60%, ${B.amber}08)` }} />
         <img
           src={specialityimage}
           alt="Speciality Doctors"

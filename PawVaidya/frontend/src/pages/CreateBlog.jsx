@@ -164,7 +164,7 @@ const CreateBlog = () => {
 
       if (response.success) {
         toast.success('Blog post created successfully!');
-        navigate(roomId ? `/room/${roomId}` : '/community-blogs');
+        navigate(roomId ? `/room/${roomId}` : '/community?tab=blogs');
       } else {
         toast.error(response.message);
       }
@@ -175,16 +175,20 @@ const CreateBlog = () => {
     }
   };
 
+  const isObsidian = userdata?.subscription?.status === 'Active' && userdata?.subscription?.plan === 'Obsidian';
+
   return (
-    <div className="min-h-screen py-8" style={{ backgroundColor: '#f2e4c7' }}>
+    <div className="min-h-screen py-8 transition-colors duration-500" style={isObsidian ? { backgroundColor: '#050505' } : { backgroundColor: '#f2e4c7' }}>
       <div className="max-w-4xl mx-auto px-4">
-        <div className="bg-white rounded-lg shadow-md p-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-6">{t('blogs.createBlog')}</h1>
+        <div className={`rounded-2xl p-8 border transition-all duration-500 ${
+          isObsidian ? 'bg-[#0E0E0E] border-zinc-800/80 shadow-[0_20px_50px_rgba(0,0,0,0.85)] text-white' : 'bg-white shadow-md'
+        }`}>
+          <h1 className={`text-3xl font-black mb-6 tracking-tight ${isObsidian ? 'text-[#F5F2EA]' : 'text-gray-900'}`}>{t('blogs.createBlog')}</h1>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Title */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className={`block text-sm font-bold mb-2 ${isObsidian ? 'text-neutral-300' : 'text-gray-700'}`}>
                 {t('blogs.blogTitle')} *
               </label>
               <input
@@ -192,7 +196,11 @@ const CreateBlog = () => {
                 name="title"
                 value={formData.title}
                 onChange={handleInputChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 transition-all ${
+                  isObsidian 
+                    ? 'bg-[#151515] border-zinc-800 focus:ring-[#E6C97A] text-white focus:border-[#E6C97A]/50 placeholder-neutral-600' 
+                    : 'border-gray-300 focus:ring-green-500 focus:border-green-500'
+                }`}
                 placeholder="Enter blog title"
                 required
               />
@@ -200,7 +208,7 @@ const CreateBlog = () => {
 
             {/* Content */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className={`block text-sm font-bold mb-2 ${isObsidian ? 'text-neutral-300' : 'text-gray-700'}`}>
                 {t('blogs.content')} *
               </label>
               <textarea
@@ -208,7 +216,11 @@ const CreateBlog = () => {
                 value={formData.content}
                 onChange={handleInputChange}
                 rows={10}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 transition-all ${
+                  isObsidian 
+                    ? 'bg-[#151515] border-zinc-800 focus:ring-[#E6C97A] text-white focus:border-[#E6C97A]/50 placeholder-neutral-600' 
+                    : 'border-gray-300 focus:ring-green-500 focus:border-green-500'
+                }`}
                 placeholder={t('blogs.content')}
                 required
               />
@@ -216,7 +228,7 @@ const CreateBlog = () => {
 
             {/* Tags */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className={`block text-sm font-bold mb-2 ${isObsidian ? 'text-neutral-300' : 'text-gray-700'}`}>
                 {t('blogs.tags')}
               </label>
               <input
@@ -224,14 +236,18 @@ const CreateBlog = () => {
                 name="tags"
                 value={formData.tags}
                 onChange={handleInputChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 transition-all ${
+                  isObsidian 
+                    ? 'bg-[#151515] border-zinc-800 focus:ring-[#E6C97A] text-white focus:border-[#E6C97A]/50 placeholder-neutral-600' 
+                    : 'border-gray-300 focus:ring-green-500 focus:border-green-500'
+                }`}
                 placeholder={t('blogs.tagsPlaceholder')}
               />
             </div>
 
             {/* Images */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className={`block text-sm font-bold mb-2 ${isObsidian ? 'text-neutral-300' : 'text-gray-700'}`}>
                 {t('blogs.images')} ({t('blogs.maxImages')})
               </label>
               <div className="flex flex-wrap gap-4 mb-4">
@@ -252,9 +268,11 @@ const CreateBlog = () => {
                   </div>
                 ))}
               </div>
-              <label className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 w-fit">
+              <label className={`flex items-center gap-2 px-4 py-2 border rounded-lg cursor-pointer transition-colors w-fit ${
+                isObsidian ? 'bg-[#151515] border-zinc-800 text-neutral-300 hover:bg-[#202020]' : 'hover:bg-gray-50'
+              }`}>
                 <PhotoIcon className="w-5 h-5 text-gray-600" />
-                <span className="text-sm text-gray-700">{t('blogs.addImages')}</span>
+                <span className="text-sm">{t('blogs.addImages')}</span>
                 <input
                   type="file"
                   accept="image/*"
@@ -267,7 +285,7 @@ const CreateBlog = () => {
 
             {/* Videos */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className={`block text-sm font-bold mb-2 ${isObsidian ? 'text-neutral-300' : 'text-gray-700'}`}>
                 {t('blogs.videos')} ({t('blogs.maxVideos')})
               </label>
               <div className="flex flex-wrap gap-4 mb-4">
@@ -288,9 +306,11 @@ const CreateBlog = () => {
                   </div>
                 ))}
               </div>
-              <label className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 w-fit">
+              <label className={`flex items-center gap-2 px-4 py-2 border rounded-lg cursor-pointer transition-colors w-fit ${
+                isObsidian ? 'bg-[#151515] border-zinc-800 text-neutral-300 hover:bg-[#202020]' : 'hover:bg-gray-50'
+              }`}>
                 <VideoCameraIcon className="w-5 h-5 text-gray-600" />
-                <span className="text-sm text-gray-700">{t('blogs.addVideos')}</span>
+                <span className="text-sm">{t('blogs.addVideos')}</span>
                 <input
                   type="file"
                   accept="video/*"
@@ -306,14 +326,20 @@ const CreateBlog = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="flex-1 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className={`flex-1 px-6 py-3 rounded-lg font-black transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 ${
+                  isObsidian 
+                    ? 'bg-gradient-to-r from-[#8C6D23] via-[#E6C97A] to-[#8C6D23] text-black shadow-lg shadow-[#E6C97A]/10' 
+                    : 'bg-green-600 text-white hover:bg-green-700'
+                }`}
               >
                 {loading ? t('common.loading') : t('blogs.createPostBtn')}
               </button>
               <button
                 type="button"
-                onClick={() => navigate(roomId ? `/room/${roomId}` : '/community-blogs')}
-                className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                onClick={() => navigate(roomId ? `/room/${roomId}` : '/community?tab=blogs')}
+                className={`px-6 py-3 rounded-lg border font-bold transition-colors ${
+                  isObsidian ? 'border-zinc-800 text-neutral-400 hover:text-white hover:bg-zinc-950' : 'border-gray-300 hover:bg-gray-50'
+                }`}
               >
                 {t('common.cancel')}
               </button>

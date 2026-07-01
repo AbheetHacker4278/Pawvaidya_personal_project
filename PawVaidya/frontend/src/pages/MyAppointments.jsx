@@ -107,11 +107,10 @@ const DueTimer = ({ dueDate }) => {
   }, [dueDate]);
 
   return (
-    <span className={`font-mono text-[11px] font-bold px-2.5 py-1 rounded-full ${
-      isUrgent 
-        ? 'bg-rose-50 text-rose-600 border border-rose-200 animate-pulse' 
+    <span className={`font-mono text-[11px] font-bold px-2.5 py-1 rounded-full ${isUrgent
+        ? 'bg-rose-50 text-rose-600 border border-rose-200 animate-pulse'
         : 'bg-amber-50 text-amber-700 border border-amber-200'
-    }`}>
+      }`}>
       {timeLeft}
     </span>
   );
@@ -164,6 +163,7 @@ const EmergencyBookingView = ({
   fetchError = null,
   isFetchingEmergencies = false
 }) => {
+  const isObsidian = userdata?.subscription?.plan === 'Obsidian';
   const navigate = useNavigate();
   const hasActiveEmergency = emergencyRequests.some(r => ['Pending', 'Waiting for Doctor Approval', 'Payment Pending'].includes(r.status));
   const activeEmergency = emergencyRequests.find(r => ['Pending', 'Waiting for Doctor Approval', 'Payment Pending'].includes(r.status));
@@ -198,25 +198,25 @@ const EmergencyBookingView = ({
   if (isFetchingEmergencies && emergencyRequests.length === 0) {
     return (
       <div className="space-y-6">
-        <div className="p-6 md:p-8 rounded-3xl bg-white border border-[#e8d5b0] shadow-sm animate-pulse space-y-6">
+        <div className={`p-6 md:p-8 rounded-3xl shadow-sm animate-pulse space-y-6 ${isObsidian ? 'bg-[#121212] border border-zinc-800' : 'bg-white border border-[#e8d5b0]'}`}>
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-slate-200 rounded-full"></div>
+            <div className={`w-12 h-12 rounded-full ${isObsidian ? 'bg-zinc-800' : 'bg-slate-200'}`}></div>
             <div className="space-y-2 flex-1">
-              <div className="h-4 bg-slate-200 rounded w-1/4"></div>
-              <div className="h-3 bg-slate-100 rounded w-1/3"></div>
+              <div className={`h-4 rounded w-1/4 ${isObsidian ? 'bg-zinc-850' : 'bg-slate-200'}`}></div>
+              <div className={`h-3 rounded w-1/3 ${isObsidian ? 'bg-zinc-900' : 'bg-slate-100'}`}></div>
             </div>
           </div>
           <div className="space-y-3">
-            <div className="h-20 bg-slate-100 rounded-2xl w-full"></div>
-            <div className="h-4 bg-slate-200 rounded w-5/6"></div>
-            <div className="h-4 bg-slate-200 rounded w-4/6"></div>
+            <div className={`h-20 rounded-2xl w-full ${isObsidian ? 'bg-zinc-900' : 'bg-slate-100'}`}></div>
+            <div className={`h-4 rounded w-5/6 ${isObsidian ? 'bg-zinc-850' : 'bg-slate-200'}`}></div>
+            <div className={`h-4 rounded w-4/6 ${isObsidian ? 'bg-zinc-850' : 'bg-slate-200'}`}></div>
           </div>
         </div>
-        <div className="p-6 md:p-8 rounded-3xl bg-white border border-[#e8d5b0] shadow-sm animate-pulse space-y-4">
-          <div className="h-4 bg-slate-200 rounded w-1/5"></div>
+        <div className={`p-6 md:p-8 rounded-3xl shadow-sm animate-pulse space-y-4 ${isObsidian ? 'bg-[#121212] border border-zinc-850' : 'bg-white border border-[#e8d5b0]'}`}>
+          <div className={`h-4 rounded w-1/5 ${isObsidian ? 'bg-zinc-850' : 'bg-slate-200'}`}></div>
           <div className="grid grid-cols-2 gap-4">
-            <div className="h-10 bg-slate-100 rounded-xl w-full"></div>
-            <div className="h-10 bg-slate-100 rounded-xl w-full"></div>
+            <div className={`h-10 rounded-xl w-full ${isObsidian ? 'bg-zinc-900' : 'bg-slate-100'}`}></div>
+            <div className={`h-10 rounded-xl w-full ${isObsidian ? 'bg-zinc-900' : 'bg-slate-100'}`}></div>
           </div>
         </div>
       </div>
@@ -226,18 +226,18 @@ const EmergencyBookingView = ({
   // 2. ERROR STATE WITH RETRY
   if (fetchError) {
     return (
-      <div className="p-8 rounded-3xl bg-white border border-[#e8d5b0] text-center space-y-5 shadow-sm max-w-xl mx-auto my-12">
-        <div className="inline-flex p-4 bg-rose-50 border border-rose-100 rounded-full text-rose-500 animate-pulse">
+      <div className={`p-8 rounded-3xl text-center space-y-5 shadow-sm max-w-xl mx-auto my-12 ${isObsidian ? 'bg-[#121212] border border-zinc-800' : 'bg-white border border-[#e8d5b0]'}`}>
+        <div className={`inline-flex p-4 rounded-full text-rose-500 animate-pulse ${isObsidian ? 'bg-red-950/20 border border-red-900/40' : 'bg-rose-50 border border-rose-100'}`}>
           <AlertCircle className="w-8 h-8" />
         </div>
-        <h3 className="text-base font-extrabold text-[#3d2b1f]">Could Not Sync Desk</h3>
-        <p className="text-xs text-slate-500 leading-relaxed">
+        <h3 className={`text-base font-extrabold ${isObsidian ? 'text-white' : 'text-[#3d2b1f]'}`}>Could Not Sync Desk</h3>
+        <p className={`text-xs leading-relaxed ${isObsidian ? 'text-neutral-400' : 'text-slate-500'}`}>
           {fetchError}. Please verify your network connection or click retry below.
         </p>
         <button
           type="button"
           onClick={fetchEmergencyRequests}
-          className="px-6 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition shadow-md active:scale-95"
+          className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition shadow-md active:scale-95 ${isObsidian ? 'bg-red-900/40 text-red-200 border border-red-800 hover:bg-red-900/60' : 'bg-rose-600 hover:bg-rose-700 text-white'}`}
         >
           Retry Connection
         </button>
@@ -249,7 +249,7 @@ const EmergencyBookingView = ({
     <div className="space-y-8 pb-16">
       {/* ── OFFLINE STATUS BANNER ───────────────────────────────────────── */}
       {!isOnline && (
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           className="p-4 rounded-3xl bg-amber-50 border-2 border-amber-200 text-amber-800 text-xs font-semibold flex items-center gap-3"
@@ -261,9 +261,9 @@ const EmergencyBookingView = ({
           <div>
             <strong className="font-extrabold">Offline Mode Active.</strong> We have paused real-time tracking queues. Your current changes will sync automatically once connection returns.
           </div>
-          <button 
-            type="button" 
-            onClick={fetchEmergencyRequests} 
+          <button
+            type="button"
+            onClick={fetchEmergencyRequests}
             className="ml-auto px-3.5 py-1.5 bg-amber-100 hover:bg-amber-200 border border-amber-200 rounded-xl text-[10px] font-black uppercase tracking-wider transition"
           >
             Force Sync
@@ -273,7 +273,7 @@ const EmergencyBookingView = ({
 
       {/* ── CRITICAL EXPIRY REMINDER BANNERS ────────────────────────────── */}
       {userDues.some(due => !due.isPaid && isNearingExpiry(due.dueDate)) && (
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           className="p-4 rounded-3xl bg-gradient-to-r from-red-500 to-amber-600 text-white shadow-lg border border-red-400 flex flex-col md:flex-row items-center justify-between gap-4 relative overflow-hidden"
@@ -290,8 +290,8 @@ const EmergencyBookingView = ({
               </p>
             </div>
           </div>
-          <button 
-            type="button" 
+          <button
+            type="button"
             onClick={() => {
               const pendingDue = userDues.find(due => !due.isPaid && isNearingExpiry(due.dueDate));
               if (pendingDue) handleRepayDue(pendingDue._id);
@@ -306,23 +306,23 @@ const EmergencyBookingView = ({
 
       {/* ── PENDING EMERGENCY DUES SECTION ──────────────────────────────── */}
       {userDues.some(due => !due.isPaid) && (
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          className="p-6 rounded-3xl bg-white border border-[#e8d5b0] shadow-md space-y-6"
+          className={`p-6 rounded-3xl shadow-md space-y-6 ${isObsidian ? 'bg-[#121212] border border-zinc-800' : 'bg-white border border-[#e8d5b0]'}`}
         >
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-[#e8d5b0]/60 pb-4">
+          <div className={`flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b pb-4 ${isObsidian ? 'border-zinc-800' : 'border-[#e8d5b0]/60'}`}>
             <div>
-              <h3 className="text-base font-extrabold text-[#3d2b1f] flex items-center gap-2">
-                <CreditCard className="w-5 h-5 text-[#c8860a]" /> Pending Emergency Dues & Billing
+              <h3 className={`text-base font-extrabold flex items-center gap-2 ${isObsidian ? 'text-white' : 'text-[#3d2b1f]'}`}>
+                <CreditCard className={`w-5 h-5 ${isObsidian ? 'text-[#E6C97A]' : 'text-[#c8860a]'}`} /> Pending Emergency Dues & Billing
               </h3>
-              <p className="text-[10px] text-[#7a5a48] font-semibold mt-0.5">
+              <p className={`text-[10px] font-semibold mt-0.5 ${isObsidian ? 'text-neutral-400' : 'text-[#7a5a48]'}`}>
                 Outstanding dues must be cleared within 4 days of the consultation to keep your account active.
               </p>
             </div>
-            
+
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-extrabold bg-amber-50 text-amber-700 px-3 py-1 rounded-full border border-amber-200">
+              <span className={`text-[10px] font-extrabold px-3 py-1 rounded-full border ${isObsidian ? 'bg-amber-950/20 text-[#E6C97A] border-amber-900/40' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
                 {userDues.filter(d => !d.isPaid).length} Unpaid Dues
               </span>
             </div>
@@ -336,56 +336,53 @@ const EmergencyBookingView = ({
               const canAfford = walletBalance >= due.amountDue;
 
               return (
-                <div 
+                <div
                   key={due._id}
-                  className={`p-5 rounded-2xl border transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-4 ${
-                    isCritical
-                      ? 'bg-red-50/20 border-red-200 shadow-md ring-1 ring-red-100 animate-pulse-subtle'
-                      : 'bg-[#fffcf7] border-[#e8d5b0]'
-                  }`}
+                  className={`p-5 rounded-2xl border transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-4 ${isCritical
+                      ? (isObsidian ? 'bg-red-950/15 border-red-900/30' : 'bg-red-50/20 border-red-200 shadow-md ring-1 ring-red-100 animate-pulse-subtle')
+                      : (isObsidian ? 'bg-zinc-900 border-zinc-800' : 'bg-[#fffcf7] border-[#e8d5b0]')
+                    }`}
                 >
                   <div className="flex items-start gap-4 flex-1">
-                    <div className={`p-3 rounded-xl border flex items-center justify-center ${
-                      isCritical
-                        ? 'bg-red-100/40 border-red-200 text-red-600'
-                        : 'bg-amber-100/40 border-amber-200 text-[#c8860a]'
-                    }`}>
+                    <div className={`p-3 rounded-xl border flex items-center justify-center ${isCritical
+                        ? (isObsidian ? 'bg-red-950/40 border-red-900/30 text-red-400' : 'bg-red-100/40 border-red-200 text-red-600')
+                        : (isObsidian ? 'bg-amber-950/40 border-amber-900/30 text-[#E6C97A]' : 'bg-amber-100/40 border-amber-200 text-[#c8860a]')
+                      }`}>
                       <Coins className="w-5 h-5" />
                     </div>
-                    
+
                     <div className="space-y-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
-                          isCritical 
-                            ? 'bg-red-50 border-red-200 text-red-700 animate-pulse' 
-                            : 'bg-amber-50 border-amber-200 text-amber-700'
-                        }`}>
+                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${isCritical
+                            ? (isObsidian ? 'bg-red-950/40 border-red-900/30 text-red-400 animate-pulse' : 'bg-red-50 border-red-200 text-red-700 animate-pulse')
+                            : (isObsidian ? 'bg-amber-950/40 border-amber-900/30 text-[#E6C97A]' : 'bg-amber-50 border-amber-200 text-amber-700')
+                          }`}>
                           <Clock className="w-3 h-3" /> Repayment Due
                         </span>
-                        
-                        <span className="text-[10px] text-[#7a5a48] font-semibold">
+
+                        <span className={`text-[10px] font-semibold ${isObsidian ? 'text-neutral-400' : 'text-[#7a5a48]'}`}>
                           Created {new Date(due.createdAt).toLocaleDateString()}
                         </span>
                       </div>
 
-                      <h4 className="text-sm font-extrabold text-[#3d2b1f] flex items-center gap-1.5">
+                      <h4 className={`text-sm font-extrabold flex items-center gap-1.5 ${isObsidian ? 'text-white' : 'text-[#3d2b1f]'}`}>
                         Emergency Consultation Dues
-                        <span className="text-xs text-amber-700">({due.requestId?.emergencyType || 'General'})</span>
+                        <span className={`text-xs ${isObsidian ? 'text-[#E6C97A]' : 'text-amber-700'}`}>({due.requestId?.emergencyType || 'General'})</span>
                       </h4>
-                      
-                      <p className="text-xs text-[#7a5a48] font-semibold leading-relaxed">
+
+                      <p className={`text-xs font-semibold leading-relaxed ${isObsidian ? 'text-neutral-300' : 'text-[#7a5a48]'}`}>
                         Case: "{due.requestId?.description || 'N/A'}"
                       </p>
 
                       <div className="flex flex-col gap-1.5 pt-1.5">
                         <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-extrabold text-[#7a5a48] uppercase">Repayment Deadline:</span>
-                          <span className="text-[11px] font-bold text-[#3d2b1f]">
+                          <span className={`text-[10px] font-extrabold uppercase ${isObsidian ? 'text-neutral-400' : 'text-[#7a5a48]'}`}>Repayment Deadline:</span>
+                          <span className={`text-[11px] font-bold ${isObsidian ? 'text-white' : 'text-[#3d2b1f]'}`}>
                             {new Date(due.dueDate).toLocaleDateString()} at {new Date(due.dueDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-extrabold text-[#7a5a48] uppercase">Due Countdown:</span>
+                          <span className={`text-[10px] font-extrabold uppercase ${isObsidian ? 'text-neutral-400' : 'text-[#7a5a48]'}`}>Due Countdown:</span>
                           <DueTimer dueDate={due.dueDate} />
                         </div>
                       </div>
@@ -394,8 +391,8 @@ const EmergencyBookingView = ({
 
                   <div className="text-right shrink-0 flex flex-col items-end gap-2.5 w-full md:w-auto border-t md:border-t-0 pt-3 md:pt-0 border-dashed border-gray-100">
                     <div>
-                      <p className="text-[10px] font-bold text-[#7a5a48] uppercase">Amount Due</p>
-                      <p className="text-lg font-black text-amber-700">₹{due.amountDue}</p>
+                      <p className={`text-[10px] font-bold uppercase ${isObsidian ? 'text-neutral-400' : 'text-[#7a5a48]'}`}>Amount Due</p>
+                      <p className={`text-lg font-black ${isObsidian ? 'text-[#E6C97A]' : 'text-amber-700'}`}>₹{due.amountDue}</p>
                     </div>
 
                     <div className="w-full flex flex-col gap-1.5">
@@ -403,8 +400,8 @@ const EmergencyBookingView = ({
                         type="button"
                         onClick={() => handleRepayDue(due._id)}
                         disabled={isPayingDue !== null || !canAfford}
-                        className="w-full md:w-auto px-4 py-2 text-xs font-extrabold rounded-xl text-white shadow-md hover:opacity-95 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1"
-                        style={{ backgroundColor: canAfford ? BRAND.mid : BRAND.light }}
+                        className={`w-full md:w-auto px-4 py-2 text-xs font-extrabold rounded-xl shadow-md hover:opacity-95 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1 ${isObsidian ? 'bg-gradient-to-r from-[#c8860a] to-[#E6C97A] text-black shadow-amber-500/20' : 'text-white'}`}
+                        style={isObsidian ? {} : { backgroundColor: canAfford ? BRAND.mid : BRAND.light }}
                       >
                         {isPayingDue === due._id ? (
                           <>
@@ -419,13 +416,13 @@ const EmergencyBookingView = ({
 
                       {!canAfford && (
                         <div className="text-right">
-                          <p className="text-[9px] text-red-600 font-bold max-w-[150px] leading-relaxed mb-1">
+                          <p className={`text-[9px] font-bold max-w-[150px] leading-relaxed mb-1 ${isObsidian ? 'text-red-400' : 'text-red-600'}`}>
                             ⚠️ Insufficient Wallet balance! Wallet has ₹{walletBalance}.
                           </p>
                           <button
                             type="button"
                             onClick={() => navigate('/paw-wallet')}
-                            className="inline-flex items-center gap-1 text-[10px] text-amber-700 font-extrabold hover:underline"
+                            className={`inline-flex items-center gap-1 text-[10px] font-extrabold hover:underline ${isObsidian ? 'text-[#E6C97A]' : 'text-amber-700'}`}
                           >
                             <Plus className="w-3 h-3" /> Add Funds
                           </button>
@@ -442,10 +439,10 @@ const EmergencyBookingView = ({
 
       {/* ── DUE PAYMENT HISTORY (COLLAPSIBLE) ────────────────────────────── */}
       {userDues.some(due => due.isPaid) && (
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="p-6 rounded-3xl bg-white border border-[#e8d5b0] shadow-sm space-y-4"
+          className={`p-6 rounded-3xl shadow-sm space-y-4 ${isObsidian ? 'bg-[#121212] border border-zinc-800' : 'bg-white border border-[#e8d5b0]'}`}
         >
           <button
             type="button"
@@ -455,44 +452,44 @@ const EmergencyBookingView = ({
             <div className="flex items-center gap-2">
               <CheckCircle className="w-5 h-5 text-green-600" />
               <div>
-                <h3 className="text-sm font-extrabold text-[#3d2b1f]">Cleared Emergency Dues History</h3>
-                <p className="text-[10px] text-[#7a5a48] font-semibold">View successfully settled emergency bookings.</p>
+                <h3 className={`text-sm font-extrabold ${isObsidian ? 'text-white' : 'text-[#3d2b1f]'}`}>Cleared Emergency Dues History</h3>
+                <p className={`text-[10px] font-semibold ${isObsidian ? 'text-neutral-400' : 'text-[#7a5a48]'}`}>View successfully settled emergency bookings.</p>
               </div>
             </div>
-            {showHistory ? <ChevronUp className="w-4 h-4 text-[#7a5a48]" /> : <ChevronDown className="w-4 h-4 text-[#7a5a48]" />}
+            {showHistory ? <ChevronUp className={`w-4 h-4 ${isObsidian ? 'text-neutral-400' : 'text-[#7a5a48]'}`} /> : <ChevronDown className={`w-4 h-4 ${isObsidian ? 'text-neutral-400' : 'text-[#7a5a48]'}`} />}
           </button>
 
           <AnimatePresence>
             {showHistory && (
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
-                className="space-y-3 pt-3 border-t border-[#e8d5b0]/40 overflow-hidden"
+                className={`space-y-3 pt-3 border-t overflow-hidden ${isObsidian ? 'border-zinc-800' : 'border-[#e8d5b0]/40'}`}
               >
                 {userDues.filter(due => due.isPaid).map((due) => (
-                  <div key={due._id} className="p-4 rounded-2xl bg-green-50/25 border border-green-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                  <div key={due._id} className={`p-4 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 ${isObsidian ? 'bg-green-950/10 border-green-900/30' : 'bg-green-50/25 border-green-100'}`}>
                     <div className="space-y-0.5">
                       <div className="flex items-center gap-2">
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-green-50 border border-green-200 text-green-700">
+                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${isObsidian ? 'bg-green-950/40 border-green-900/30 text-green-400' : 'bg-green-50 border-green-200 text-green-700'}`}>
                           <Check className="w-3 h-3" /> Cleared
                         </span>
-                        <span className="text-[10px] text-[#7a5a48] font-semibold">
+                        <span className={`text-[10px] font-semibold ${isObsidian ? 'text-neutral-400' : 'text-[#7a5a48]'}`}>
                           Reference: #{due._id.slice(-8).toUpperCase()}
                         </span>
                       </div>
-                      <h4 className="text-xs font-extrabold text-[#3d2b1f]">
+                      <h4 className={`text-xs font-extrabold ${isObsidian ? 'text-white' : 'text-[#3d2b1f]'}`}>
                         Emergency Consultation Fee ({due.requestId?.emergencyType || 'General'})
                       </h4>
                       {due.paidAt && (
-                        <p className="text-[10px] text-green-700 font-medium italic">
+                        <p className={`text-[10px] font-medium italic ${isObsidian ? 'text-green-400' : 'text-green-700'}`}>
                           Cleared on {new Date(due.paidAt).toLocaleDateString()} at {new Date(due.paidAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </p>
                       )}
                     </div>
                     <div className="text-right">
-                      <p className="text-xs text-[#7a5a48] font-bold uppercase">Saddled Amount</p>
-                      <p className="text-sm font-extrabold text-green-700">₹{due.amountDue}</p>
+                      <p className={`text-xs font-bold uppercase ${isObsidian ? 'text-neutral-400' : 'text-[#7a5a48]'}`}>Saddled Amount</p>
+                      <p className={`text-sm font-extrabold ${isObsidian ? 'text-green-400' : 'text-green-700'}`}>₹{due.amountDue}</p>
                     </div>
                   </div>
                 ))}
@@ -504,36 +501,36 @@ const EmergencyBookingView = ({
 
       {/* ── ACTIVE EMERGENCY TRACKING BOARD ─────────────────────────────── */}
       {hasActiveEmergency && activeEmergency ? (
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
           className="space-y-6"
         >
           {/* Status Card */}
-          <div className="p-6 md:p-8 rounded-3xl bg-white border-2 border-red-200 shadow-xl overflow-hidden relative">
-            <div className="absolute -right-24 -bottom-24 w-64 h-64 rounded-full bg-red-100 blur-3xl opacity-40" />
-            
+          <div className={`p-6 md:p-8 rounded-3xl shadow-xl overflow-hidden relative border-2 ${isObsidian ? 'bg-[#121212] border-red-900/60' : 'bg-white border-red-200'}`}>
+            <div className={`absolute -right-24 -bottom-24 w-64 h-64 rounded-full blur-3xl opacity-40 ${isObsidian ? 'bg-red-950/30' : 'bg-red-100'}`} />
+
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative z-10">
               <div className="flex items-start gap-5 flex-1">
-                <div className="p-4 rounded-2xl bg-red-50 border border-red-100 relative flex items-center justify-center">
+                <div className={`p-4 rounded-2xl relative flex items-center justify-center border ${isObsidian ? 'bg-red-950/20 border-red-900/30' : 'bg-red-50 border-red-100'}`}>
                   <span className="animate-ping absolute inline-flex h-12 w-12 rounded-full bg-red-400 opacity-25"></span>
                   <Activity className="w-8 h-8 text-red-600 animate-pulse" />
                 </div>
                 <div>
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border border-red-200 bg-red-50 text-red-600 mb-2 uppercase tracking-wide">
+                  <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border mb-2 uppercase tracking-wide ${isObsidian ? 'bg-red-950/40 border-red-900/30 text-red-400' : 'bg-red-50 border-red-200 text-red-600'}`}>
                     <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse" />
                     {activeEmergency.status}
                   </span>
-                  <h2 className="text-xl md:text-2xl font-extrabold mb-1" style={{ color: BRAND.dark }}>Emergency Broadcast Active</h2>
-                  <p className="text-xs font-semibold text-[#7a5a48] max-w-lg">
+                  <h2 className="text-xl md:text-2xl font-extrabold mb-1" style={isObsidian ? { color: '#ffffff' } : { color: BRAND.dark }}>Emergency Broadcast Active</h2>
+                  <p className={`text-xs font-semibold max-w-lg ${isObsidian ? 'text-neutral-400' : 'text-[#7a5a48]'}`}>
                     Our live dispatcher is broadcasting your medical emergency to all registered veterinarians in the <strong className="text-red-600">{activeEmergency.district}</strong> district. Please stand by.
                   </p>
                 </div>
               </div>
 
-              <div className="flex flex-col items-center sm:items-end gap-3 self-stretch md:self-auto justify-between border-t md:border-t-0 pt-4 md:pt-0 border-gray-100">
+              <div className={`flex flex-col items-center sm:items-end gap-3 self-stretch md:self-auto justify-between border-t md:border-t-0 pt-4 md:pt-0 ${isObsidian ? 'border-zinc-800' : 'border-gray-100'}`}>
                 <div className="text-center md:text-right">
-                  <p className="text-[10px] font-extrabold text-[#7a5a48] uppercase tracking-wider mb-1.5">Approval Timer Window</p>
+                  <p className={`text-[10px] font-extrabold uppercase tracking-wider mb-1.5 ${isObsidian ? 'text-neutral-400' : 'text-[#7a5a48]'}`}>Approval Timer Window</p>
                   <EmergencyTimer createdAt={activeEmergency.createdAt} onTimeout={fetchEmergencyRequests} />
                 </div>
                 {['Pending', 'Waiting for Doctor Approval'].includes(activeEmergency.status) && (
@@ -542,7 +539,7 @@ const EmergencyBookingView = ({
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.97 }}
                     onClick={() => cancelEmergencyRequest(activeEmergency._id)}
-                    className="px-4 py-1.5 text-xs font-semibold rounded-xl bg-red-50 border border-red-200 text-red-600 hover:bg-red-100 transition shadow-sm"
+                    className={`px-4 py-1.5 text-xs font-semibold rounded-xl transition shadow-sm border ${isObsidian ? 'bg-red-950/20 border-red-900/40 text-red-400 hover:bg-red-950/40' : 'bg-red-50 border-red-200 text-red-600 hover:bg-red-100'}`}
                   >
                     Cancel Request
                   </motion.button>
@@ -551,7 +548,7 @@ const EmergencyBookingView = ({
             </div>
 
             {/* Real-time Interactive Progress Stepper */}
-            <div className="border-t border-red-100 pt-6 mt-6 relative z-10">
+            <div className={`border-t pt-6 mt-6 relative z-10 ${isObsidian ? 'border-zinc-800' : 'border-red-100'}`}>
               <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 lg:gap-2">
                 {steps.map((step, idx) => {
                   const IconComponent = step.icon;
@@ -563,8 +560,8 @@ const EmergencyBookingView = ({
                     <div key={idx} className="flex-1 w-full flex flex-row lg:flex-col items-center gap-3 text-left lg:text-center group relative">
                       {/* Connection Line on Desktop */}
                       {idx < steps.length - 1 && (
-                        <div className="hidden lg:block absolute left-[calc(50%+1.5rem)] right-[calc(-50%+1.5rem)] top-5 h-0.5 bg-gray-100 z-0">
-                          <motion.div 
+                        <div className={`hidden lg:block absolute left-[calc(50%+1.5rem)] right-[calc(-50%+1.5rem)] top-5 h-0.5 z-0 ${isObsidian ? 'bg-zinc-800' : 'bg-gray-100'}`}>
+                          <motion.div
                             initial={{ width: 0 }}
                             animate={{ width: isCompleted ? "100%" : "0%" }}
                             transition={{ duration: 0.5 }}
@@ -574,15 +571,14 @@ const EmergencyBookingView = ({
                       )}
 
                       {/* Icon Bubble */}
-                      <motion.div 
+                      <motion.div
                         whileHover={{ scale: 1.1 }}
-                        className={`w-10 h-10 rounded-full flex items-center justify-center border-2 z-10 transition-all ${
-                          isCompleted 
+                        className={`w-10 h-10 rounded-full flex items-center justify-center border-2 z-10 transition-all ${isCompleted
                             ? 'bg-gradient-to-br from-red-500 to-amber-500 border-transparent text-white shadow-md'
                             : isActive
-                            ? 'bg-red-50 border-red-600 text-red-600 shadow-lg shadow-red-100 scale-105'
-                            : 'bg-white border-gray-200 text-gray-400'
-                        }`}
+                              ? (isObsidian ? 'bg-red-950/30 border-red-500 text-red-400 shadow-lg shadow-red-950 scale-105' : 'bg-red-50 border-red-600 text-red-600 shadow-lg shadow-red-100 scale-105')
+                              : (isObsidian ? 'bg-[#121212] border-zinc-800 text-zinc-600' : 'bg-white border-gray-200 text-gray-400')
+                          }`}
                       >
                         {isCompleted ? (
                           <Check className="w-5 h-5 stroke-[3]" />
@@ -593,9 +589,8 @@ const EmergencyBookingView = ({
 
                       {/* Content */}
                       <div className="flex-1 lg:mt-1">
-                        <p className={`text-xs font-bold leading-tight transition-colors ${
-                          isActive ? 'text-red-600 font-extrabold' : isCompleted ? 'text-[#3d2b1f]' : 'text-gray-400'
-                        }`}>
+                        <p className={`text-xs font-bold leading-tight transition-colors ${isActive ? 'text-red-500 font-extrabold' : isCompleted ? (isObsidian ? 'text-white' : 'text-[#3d2b1f]') : 'text-gray-500'
+                          }`}>
                           {step.label}
                         </p>
                         <p className="text-[10px] text-gray-400 mt-0.5 line-clamp-1 max-w-[150px] lg:mx-auto">
@@ -612,24 +607,24 @@ const EmergencyBookingView = ({
 
           {/* Responding Doctor Card */}
           {activeEmergency.docId ? (
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
-              className="p-6 rounded-3xl bg-white border border-[#e8d5b0] shadow-md flex flex-col md:flex-row items-center justify-between gap-5 relative overflow-hidden"
+              className={`p-6 rounded-3xl shadow-md flex flex-col md:flex-row items-center justify-between gap-5 relative overflow-hidden ${isObsidian ? 'bg-[#121212] border border-zinc-800' : 'bg-white border border-[#e8d5b0]'}`}
             >
-              <div className="absolute -left-10 -top-10 w-32 h-32 rounded-full bg-amber-50 blur-2xl opacity-40" />
-              
+              <div className={`absolute -left-10 -top-10 w-32 h-32 rounded-full blur-2xl opacity-40 ${isObsidian ? 'bg-amber-950/10' : 'bg-amber-50'}`} />
+
               <div className="flex items-center gap-4 relative z-10">
-                <img 
-                  src={activeEmergency.docId.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(activeEmergency.docId.name)}&background=random`} 
-                  alt="Doctor" 
-                  className="w-16 h-16 rounded-2xl object-cover border-2 border-[#e8d5b0] shadow-sm" 
+                <img
+                  src={activeEmergency.docId.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(activeEmergency.docId.name)}&background=random`}
+                  alt="Doctor"
+                  className={`w-16 h-16 rounded-2xl object-cover border-2 shadow-sm ${isObsidian ? 'border-zinc-800' : 'border-[#e8d5b0]'}`}
                 />
                 <div>
-                  <p className="text-[10px] font-extrabold text-[#c8860a] uppercase tracking-wider mb-0.5">Assigned Emergency Vet</p>
-                  <h3 className="text-lg font-extrabold text-[#3d2b1f]">Dr. {activeEmergency.docId.name}</h3>
-                  <p className="text-xs font-medium text-[#7a5a48] flex items-center gap-1">
-                    <Stethoscope className="w-3.5 h-3.5" style={{ color: BRAND.amber }} />
+                  <p className={`text-[10px] font-extrabold uppercase tracking-wider mb-0.5 ${isObsidian ? 'text-[#E6C97A]' : 'text-[#c8860a]'}`}>Assigned Emergency Vet</p>
+                  <h3 className={`text-lg font-extrabold ${isObsidian ? 'text-white' : 'text-[#3d2b1f]'}`}>Dr. {activeEmergency.docId.name}</h3>
+                  <p className={`text-xs font-medium flex items-center gap-1 ${isObsidian ? 'text-neutral-400' : 'text-[#7a5a48]'}`}>
+                    <Stethoscope className="w-3.5 h-3.5" style={isObsidian ? { color: '#E6C97A' } : { color: BRAND.amber }} />
                     {activeEmergency.docId.speciality || 'General Veterinary Specialist'}
                   </p>
                 </div>
@@ -637,9 +632,9 @@ const EmergencyBookingView = ({
 
               <div className="flex items-center gap-3 relative z-10 w-full md:w-auto">
                 {activeEmergency.docId.docphone && (
-                  <a 
+                  <a
                     href={`tel:${activeEmergency.docId.docphone}`}
-                    className="flex-1 md:flex-initial inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl bg-green-50 border border-green-200 text-green-700 text-xs font-bold shadow-sm hover:bg-green-100 transition"
+                    className={`flex-1 md:flex-initial inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl border text-xs font-bold shadow-sm transition ${isObsidian ? 'bg-green-950/20 border-green-900/30 text-green-400 hover:bg-green-950/40' : 'bg-green-50 border-green-200 text-green-700 hover:bg-green-100'}`}
                   >
                     <Phone className="w-4 h-4" /> Call Vet
                   </a>
@@ -649,68 +644,68 @@ const EmergencyBookingView = ({
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
                   onClick={() => setSelectedChat({ _id: activeEmergency._id, docData: activeEmergency.docId })}
-                  className="flex-1 md:flex-initial inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl bg-amber-50 border border-amber-200 text-[#c8860a] text-xs font-bold shadow-sm hover:bg-amber-100 transition"
+                  className={`flex-1 md:flex-initial inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl border text-xs font-bold shadow-sm transition ${isObsidian ? 'bg-amber-950/20 border-amber-900/30 text-[#E6C97A] hover:bg-amber-950/40' : 'bg-amber-50 border-amber-200 text-[#c8860a] hover:bg-amber-100'}`}
                 >
                   <MessageCircle className="w-4 h-4" /> Message Chat
                 </motion.button>
               </div>
             </motion.div>
           ) : (
-            <div className="p-6 rounded-3xl bg-white border border-[#e8d5b0] text-center shadow-inner py-8">
-              <div className="inline-flex p-3 rounded-full bg-amber-50 border border-amber-200 animate-pulse mb-3">
-                <Clock className="w-6 h-6 text-[#c8860a]" />
+            <div className={`p-6 rounded-3xl text-center shadow-inner py-8 ${isObsidian ? 'bg-[#121212] border border-zinc-800' : 'bg-white border border-[#e8d5b0]'}`}>
+              <div className={`inline-flex p-3 rounded-full animate-pulse mb-3 border ${isObsidian ? 'bg-amber-950/30 border-amber-900/40' : 'bg-amber-50 border-amber-200'}`}>
+                <Clock className={`w-6 h-6 ${isObsidian ? 'text-[#E6C97A]' : 'text-[#c8860a]'}`} />
               </div>
-              <h3 className="text-sm font-bold text-[#3d2b1f]">Awaiting Doctor Lock-In</h3>
-              <p className="text-xs text-[#7a5a48] mt-1 max-w-md mx-auto">
+              <h3 className={`text-sm font-bold ${isObsidian ? 'text-white' : 'text-[#3d2b1f]'}`}>Awaiting Doctor Lock-In</h3>
+              <p className={`text-xs mt-1 max-w-md mx-auto ${isObsidian ? 'text-neutral-400' : 'text-[#7a5a48]'}`}>
                 Vets in your district are receiving notifications right now. The first doctor to accept will lock this appointment instantly to prevent conflicts.
               </p>
             </div>
           )}
 
           {/* Breakdown details */}
-          <div className="p-6 md:p-8 rounded-3xl bg-[#fffdfa] border border-[#e8d5b0] shadow-sm">
-            <h3 className="text-xs font-extrabold text-[#3d2b1f] border-b border-[#e8d5b0] pb-3 mb-5 flex items-center gap-2 uppercase tracking-wider">
-              <FileText className="w-4 h-4 text-[#c8860a]" /> Emergency Case Sheet
+          <div className={`p-6 md:p-8 rounded-3xl shadow-sm ${isObsidian ? 'bg-zinc-900 border border-zinc-800' : 'bg-[#fffdfa] border border-[#e8d5b0]'}`}>
+            <h3 className={`text-xs font-extrabold border-b pb-3 mb-5 flex items-center gap-2 uppercase tracking-wider ${isObsidian ? 'text-white border-zinc-800' : 'text-[#3d2b1f] border-[#e8d5b0]'}`}>
+              <FileText className={`w-4 h-4 ${isObsidian ? 'text-[#E6C97A]' : 'text-[#c8860a]'}`} /> Emergency Case Sheet
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <p className="text-[10px] font-bold text-[#7a5a48] uppercase tracking-wider">Target Patient</p>
-                <p className="text-sm font-bold text-[#3d2b1f] mt-1 flex items-center gap-1.5">
-                  <PawPrint className="w-4 h-4 text-[#c8860a]" />
+                <p className={`text-[10px] font-bold uppercase tracking-wider ${isObsidian ? 'text-neutral-400' : 'text-[#7a5a48]'}`}>Target Patient</p>
+                <p className={`text-sm font-bold mt-1 flex items-center gap-1.5 ${isObsidian ? 'text-white' : 'text-[#3d2b1f]'}`}>
+                  <PawPrint className={`w-4 h-4 ${isObsidian ? 'text-[#E6C97A]' : 'text-[#c8860a]'}`} />
                   {activeEmergency.isStray ? `Stray Animal (${activeEmergency.strayDetails?.petType || 'Other'})` : `Registered Pet`}
                 </p>
                 {activeEmergency.isStray && activeEmergency.strayDetails?.location && (
-                  <p className="text-xs text-[#7a5a48] mt-1.5 flex items-center gap-1 bg-[#fbf5e8] p-2 rounded-xl border border-[#e8d5b0]/40">
-                    <MapPin className="w-3.5 h-3.5 text-[#c8860a]" /> Location: {activeEmergency.strayDetails.location}
+                  <p className={`text-xs mt-1.5 flex items-center gap-1 p-2 rounded-xl border ${isObsidian ? 'bg-[#121212] border-zinc-800 text-neutral-300' : 'bg-[#fbf5e8] border-[#e8d5b0]/40 text-[#7a5a48]'}`}>
+                    <MapPin className={`w-3.5 h-3.5 ${isObsidian ? 'text-[#E6C97A]' : 'text-[#c8860a]'}`} /> Location: {activeEmergency.strayDetails.location}
                   </p>
                 )}
               </div>
               <div>
-                <p className="text-[10px] font-bold text-[#7a5a48] uppercase tracking-wider">Symptom Severity Level</p>
+                <p className={`text-[10px] font-bold uppercase tracking-wider ${isObsidian ? 'text-neutral-400' : 'text-[#7a5a48]'}`}>Symptom Severity Level</p>
                 <p className="text-sm font-extrabold text-red-600 mt-1 flex items-center gap-1.5">
                   <AlertCircle className="w-4 h-4" />
                   {activeEmergency.emergencyType}
                 </p>
               </div>
               <div className="md:col-span-2">
-                <p className="text-[10px] font-bold text-[#7a5a48] uppercase tracking-wider">Situation Narrative</p>
-                <p className="text-xs text-[#3d2b1f] mt-2 bg-white p-4 rounded-2xl border border-[#e8d5b0] italic leading-relaxed shadow-inner">
+                <p className={`text-[10px] font-bold uppercase tracking-wider ${isObsidian ? 'text-neutral-400' : 'text-[#7a5a48]'}`}>Situation Narrative</p>
+                <p className={`text-xs mt-2 p-4 rounded-2xl border italic leading-relaxed shadow-inner ${isObsidian ? 'bg-[#121212] border-zinc-800 text-white' : 'bg-white border-[#e8d5b0] text-[#3d2b1f]'}`}>
                   "{activeEmergency.description}"
                 </p>
               </div>
               {activeEmergency.attachments && activeEmergency.attachments.length > 0 && (
                 <div className="md:col-span-2">
-                  <p className="text-[10px] font-bold text-[#7a5a48] uppercase tracking-wider mb-2.5">Attached Medical Files / Images</p>
+                  <p className={`text-[10px] font-bold uppercase tracking-wider mb-2.5 ${isObsidian ? 'text-neutral-400' : 'text-[#7a5a48]'}`}>Attached Medical Files / Images</p>
                   <div className="flex flex-wrap gap-2">
                     {activeEmergency.attachments.map((file, fIdx) => (
-                      <a 
-                        key={fIdx} 
-                        href={file.url} 
-                        target="_blank" 
+                      <a
+                        key={fIdx}
+                        href={file.url}
+                        target="_blank"
                         rel="noreferrer"
-                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-[#e8d5b0] bg-white text-xs font-bold text-[#5A4035] hover:text-[#c8860a] hover:bg-amber-50 transition shadow-sm"
+                        className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-bold transition shadow-sm ${isObsidian ? 'border-zinc-800 bg-[#121212] text-neutral-300 hover:text-[#E6C97A] hover:bg-zinc-900' : 'border-[#e8d5b0] bg-white text-[#5A4035] hover:text-[#c8860a] hover:bg-amber-50'}`}
                       >
-                        <FileText className="w-4 h-4 text-[#c8860a]" /> {file.name || `Medical_Record_${fIdx + 1}`}
+                        <FileText className={`w-4 h-4 ${isObsidian ? 'text-[#E6C97A]' : 'text-[#c8860a]'}`} /> {file.name || `Medical_Record_${fIdx + 1}`}
                       </a>
                     ))}
                   </div>
@@ -722,14 +717,14 @@ const EmergencyBookingView = ({
       ) : (
         /* ── EMERGENCY CREATION FORM ─────────────────────────────────────── */
         <form onSubmit={handleBookEmergency} className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-          
+
           {/* Inputs Columns (Left & Center) */}
           <div className="lg:col-span-2 space-y-6">
-            
+
             {/* Select Pet Box */}
-            <div className="p-6 rounded-3xl bg-white border border-[#e8d5b0] shadow-sm">
-              <label className="text-sm font-extrabold text-[#3d2b1f] uppercase tracking-wider flex items-center gap-2 mb-4">
-                <PawPrint className="w-4 h-4 text-[#c8860a]" /> 1. Select Emergency Patient
+            <div className={`p-6 rounded-3xl shadow-sm ${isObsidian ? 'bg-[#121212] border border-zinc-800' : 'bg-white border border-[#e8d5b0]'}`}>
+              <label className={`text-sm font-extrabold uppercase tracking-wider flex items-center gap-2 mb-4 ${isObsidian ? 'text-white' : 'text-[#3d2b1f]'}`}>
+                <PawPrint className={`w-4 h-4 ${isObsidian ? 'text-[#E6C97A]' : 'text-[#c8860a]'}`} /> 1. Select Emergency Patient
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {userPets && userPets.map(pet => (
@@ -739,37 +734,35 @@ const EmergencyBookingView = ({
                       setSelectedPet(pet._id);
                       setIsStray(false);
                     }}
-                    className={`p-3.5 rounded-2xl border transition-all cursor-pointer text-center flex flex-col items-center justify-center gap-2 ${
-                      selectedPet === pet._id && !isStray
-                        ? 'border-2 border-[#5A4035] bg-[#fffcf7] scale-[1.02] shadow-md'
-                        : 'border-[#e8d5b0] bg-white hover:bg-amber-50/40'
-                    }`}
+                    className={`p-3.5 rounded-2xl border transition-all cursor-pointer text-center flex flex-col items-center justify-center gap-2 ${selectedPet === pet._id && !isStray
+                        ? (isObsidian ? 'border-2 border-[#E6C97A] bg-zinc-900 scale-[1.02] shadow-md' : 'border-2 border-[#5A4035] bg-[#fffcf7] scale-[1.02] shadow-md')
+                        : (isObsidian ? 'border-zinc-800 bg-[#121212] hover:bg-zinc-900' : 'border-[#e8d5b0] bg-white hover:bg-amber-50/40')
+                      }`}
                   >
-                    <img 
-                      src={pet.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(pet.name)}&background=random`} 
-                      alt={pet.name} 
-                      className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm" 
+                    <img
+                      src={pet.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(pet.name)}&background=random`}
+                      alt={pet.name}
+                      className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm"
                     />
                     <div>
-                      <p className="text-sm font-extrabold text-[#3d2b1f] truncate max-w-[120px]">{pet.name}</p>
-                      <p className="text-[10px] text-[#7a5a48] font-semibold">{pet.breed || pet.species}</p>
+                      <p className={`text-sm font-extrabold truncate max-w-[120px] ${isObsidian ? 'text-white' : 'text-[#3d2b1f]'}`}>{pet.name}</p>
+                      <p className={`text-[10px] font-semibold ${isObsidian ? 'text-neutral-400' : 'text-[#7a5a48]'}`}>{pet.breed || pet.species}</p>
                     </div>
                   </div>
                 ))}
-                
+
                 {/* Stray Card Option */}
                 <div
                   onClick={() => {
                     setSelectedPet('');
                     setIsStray(true);
                   }}
-                  className={`p-3.5 rounded-2xl border transition-all cursor-pointer text-center flex flex-col items-center justify-center gap-2 ${
-                    isStray
-                      ? 'border-2 border-red-600 bg-red-50/30 scale-[1.02] shadow-md'
-                      : 'border-[#e8d5b0] bg-white hover:bg-amber-50/40'
-                  }`}
+                  className={`p-3.5 rounded-2xl border transition-all cursor-pointer text-center flex flex-col items-center justify-center gap-2 ${isStray
+                      ? (isObsidian ? 'border-2 border-red-500 bg-red-950/20 scale-[1.02] shadow-md' : 'border-2 border-red-600 bg-red-50/30 scale-[1.02] shadow-md')
+                      : (isObsidian ? 'border-zinc-800 bg-[#121212] hover:bg-zinc-900' : 'border-[#e8d5b0] bg-white hover:bg-amber-50/40')
+                    }`}
                 >
-                  <div className="w-12 h-12 rounded-full bg-red-50 border border-red-100 flex items-center justify-center text-red-600 font-bold text-lg shadow-inner">
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center text-red-600 font-bold text-lg shadow-inner ${isObsidian ? 'bg-red-950/40 border border-red-900/30' : 'bg-red-50 border-red-100'}`}>
                     🏥
                   </div>
                   <div>
@@ -781,19 +774,19 @@ const EmergencyBookingView = ({
 
               {/* Stray Details panel */}
               {isStray && (
-                <motion.div 
-                  initial={{ opacity: 0, height: 0 }} 
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
-                  className="mt-5 p-4 rounded-2xl bg-red-50/30 border border-red-100 space-y-4"
+                  className={`mt-5 p-4 rounded-2xl border space-y-4 ${isObsidian ? 'bg-red-950/10 border-red-900/30' : 'bg-red-50/30 border-red-100'}`}
                 >
                   <p className="text-[10px] font-extrabold text-red-600 uppercase tracking-wider">Stray Animal Details Needed</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="text-[10px] font-extrabold text-[#7a5a48] uppercase block mb-1 font-semibold">Animal Type</label>
+                      <label className={`text-[10px] font-extrabold uppercase block mb-1 font-semibold ${isObsidian ? 'text-neutral-400' : 'text-[#7a5a48]'}`}>Animal Type</label>
                       <select
                         value={strayPetType}
                         onChange={e => setStrayPetType(e.target.value)}
-                        className="w-full px-3 py-2 rounded-xl text-xs outline-none bg-white border border-[#e8d5b0] font-semibold"
+                        className={`w-full px-3 py-2 rounded-xl text-xs outline-none font-semibold ${isObsidian ? 'bg-zinc-900 border-zinc-850 text-white' : 'bg-white border-[#e8d5b0]'}`}
                       >
                         <option value="Dog">Dog</option>
                         <option value="Cat">Cat</option>
@@ -803,24 +796,24 @@ const EmergencyBookingView = ({
                       </select>
                     </div>
                     <div>
-                      <label className="text-[10px] font-extrabold text-[#7a5a48] uppercase block mb-1 font-semibold">Found Location</label>
+                      <label className={`text-[10px] font-extrabold uppercase block mb-1 font-semibold ${isObsidian ? 'text-neutral-400' : 'text-[#7a5a48]'}`}>Found Location</label>
                       <input
                         type="text"
                         placeholder="E.g., Near Sector 4 Bus Stop"
                         value={strayLocation}
                         onChange={e => setStrayLocation(e.target.value)}
-                        className="w-full px-3 py-2 rounded-xl text-xs outline-none bg-white border border-[#e8d5b0] font-semibold"
+                        className={`w-full px-3 py-2 rounded-xl text-xs outline-none font-semibold ${isObsidian ? 'bg-zinc-900 border-zinc-850 text-white placeholder-zinc-500' : 'bg-white border-[#e8d5b0]'}`}
                       />
                     </div>
                   </div>
                   <div>
-                    <label className="text-[10px] font-extrabold text-[#7a5a48] uppercase block mb-1 font-semibold">Animal Condition Details</label>
+                    <label className={`text-[10px] font-extrabold uppercase block mb-1 font-semibold ${isObsidian ? 'text-neutral-400' : 'text-[#7a5a48]'}`}>Animal Condition Details</label>
                     <textarea
                       rows={2}
                       placeholder="Describe how the stray animal was found (injuries, bleeding, limp, etc.)"
                       value={strayDescription}
                       onChange={e => setStrayDescription(e.target.value)}
-                      className="w-full p-3 rounded-xl text-xs outline-none bg-white border border-[#e8d5b0] font-semibold"
+                      className={`w-full p-3 rounded-xl text-xs outline-none font-semibold ${isObsidian ? 'bg-zinc-900 border-zinc-850 text-white placeholder-zinc-500' : 'bg-white border-[#e8d5b0]'}`}
                     />
                   </div>
                 </motion.div>
@@ -828,8 +821,8 @@ const EmergencyBookingView = ({
             </div>
 
             {/* Severity level & Category Selection */}
-            <div className="p-6 rounded-3xl bg-white border border-[#e8d5b0] shadow-sm">
-              <label className="text-sm font-extrabold text-[#3d2b1f] uppercase tracking-wider flex items-center gap-2 mb-4">
+            <div className={`p-6 rounded-3xl shadow-sm ${isObsidian ? 'bg-[#121212] border border-zinc-800' : 'bg-white border border-[#e8d5b0]'}`}>
+              <label className={`text-sm font-extrabold uppercase tracking-wider flex items-center gap-2 mb-4 ${isObsidian ? 'text-white' : 'text-[#3d2b1f]'}`}>
                 <AlertTriangle className="w-4 h-4 text-red-600" /> 2. Select Medical Severity Category
               </label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -845,16 +838,15 @@ const EmergencyBookingView = ({
                   <div
                     key={cat.id}
                     onClick={() => setEmergencyType(cat.id)}
-                    className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-start gap-3 text-left ${
-                      emergencyType === cat.id
-                        ? 'border-2 border-red-600 bg-red-50/20 scale-[1.01] shadow-md'
-                        : 'border-[#e8d5b0] bg-white hover:bg-amber-50/20'
-                    }`}
+                    className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-start gap-3 text-left ${emergencyType === cat.id
+                        ? (isObsidian ? 'border-2 border-red-500 bg-red-950/20 scale-[1.01] shadow-md' : 'border-2 border-red-600 bg-red-50/20 scale-[1.01] shadow-md')
+                        : (isObsidian ? 'border-zinc-800 bg-[#121212] hover:bg-zinc-900' : 'border-[#e8d5b0] bg-white hover:bg-amber-50/20')
+                      }`}
                   >
                     <span className="text-2xl pt-0.5">{cat.emoji}</span>
                     <div>
-                      <p className="text-xs font-extrabold text-[#3d2b1f]">{cat.label}</p>
-                      <p className="text-[10px] text-[#7a5a48] font-medium leading-relaxed mt-0.5">{cat.desc}</p>
+                      <p className={`text-xs font-extrabold ${isObsidian ? 'text-white' : 'text-[#3d2b1f]'}`}>{cat.label}</p>
+                      <p className={`text-[10px] font-medium leading-relaxed mt-0.5 ${isObsidian ? 'text-neutral-400' : 'text-[#7a5a48]'}`}>{cat.desc}</p>
                     </div>
                   </div>
                 ))}
@@ -862,9 +854,9 @@ const EmergencyBookingView = ({
             </div>
 
             {/* Consultation Mode Selector */}
-            <div className="p-6 rounded-3xl bg-white border border-[#e8d5b0] shadow-sm">
-              <label className="text-sm font-extrabold text-[#3d2b1f] uppercase tracking-wider flex items-center gap-2 mb-4">
-                <Stethoscope className="w-4 h-4 text-[#c8860a]" /> 3. Preferred Consultation Mode
+            <div className={`p-6 rounded-3xl shadow-sm ${isObsidian ? 'bg-[#121212] border border-zinc-800' : 'bg-white border border-[#e8d5b0]'}`}>
+              <label className={`text-sm font-extrabold uppercase tracking-wider flex items-center gap-2 mb-4 ${isObsidian ? 'text-white' : 'text-[#3d2b1f]'}`}>
+                <Stethoscope className={`w-4 h-4 ${isObsidian ? 'text-[#E6C97A]' : 'text-[#c8860a]'}`} /> 3. Preferred Consultation Mode
               </label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {[
@@ -874,24 +866,23 @@ const EmergencyBookingView = ({
                   <div
                     key={mode.id}
                     onClick={() => setPreferredMode(mode.id)}
-                    className={`p-4 rounded-2xl border text-center transition-all cursor-pointer ${
-                      preferredMode === mode.id
-                        ? 'border-2 border-[#5A4035] bg-[#fffcf7] scale-[1.02] shadow-md'
-                        : 'border-[#e8d5b0] bg-white hover:bg-amber-50/20'
-                    }`}
+                    className={`p-4 rounded-2xl border text-center transition-all cursor-pointer ${preferredMode === mode.id
+                        ? (isObsidian ? 'border-2 border-[#E6C97A] bg-zinc-900 scale-[1.02] shadow-md' : 'border-2 border-[#5A4035] bg-[#fffcf7] scale-[1.02] shadow-md')
+                        : (isObsidian ? 'border-zinc-800 bg-[#121212] hover:bg-zinc-900' : 'border-[#e8d5b0] bg-white hover:bg-amber-50/20')
+                      }`}
                   >
-                    <p className="text-xs font-extrabold text-[#3d2b1f]">{mode.label}</p>
-                    <p className="text-[10px] text-[#7a5a48] font-medium mt-1 leading-relaxed">{mode.desc}</p>
+                    <p className={`text-xs font-extrabold ${isObsidian ? 'text-white' : 'text-[#3d2b1f]'}`}>{mode.label}</p>
+                    <p className={`text-[10px] font-medium mt-1 leading-relaxed ${isObsidian ? 'text-neutral-400' : 'text-[#7a5a48]'}`}>{mode.desc}</p>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Narrative details & attachment */}
-            <div className="p-6 rounded-3xl bg-white border border-[#e8d5b0] shadow-sm space-y-4">
+            <div className={`p-6 rounded-3xl shadow-sm space-y-4 ${isObsidian ? 'bg-[#121212] border border-zinc-800' : 'bg-white border border-[#e8d5b0]'}`}>
               <div>
-                <label className="text-sm font-extrabold text-[#3d2b1f] uppercase tracking-wider block mb-2 flex items-center gap-1.5">
-                  <FileText className="w-4 h-4 text-[#c8860a]" /> 4. Brief Case Narrative
+                <label className={`text-sm font-extrabold uppercase tracking-wider block mb-2 flex items-center gap-1.5 ${isObsidian ? 'text-white' : 'text-[#3d2b1f]'}`}>
+                  <FileText className={`w-4 h-4 ${isObsidian ? 'text-[#E6C97A]' : 'text-[#c8860a]'}`} /> 4. Brief Case Narrative
                 </label>
                 <textarea
                   required
@@ -899,15 +890,15 @@ const EmergencyBookingView = ({
                   placeholder="Explain the situation briefly (e.g. Swallowed a dark chocolate bar 10 minutes ago, is whimpering and starting to vomit. Please help!)"
                   value={emergencyDescription}
                   onChange={e => setEmergencyDescription(e.target.value)}
-                  className="w-full p-4 rounded-2xl text-xs outline-none bg-white border border-[#e8d5b0] focus:ring-1 focus:ring-amber-500 font-medium"
+                  className={`w-full p-4 rounded-2xl text-xs outline-none focus:ring-1 focus:ring-amber-500 font-medium ${isObsidian ? 'bg-zinc-900 border-zinc-850 text-white placeholder-zinc-500' : 'bg-white border-[#e8d5b0]'}`}
                 />
               </div>
 
               <div>
-                <label className="text-sm font-extrabold text-[#3d2b1f] uppercase tracking-wider block mb-2">
-                  Upload Medical Images / Records <span className="text-[#7a5a48] font-semibold text-[10px]">(Optional)</span>
+                <label className={`text-sm font-extrabold uppercase tracking-wider block mb-2 ${isObsidian ? 'text-white' : 'text-[#3d2b1f]'}`}>
+                  Upload Medical Images / Records <span className={`font-semibold text-[10px] ${isObsidian ? 'text-neutral-400' : 'text-[#7a5a48]'}`}>(Optional)</span>
                 </label>
-                <div className="relative border-2 border-dashed border-[#e8d5b0] rounded-2xl p-6 text-center hover:bg-amber-50/20 transition-all cursor-pointer">
+                <div className={`relative border-2 border-dashed rounded-2xl p-6 text-center transition-all cursor-pointer ${isObsidian ? 'border-zinc-800 hover:bg-zinc-900' : 'border-[#e8d5b0] hover:bg-amber-50/20'}`}>
                   <input
                     type="file"
                     accept="image/*,application/pdf"
@@ -915,15 +906,15 @@ const EmergencyBookingView = ({
                     className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
                   />
                   <div className="space-y-1">
-                    <Upload className="mx-auto h-8 w-8 text-[#7a5a48]" />
-                    <p className="text-xs font-bold text-[#5A4035]">
+                    <Upload className={`mx-auto h-8 w-8 ${isObsidian ? 'text-neutral-400' : 'text-[#7a5a48]'}`} />
+                    <p className={`text-xs font-bold ${isObsidian ? 'text-white' : 'text-[#5A4035]'}`}>
                       {reportFile ? reportFile.name : 'Click to select or drag files here'}
                     </p>
-                    <p className="text-[10px] text-[#7a5a48] font-semibold">Supports JPG, PNG, or PDF files up to 5MB</p>
+                    <p className={`text-[10px] font-semibold ${isObsidian ? 'text-neutral-400' : 'text-[#7a5a48]'}`}>Supports JPG, PNG, or PDF files up to 5MB</p>
                   </div>
                 </div>
                 {reportFile && (
-                  <div className="mt-2.5 flex items-center justify-between p-2 px-3 rounded-xl bg-[#fffcf7] border border-[#e8d5b0] text-xs font-medium text-[#5A4035]">
+                  <div className={`mt-2.5 flex items-center justify-between p-2 px-3 rounded-xl border text-xs font-medium ${isObsidian ? 'bg-zinc-900 border-zinc-800 text-neutral-350' : 'bg-[#fffcf7] border-[#e8d5b0] text-[#5A4035]'}`}>
                     <span className="truncate max-w-xs">{reportFile.name} ({(reportFile.size / 1024 / 1024).toFixed(2)} MB)</span>
                     <button
                       type="button"
@@ -938,34 +929,34 @@ const EmergencyBookingView = ({
             </div>
 
             {/* Dispatch Parameters */}
-            <div className="p-6 rounded-3xl bg-white border border-[#e8d5b0] shadow-sm">
-              <label className="text-sm font-extrabold text-[#3d2b1f] uppercase tracking-wider flex items-center gap-2 mb-3">
-                <MapPin className="w-4 h-4 text-[#c8860a]" /> 5. Dispatch Routing Location
+            <div className={`p-6 rounded-3xl shadow-sm ${isObsidian ? 'bg-[#121212] border border-zinc-800' : 'bg-white border border-[#e8d5b0]'}`}>
+              <label className={`text-sm font-extrabold uppercase tracking-wider flex items-center gap-2 mb-3 ${isObsidian ? 'text-white' : 'text-[#3d2b1f]'}`}>
+                <MapPin className={`w-4 h-4 ${isObsidian ? 'text-[#E6C97A]' : 'text-[#c8860a]'}`} /> 5. Dispatch Routing Location
               </label>
-              <p className="text-[10px] text-[#7a5a48] font-semibold mb-4 leading-relaxed">
+              <p className={`text-[10px] font-semibold mb-4 leading-relaxed ${isObsidian ? 'text-neutral-400' : 'text-[#7a5a48]'}`}>
                 Alerts are instantly pushed to available veterinarians in your district. Correct physical location parameters ensure maximum response rates.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[10px] font-extrabold text-[#7a5a48] uppercase block mb-1">State</label>
+                  <label className={`text-[10px] font-extrabold uppercase block mb-1 ${isObsidian ? 'text-neutral-400' : 'text-[#7a5a48]'}`}>State</label>
                   <input
                     required
                     type="text"
                     placeholder="E.g., MAHARASHTRA"
                     value={stateInput}
                     onChange={e => setStateInput(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl text-xs outline-none bg-[#fffcf7] border border-[#e8d5b0] font-extrabold uppercase"
+                    className={`w-full px-3.5 py-2.5 rounded-xl text-xs outline-none font-extrabold uppercase ${isObsidian ? 'bg-zinc-900 border-zinc-850 text-white placeholder-zinc-650' : 'bg-[#fffcf7] border-[#e8d5b0]'}`}
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-extrabold text-[#7a5a48] uppercase block mb-1">District</label>
+                  <label className={`text-[10px] font-extrabold uppercase block mb-1 ${isObsidian ? 'text-neutral-400' : 'text-[#7a5a48]'}`}>District</label>
                   <input
                     required
                     type="text"
                     placeholder="E.g., PUNE"
                     value={districtInput}
                     onChange={e => setDistrictInput(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl text-xs outline-none bg-[#fffcf7] border border-[#e8d5b0] font-extrabold uppercase"
+                    className={`w-full px-3.5 py-2.5 rounded-xl text-xs outline-none font-extrabold uppercase ${isObsidian ? 'bg-zinc-900 border-zinc-850 text-white placeholder-zinc-650' : 'bg-[#fffcf7] border-[#e8d5b0]'}`}
                   />
                 </div>
               </div>
@@ -974,40 +965,39 @@ const EmergencyBookingView = ({
 
           {/* Right Columns (Rules, Membership, Submit button) */}
           <div className="space-y-6">
-            
+
             {/* Active plan billing details */}
-            <div className="p-6 rounded-3xl bg-[#fffaf0] border border-[#e8d5b0] shadow-sm relative overflow-hidden">
-              <div className="absolute -right-8 -top-8 w-24 h-24 rounded-full bg-amber-100 blur-xl opacity-30" />
-              
-              <h3 className="text-xs font-extrabold text-[#3d2b1f] uppercase tracking-wider flex items-center gap-1.5 border-b border-[#e8d5b0]/60 pb-3 mb-4 relative z-10">
-                <CreditCard className="w-4 h-4 text-[#c8860a]" /> Membership Billing Slip
+            <div className={`p-6 rounded-3xl shadow-sm relative overflow-hidden ${isObsidian ? 'bg-[#121212] border border-zinc-800' : 'bg-[#fffaf0] border border-[#e8d5b0]'}`}>
+              <div className={`absolute -right-8 -top-8 w-24 h-24 rounded-full blur-xl opacity-30 ${isObsidian ? 'bg-amber-950/10' : 'bg-amber-100'}`} />
+
+              <h3 className={`text-xs font-extrabold uppercase tracking-wider flex items-center gap-1.5 border-b pb-3 mb-4 relative z-10 ${isObsidian ? 'text-white border-zinc-800' : 'text-[#3d2b1f] border-[#e8d5b0]/60'}`}>
+                <CreditCard className={`w-4 h-4 ${isObsidian ? 'text-[#E6C97A]' : 'text-[#c8860a]'}`} /> Membership Billing Slip
               </h3>
 
               <div className="space-y-3 relative z-10">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="font-semibold text-[#7a5a48]">Active Plan Tier:</span>
-                  <span className="font-extrabold text-[#3d2b1f] flex items-center gap-1">
-                    <Sparkles className="w-3.5 h-3.5 text-[#c8860a]" />
+                  <span className={`font-semibold ${isObsidian ? 'text-neutral-400' : 'text-[#7a5a48]'}`}>Active Plan Tier:</span>
+                  <span className={`font-extrabold flex items-center gap-1 ${isObsidian ? 'text-white' : 'text-[#3d2b1f]'}`}>
+                    <Sparkles className={`w-3.5 h-3.5 ${isObsidian ? 'text-[#E6C97A]' : 'text-[#c8860a]'}`} />
                     {userdata?.subscription?.plan || 'None/Non-Subscriber'}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-xs">
-                  <span className="font-semibold text-[#7a5a48]">Plan Status:</span>
-                  <span className={`font-extrabold uppercase ${
-                    userdata?.subscription?.status === 'Active' ? 'text-green-600' : 'text-rose-500'
-                  }`}>
+                  <span className={`font-semibold ${isObsidian ? 'text-neutral-400' : 'text-[#7a5a48]'}`}>Plan Status:</span>
+                  <span className={`font-extrabold uppercase ${userdata?.subscription?.status === 'Active' ? 'text-green-600' : 'text-rose-500'
+                    }`}>
                     {userdata?.subscription?.status || 'Inactive'}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-xs">
-                  <span className="font-semibold text-[#7a5a48]">Paw Wallet Balance:</span>
-                  <span className="font-extrabold text-[#3d2b1f]">₹{userdata?.pawWallet || 0}</span>
+                  <span className={`font-semibold ${isObsidian ? 'text-neutral-400' : 'text-[#7a5a48]'}`}>Paw Wallet Balance:</span>
+                  <span className={`font-extrabold ${isObsidian ? 'text-white' : 'text-[#3d2b1f]'}`}>₹{userdata?.pawWallet || 0}</span>
                 </div>
 
-                <div className="border-t border-dashed border-[#e8d5b0] pt-3 mt-1.5 flex items-center justify-between">
-                  <span className="text-sm font-extrabold text-[#3d2b1f]">Service Fee:</span>
-                  <span className="text-lg font-extrabold text-[#3d2b1f]">
-                    {userdata?.subscription?.status === 'Active' && ['Platinum', 'Gold', 'Silver'].includes(userdata?.subscription?.plan) ? (
+                <div className={`border-t border-dashed pt-3 mt-1.5 flex items-center justify-between ${isObsidian ? 'border-zinc-800' : 'border-[#e8d5b0]'}`}>
+                  <span className={`text-sm font-extrabold ${isObsidian ? 'text-white' : 'text-[#3d2b1f]'}`}>Service Fee:</span>
+                  <span className={`text-lg font-extrabold ${isObsidian ? 'text-white' : 'text-[#3d2b1f]'}`}>
+                    {userdata?.subscription?.status === 'Active' && ['Platinum', 'Gold', 'Silver', 'Obsidian'].includes(userdata?.subscription?.plan) ? (
                       <span className="text-green-600 font-bold flex items-center gap-1">
                         <CheckCircle className="w-4 h-4 text-green-600" /> ₹0
                       </span>
@@ -1017,8 +1007,8 @@ const EmergencyBookingView = ({
                   </span>
                 </div>
 
-                {!(userdata?.subscription?.status === 'Active' && ['Platinum', 'Gold', 'Silver'].includes(userdata?.subscription?.plan)) && (
-                  <div className="mt-3 bg-white p-3 rounded-xl border border-[#e8d5b0]/60 text-[10px] text-[#7a5a48] font-semibold leading-relaxed">
+                {!(userdata?.subscription?.status === 'Active' && ['Platinum', 'Gold', 'Silver', 'Obsidian'].includes(userdata?.subscription?.plan)) && (
+                  <div className={`mt-3 p-3 rounded-xl border text-[10px] font-semibold leading-relaxed ${isObsidian ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-[#e8d5b0]/60'}`}>
                     {userdata?.pawWallet >= 100 ? (
                       <p className="text-green-700 flex items-start gap-1">
                         <Check className="w-3.5 h-3.5 text-green-600 mt-0.5 shrink-0" /> Balance is sufficient! ₹100 will be auto-deducted directly from your Paw Wallet upon booking.
@@ -1034,8 +1024,8 @@ const EmergencyBookingView = ({
             </div>
 
             {/* Dispatching Guidelines */}
-            <div className="p-6 rounded-3xl bg-white border border-[#e8d5b0] shadow-sm">
-              <h3 className="text-xs font-extrabold text-[#3d2b1f] uppercase tracking-wider flex items-center gap-1.5 border-b border-gray-100 pb-3 mb-4">
+            <div className={`p-6 rounded-3xl shadow-sm ${isObsidian ? 'bg-[#121212] border border-zinc-800' : 'bg-white border border-[#e8d5b0]'}`}>
+              <h3 className={`text-xs font-extrabold uppercase tracking-wider flex items-center gap-1.5 border-b pb-3 mb-4 ${isObsidian ? 'text-white border-zinc-800' : 'text-[#3d2b1f] border-gray-100'}`}>
                 <Shield className="w-4 h-4 text-red-600" /> Dispatch Rules
               </h3>
               <ul className="space-y-3">
@@ -1046,10 +1036,10 @@ const EmergencyBookingView = ({
                   { title: 'Account Restrict', text: 'Unpaid emergency booking dues exceed 4 days will trigger automatic temporary account restriction.' }
                 ].map((item, idx) => (
                   <li key={idx} className="flex gap-2.5 items-start">
-                    <span className="text-[#c8860a] text-xs font-bold pt-0.5">0{idx + 1}.</span>
+                    <span className={`text-xs font-bold pt-0.5 ${isObsidian ? 'text-[#E6C97A]' : 'text-[#c8860a]'}`}>0{idx + 1}.</span>
                     <div>
-                      <p className="text-xs font-extrabold text-[#3d2b1f]">{item.title}</p>
-                      <p className="text-[10px] text-[#7a5a48] font-semibold leading-relaxed mt-0.5">{item.text}</p>
+                      <p className={`text-xs font-extrabold ${isObsidian ? 'text-white' : 'text-[#3d2b1f]'}`}>{item.title}</p>
+                      <p className={`text-[10px] font-semibold leading-relaxed mt-0.5 ${isObsidian ? 'text-neutral-400' : 'text-[#7a5a48]'}`}>{item.text}</p>
                     </div>
                   </li>
                 ))}
@@ -1081,30 +1071,30 @@ const EmergencyBookingView = ({
 
       {/* ── EMERGENCY CONSULTATION HISTORY ────────────────────────────── */}
       <div className="space-y-4">
-        <div className="flex items-center justify-between border-b border-[#e8d5b0]/60 pb-3">
-          <h3 className="text-base font-extrabold text-[#3d2b1f] flex items-center gap-2">
-            <Clock className="w-4.5 h-4.5 text-[#c8860a]" /> Emergency Case Archive
+        <div className={`flex items-center justify-between border-b pb-3 ${isObsidian ? 'border-zinc-800' : 'border-[#e8d5b0]/60'}`}>
+          <h3 className={`text-base font-extrabold flex items-center gap-2 ${isObsidian ? 'text-white' : 'text-[#3d2b1f]'}`}>
+            <Clock className={`w-4.5 h-4.5 ${isObsidian ? 'text-[#E6C97A]' : 'text-[#c8860a]'}`} /> Emergency Case Archive
           </h3>
-          <span className="text-[10px] font-extrabold bg-[#e8d5b0]/30 text-[#5A4035] px-2.5 py-1 rounded-full border border-[#e8d5b0]/60">
+          <span className={`text-[10px] font-extrabold px-2.5 py-1 rounded-full border ${isObsidian ? 'bg-zinc-900 border-zinc-800 text-neutral-350' : 'bg-[#e8d5b0]/30 border-[#e8d5b0]/60 text-[#5A4035]'}`}>
             {emergencyRequests.filter(r => !['Pending', 'Waiting for Doctor Approval', 'Payment Pending'].includes(r.status)).length} Recorded Cases
           </span>
         </div>
 
         {emergencyRequests.filter(r => !['Pending', 'Waiting for Doctor Approval', 'Payment Pending'].includes(r.status)).length === 0 ? (
-          <motion.div 
-            initial={{ opacity: 0, y: 12 }} 
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center py-16 px-4 rounded-3xl bg-white border border-[#e8d5b0] space-y-4"
+            className={`text-center py-16 px-4 rounded-3xl space-y-4 border ${isObsidian ? 'bg-[#121212] border-zinc-800' : 'bg-white border-[#e8d5b0]'}`}
           >
             <motion.div
               animate={{ y: [0, -8, 0] }}
               transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-              className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-amber-50 to-orange-100 border-2 border-[#e8d5b0] text-4xl shadow-inner mx-auto"
+              className={`inline-flex items-center justify-center w-20 h-20 rounded-full border-2 text-4xl shadow-inner mx-auto ${isObsidian ? 'bg-zinc-900 border-zinc-800' : 'bg-gradient-to-br from-amber-50 to-orange-100 border-[#e8d5b0]'}`}
             >
               🐾
             </motion.div>
-            <h3 className="text-base font-extrabold text-[#3d2b1f]">No Emergency Cases on Record</h3>
-            <p className="text-xs text-[#7a5a48] font-semibold max-w-xs mx-auto leading-relaxed">
+            <h3 className={`text-base font-extrabold ${isObsidian ? 'text-white' : 'text-[#3d2b1f]'}`}>No Emergency Cases on Record</h3>
+            <p className={`text-xs font-semibold max-w-xs mx-auto leading-relaxed ${isObsidian ? 'text-neutral-400' : 'text-[#7a5a48]'}`}>
               All your completed, cancelled, and resolved emergency cases will appear here for reference.
             </p>
             <span className="inline-flex items-center gap-1.5 px-4 py-2 text-[10px] font-extrabold uppercase tracking-widest rounded-full border border-green-200 bg-green-50 text-green-700">
@@ -1118,46 +1108,46 @@ const EmergencyBookingView = ({
               .map((req, rIdx) => {
                 const isComplete = req.status === 'Completed';
                 const isReject = req.status === 'Rejected';
-                
-                const badgeStyle = isComplete 
-                  ? { bg: 'bg-green-50 border-green-200 text-green-700', text: 'Completed', dot: 'bg-green-600' }
+
+                const badgeStyle = isComplete
+                  ? { bg: isObsidian ? 'bg-green-950/20 border-green-900/30 text-green-400' : 'bg-green-50 border-green-200 text-green-700', text: 'Completed', dot: 'bg-green-600' }
                   : isReject
-                    ? { bg: 'bg-red-50 border-red-200 text-red-700', text: 'Rejected', dot: 'bg-red-600' }
-                    : { bg: 'bg-gray-50 border-gray-200 text-gray-700', text: 'Cancelled', dot: 'bg-gray-500' };
+                    ? { bg: isObsidian ? 'bg-red-950/20 border-red-900/30 text-red-400' : 'bg-red-50 border-red-200 text-red-700', text: 'Rejected', dot: 'bg-red-600' }
+                    : { bg: isObsidian ? 'bg-zinc-800 border-zinc-700 text-zinc-400' : 'bg-gray-50 border-gray-200 text-gray-700', text: 'Cancelled', dot: 'bg-gray-500' };
 
                 return (
                   <motion.div
                     key={req._id || rIdx}
                     whileHover={{ y: -2 }}
-                    className="p-5 rounded-3xl bg-white border border-[#e8d5b0] shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
+                    className={`p-5 rounded-3xl border shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4 ${isObsidian ? 'bg-[#121212] border-zinc-800' : 'bg-white border-[#e8d5b0]'}`}
                   >
                     <div className="flex items-start gap-4 flex-1">
-                      <div className="p-3 rounded-2xl bg-amber-50/40 border border-[#e8d5b0]/40 flex items-center justify-center">
-                        <PawPrint className="w-5 h-5 text-[#c8860a]" />
+                      <div className={`p-3 rounded-2xl border flex items-center justify-center ${isObsidian ? 'bg-zinc-900 border-zinc-800' : 'bg-amber-50/40 border-[#e8d5b0]/40'}`}>
+                        <PawPrint className={`w-5 h-5 ${isObsidian ? 'text-[#E6C97A]' : 'text-[#c8860a]'}`} />
                       </div>
-                      <div className="space-y-1">
+                      <div className="space-y-1 text-left">
                         <div className="flex items-center gap-2">
                           <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${badgeStyle.bg}`}>
                             <span className={`w-1 h-1 rounded-full ${badgeStyle.dot}`} />
                             {badgeStyle.text}
                           </span>
-                          <span className="text-[10px] text-[#7a5a48] font-semibold">
+                          <span className={`text-[10px] font-semibold ${isObsidian ? 'text-neutral-400' : 'text-[#7a5a48]'}`}>
                             {new Date(req.createdAt).toLocaleDateString()} at {new Date(req.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </span>
                         </div>
-                        <h4 className="text-sm font-extrabold text-[#3d2b1f]">{req.emergencyType}</h4>
-                        <p className="text-xs text-[#7a5a48] font-semibold max-w-lg truncate leading-relaxed">
+                        <h4 className={`text-sm font-extrabold ${isObsidian ? 'text-white' : 'text-[#3d2b1f]'}`}>{req.emergencyType}</h4>
+                        <p className={`text-xs font-semibold max-w-lg truncate leading-relaxed ${isObsidian ? 'text-neutral-350' : 'text-[#7a5a48]'}`}>
                           {req.isStray
                             ? `Stray ${req.strayDetails?.petType || 'Animal'} — ${req.strayDetails?.location || 'Location not set'}`
                             : req.petId
                               ? `Pet: ${req.petId.name || 'Unknown'} (${req.petId.type || req.petId.breed || 'Mixed'})`
                               : 'Pet info unavailable'}
                         </p>
-                        <p className="text-[10px] text-[#7a5a48] font-medium truncate mt-0.5">
+                        <p className={`text-[10px] truncate mt-0.5 ${isObsidian ? 'text-neutral-400' : 'text-[#7a5a48]'}`}>
                           {req.description || req.emergencyDescription || 'No additional description'}
                         </p>
                         {req.docId && (
-                          <p className="text-[10px] text-[#5A4035] font-extrabold">
+                          <p className={`text-[10px] font-extrabold ${isObsidian ? 'text-[#E6C97A]' : 'text-[#5A4035]'}`}>
                             Responding Doctor: Dr. {req.docId.name} ({req.docId.speciality || 'Vet'})
                           </p>
                         )}
@@ -1165,8 +1155,8 @@ const EmergencyBookingView = ({
                     </div>
 
                     <div className="text-right shrink-0">
-                      <p className="text-xs font-bold text-[#3d2b1f]">Charge</p>
-                      <p className="text-sm font-extrabold text-amber-700 mt-0.5">
+                      <p className={`text-xs font-bold ${isObsidian ? 'text-neutral-400' : 'text-[#3d2b1f]'}`}>Charge</p>
+                      <p className={`text-sm font-extrabold mt-0.5 ${isObsidian ? 'text-[#E6C97A]' : 'text-amber-700'}`}>
                         {req.paymentLog?.amount ? `₹${req.paymentLog.amount}` : req.billingPlanTier && req.billingPlanTier !== 'None' ? '₹0 (Plan Cover)' : '₹100'}
                       </p>
                     </div>
@@ -1190,6 +1180,7 @@ const TABS = [
 
 const MyAppointments = () => {
   const { backendurl, token, userdata, userPets, fetchUserPets, loadUserProfileData } = useContext(AppContext)
+  const isObsidian = userdata?.subscription?.plan === 'Obsidian';
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation();
@@ -1360,7 +1351,7 @@ const MyAppointments = () => {
         // SWR: persist to localStorage for instant next-load
         try {
           localStorage.setItem('pawvaidya_cached_emergencies', JSON.stringify(data.requests));
-        } catch {}
+        } catch { }
       }
     } catch (err) {
       console.error("Error fetching emergency requests:", err);
@@ -1406,7 +1397,7 @@ const MyAppointments = () => {
       formData.append('district', districtInput.toUpperCase());
       formData.append('state', stateInput.toUpperCase());
       formData.append('isStray', isStray ? 'true' : 'false');
-      
+
       if (isStray) {
         formData.append('strayDetails', JSON.stringify({
           petType: strayPetType,
@@ -1493,7 +1484,7 @@ const MyAppointments = () => {
 
   useEffect(() => {
     let interval = null;
-    const hasActive = emergencyRequests.some(r => 
+    const hasActive = emergencyRequests.some(r =>
       ['Pending', 'Waiting for Doctor Approval', 'Payment Pending'].includes(r.status)
     );
 
@@ -1666,7 +1657,7 @@ const MyAppointments = () => {
               <div className="p-4.5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-semibold leading-relaxed flex items-start gap-2.5">
                 <Info className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
                 <div>
-                  <span className="font-extrabold text-amber-900 block mb-1">Active Restrictions:</span> 
+                  <span className="font-extrabold text-amber-900 block mb-1">Active Restrictions:</span>
                   Standard appointment bookings, telemedicine video requests, and active emergency dispatch queues are locked. Settle your dues below to restore full access instantly.
                 </div>
               </div>
@@ -1720,10 +1711,10 @@ const MyAppointments = () => {
                 <div className="p-6 rounded-2xl bg-green-50 border border-green-200 text-center space-y-2">
                   <CheckCircle className="w-8 h-8 text-green-600 mx-auto animate-bounce" />
                   <p className="text-xs font-bold text-green-800">No pending dues found! Reloading profile...</p>
-                  <button 
+                  <button
                     onClick={() => {
                       if (typeof loadUserProfileData === 'function') loadUserProfileData();
-                    }} 
+                    }}
                     className="px-4 py-2 bg-green-600 text-white rounded-lg text-xs font-black uppercase tracking-wider shadow"
                   >
                     Refresh Account
@@ -1755,11 +1746,10 @@ const MyAppointments = () => {
                           <button
                             onClick={() => handleRepayDue(due._id)}
                             disabled={isPayingDue !== null || !canAfford}
-                            className={`px-5 py-3 rounded-xl font-black uppercase tracking-wider text-xs shadow-md transition flex items-center gap-1.5 ${
-                              canAfford
+                            className={`px-5 py-3 rounded-xl font-black uppercase tracking-wider text-xs shadow-md transition flex items-center gap-1.5 ${canAfford
                                 ? 'bg-green-600 hover:bg-green-700 text-white shadow-green-100'
                                 : 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200'
-                            }`}
+                              }`}
                           >
                             {isPayingDue === due._id ? (
                               <>
@@ -1792,68 +1782,146 @@ const MyAppointments = () => {
   }
 
   return (
-    <div className="min-h-screen pb-24" style={{ background: BRAND.cream }}>
+    <div className={`min-h-screen pb-24 transition-colors duration-300 ${isObsidian ? 'bg-[#050505] text-white' : 'text-[#3d2b1f]'}`} style={isObsidian ? {} : { background: BRAND.cream }}>
 
       {/* ── Hero Header ─────────────────────────────────────────────────────── */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="relative overflow-hidden py-10 px-6 mb-8 rounded-b-[2.5rem] shadow-xl"
-        style={{ background: `linear-gradient(135deg, ${BRAND.dark} 0%, ${BRAND.mid} 50%, ${BRAND.light} 100%)` }}
-      >
-        {/* Decorative blobs */}
-        <div className="absolute -top-10 -left-10 w-48 h-48 rounded-full blur-3xl opacity-20"
-          style={{ background: BRAND.cream }} />
-        <div className="absolute -bottom-8 -right-8 w-64 h-64 rounded-full blur-3xl opacity-15"
-          style={{ background: '#c8860a' }} />
-        {/* Subtle paw print pattern */}
-        <div className="absolute inset-0 opacity-5"
-          style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
+      {isObsidian ? (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="relative overflow-hidden py-10 px-6 sm:px-8 rounded-[2rem] border border-[#E6C97A]/25 bg-gradient-to-b from-[#121212] to-[#0A0A0A] shadow-[0_0_30px_rgba(230,201,122,0.05)] mx-4 md:mx-6 mt-6 mb-8"
+        >
+          {/* Border light flare overlays */}
+          <div className="absolute top-0 left-1/4 right-1/4 h-[1px] bg-gradient-to-r from-transparent via-[#E6C97A]/60 to-transparent"></div>
+          <div className="absolute bottom-1/4 right-0 w-[1px] h-1/2 bg-gradient-to-b from-transparent via-[#E6C97A]/40 to-transparent"></div>
 
-        <div className="relative z-10 max-w-5xl mx-auto">
-          <div className="flex items-center gap-4 mb-3">
-            <div className="p-2.5 rounded-2xl border border-white/20"
-              style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(8px)' }}>
-              <Calendar className="w-7 h-7 text-white" />
+          <div 
+            className="absolute inset-0 opacity-[0.03] pointer-events-none"
+            style={{ backgroundImage: 'radial-gradient(circle, #E6C97A 1px, transparent 1px)', backgroundSize: '24px 24px' }} 
+          />
+
+          <div className="relative z-10 max-w-5xl mx-auto">
+            <div className="flex items-center gap-4 mb-3">
+              <div className="relative inline-flex items-center justify-center w-14 h-14 rounded-2xl border border-[#E6C97A]/30 bg-[#0d0d0d] shadow-[0_0_15px_rgba(230,201,122,0.15)] flex-shrink-0">
+                <Calendar className="w-7 h-7 text-[#E6C97A] filter drop-shadow-[0_0_4px_rgba(230,201,122,0.4)]" />
+              </div>
+              <div>
+                <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight">{t('appointments.myAppointments')}</h1>
+                <p className="text-sm mt-0.5 flex items-center gap-1.5 text-[#E6C97A]/80 font-medium">
+                  <Sparkles className="w-3.5 h-3.5 text-[#E6C97A]" />
+                  {userdata?.name ? `Welcome back, ${userdata.name}` : 'Manage your pet care schedule'}
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight">{t('appointments.myAppointments')}</h1>
-              <p className="text-amber-200 text-sm mt-0.5 flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5" />
-                {userdata?.name ? `${t('appointments.welcomeBack')} ${userdata.name}` : 'Manage your pet care schedule'}
-              </p>
+
+            {/* Stats row */}
+            <div className="grid grid-cols-4 gap-3 mt-6">
+              {[
+                { 
+                  label: t('appointments.total'), 
+                  value: stats.total, 
+                  key: 'all', 
+                  baseStyle: 'border-[#E6C97A]/30 bg-[#121212]',
+                  activeStyle: 'border-[#E6C97A] bg-[#1a1a1a] shadow-[0_0_15px_rgba(230,201,122,0.15)]'
+                },
+                { 
+                  label: t('appointments.upcoming'), 
+                  value: stats.upcoming, 
+                  key: 'upcoming', 
+                  baseStyle: 'border-neutral-800 bg-[#0E0E0E]',
+                  activeStyle: 'border-[#E6C97A] bg-[#141414] shadow-[0_0_15px_rgba(230,201,122,0.15)]'
+                },
+                { 
+                  label: t('appointments.completed'), 
+                  value: stats.completed, 
+                  key: 'completed', 
+                  baseStyle: 'border-[#1E3A2F]/80 bg-[#0D1813]',
+                  activeStyle: 'border-green-500 bg-[#12281D] shadow-[0_0_15px_rgba(34,197,94,0.15)]'
+                },
+                { 
+                  label: t('appointments.cancelled'), 
+                  value: stats.cancelled, 
+                  key: 'cancelled', 
+                  baseStyle: 'border-[#3F1A1A]/80 bg-[#1D0E0E]',
+                  activeStyle: 'border-red-500 bg-[#2D1212] shadow-[0_0_15px_rgba(239,68,68,0.15)]'
+                },
+              ].map(s => {
+                const isActive = activeTab === s.key;
+                return (
+                  <motion.button key={s.label}
+                    whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}
+                    onClick={() => setActiveTab(s.key)}
+                    className={`rounded-2xl p-4 text-center border transition-all ${isActive ? s.activeStyle : s.baseStyle}`}
+                  >
+                    <p className="text-2xl md:text-3xl font-extrabold text-white">{s.value}</p>
+                    <p className="text-xs font-semibold text-neutral-400 mt-1">{s.label}</p>
+                  </motion.button>
+                );
+              })}
             </div>
           </div>
+        </motion.div>
+      ) : (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="relative overflow-hidden py-10 px-6 mb-8 rounded-b-[2.5rem] shadow-xl"
+          style={{ background: `linear-gradient(135deg, ${BRAND.dark} 0%, ${BRAND.mid} 50%, ${BRAND.light} 100%)` }}
+        >
+          {/* Decorative blobs */}
+          <div className="absolute -top-10 -left-10 w-48 h-48 rounded-full blur-3xl opacity-20"
+            style={{ background: BRAND.cream }} />
+          <div className="absolute -bottom-8 -right-8 w-64 h-64 rounded-full blur-3xl opacity-15"
+            style={{ background: '#c8860a' }} />
+          {/* Subtle paw print pattern */}
+          <div className="absolute inset-0 opacity-5"
+            style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
 
-          {/* Stats row */}
-          <div className="grid grid-cols-4 gap-3 mt-6">
-            {[
-              { label: t('appointments.total'), value: stats.total, key: 'all', accent: 'rgba(255,255,255,0.15)' },
-              { label: t('appointments.upcoming'), value: stats.upcoming, key: 'upcoming', accent: 'rgba(200,134,10,0.35)' },
-              { label: t('appointments.completed'), value: stats.completed, key: 'completed', accent: 'rgba(34,197,94,0.25)' },
-              { label: t('appointments.cancelled'), value: stats.cancelled, key: 'cancelled', accent: 'rgba(239,68,68,0.25)' },
-            ].map(s => (
-              <motion.button key={s.label}
-                whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }}
-                onClick={() => setActiveTab(s.key)}
-                className={`rounded-2xl p-3 text-center border transition-all ${activeTab === s.key ? 'border-white/40 ring-2 ring-white/30' : 'border-white/10'
-                  }`}
-                style={{ background: s.accent, backdropFilter: 'blur(8px)' }}
-              >
-                <p className="text-2xl font-bold text-white">{s.value}</p>
-                <p className="text-xs text-white/70 font-medium">{s.label}</p>
-              </motion.button>
-            ))}
+          <div className="relative z-10 max-w-5xl mx-auto">
+            <div className="flex items-center gap-4 mb-3">
+              <div className="p-2.5 rounded-2xl border border-white/20 bg-white/10"
+                style={{ backdropFilter: 'blur(8px)' }}>
+                <Calendar className="w-7 h-7 text-white" />
+              </div>
+              <div>
+                <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight">{t('appointments.myAppointments')}</h1>
+                <p className="text-sm mt-0.5 flex items-center gap-1.5 text-amber-200">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  {userdata?.name ? `${t('appointments.welcomeBack')} ${userdata.name}` : 'Manage your pet care schedule'}
+                </p>
+              </div>
+            </div>
+
+            {/* Stats row */}
+            <div className="grid grid-cols-4 gap-3 mt-6">
+              {[
+                { label: t('appointments.total'), value: stats.total, key: 'all', accent: 'rgba(255,255,255,0.15)' },
+                { label: t('appointments.upcoming'), value: stats.upcoming, key: 'upcoming', accent: 'rgba(200,134,10,0.35)' },
+                { label: t('appointments.completed'), value: stats.completed, key: 'completed', accent: 'rgba(34,197,94,0.25)' },
+                { label: t('appointments.cancelled'), value: stats.cancelled, key: 'cancelled', accent: 'rgba(239,68,68,0.25)' },
+              ].map(s => (
+                <motion.button key={s.label}
+                  whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }}
+                  onClick={() => setActiveTab(s.key)}
+                  className={`rounded-2xl p-3 text-center border transition-all ${activeTab === s.key ? 'border-white/40 ring-2 ring-white/30' : 'border-white/10'}`}
+                  style={{ background: s.accent, backdropFilter: 'blur(8px)' }}
+                >
+                  <p className="text-2xl font-bold text-white">{s.value}</p>
+                  <p className="text-xs font-medium text-white/70">{s.label}</p>
+                </motion.button>
+              ))}
+            </div>
           </div>
-        </div>
-      </motion.div>
+        </motion.div>
+      )}
 
       <div className="max-w-5xl mx-auto px-4">
 
         {/* ── Progressive Due Warnings & Reminders ────────────────────────── */}
         {userDues.some(due => !due.isPaid && isNearingExpiry(due.dueDate)) && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             className="p-4.5 mb-6 rounded-3xl bg-gradient-to-r from-red-500 to-amber-600 text-white shadow-lg border border-red-400 flex flex-col md:flex-row items-center justify-between gap-4 relative overflow-hidden"
@@ -1870,7 +1938,7 @@ const MyAppointments = () => {
                 </p>
               </div>
             </div>
-            <button 
+            <button
               type="button"
               onClick={() => {
                 const pendingDue = userDues.find(due => !due.isPaid && isNearingExpiry(due.dueDate));
@@ -1890,28 +1958,28 @@ const MyAppointments = () => {
 
           {/* Category Tabs */}
           {activeTab === 'emergency' ? (
-            <div className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-red-50 border-2 border-red-200 self-start shadow-sm">
+            <div className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl self-start shadow-sm border ${isObsidian ? 'bg-red-950/20 border-red-900/30 text-red-400' : 'bg-red-50 border-2 border-red-200 text-red-600'}`}>
               <span className="relative flex h-3.5 w-3.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-red-600"></span>
               </span>
-              <span className="text-xs font-bold text-red-600 tracking-wider uppercase flex items-center gap-1">
+              <span className="text-xs font-bold tracking-wider uppercase flex items-center gap-1">
                 <Activity className="w-3.5 h-3.5 animate-pulse" /> Live Emergency Dispatch Channel
               </span>
             </div>
           ) : (
-            <div className="flex p-1 bg-white rounded-2xl border-2 self-start" style={{ borderColor: BRAND.sand }}>
+            <div className={`flex p-1 rounded-2xl border-2 self-start ${isObsidian ? 'bg-[#121212] border-zinc-800' : 'bg-white'}`} style={isObsidian ? {} : { borderColor: BRAND.sand }}>
               <button
                 onClick={() => setCategoryFilter('clinic')}
-                className={`px-6 py-2 rounded-xl text-sm font-bold transition-all ${categoryFilter === 'clinic' ? 'text-white shadow-lg' : 'text-[#5A4035] hover:bg-amber-50'}`}
-                style={{ background: categoryFilter === 'clinic' ? BRAND.mid : 'transparent' }}
+                className={`px-6 py-2 rounded-xl text-sm font-bold transition-all ${categoryFilter === 'clinic' ? (isObsidian ? 'bg-[#E6C97A] text-black shadow-lg' : 'text-white shadow-lg') : (isObsidian ? 'text-neutral-400 hover:text-white' : 'text-[#5A4035] hover:bg-amber-50')}`}
+                style={isObsidian ? {} : { background: categoryFilter === 'clinic' ? BRAND.mid : 'transparent' }}
               >
                 🏥 Clinic Appointments
               </button>
               <button
                 onClick={() => setCategoryFilter('video')}
-                className={`px-6 py-2 rounded-xl text-sm font-bold transition-all ${categoryFilter === 'video' ? 'text-white shadow-lg' : 'text-[#5A4035] hover:bg-amber-50'}`}
-                style={{ background: categoryFilter === 'video' ? BRAND.mid : 'transparent' }}
+                className={`px-6 py-2 rounded-xl text-sm font-bold transition-all ${categoryFilter === 'video' ? (isObsidian ? 'bg-[#E6C97A] text-black shadow-lg' : 'text-white shadow-lg') : (isObsidian ? 'text-neutral-400 hover:text-white' : 'text-[#5A4035] hover:bg-amber-50')}`}
+                style={isObsidian ? {} : { background: categoryFilter === 'video' ? BRAND.mid : 'transparent' }}
               >
                 📹 Video Consultations
               </button>
@@ -1922,14 +1990,14 @@ const MyAppointments = () => {
             {/* Search */}
             {activeTab !== 'emergency' && (
               <div className="relative flex-1">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: BRAND.light }} />
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: isObsidian ? '#E6C97A' : BRAND.light }} />
                 <input
                   type="text"
                   placeholder={t('appointments.searchPlaceholder')}
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl text-sm outline-none transition"
-                  style={{
+                  className={`w-full pl-10 pr-4 py-2.5 rounded-xl text-sm outline-none transition ${isObsidian ? 'bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 focus:border-[#E6C97A]/40' : ''}`}
+                  style={isObsidian ? {} : {
                     background: '#fff',
                     border: `1.5px solid ${BRAND.sand}`,
                     color: BRAND.dark,
@@ -1939,33 +2007,36 @@ const MyAppointments = () => {
               </div>
             )}
             {/* Tabs */}
-            <div className="flex gap-1 rounded-xl p-1 border"
-              style={{ background: '#fff', borderColor: BRAND.sand, boxShadow: '0 1px 4px rgba(90,64,53,0.08)' }}>
-              {TABS.map(tab => (
-                <button key={tab.key} onClick={() => setActiveTab(tab.key)}
-                  className="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all"
-                  style={activeTab === tab.key
-                    ? { background: BRAND.mid, color: '#fff' }
-                    : { color: BRAND.light }
-                  }>
-                  {t(tab.label)}
-                  <span className="ml-1.5 text-[10px] px-1.5 py-0.5 rounded-full"
-                    style={activeTab === tab.key
-                      ? { background: 'rgba(255,255,255,0.2)', color: '#fff' }
-                      : { background: BRAND.sand, color: BRAND.mid }
+            <div className={`flex gap-1 rounded-xl p-1 border ${isObsidian ? 'bg-[#121212] border-zinc-800' : ''}`}
+              style={isObsidian ? {} : { background: '#fff', borderColor: BRAND.sand, boxShadow: '0 1px 4px rgba(90,64,53,0.08)' }}>
+              {TABS.map(tab => {
+                const isActive = activeTab === tab.key;
+                return (
+                  <button key={tab.key} onClick={() => setActiveTab(tab.key)}
+                    className="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center"
+                    style={isActive
+                      ? (isObsidian ? { background: '#E6C97A', color: '#000000', fontWeight: 'bold' } : { background: BRAND.mid, color: '#fff' })
+                      : (isObsidian ? { color: '#a1a1aa' } : { color: BRAND.light })
                     }>
-                    {tab.key === 'all' 
-                      ? stats.total 
-                      : tab.key === 'upcoming' 
-                        ? stats.upcoming 
-                        : tab.key === 'completed' 
-                          ? stats.completed 
-                          : tab.key === 'emergency'
-                            ? emergencyRequests.filter(r => ['Pending', 'Waiting for Doctor Approval', 'Payment Pending'].includes(r.status)).length
-                            : stats.cancelled}
-                  </span>
-                </button>
-              ))}
+                    {t(tab.label)}
+                    <span className="ml-1.5 text-[10px] px-1.5 py-0.5 rounded-full"
+                      style={isActive
+                        ? (isObsidian ? { background: 'rgba(0,0,0,0.15)', color: '#000000' } : { background: 'rgba(255,255,255,0.2)', color: '#fff' })
+                        : (isObsidian ? { background: '#27272a', color: '#E6C97A' } : { background: BRAND.sand, color: BRAND.mid })
+                      }>
+                      {tab.key === 'all'
+                        ? stats.total
+                        : tab.key === 'upcoming'
+                          ? stats.upcoming
+                          : tab.key === 'completed'
+                            ? stats.completed
+                            : tab.key === 'emergency'
+                              ? emergencyRequests.filter(r => ['Pending', 'Waiting for Doctor Approval', 'Payment Pending'].includes(r.status)).length
+                              : stats.cancelled}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </motion.div>
@@ -2016,308 +2087,331 @@ const MyAppointments = () => {
           <>
             {/* ── Empty State ──────────────────────────────────────────────────── */}
             {filtered.length === 0 && (
-          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
-            className="text-center py-20">
-            <motion.div animate={{ y: [0, -8, 0] }} transition={{ duration: 2.5, repeat: Infinity }}
-              className="inline-flex items-center justify-center w-20 h-20 rounded-full mb-5"
-              style={{ background: BRAND.sand }}>
-              <Calendar className="w-10 h-10" style={{ color: BRAND.light }} />
-            </motion.div>
-            <h3 className="text-xl font-bold mb-2" style={{ color: BRAND.dark }}>
-              {searchQuery ? t('appointments.noResults') : t('appointments.noAppointmentsHere')}
-            </h3>
-            <p className="text-sm mb-6" style={{ color: BRAND.light }}>
-              {searchQuery ? t('appointments.tryDifferentSearch') : t('appointments.bookFirstAppointment')}
-            </p>
-            {!searchQuery && (
-              <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
-                onClick={() => navigate('/doctors')}
-                className="px-6 py-2.5 text-white rounded-xl text-sm font-semibold shadow-lg transition"
-                style={{ background: BRAND.mid }}>
-                {t('doctors.findADoctor')}
-              </motion.button>
-            )}
-          </motion.div>
-        )}
-
-        {/* ── Appointment Cards ────────────────────────────────────────────── */}
-        <div className="space-y-4">
-          <AnimatePresence mode="popLayout">
-            {filtered.map((item, index) => {
-              const isUpcoming = !item.cancelled && !item.isCompleted;
-              const isCompleted = item.isCompleted;
-              const isCancelled = item.cancelled;
-
-              // Status styling in warm palette
-              const status = isCancelled
-                ? { label: t('appointments.cancelled'), icon: XCircle, barColor: '#ef4444', badgeBg: '#fef2f2', badgeBorder: '#fecaca', badgeText: '#dc2626' }
-                : isCompleted
-                  ? { label: t('appointments.completed'), icon: CheckCircle, barColor: '#16a34a', badgeBg: '#f0fdf4', badgeBorder: '#bbf7d0', badgeText: '#15803d' }
-                  : { label: t('appointments.upcoming'), icon: Clock, barColor: BRAND.amber, badgeBg: '#fffbeb', badgeBorder: '#fde68a', badgeText: BRAND.amber };
-
-              const StatusIcon = status.icon;
-
-              return (
-                <motion.div
-                  key={item._id || index}
-                  layout
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.96 }}
-                  transition={{ delay: index * 0.04, duration: 0.3 }}
-                  whileHover={{ y: -3, boxShadow: '0 12px 32px rgba(90,64,53,0.15)', transition: { duration: 0.2 } }}
-                  className="rounded-2xl overflow-hidden"
-                  style={{
-                    background: '#fff',
-                    border: `1.5px solid ${BRAND.sand}`,
-                    boxShadow: '0 2px 8px rgba(90,64,53,0.07)',
-                  }}
-                >
-                  {/* Top accent bar */}
-                  <div className="h-1 w-full" style={{ background: status.barColor }} />
-
-                  <div className="p-5 md:p-6 flex flex-col sm:flex-row gap-5">
-                    {/* Video Banner for Video Consultations */}
-                    {item.isVideo && (
-                      <div className="absolute top-1 right-1 px-2 py-1 bg-[#5A4035] text-[#F2E4C6] text-[10px] font-bold rounded-bl-xl flex items-center gap-1 shadow-sm">
-                        <Video size={10} /> VIDEO CONSULTATION
-                      </div>
-                    )}
-                    {/* ... (rest of doctor image section unchanged) */}
-                    {/* Doctor Image */}
-                    <div className="relative flex-shrink-0 self-start">
-                      <div className="w-20 h-20 md:w-24 md:h-24 rounded-2xl overflow-hidden border-2"
-                        style={{ borderColor: BRAND.sand, boxShadow: '0 4px 12px rgba(90,64,53,0.15)' }}>
-                        <img src={item.docData.image} alt={item.docData.name}
-                          className="w-full h-full object-cover" />
-                      </div>
-                      <div className="absolute -bottom-2 -right-2 w-7 h-7 rounded-full flex items-center justify-center border-2 border-white shadow-md"
-                        style={{ background: BRAND.mid }}>
-                        <Stethoscope className="w-3.5 h-3.5 text-white" />
-                      </div>
-                    </div>
-
-                    {/* Details */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex flex-wrap items-start justify-between gap-2 mb-3">
-                        <div>
-                          <h2 className="text-lg font-bold" style={{ color: BRAND.dark }}>Dr. {item.docData.name}</h2>
-                          <p className="text-sm font-medium" style={{ color: BRAND.mid }}>{translateSpeciality(item.docData.speciality, t)}</p>
-                        </div>
-                        {/* Status badge */}
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border"
-                          style={{ background: status.badgeBg, borderColor: status.badgeBorder, color: status.badgeText }}>
-                          <span className="w-1.5 h-1.5 rounded-full" style={{ background: status.barColor }} />
-                          {status.label}
-                        </span>
-                      </div>
-
-                      {/* Info chips */}
-                      <div className="flex flex-wrap gap-2 mb-4">
-                        {/* Date */}
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border"
-                          style={{ background: '#fdf8f0', borderColor: '#e8d5b0', color: BRAND.mid }}>
-                          <Calendar className="w-3.5 h-3.5" style={{ color: BRAND.amber }} />
-                          {slotDateFormat(item.slotDate)}
-                        </span>
-                        {/* Time */}
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border"
-                          style={{ background: '#fdf8f0', borderColor: '#e8d5b0', color: BRAND.mid }}>
-                          <Clock className="w-3.5 h-3.5" style={{ color: BRAND.amber }} />
-                          {item.slotTime}
-                        </span>
-                        {/* Countdown */}
-                        {isUpcoming && (
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border"
-                            style={{ background: '#fffbeb', borderColor: '#fde68a', color: BRAND.amber }}>
-                            <AlertCircle className="w-3.5 h-3.5" />
-                            {getTimeStatus(item.slotDate, item.slotTime)}
-                          </span>
-                        )}
-                        {/* Location */}
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border"
-                          style={{ background: '#fdf8f0', borderColor: '#e8d5b0', color: BRAND.mid }}>
-                          <MapPin className="w-3.5 h-3.5" style={{ color: BRAND.light }} />
-                          {item.docData.address?.Location || 'N/A'}
-                        </span>
-                        {/* Phone */}
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border"
-                          style={{ background: '#fdf8f0', borderColor: '#e8d5b0', color: BRAND.mid }}>
-                          <Phone className="w-3.5 h-3.5" style={{ color: BRAND.light }} />
-                          +91 {item.docData.docphone}
-                        </span>
-                      </div>
-
-                      {/* Pet Details (Hidden for Video) */}
-                      {!item.isVideo && (
-                        <div className="mb-4 p-4 rounded-xl border border-[#e8d5b0] bg-[#fdfaf2]/80 group transition-all hover:bg-[#fdfaf2]">
-                          <p className="text-[10px] font-bold uppercase tracking-wider text-[#7a5a48] mb-3 flex items-center gap-1.5">
-                            <PawPrint className="w-3.5 h-3.5 text-[#c8860a]" /> {t('appointments.selectedPet')}
-                          </p>
-                          {item.isStray ? (
-                            <div className="flex items-center gap-3">
-                              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#5A4035] to-[#3d2b1f] flex items-center justify-center text-white font-bold text-xs shadow-md">
-                                🐾
-                              </div>
-                              <div>
-                                <p className="text-sm font-bold text-[#3d2b1f] capitalize">{item.strayDetails?.petType || 'Unknown'} (Stray)</p>
-                                <p className="text-[11px] text-[#5A4035] italic flex items-center gap-1">
-                                  <MapPin className="w-3 h-3" /> {item.strayDetails?.location || 'Location not specified'}
-                                </p>
-                              </div>
-                            </div>
-                          ) : item.petId ? (
-                            <div className="flex items-center gap-3">
-                              <div className="relative">
-                                <img src={item.petId.image} alt={item.petId.name} className="w-12 h-12 rounded-xl object-cover border-2 border-[#e8d5b0] shadow-md" />
-                                <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-[#c8860a] border border-white flex items-center justify-center">
-                                  <Sparkles className="w-2 h-2 text-white" />
-                                </div>
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2">
-                                  <p className="text-sm font-bold text-[#3d2b1f] truncate">{item.petId.name}</p>
-                                  <span className="text-[10px] bg-[#e8d5b0] text-[#5A4035] px-1.5 py-0.5 rounded-md font-semibold truncate max-w-[80px]">
-                                    {item.petId.breed}
-                                  </span>
-                                </div>
-                                <p className="text-[11px] text-[#5A4035] mt-1 font-medium">
-                                  {item.petId.gender} • {item.petId.age} yrs • ID: <span className="text-[#c8860a] font-bold">{item.petId.petId}</span>
-                                </p>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-2 p-2 rounded-lg bg-gray-50 border border-dashed border-gray-300">
-                              <AlertCircle className="w-3.5 h-3.5 text-gray-400" />
-                              <p className="text-xs text-gray-500 italic">No pet selection data available</p>
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Action Buttons */}
-                      {isUpcoming && (
-                        <div className="flex flex-wrap gap-2">
-                          {item.isVideo && !isCancelled && !isCompleted && (
-                            <>
-                              {item.videoStatus === 'Approved' ? (
-                                <motion.button
-                                  whileHover={{ scale: 1.05 }}
-                                  whileTap={{ scale: 0.95 }}
-                                  disabled={parseAppointmentDateTime(item.slotDate, item.slotTime).getTime() - 600000 > currentTime.getTime()}
-                                  onClick={() => navigate(`/video-call/${item._id}`)}
-                                  className={`inline-flex items-center gap-1.5 px-6 py-2 text-white text-xs font-bold rounded-xl shadow-lg transition-all ${parseAppointmentDateTime(item.slotDate, item.slotTime).getTime() - 600000 > currentTime.getTime() ? 'opacity-50 cursor-not-allowed grayscale' : 'bg-gradient-to-r from-[#5A4035] to-[#c8860a]'}`}
-                                >
-                                  <Video size={14} /> {parseAppointmentDateTime(item.slotDate, item.slotTime).getTime() - 600000 > currentTime.getTime() ? 'Joinable at Scheduled' : 'Join Video Call'}
-                                </motion.button>
-                              ) : item.videoStatus === 'Pending' ? (
-                                <div className="flex items-center gap-2 px-4 py-2 bg-[#fdf8f0] border border-[#e8d5b0] rounded-xl text-xs font-bold text-[#c8860a]">
-                                  <Clock size={14} /> Video Request Pending Approval
-                                </div>
-                              ) : null}
-                            </>
-                          )}
-
-                          {item.isVideo && item.videoStatus === 'Declined' && (
-                            <div className="w-full mt-2 p-3 bg-red-50 border border-red-100 rounded-xl">
-                              <p className="text-[11px] font-bold text-red-700 uppercase flex items-center gap-1">
-                                <XCircle size={12} /> Appointment Declined
-                              </p>
-                              {item.videoMessage && <p className="text-xs text-red-600 mt-1 italic">"{item.videoMessage}"</p>}
-                            </div>
-                          )}
-
-                          {item.isVideo && item.videoStatus === 'Rescheduled' && (
-                            <div className="w-full mt-2 p-3 bg-amber-50 border border-amber-100 rounded-xl">
-                              <p className="text-[11px] font-bold text-amber-700 uppercase flex items-center gap-1">
-                                <Calendar size={12} /> Reschedule Suggested
-                              </p>
-                              <p className="text-xs text-amber-800 mt-1">Suggested Slot: <span className="font-bold">{item.rescheduleSlot}</span></p>
-                              {item.videoMessage && <p className="text-xs text-amber-600 mt-1 italic">"{item.videoMessage}"</p>}
-                            </div>
-                          )}
-                          {!item.payment && item.paymentMethod !== 'Cash' && (
-                            <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-                              onClick={() => toast.info('Order recovery for late payment is currently being integrated by Admin.')}
-                              className="inline-flex items-center gap-1.5 px-4 py-2 text-white text-xs font-semibold rounded-xl shadow-sm transition"
-                              style={{ background: BRAND.mid }}>
-                              <CheckCircle className="w-3.5 h-3.5" /> {t('appointments.payOnline')}
-                            </motion.button>
-                          )}
-
-                          {item.walletDeduction > 0 && (
-                            <div className="mt-2 p-2 rounded-lg bg-amber-50 border border-amber-200">
-                              <p className="text-[10px] font-bold text-amber-800 flex items-center gap-1">
-                                <Shield className="w-3 h-3" /> Wallet Payment: ₹{item.walletDeduction}
-                              </p>
-                              <p className="text-[10px] font-medium text-amber-600">
-                                Remaining {item.paymentMethod === 'Cash' ? 'to pay at clinic' : 'paid online'}: ₹{item.amount}
-                              </p>
-                            </div>
-                          )}
-
-                          <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-                            onClick={() => setSelectedChat(item)}
-                            className="inline-flex items-center gap-1.5 px-4 py-2 text-white text-xs font-semibold rounded-xl shadow-sm transition"
-                            style={{ background: '#3b82f6' }}>
-                            <MessageCircle className="w-3.5 h-3.5" /> {t('appointments.chat')}
-                          </motion.button>
-
-                          <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-                            onClick={() => {
-                              let num = item.docData.docphone.replace(/\s+/g, '');
-                              if (!num.startsWith('+91')) num = `+91${num}`;
-                              window.open(`https://wa.me/${num}?text=Hi%20Dr.%20${item.docData.name},%20regarding%20my%20appointment%20on%20${slotDateFormat(item.slotDate)}%20at%20${item.slotTime}.`, '_blank');
-                            }}
-                            className="inline-flex items-center gap-1.5 px-4 py-2 text-white text-xs font-semibold rounded-xl shadow-sm transition"
-                            style={{ background: '#16a34a' }}>
-                            <MessageCircle className="w-3.5 h-3.5" /> {t('appointments.whatsapp')}
-                          </motion.button>
-
-                          <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-                            onClick={() => setReportAppointment(item)}
-                            className="inline-flex items-center gap-1.5 px-4 py-2 text-white text-xs font-semibold rounded-xl shadow-sm transition"
-                            style={{ background: '#f97316' }}>
-                            <Flag className="w-3.5 h-3.5" /> Report
-                          </motion.button>
-
-                          {!item.isVideo && (
-                            <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-                              onClick={() => cancelAppointment(item._id)}
-                              className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-xl border transition"
-                              style={{ background: '#fef2f2', borderColor: '#fecaca', color: '#dc2626' }}>
-                              <XCircle className="w-3.5 h-3.5" /> Cancel
-                            </motion.button>
-                          )}
-                        </div>
-                      )}
-
-                      {isCompleted && (
-                        <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-                          onClick={() => navigate('/doctors')}
-                          className="inline-flex items-center gap-1.5 px-4 py-2 text-white text-xs font-semibold rounded-xl shadow-sm transition"
-                          style={{ background: BRAND.mid }}>
-                          <ChevronRight className="w-3.5 h-3.5" /> Book Again
-                        </motion.button>
-                      )}
-
-                      {isCompleted && !isCancelled && !item.isRated && (
-                        <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-                          onClick={() => setRatingAppointment(item)}
-                          className="inline-flex items-center gap-1.5 px-4 py-2 text-white text-xs font-semibold rounded-xl shadow-sm transition"
-                          style={{ background: BRAND.amber }}>
-                          <CheckCircle className="w-3.5 h-3.5" /> {t('appointments.rateDoctor')}
-                        </motion.button>
-                      )}
-                    </div>
-                  </div>
+              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+                className="text-center py-20">
+                <motion.div animate={{ y: [0, -8, 0] }} transition={{ duration: 2.5, repeat: Infinity }}
+                  className={`inline-flex items-center justify-center w-20 h-20 rounded-full mb-5 ${isObsidian ? 'bg-zinc-900 border border-zinc-850' : ''}`}
+                  style={isObsidian ? {} : { background: BRAND.sand }}>
+                  <Calendar className="w-10 h-10" style={{ color: isObsidian ? '#E6C97A' : BRAND.light }} />
                 </motion.div>
-              );
-            })}
-          </AnimatePresence>
-        </div>
-      </>
-    )}
+                <h3 className="text-xl font-bold mb-2" style={{ color: isObsidian ? '#FFFFFF' : BRAND.dark }}>
+                  {searchQuery ? t('appointments.noResults') : t('appointments.noAppointmentsHere')}
+                </h3>
+                <p className="text-sm mb-6" style={{ color: isObsidian ? '#a1a1aa' : BRAND.light }}>
+                  {searchQuery ? t('appointments.tryDifferentSearch') : t('appointments.bookFirstAppointment')}
+                </p>
+                {!searchQuery && (
+                  <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
+                    onClick={() => navigate('/doctors')}
+                    className={`px-6 py-2.5 rounded-xl text-sm font-semibold shadow-lg transition ${isObsidian ? 'bg-gradient-to-r from-[#c8860a] to-[#E6C97A] text-black font-bold hover:opacity-90' : 'text-white'}`}
+                    style={isObsidian ? {} : { background: BRAND.mid }}>
+                    {t('doctors.findADoctor')}
+                  </motion.button>
+                )}
+              </motion.div>
+            )}
+
+            {/* ── Appointment Cards ────────────────────────────────────────────── */}
+            <div className="space-y-4">
+              <AnimatePresence mode="popLayout">
+                {filtered.map((item, index) => {
+                  const isUpcoming = !item.cancelled && !item.isCompleted;
+                  const isCompleted = item.isCompleted;
+                  const isCancelled = item.cancelled;
+
+                  // Status styling in warm palette
+                  const status = isCancelled
+                    ? {
+                        label: t('appointments.cancelled'),
+                        icon: XCircle,
+                        barColor: '#ef4444',
+                        badgeBg: isObsidian ? 'bg-red-950/20 border-red-900/30 text-red-450' : '#fef2f2',
+                        badgeBorder: '#fecaca',
+                        badgeText: '#dc2626'
+                      }
+                    : isCompleted
+                      ? {
+                          label: t('appointments.completed'),
+                          icon: CheckCircle,
+                          barColor: '#16a34a',
+                          badgeBg: isObsidian ? 'bg-green-950/20 border-green-900/30 text-green-450' : '#f0fdf4',
+                          badgeBorder: '#bbf7d0',
+                          badgeText: '#15803d'
+                        }
+                      : {
+                          label: t('appointments.upcoming'),
+                          icon: Clock,
+                          barColor: isObsidian ? '#E6C97A' : BRAND.amber,
+                          badgeBg: isObsidian ? 'bg-amber-950/20 border-amber-900/30 text-[#E6C97A]' : '#fffbeb',
+                          badgeBorder: '#fde68a',
+                          badgeText: isObsidian ? '#E6C97A' : BRAND.amber
+                        };
+
+                  const StatusIcon = status.icon;
+
+                  return (
+                    <motion.div
+                      key={item._id || index}
+                      layout
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.96 }}
+                      transition={{ delay: index * 0.04, duration: 0.3 }}
+                      whileHover={{ y: -3, boxShadow: isObsidian ? '0 12px 32px rgba(0,0,0,0.5)' : '0 12px 32px rgba(90,64,53,0.15)', transition: { duration: 0.2 } }}
+                      className="rounded-2xl overflow-hidden relative"
+                      style={isObsidian ? {
+                        background: '#121212',
+                        border: '1px solid #27272a',
+                      } : {
+                        background: '#fff',
+                        border: `1.5px solid ${BRAND.sand}`,
+                        boxShadow: '0 2px 8px rgba(90,64,53,0.07)',
+                      }}
+                    >
+                      {/* Top accent bar */}
+                      <div className="h-1 w-full" style={{ background: status.barColor }} />
+
+                      <div className="p-5 md:p-6 flex flex-col sm:flex-row gap-5">
+                        {/* Video Banner for Video Consultations */}
+                        {item.isVideo && (
+                          <div className={`absolute top-1 right-1 px-2 py-1 text-[10px] font-bold rounded-bl-xl flex items-center gap-1 shadow-sm ${isObsidian ? 'bg-zinc-800 text-[#E6C97A] border-l border-b border-zinc-700' : 'bg-[#5A4035] text-[#F2E4C6]'}`}>
+                            <Video size={10} /> VIDEO CONSULTATION
+                          </div>
+                        )}
+                        {/* Doctor Image */}
+                        <div className="relative flex-shrink-0 self-start mt-2 sm:mt-0">
+                          <div className="w-20 h-20 md:w-24 md:h-24 rounded-2xl overflow-hidden border-2"
+                            style={{ borderColor: isObsidian ? '#27272a' : BRAND.sand, boxShadow: isObsidian ? '0 4px 12px rgba(0,0,0,0.4)' : '0 4px 12px rgba(90,64,53,0.15)' }}>
+                            <img src={item.docData.image} alt={item.docData.name}
+                              className="w-full h-full object-cover" />
+                          </div>
+                          <div className={`absolute -bottom-2 -right-2 w-7 h-7 rounded-full flex items-center justify-center border-2 shadow-md ${isObsidian ? 'bg-[#E6C97A] border-zinc-900' : 'border-white'}`}
+                            style={isObsidian ? {} : { background: BRAND.mid }}>
+                            <Stethoscope className={`w-3.5 h-3.5 ${isObsidian ? 'text-black' : 'text-white'}`} />
+                          </div>
+                        </div>
+
+                        {/* Details */}
+                        <div className="flex-1 min-w-0 text-left">
+                          <div className="flex flex-wrap items-start justify-between gap-2 mb-3">
+                            <div>
+                              <h2 className="text-lg font-bold" style={{ color: isObsidian ? '#fff' : BRAND.dark }}>Dr. {item.docData.name}</h2>
+                              <p className="text-sm font-medium" style={{ color: isObsidian ? '#E6C97A' : BRAND.mid }}>{translateSpeciality(item.docData.speciality, t)}</p>
+                            </div>
+                            {/* Status badge */}
+                            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${isObsidian ? status.badgeBg : ''}`}
+                              style={isObsidian ? { borderColor: 'transparent' } : { background: status.badgeBg, borderColor: status.badgeBorder, color: status.badgeText }}>
+                              <span className="w-1.5 h-1.5 rounded-full" style={{ background: status.barColor }} />
+                              {status.label}
+                            </span>
+                          </div>
+
+                          {/* Info chips */}
+                          <div className="flex flex-wrap gap-2 mb-4">
+                            {/* Date */}
+                            <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border ${isObsidian ? 'bg-zinc-900 border-zinc-800 text-neutral-300' : ''}`}
+                              style={isObsidian ? {} : { background: '#fdf8f0', borderColor: '#e8d5b0', color: BRAND.mid }}>
+                              <Calendar className="w-3.5 h-3.5" style={{ color: isObsidian ? '#E6C97A' : BRAND.amber }} />
+                              {slotDateFormat(item.slotDate)}
+                            </span>
+                            {/* Time */}
+                            <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border ${isObsidian ? 'bg-zinc-900 border-zinc-800 text-neutral-300' : ''}`}
+                              style={isObsidian ? {} : { background: '#fdf8f0', borderColor: '#e8d5b0', color: BRAND.mid }}>
+                              <Clock className="w-3.5 h-3.5" style={{ color: isObsidian ? '#E6C97A' : BRAND.amber }} />
+                              {item.slotTime}
+                            </span>
+                            {/* Countdown */}
+                            {isUpcoming && (
+                              <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border ${isObsidian ? 'bg-amber-950/20 border-amber-900/30 text-[#E6C97A]' : ''}`}
+                                style={isObsidian ? { borderColor: 'transparent' } : { background: '#fffbeb', borderColor: '#fde68a', color: BRAND.amber }}>
+                                <AlertCircle className="w-3.5 h-3.5" />
+                                {getTimeStatus(item.slotDate, item.slotTime)}
+                              </span>
+                            )}
+                            {/* Location */}
+                            <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border ${isObsidian ? 'bg-zinc-900 border-zinc-800 text-neutral-300' : ''}`}
+                              style={isObsidian ? {} : { background: '#fdf8f0', borderColor: '#e8d5b0', color: BRAND.mid }}>
+                              <MapPin className="w-3.5 h-3.5" style={{ color: isObsidian ? '#E6C97A' : BRAND.light }} />
+                              {item.docData.address?.Location || 'N/A'}
+                            </span>
+                            {/* Phone */}
+                            <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border ${isObsidian ? 'bg-zinc-900 border-zinc-800 text-neutral-300' : ''}`}
+                              style={isObsidian ? {} : { background: '#fdf8f0', borderColor: '#e8d5b0', color: BRAND.mid }}>
+                              <Phone className="w-3.5 h-3.5" style={{ color: isObsidian ? '#E6C97A' : BRAND.light }} />
+                              +91 {item.docData.docphone}
+                            </span>
+                          </div>
+
+                          {/* Pet Details (Hidden for Video) */}
+                          {!item.isVideo && (
+                            <div className={`mb-4 p-4 rounded-xl border group transition-all ${isObsidian ? 'border-zinc-800 bg-zinc-900/40 hover:bg-zinc-900/60' : 'border-[#e8d5b0] bg-[#fdfaf2]/80 hover:bg-[#fdfaf2]'}`}>
+                              <p className={`text-[10px] font-bold uppercase tracking-wider mb-3 flex items-center gap-1.5 ${isObsidian ? 'text-neutral-400' : 'text-[#7a5a48]'}`}>
+                                <PawPrint className="w-3.5 h-3.5" style={{ color: isObsidian ? '#E6C97A' : '#c8860a' }} /> {t('appointments.selectedPet')}
+                              </p>
+                              {item.isStray ? (
+                                <div className="flex items-center gap-3">
+                                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-xs shadow-md ${isObsidian ? 'bg-gradient-to-br from-zinc-800 to-zinc-900 text-neutral-400 border border-zinc-700' : 'bg-gradient-to-br from-[#5A4035] to-[#3d2b1f] text-white'}`}>
+                                    🐾
+                                  </div>
+                                  <div>
+                                    <p className={`text-sm font-bold capitalize ${isObsidian ? 'text-white' : 'text-[#3d2b1f]'}`}>{item.strayDetails?.petType || 'Unknown'} (Stray)</p>
+                                    <p className={`text-[11px] italic flex items-center gap-1 ${isObsidian ? 'text-neutral-400' : 'text-[#5A4035]'}`}>
+                                      <MapPin className="w-3 h-3" /> {item.strayDetails?.location || 'Location not specified'}
+                                    </p>
+                                  </div>
+                                </div>
+                              ) : item.petId ? (
+                                <div className="flex items-center gap-3">
+                                  <div className="relative">
+                                    <img src={item.petId.image} alt={item.petId.name} className={`w-12 h-12 rounded-xl object-cover border-2 shadow-md ${isObsidian ? 'border-zinc-800' : 'border-[#e8d5b0]'}`} />
+                                    <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border flex items-center justify-center ${isObsidian ? 'bg-[#E6C97A] border-[#121212]' : 'bg-[#c8860a] border-white'}`}>
+                                      <Sparkles className="w-2 h-2 text-white" />
+                                    </div>
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2">
+                                      <p className={`text-sm font-bold truncate ${isObsidian ? 'text-white' : 'text-[#3d2b1f]'}`}>{item.petId.name}</p>
+                                      <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-semibold truncate max-w-[80px] ${isObsidian ? 'bg-zinc-800 text-neutral-300' : 'bg-[#e8d5b0] text-[#5A4035]'}`}>
+                                        {item.petId.breed}
+                                      </span>
+                                    </div>
+                                    <p className={`text-[11px] mt-1 font-medium ${isObsidian ? 'text-neutral-400' : 'text-[#5A4035]'}`}>
+                                      {item.petId.gender} • {item.petId.age} yrs • ID: <span className={`font-bold ${isObsidian ? 'text-[#E6C97A]' : 'text-[#c8860a]'}`}>{item.petId.petId}</span>
+                                    </p>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className={`flex items-center gap-2 p-2 rounded-lg border border-dashed ${isObsidian ? 'bg-zinc-900/50 border-zinc-805 text-neutral-400' : 'bg-gray-50 border-gray-300 text-gray-500'}`}>
+                                  <AlertCircle className="w-3.5 h-3.5 text-gray-400" />
+                                  <p className="text-xs text-gray-500 italic">No pet selection data available</p>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Action Buttons */}
+                          {isUpcoming && (
+                            <div className="flex flex-wrap gap-2">
+                              {item.isVideo && !isCancelled && !isCompleted && (
+                                <>
+                                  {item.videoStatus === 'Approved' ? (
+                                    <motion.button
+                                      whileHover={{ scale: 1.05 }}
+                                      whileTap={{ scale: 0.95 }}
+                                      disabled={parseAppointmentDateTime(item.slotDate, item.slotTime).getTime() - 600000 > currentTime.getTime()}
+                                      onClick={() => navigate(`/video-call/${item._id}`)}
+                                      className={`inline-flex items-center gap-1.5 px-6 py-2 text-white text-xs font-bold rounded-xl shadow-lg transition-all ${parseAppointmentDateTime(item.slotDate, item.slotTime).getTime() - 600000 > currentTime.getTime() ? 'opacity-50 cursor-not-allowed grayscale' : 'bg-gradient-to-r from-[#5A4035] to-[#c8860a]'}`}
+                                    >
+                                      <Video size={14} /> {parseAppointmentDateTime(item.slotDate, item.slotTime).getTime() - 600000 > currentTime.getTime() ? 'Joinable at Scheduled' : 'Join Video Call'}
+                                    </motion.button>
+                                  ) : item.videoStatus === 'Pending' ? (
+                                    <div className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold border ${isObsidian ? 'bg-amber-950/20 border-amber-900/30 text-[#E6C97A]' : 'bg-[#fdf8f0] border-[#e8d5b0] text-[#c8860a]'}`}>
+                                      <Clock size={14} /> Video Request Pending Approval
+                                    </div>
+                                  ) : null}
+                                </>
+                              )}
+
+                              {item.isVideo && item.videoStatus === 'Declined' && (
+                                <div className={`w-full mt-2 p-3 rounded-xl border ${isObsidian ? 'bg-red-950/20 border-red-900/30' : 'bg-red-50 border-red-100'}`}>
+                                  <p className={`text-[11px] font-bold uppercase flex items-center gap-1 ${isObsidian ? 'text-red-400' : 'text-red-700'}`}>
+                                    <XCircle size={12} /> Appointment Declined
+                                  </p>
+                                  {item.videoMessage && <p className={`text-xs mt-1 italic ${isObsidian ? 'text-red-300' : 'text-red-600'}`}>"{item.videoMessage}"</p>}
+                                </div>
+                              )}
+
+                              {item.isVideo && item.videoStatus === 'Rescheduled' && (
+                                <div className={`w-full mt-2 p-3 rounded-xl border ${isObsidian ? 'bg-amber-950/20 border-amber-900/30' : 'bg-amber-50 border-amber-100'}`}>
+                                  <p className={`text-[11px] font-bold uppercase flex items-center gap-1 ${isObsidian ? 'text-[#E6C97A]' : 'text-amber-700'}`}>
+                                    <Calendar size={12} /> Reschedule Suggested
+                                  </p>
+                                  <p className={`text-xs mt-1 ${isObsidian ? 'text-neutral-300' : 'text-amber-800'}`}>Suggested Slot: <span className="font-bold">{item.rescheduleSlot}</span></p>
+                                  {item.videoMessage && <p className={`text-xs mt-1 italic ${isObsidian ? 'text-neutral-450' : 'text-amber-600'}`}>"{item.videoMessage}"</p>}
+                                </div>
+                              )}
+                              {!item.payment && item.paymentMethod !== 'Cash' && (
+                                <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+                                  onClick={() => toast.info('Order recovery for late payment is currently being integrated by Admin.')}
+                                  className={`inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-xl shadow-sm transition ${isObsidian ? 'bg-gradient-to-r from-[#c8860a] to-[#E6C97A] text-black hover:opacity-90 shadow-amber-500/20' : 'text-white'}`}
+                                  style={isObsidian ? {} : { background: BRAND.mid }}>
+                                  <CheckCircle className="w-3.5 h-3.5" /> {t('appointments.payOnline')}
+                                </motion.button>
+                              )}
+
+                              {item.walletDeduction > 0 && (
+                                <div className={`mt-2 p-2 rounded-lg border ${isObsidian ? 'bg-amber-950/20 border-amber-900/30' : 'bg-amber-50 border-amber-200'}`}>
+                                  <p className={`text-[10px] font-bold flex items-center gap-1 ${isObsidian ? 'text-[#E6C97A]' : 'text-amber-800'}`}>
+                                    <Shield className="w-3 h-3" /> Wallet Payment: ₹{item.walletDeduction}
+                                  </p>
+                                  <p className={`text-[10px] font-medium ${isObsidian ? 'text-neutral-400' : 'text-amber-600'}`}>
+                                    Remaining {item.paymentMethod === 'Cash' ? 'to pay at clinic' : 'paid online'}: ₹{item.amount}
+                                  </p>
+                                </div>
+                              )}
+
+                              <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+                                onClick={() => setSelectedChat(item)}
+                                className="inline-flex items-center gap-1.5 px-4 py-2 text-white text-xs font-semibold rounded-xl shadow-sm transition"
+                                style={{ background: '#3b82f6' }}>
+                                <MessageCircle className="w-3.5 h-3.5" /> {t('appointments.chat')}
+                              </motion.button>
+
+                              <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+                                onClick={() => {
+                                  let num = item.docData.docphone.replace(/\s+/g, '');
+                                  if (!num.startsWith('+91')) num = `+91${num}`;
+                                  window.open(`https://wa.me/${num}?text=Hi%20Dr.%20${item.docData.name},%20regarding%20my%20appointment%20on%20${slotDateFormat(item.slotDate)}%20at%20${item.slotTime}.`, '_blank');
+                                }}
+                                className="inline-flex items-center gap-1.5 px-4 py-2 text-white text-xs font-semibold rounded-xl shadow-sm transition"
+                                style={{ background: '#16a34a' }}>
+                                <MessageCircle className="w-3.5 h-3.5" /> {t('appointments.whatsapp')}
+                              </motion.button>
+
+                              <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+                                onClick={() => setReportAppointment(item)}
+                                className="inline-flex items-center gap-1.5 px-4 py-2 text-white text-xs font-semibold rounded-xl shadow-sm transition"
+                                style={{ background: '#f97316' }}>
+                                <Flag className="w-3.5 h-3.5" /> Report
+                              </motion.button>
+
+                              {!item.isVideo && (
+                                <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+                                  onClick={() => cancelAppointment(item._id)}
+                                  className={`inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-xl border transition ${isObsidian ? 'bg-red-950/20 border-red-900/30 text-red-400 hover:bg-red-900/20' : ''}`}
+                                  style={isObsidian ? {} : { background: '#fef2f2', borderColor: '#fecaca', color: '#dc2626' }}>
+                                  <XCircle className="w-3.5 h-3.5" /> Cancel
+                                </motion.button>
+                              )}
+                            </div>
+                          )}
+
+                          {isCompleted && (
+                            <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+                              onClick={() => navigate('/doctors')}
+                              className={`inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-xl shadow-sm transition ${isObsidian ? 'bg-gradient-to-r from-[#c8860a] to-[#E6C97A] text-black hover:opacity-90 shadow-amber-500/20' : 'text-white'}`}
+                              style={isObsidian ? {} : { background: BRAND.mid }}>
+                              <ChevronRight className="w-3.5 h-3.5" /> Book Again
+                            </motion.button>
+                          )}
+
+                          {isCompleted && !isCancelled && !item.isRated && (
+                            <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+                              onClick={() => setRatingAppointment(item)}
+                              className={`inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-xl shadow-sm transition ${isObsidian ? 'bg-gradient-to-r from-[#c8860a] to-[#E6C97A] text-black hover:opacity-90 shadow-amber-500/20' : 'text-white'}`}
+                              style={isObsidian ? {} : { background: BRAND.amber }}>
+                              <CheckCircle className="w-3.5 h-3.5" /> {t('appointments.rateDoctor')}
+                            </motion.button>
+                          )}
+                        </div>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </AnimatePresence>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Chat Modal */}
@@ -2343,6 +2437,7 @@ const MyAppointments = () => {
             onSuccess={getUserAppointments}
             backendurl={backendurl}
             token={token}
+            isObsidian={isObsidian}
           />
         )
       }
@@ -2353,8 +2448,8 @@ const MyAppointments = () => {
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          className="p-3 rounded-full text-white shadow-lg flex items-center justify-center transition-all hover:shadow-xl"
-          style={{ background: BRAND.mid }}
+          className={`p-3 rounded-full shadow-lg flex items-center justify-center transition-all hover:shadow-xl ${isObsidian ? 'text-black' : 'text-white'}`}
+          style={{ background: isObsidian ? '#E6C97A' : BRAND.mid }}
           title="Scroll to Top"
         >
           <ChevronUp className="w-6 h-6" />
@@ -2363,8 +2458,8 @@ const MyAppointments = () => {
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           onClick={() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' })}
-          className="p-3 rounded-full text-white shadow-lg flex items-center justify-center transition-all hover:shadow-xl"
-          style={{ background: BRAND.mid }}
+          className={`p-3 rounded-full shadow-lg flex items-center justify-center transition-all hover:shadow-xl ${isObsidian ? 'text-black' : 'text-white'}`}
+          style={{ background: isObsidian ? '#E6C97A' : BRAND.mid }}
           title="Scroll to Bottom"
         >
           <ChevronDown className="w-6 h-6" />

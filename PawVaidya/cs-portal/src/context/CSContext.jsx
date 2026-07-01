@@ -8,6 +8,69 @@ export const CSContext = createContext();
 const SHIFT_DURATION = 10 * 60 * 60; // 10 hours in seconds
 const SYNC_INTERVAL = 60; // sync to backend every 60 seconds
 
+const DB_NAME = 'CS_ScreenRecording_DB';
+const STORE_NAME = 'chunks';
+
+const openDB = () => {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, 1);
+        request.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains(STORE_NAME)) {
+                db.createObjectStore(STORE_NAME, { autoIncrement: true });
+            }
+        };
+        request.onsuccess = (e) => resolve(e.target.result);
+        request.onerror = (e) => reject(e.target.error);
+    });
+};
+
+const saveChunkToDB = async (chunk) => {
+    try {
+        const db = await openDB();
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction(STORE_NAME, 'readwrite');
+            const store = transaction.objectStore(STORE_NAME);
+            const request = store.add(chunk);
+            request.onsuccess = () => resolve();
+            request.onerror = (e) => reject(e.target.error);
+        });
+    } catch (err) {
+        console.error('Failed to save chunk to IndexedDB', err);
+    }
+};
+
+const getChunksFromDB = async () => {
+    try {
+        const db = await openDB();
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction(STORE_NAME, 'readonly');
+            const store = transaction.objectStore(STORE_NAME);
+            const request = store.getAll();
+            request.onsuccess = (e) => resolve(e.target.result);
+            request.onerror = (e) => reject(e.target.error);
+        });
+    } catch (err) {
+        console.error('Failed to get chunks from IndexedDB', err);
+        return [];
+    }
+};
+
+const clearChunksFromDB = async () => {
+    try {
+        const db = await openDB();
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction(STORE_NAME, 'readwrite');
+            const store = transaction.objectStore(STORE_NAME);
+            const request = store.clear();
+            request.onsuccess = () => resolve();
+            request.onerror = (e) => reject(e.target.error);
+        });
+    } catch (err) {
+        console.error('Failed to clear chunks in IndexedDB', err);
+    }
+};
+
 export const CSProvider = ({ children }) => {
     const [cstoken, setCSToken] = useState(localStorage.getItem('cstoken') || '');
     const [employee, setEmployee] = useState(false);
@@ -33,8 +96,9 @@ export const CSProvider = ({ children }) => {
     const [shiftBreakSeconds, setShiftBreakSeconds] = useState(
         parseInt(localStorage.getItem('shiftBreakSeconds')) || 0
     );
-    const [shiftStarted, setShiftStarted] = useState(localStorage.getItem('shiftStarted') === 'true');
-    const [shiftCompleted, setShiftCompleted] = useState(localStorage.getItem('shiftCompleted') === 'true');
+    const isBypassed = localStorage.getItem('cs_isBypassed') === 'true';
+    const [shiftStarted, setShiftStarted] = useState(localStorage.getItem('shiftStarted') === 'true' && !isBypassed);
+    const [shiftCompleted, setShiftCompleted] = useState(localStorage.getItem('shiftCompleted') === 'true' && !isBypassed);
     const [shiftBreakCount, setShiftBreakCount] = useState(
         parseInt(localStorage.getItem('shiftBreakCount')) || 0
     );
@@ -248,16 +312,33 @@ export const CSProvider = ({ children }) => {
 
             const mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
             
-            recordingChunksRef.current = [];
-            mediaRecorder.ondataavailable = (e) => {
+            // Do NOT clear chunks if we already have chunks from the current active shift
+            const existingChunks = await getChunksFromDB();
+            if (!existingChunks || existingChunks.length === 0) {
+                recordingChunksRef.current = [];
+                await clearChunksFromDB();
+                recordingStartTimeRef.current = Date.now();
+                localStorage.setItem('cs_recordingStartTime', recordingStartTimeRef.current);
+            } else {
+                recordingChunksRef.current = existingChunks;
+                if (!localStorage.getItem('cs_recordingStartTime')) {
+                    recordingStartTimeRef.current = Date.now() - (existingChunks.length * 1000);
+                    localStorage.setItem('cs_recordingStartTime', recordingStartTimeRef.current);
+                } else {
+                    recordingStartTimeRef.current = parseInt(localStorage.getItem('cs_recordingStartTime'));
+                }
+                console.log(`Resuming screen recording with ${existingChunks.length} existing chunks.`);
+            }
+
+            mediaRecorder.ondataavailable = async (e) => {
                 if (e.data && e.data.size > 0) {
                     recordingChunksRef.current.push(e.data);
+                    await saveChunkToDB(e.data);
                 }
             };
 
             mediaStreamRef.current = stream;
             mediaRecorderRef.current = mediaRecorder;
-            recordingStartTimeRef.current = Date.now();
             
             mediaRecorder.start(1000); // chunk every 1s
             setIsRecording(true);
@@ -286,24 +367,66 @@ export const CSProvider = ({ children }) => {
 
     const stopAndUploadScreenRecording = async () => {
         if (!mediaRecorderRef.current || mediaRecorderRef.current.state === 'inactive') {
+            // Even if media recorder is not running, we might still have chunks in IndexedDB to upload!
+            const chunks = await getChunksFromDB();
+            if (chunks && chunks.length > 0) {
+                setIsRecording(false);
+                const blob = new Blob(chunks, { type: 'video/webm' });
+                const startTime = parseInt(localStorage.getItem('cs_recordingStartTime')) || (Date.now() - chunks.length * 1000);
+                const duration = Math.round((Date.now() - startTime) / 1000);
+                await clearChunksFromDB();
+                localStorage.removeItem('cs_recordingStartTime');
+
+                setIsUploadingRecording(true);
+                try {
+                    const formData = new FormData();
+                    formData.append('recording', blob, `recording_${employee?._id || 'unknown'}_${Date.now()}.webm`);
+                    formData.append('durationSeconds', duration);
+
+                    const { data } = await axios.post(`${backendUrl}/api/cs/upload-recording`, formData, {
+                        headers: {
+                            cstoken,
+                            'Content-Type': 'multipart/form-data'
+                        }
+                    });
+
+                    if (data.success) {
+                        toast.success('Screen recording saved to Firebase!');
+                        return data.url;
+                    } else {
+                        toast.error(`Failed to save recording: ${data.message}`);
+                        return null;
+                    }
+                } catch (err) {
+                    console.error('Error uploading recording:', err);
+                    toast.error('Network error uploading screen recording.');
+                    return null;
+                } finally {
+                    setIsUploadingRecording(false);
+                }
+            }
             return null;
         }
 
         return new Promise((resolve) => {
             const recorder = mediaRecorderRef.current;
             const stream = mediaStreamRef.current;
-            const startTime = recordingStartTimeRef.current;
 
             recorder.onstop = async () => {
                 setIsRecording(false);
-                const chunks = recordingChunksRef.current;
-                if (chunks.length === 0) {
+                const chunks = await getChunksFromDB();
+                if (!chunks || chunks.length === 0) {
+                    await clearChunksFromDB();
+                    localStorage.removeItem('cs_recordingStartTime');
                     resolve(null);
                     return;
                 }
 
                 const blob = new Blob(chunks, { type: 'video/webm' });
+                const startTime = parseInt(localStorage.getItem('cs_recordingStartTime')) || recordingStartTimeRef.current || Date.now();
                 const duration = Math.round((Date.now() - startTime) / 1000);
+                await clearChunksFromDB();
+                localStorage.removeItem('cs_recordingStartTime');
 
                 setIsUploadingRecording(true);
                 try {
@@ -435,6 +558,7 @@ export const CSProvider = ({ children }) => {
         localStorage.removeItem('shiftCompleted');
         localStorage.removeItem('shiftBreakCount');
         localStorage.removeItem('cs_isBypassed');
+        localStorage.removeItem('cs_recordingStartTime');
         // Clear break state too
         setIsBreakActive(false);
         setBreakTimeRemaining(0);
@@ -455,6 +579,97 @@ export const CSProvider = ({ children }) => {
             setLoading(false);
         }
     }, [cstoken]);
+
+    // Auto-restore cached chunks to memory if shift is active
+    useEffect(() => {
+        const restoreChunks = async () => {
+            if (!cstoken || !employee) return;
+            if (shiftStarted && !shiftCompleted) {
+                try {
+                    const existingChunks = await getChunksFromDB();
+                    if (existingChunks && existingChunks.length > 0) {
+                        console.log(`Restored ${existingChunks.length} chunks from IndexedDB to local ref.`);
+                        recordingChunksRef.current = existingChunks;
+                        const savedStartTime = localStorage.getItem('cs_recordingStartTime');
+                        if (savedStartTime) {
+                            recordingStartTimeRef.current = parseInt(savedStartTime);
+                        } else {
+                            recordingStartTimeRef.current = Date.now() - (existingChunks.length * 1000);
+                            localStorage.setItem('cs_recordingStartTime', recordingStartTimeRef.current);
+                        }
+                    }
+                } catch (err) {
+                    console.warn('Failed to restore chunks:', err);
+                }
+            }
+        };
+        restoreChunks();
+    }, [cstoken, employee, shiftStarted, shiftCompleted]);
+
+    // Auto-upload cached chunks from previous page-load/refresh (only if shift is not active)
+    useEffect(() => {
+        const checkAndUploadCachedRecording = async () => {
+            if (!cstoken || !employee) return;
+            // Only upload/recover if the shift is not currently active (meaning leftover from a previous day/session)
+            if (shiftStarted && !shiftCompleted) {
+                return;
+            }
+            
+            try {
+                const cachedChunks = await getChunksFromDB();
+                if (cachedChunks && cachedChunks.length > 0) {
+                    console.log(`Found ${cachedChunks.length} cached screen recording chunks from a completed/stale session. Uploading...`);
+                    
+                    const blob = new Blob(cachedChunks, { type: 'video/webm' });
+                    const duration = cachedChunks.length; 
+                    
+                    const formData = new FormData();
+                    formData.append('recording', blob, `recording_recovered_${employee?._id || 'unknown'}_${Date.now()}.webm`);
+                    formData.append('durationSeconds', duration);
+
+                    axios.post(`${backendUrl}/api/cs/upload-recording`, formData, {
+                        headers: {
+                            cstoken,
+                            'Content-Type': 'multipart/form-data'
+                        }
+                    }).then(({ data }) => {
+                        if (data.success) {
+                            console.log('Recovered screen recording uploaded and saved successfully.');
+                            toast.info('Your prior screen recording session was recovered and uploaded.');
+                        } else {
+                            console.warn('Failed to upload recovered screen recording:', data.message);
+                        }
+                    }).catch(err => {
+                        console.error('Error uploading recovered recording:', err);
+                    }).finally(async () => {
+                        await clearChunksFromDB();
+                        localStorage.removeItem('cs_recordingStartTime');
+                    });
+                }
+            } catch (err) {
+                console.error('Failed to process cached recording chunks:', err);
+            }
+        };
+
+        if (cstoken && employee) {
+            checkAndUploadCachedRecording();
+        }
+    }, [cstoken, employee, shiftStarted, shiftCompleted]);
+
+    // Prevent accidental page refreshes when recording
+    useEffect(() => {
+        const handleBeforeUnload = (e) => {
+            if (isRecording) {
+                e.preventDefault();
+                e.returnValue = 'Screen recording is active. Refreshing the page will stop the current recording session. Are you sure you want to leave?';
+                return e.returnValue;
+            }
+        };
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+        };
+    }, [isRecording]);
 
     // Start shift timer once employee is loaded and authenticated
     useEffect(() => {
@@ -594,6 +809,100 @@ export const CSProvider = ({ children }) => {
 
     // Global Socket Connection for CS Portal
     useEffect(() => {
+        if (socket && employee && employee._id) {
+            socket.emit('cs-mirror-start', employee._id);
+            return () => {
+                socket.emit('cs-mirror-stop', employee._id);
+            };
+        }
+    }, [socket, employee]);
+
+    const cursorPositionRef = useRef({ x: 0, y: 0 });
+    const lastActivityTimeRef = useRef(Date.now());
+    const idleLoggedRef = useRef(false);
+
+    useEffect(() => {
+        if (!cstoken || !employee || !socket) return;
+
+        const handleMouseMove = (e) => {
+            cursorPositionRef.current = {
+                x: Math.round((e.clientX / window.innerWidth) * 100),
+                y: Math.round((e.clientY / window.innerHeight) * 100)
+            };
+            lastActivityTimeRef.current = Date.now();
+            idleLoggedRef.current = false;
+        };
+
+        const handleActivity = () => {
+            lastActivityTimeRef.current = Date.now();
+            idleLoggedRef.current = false;
+        };
+
+        window.addEventListener('mousemove', handleMouseMove);
+        window.addEventListener('keydown', handleActivity);
+        window.addEventListener('click', handleActivity);
+        window.addEventListener('scroll', handleActivity);
+
+        const frameInterval = setInterval(() => {
+            let lastAction = "Active on portal";
+            let ticketId = "";
+            const path = window.location.pathname;
+            if (path.startsWith('/ticket/')) {
+                ticketId = path.split('/ticket/')[1] || "";
+                lastAction = `Viewing Ticket #${ticketId}`;
+            } else if (path === '/queue') {
+                lastAction = "Browsing Complaint Queue";
+            } else if (path === '/customer-360') {
+                lastAction = "Viewing Customer 360";
+            } else if (path === '/chat') {
+                lastAction = "In Admin Comms Chat";
+            } else if (path === '/profile') {
+                lastAction = "Reviewing Performance";
+            }
+
+            const secondsIdle = Math.floor((Date.now() - lastActivityTimeRef.current) / 1000);
+            if (secondsIdle >= 5) {
+                lastAction = `Idle for ${Math.floor(secondsIdle)}s`;
+            }
+
+            socket.emit('cs-mirror-frame', {
+                employeeId: employee._id,
+                routeName: path,
+                ticketId: ticketId,
+                cursorX: cursorPositionRef.current.x,
+                cursorY: cursorPositionRef.current.y,
+                windowWidth: window.innerWidth,
+                windowHeight: window.innerHeight,
+                scrollX: Math.round((window.scrollX / (document.documentElement.scrollWidth - window.innerWidth || 1)) * 100),
+                scrollY: Math.round((window.scrollY / (document.documentElement.scrollHeight - window.innerHeight || 1)) * 100),
+                lastAction,
+                isOnline: true,
+                timestamp: Date.now()
+            });
+
+            if (secondsIdle >= 300 && !idleLoggedRef.current) {
+                idleLoggedRef.current = true;
+                axios.post(`${backendUrl}/api/cs/log-idle`, {
+                    durationSeconds: secondsIdle,
+                    ticketId: ticketId
+                }, { headers: { cstoken } }).then(({ data }) => {
+                    if (data.success) {
+                        toast.warn('⚠️ Idle alert logged: you have been idle on this ticket for more than 5 minutes.');
+                        getEmployeeProfile();
+                    }
+                }).catch(err => console.warn('Failed to log idle time:', err));
+            }
+        }, 1500);
+
+        return () => {
+            window.removeEventListener('mousemove', handleMouseMove);
+            window.removeEventListener('keydown', handleActivity);
+            window.removeEventListener('click', handleActivity);
+            window.removeEventListener('scroll', handleActivity);
+            clearInterval(frameInterval);
+        };
+    }, [cstoken, employee, socket, backendUrl]);
+    useEffect(() => {
         if (!backendUrl || !cstoken) {
             if (socket) {
                 socket.disconnect();
@@ -627,6 +936,13 @@ export const CSProvider = ({ children }) => {
             );
         });
 
+        newSocket.on('gamification-update', (data) => {
+            console.log('Global CS gamification-update event:', data);
+            // Refresh performance and leaderboard on update
+            fetchPerformance();
+            fetchLeaderboard();
+        });
+
         setSocket(newSocket);
 
         return () => {
@@ -652,6 +968,7 @@ export const CSProvider = ({ children }) => {
             // Shift timer
             shiftWorkSeconds, shiftBreakSeconds,
             shiftStarted, shiftCompleted,
+            isBypassed,
             shiftSecondsRemaining, shiftProgress,
             SHIFT_DURATION, shiftBreakCount,
             showEarlyLogoutModal, setShowEarlyLogoutModal,

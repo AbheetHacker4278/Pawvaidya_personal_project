@@ -2,14 +2,16 @@ import React, { useContext, useEffect, useState, useRef } from 'react';
 import { DoctorContext } from '../../context/DoctorContext';
 import { toast } from 'react-toastify';
 import axios from 'axios';
-import { Camera, MapPin, Phone, Clock, CreditCard, Edit2, Save, RefreshCw, UserCheck, ShieldCheck, Upload, FileText, Eye, Trash2, CheckCircle, XCircle, AlertCircle, FolderOpen } from 'lucide-react';
+import { Camera, MapPin, Phone, Clock, CreditCard, Edit2, Save, RefreshCw, UserCheck, ShieldCheck, Upload, FileText, Eye, Trash2, CheckCircle, XCircle, AlertCircle, FolderOpen, User, Mail, Heart, Award } from 'lucide-react';
 import { getCurrentLocation } from '../../../../frontend/src/utils/geolocation';
 import FaceAuth from '../../components/FaceAuth';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const DoctorProfile = () => {
-    const { dtoken, profileData, setProfileData, getProfileData, backendurl } = useContext(DoctorContext);
+    const { dtoken, profileData, setProfileData, getProfileData, backendurl, getVcoClients } = useContext(DoctorContext);
     const [isEdit, setIsEdit] = useState(false);
+    const [vcoClients, setVcoClients] = useState([]);
+    const [vcoClientsLoading, setVcoClientsLoading] = useState(false);
     const fileInputRef = useRef(null);
     const [selectedImage, setSelectedImage] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -175,11 +177,24 @@ const DoctorProfile = () => {
         }
     };
 
+    const fetchVcoClients = async () => {
+        setVcoClientsLoading(true);
+        try {
+            const clients = await getVcoClients();
+            setVcoClients(clients || []);
+        } catch (error) {
+            console.error("Error fetching VCO clients:", error);
+        } finally {
+            setVcoClientsLoading(false);
+        }
+    };
+
     useEffect(() => {
         if (dtoken) {
             getProfileData();
             fetchTodaySchedule();
             fetchMyDocs();
+            fetchVcoClients();
         }
     }, [dtoken]);
 
@@ -727,6 +742,301 @@ const DoctorProfile = () => {
                                             <p className="text-[9px] text-gray-400 mt-1">
                                                 {doc.storageProvider === 'cloudinary' ? '☁️ Cloudinary' : '🔥 Firebase'} · {new Date(doc.uploadedAt).toLocaleDateString()}
                                             </p>
+                                        </div>
+                                    </motion.div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* ─── Dedicated VCO Clients Section ─── */}
+                <div className="bg-slate-950 rounded-xl border border-amber-500/30 overflow-hidden shadow-2xl">
+                    {/* Header */}
+                    <div className="bg-gradient-to-r from-amber-950 via-slate-900 to-amber-950 p-6 border-b border-amber-500/20">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-amber-500/10 border border-amber-500/30 rounded-xl flex items-center justify-center">
+                                    <Award className="w-5 h-5 text-amber-400" />
+                                </div>
+                                <div>
+                                    <h2 className="text-xl font-bold text-amber-100 flex items-center gap-2">
+                                        Obsidian VIP Concierge Command
+                                        <span className="text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full">
+                                            Dedicated VCO Clients
+                                        </span>
+                                    </h2>
+                                    <p className="text-amber-200/60 text-sm">Obsidian Signature Pass members currently assigned under your direct veterinary care</p>
+                                </div>
+                            </div>
+                            <button 
+                                onClick={fetchVcoClients}
+                                className="p-2 bg-slate-900 hover:bg-slate-800 text-amber-400 hover:text-amber-300 border border-amber-500/20 rounded-lg transition-all animate-none"
+                                title="Refresh clients"
+                            >
+                                <RefreshCw className={`w-4 h-4 ${vcoClientsLoading ? 'animate-spin' : ''}`} />
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="p-6 space-y-6">
+                        {vcoClientsLoading ? (
+                            <div className="flex flex-col items-center justify-center py-12 space-y-3">
+                                <RefreshCw className="w-8 h-8 text-amber-500 animate-spin" />
+                                <p className="text-amber-200/60 text-sm">Loading your Dedicated VCO client roster...</p>
+                            </div>
+                        ) : vcoClients.length === 0 ? (
+                            <div className="text-center py-12">
+                                <Award className="w-12 h-12 text-amber-500/20 mx-auto mb-3" />
+                                <p className="text-amber-100 font-medium text-base">No Assigned Obsidian Members</p>
+                                <p className="text-amber-200/50 text-sm max-w-md mx-auto mt-1">
+                                    You will be designated as a Dedicated Veterinary Care Officer when an Obsidian subscriber selects or gets assigned to you.
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="space-y-6">
+                                {vcoClients.map(client => (
+                                    <motion.div
+                                        key={client._id}
+                                        initial={{ opacity: 0, y: 15 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        className="bg-slate-900/80 border border-amber-500/20 hover:border-amber-500/40 rounded-xl p-6 transition-all duration-300 shadow-xl"
+                                    >
+                                        {/* Client Header Info */}
+                                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-amber-500/10 pb-6 mb-6">
+                                            <div className="flex items-center gap-4">
+                                                <div className="relative">
+                                                    <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-amber-500 bg-slate-800">
+                                                        {client.image ? (
+                                                            <img src={client.image} alt={client.name} className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center text-amber-400">
+                                                                <User className="w-8 h-8" />
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div className="absolute -bottom-1 -right-1 bg-amber-500 text-slate-950 w-6 h-6 flex items-center justify-center rounded-full text-xs font-bold shadow-md">
+                                                        👑
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <h3 className="text-xl font-bold text-amber-100">{client.name}</h3>
+                                                    <div className="flex flex-wrap items-center gap-2 mt-1">
+                                                        <span className="text-xs bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded border border-amber-500/30 font-semibold uppercase tracking-wider">
+                                                            Obsidian {client.subscription?.plan || 'Signature'}
+                                                        </span>
+                                                        <span className="text-xs bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/20 font-medium">
+                                                            {client.subscription?.status || 'Active'}
+                                                        </span>
+                                                        <span className="text-[10px] text-amber-200/50">
+                                                            Joined: {new Date(client.createdAt).toLocaleDateString()}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Quick Contact Chips */}
+                                            <div className="flex flex-wrap gap-2 text-xs">
+                                                <div className="flex items-center gap-2 bg-slate-950 border border-amber-500/10 px-3 py-1.5 rounded-lg text-amber-200/70">
+                                                    <Mail className="w-3.5 h-3.5 text-amber-400" />
+                                                    <span>{client.email}</span>
+                                                </div>
+                                                <div className="flex items-center gap-2 bg-slate-950 border border-amber-500/10 px-3 py-1.5 rounded-lg text-amber-200/70">
+                                                    <Phone className="w-3.5 h-3.5 text-amber-400" />
+                                                    <span>{client.phone ? (typeof client.phone === 'object' ? `${client.phone.code || '+91'} ${client.phone.number || ''}` : client.phone) : 'N/A'}</span>
+                                                </div>
+                                                {client.address && (
+                                                    <div className="flex items-center gap-2 bg-slate-950 border border-amber-500/10 px-3 py-1.5 rounded-lg text-amber-200/70 max-w-xs">
+                                                        <MapPin className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                                                        <span className="truncate">{typeof client.address === 'object' ? `${client.address.line || ''} ${client.address.Location || ''}` : client.address}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Detailed Informations Grid */}
+                                        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                                            {/* Panel 1: Obsidian Financial & Credit Center */}
+                                            <div className="bg-slate-950/80 border border-amber-500/10 rounded-xl p-5 space-y-4">
+                                                <h4 className="text-sm font-bold text-amber-300 flex items-center gap-2 border-b border-amber-500/10 pb-2">
+                                                    <CreditCard className="w-4 h-4" />
+                                                    Obsidian Wallet & Credit Line
+                                                </h4>
+
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div>
+                                                        <span className="text-[10px] text-amber-200/50 block uppercase">PawWallet Balance</span>
+                                                        <span className="text-lg font-bold text-amber-200">
+                                                            ₹{(client.pawWallet || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                                                        </span>
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-[10px] text-amber-200/50 block uppercase">PawPoints Earned</span>
+                                                        <span className="text-lg font-bold text-amber-400">
+                                                            {(client.pawpoints || 0).toLocaleString('en-IN')} pts
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                <div className="border-t border-amber-500/10 pt-3 space-y-2.5">
+                                                    <div className="flex items-center justify-between text-xs">
+                                                        <span className="text-amber-200/60">Interest-Free Credit Line:</span>
+                                                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                                                            client.creditLine?.status === 'Active' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
+                                                            client.creditLine?.status === 'Suspended' ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' :
+                                                            'bg-slate-800 text-slate-400'
+                                                        }`}>
+                                                            {client.creditLine?.status || 'None'}
+                                                        </span>
+                                                    </div>
+
+                                                    {client.creditLine && client.creditLine.status !== 'None' && (
+                                                        <div className="space-y-2 bg-slate-900/60 p-3 rounded-lg border border-amber-500/5">
+                                                            <div className="flex justify-between text-xs">
+                                                                <span className="text-amber-200/40">Total Credit Limit:</span>
+                                                                <span className="font-semibold text-amber-200">₹{(client.creditLine.limit || 0).toLocaleString('en-IN')}</span>
+                                                            </div>
+                                                            <div className="flex justify-between text-xs">
+                                                                <span className="text-amber-200/40">Credit Spent:</span>
+                                                                <span className="font-semibold text-rose-400">₹{(client.creditLine.spent || 0).toLocaleString('en-IN')}</span>
+                                                            </div>
+                                                            <div className="flex justify-between text-xs font-semibold border-t border-amber-500/10 pt-1.5">
+                                                                <span className="text-amber-300/80">Available Balance:</span>
+                                                                <span className="text-emerald-400">₹{((client.creditLine.limit || 0) - (client.creditLine.spent || 0)).toLocaleString('en-IN')}</span>
+                                                            </div>
+                                                            
+                                                            {/* Repayment Progress bar */}
+                                                            <div className="w-full bg-slate-950 h-2 rounded-full overflow-hidden mt-2 border border-amber-500/10">
+                                                                <div 
+                                                                    className="bg-gradient-to-r from-amber-500 to-amber-300 h-full rounded-full"
+                                                                    style={{ width: `${Math.min(100, ((client.creditLine.spent || 0) / (client.creditLine.limit || 1)) * 100)}%` }}
+                                                                />
+                                                            </div>
+
+                                                            {client.creditLine.repaymentDeadline && (
+                                                                <div className="flex items-center gap-1.5 text-[10px] text-amber-200/50 mt-1">
+                                                                    <Clock className="w-3 h-3 text-amber-400" />
+                                                                    <span>Repay by: {new Date(client.creditLine.repaymentDeadline).toLocaleDateString()}</span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    )}
+
+                                                    <div className="flex items-center justify-between text-xs border-t border-amber-500/10 pt-2.5">
+                                                        <span className="text-amber-200/60">Emergency Payment Dues:</span>
+                                                        <span className={`font-semibold ${
+                                                            client.emergencyPaymentStatus === 'Pending Due Payment' ? 'text-rose-400 flex items-center gap-1 animate-pulse' : 'text-emerald-400'
+                                                        }`}>
+                                                            {client.emergencyPaymentStatus === 'Pending Due Payment' ? '⚠️ Dues Outstanding' : '✅ Clear (No Dues)'}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Panel 2: Supervised Pets */}
+                                            <div className="bg-slate-950/80 border border-amber-500/10 rounded-xl p-5 space-y-4">
+                                                <h4 className="text-sm font-bold text-amber-300 flex items-center gap-2 border-b border-amber-500/10 pb-2">
+                                                    <Heart className="w-4 h-4 text-rose-400" />
+                                                    Client Pets Under Direct Care ({client.pets?.length || 0})
+                                                </h4>
+
+                                                {(!client.pets || client.pets.length === 0) ? (
+                                                    <div className="text-slate-500 text-xs italic py-8 text-center">
+                                                        No pets registered under this client's profile yet.
+                                                    </div>
+                                                ) : (
+                                                    <div className="space-y-3 max-h-60 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-amber-500/20 scrollbar-track-transparent">
+                                                        {client.pets.map(pet => (
+                                                            <div 
+                                                                key={pet._id}
+                                                                className="bg-slate-900/60 border border-amber-500/5 hover:border-amber-500/20 rounded-lg p-3 flex gap-3 transition-all duration-300"
+                                                            >
+                                                                <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0 bg-slate-800 border border-amber-500/20">
+                                                                    {pet.image ? (
+                                                                        <img src={pet.image} alt={pet.name} className="w-full h-full object-cover" />
+                                                                    ) : (
+                                                                        <div className="w-full h-full flex items-center justify-center text-amber-500/40 bg-slate-950 text-[10px] font-bold">
+                                                                            PET
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                                <div className="min-w-0 flex-1">
+                                                                    <div className="flex items-center justify-between">
+                                                                        <p className="text-sm font-bold text-amber-300 truncate">{pet.name}</p>
+                                                                        {pet.qrToken && (
+                                                                            <span className="text-[9px] bg-amber-500/10 text-amber-400 px-1 rounded border border-amber-500/20">
+                                                                                QR Linked
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                    <p className="text-[11px] text-amber-200/50 truncate capitalize">
+                                                                        {pet.petType} · {pet.breed || 'Breed N/A'}
+                                                                    </p>
+                                                                    <p className="text-[10px] text-amber-200/40 mt-0.5">
+                                                                        Age: {pet.age} yrs · {pet.gender}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Panel 3: Consultation & Appointment History */}
+                                            <div className="bg-slate-950/80 border border-amber-500/10 rounded-xl p-5 space-y-4">
+                                                <h4 className="text-sm font-bold text-amber-300 flex items-center gap-2 border-b border-amber-500/10 pb-2">
+                                                    <Clock className="w-4 h-4 text-amber-400" />
+                                                    Your Appointments with Client ({client.appointments?.length || 0})
+                                                </h4>
+
+                                                {(!client.appointments || client.appointments.length === 0) ? (
+                                                    <div className="text-slate-500 text-xs italic py-8 text-center">
+                                                        No consultation history found with this client.
+                                                    </div>
+                                                ) : (
+                                                    <div className="space-y-3 max-h-60 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-amber-500/20 scrollbar-track-transparent">
+                                                        {client.appointments.map(appt => (
+                                                            <div 
+                                                                key={appt._id}
+                                                                className="bg-slate-900/60 border border-amber-500/5 p-3 rounded-lg space-y-2 text-xs"
+                                                            >
+                                                                <div className="flex items-center justify-between">
+                                                                    <span className="font-semibold text-amber-200">
+                                                                        {new Date(appt.slotDate).toLocaleDateString()} at {appt.slotTime}
+                                                                    </span>
+                                                                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                                                                        appt.status === 'Completed' ? 'bg-emerald-500/20 text-emerald-400' :
+                                                                        appt.status === 'Cancelled' ? 'bg-rose-500/20 text-rose-400' :
+                                                                        'bg-amber-500/20 text-amber-400'
+                                                                    }`}>
+                                                                        {appt.status}
+                                                                    </span>
+                                                                </div>
+
+                                                                <div className="flex justify-between items-center text-[11px] text-amber-200/60">
+                                                                    <span>Consultation Type:</span>
+                                                                    <span className="font-medium text-amber-300">
+                                                                        {appt.isVcoBooking ? `VCO ${appt.vcoVisitType || 'Visit'}` : 'Standard Appointment'}
+                                                                    </span>
+                                                                </div>
+
+                                                                <div className="flex justify-between items-center text-[11px] text-amber-200/60">
+                                                                    <span>Fees Paid:</span>
+                                                                    <span className="font-medium text-amber-100">
+                                                                        ₹{appt.amount} ({appt.payment ? 'Online / Wallet' : 'Credit Line / Pending'})
+                                                                    </span>
+                                                                </div>
+
+                                                                {appt.preemptedAppointments && appt.preemptedAppointments.length > 0 && (
+                                                                    <div className="mt-1 bg-amber-500/10 text-amber-400 p-1.5 rounded text-[10px] border border-amber-500/20">
+                                                                        ⚠️ Preempted regular slots; Auto-rescheduled affected clients.
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                     </motion.div>
                                 ))}

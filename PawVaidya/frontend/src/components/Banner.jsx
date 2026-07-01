@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowRight, Calendar, Star } from 'lucide-react';
+import { AppContext } from '../context/AppContext';
 
 // ─── Brand palette ────────────────────────────────────────────────────────────
 const B = {
@@ -18,6 +19,8 @@ const B = {
 const Banner = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { userdata } = useContext(AppContext);
+  const isObsidian = userdata?.subscription?.plan === 'Obsidian' && userdata?.subscription?.status === 'Active';
 
   return (
     <motion.div
@@ -25,14 +28,19 @@ const Banner = () => {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.6 }}
-      className="relative overflow-hidden rounded-3xl mx-4 md:mx-10 my-16 shadow-2xl"
-      style={{ background: `linear-gradient(135deg, ${B.dark} 0%, ${B.mid} 55%, ${B.light} 100%)` }}
+      className="relative overflow-hidden rounded-3xl mx-4 md:mx-10 my-16 shadow-2xl border"
+      style={{ 
+        background: isObsidian 
+          ? 'radial-gradient(ellipse at top left, #1a130d 0%, #0d0d0d 55%, #050505 100%)' 
+          : `linear-gradient(135deg, ${B.dark} 0%, ${B.mid} 55%, ${B.light} 100%)`,
+        borderColor: isObsidian ? 'rgba(212,175,55,0.25)' : 'transparent'
+      }}
     >
       {/* Decorative blobs */}
       <div className="absolute -top-12 -left-12 w-56 h-56 rounded-full blur-3xl opacity-15"
-        style={{ background: B.cream }} />
+        style={{ background: isObsidian ? 'rgba(212,175,55,0.25)' : B.cream }} />
       <div className="absolute -bottom-10 -right-10 w-72 h-72 rounded-full blur-3xl opacity-10"
-        style={{ background: B.amber }} />
+        style={{ background: isObsidian ? '#D4AF37' : B.amber }} />
       <div className="absolute inset-0 opacity-5"
         style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '28px 28px' }} />
 
@@ -44,8 +52,8 @@ const Banner = () => {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
-            className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold text-amber-200 border border-white/15 w-fit"
-            style={{ background: 'rgba(255,255,255,0.10)' }}
+            className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold border w-fit ${isObsidian ? 'text-[#E6C97A] border-[#D4AF37]/30' : 'text-amber-200 border-white/15'}`}
+            style={{ background: isObsidian ? 'rgba(212,175,55,0.12)' : 'rgba(255,255,255,0.10)' }}
           >
             <Star className="w-3 h-3" /> {t('banner.trustedOwners')}
           </motion.div>
@@ -55,10 +63,10 @@ const Banner = () => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.2 }}
-            className="text-2xl md:text-3xl lg:text-4xl font-bold text-white leading-snug"
+            className={`text-2xl md:text-3xl lg:text-4xl font-bold text-white leading-snug ${isObsidian ? 'font-serif' : ''}`}
           >
             {t('appointments.bookAppointment')}<br />
-            <span style={{ color: '#f5c842' }}>{t('banner.withTrusted')}</span> Veterinary
+            <span style={{ color: isObsidian ? '#D4AF37' : '#f5c842' }}>{t('banner.withTrusted')}</span> Veterinary
           </motion.h2>
 
           <motion.p
@@ -66,7 +74,7 @@ const Banner = () => {
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
             transition={{ delay: 0.3 }}
-            className="text-amber-100 text-sm leading-relaxed"
+            className={isObsidian ? 'text-[#8A8A8A] text-sm leading-relaxed' : 'text-amber-100 text-sm leading-relaxed'}
           >
             {t('banner.description')}
           </motion.p>
@@ -79,11 +87,14 @@ const Banner = () => {
             className="flex flex-wrap gap-3 mt-2"
           >
             <motion.button
-              whileHover={{ scale: 1.05, boxShadow: `0 12px 32px ${B.amber}55` }}
+              whileHover={{ scale: 1.05, boxShadow: isObsidian ? '0 12px 32px rgba(212,175,55,0.3)' : `0 12px 32px ${B.amber}55` }}
               whileTap={{ scale: 0.97 }}
               onClick={() => { navigate('/login'); scrollTo(0, 0); }}
               className="flex items-center gap-2 px-6 py-3 rounded-full font-bold text-sm shadow-xl"
-              style={{ background: `linear-gradient(135deg, ${B.amber}, #e8a020)`, color: '#fff' }}
+              style={{ 
+                background: isObsidian ? 'linear-gradient(135deg, #D4AF37, #8C6D23)' : `linear-gradient(135deg, ${B.amber}, #e8a020)`, 
+                color: isObsidian ? '#050505' : '#fff' 
+              }}
             >
               <Calendar className="w-4 h-4" /> {t('banner.createAccount')}
             </motion.button>
@@ -91,8 +102,8 @@ const Banner = () => {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.97 }}
               onClick={() => { navigate('/doctors'); scrollTo(0, 0); }}
-              className="flex items-center gap-2 px-6 py-3 rounded-full font-bold text-sm border border-white/25 text-white transition"
-              style={{ background: 'rgba(255,255,255,0.10)', backdropFilter: 'blur(8px)' }}
+              className={`flex items-center gap-2 px-6 py-3 rounded-full font-bold text-sm border transition ${isObsidian ? 'text-[#F5F2EA] border-[#D4AF37]/25' : 'border-white/25 text-white'}`}
+              style={{ background: isObsidian ? 'rgba(212,175,55,0.08)' : 'rgba(255,255,255,0.10)', backdropFilter: 'blur(8px)' }}
             >
               {t('banner.browseDoctors')} <ArrowRight className="w-4 h-4" />
             </motion.button>
@@ -119,13 +130,17 @@ const Banner = () => {
               viewport={{ once: true }}
               transition={{ delay: 0.35 + i * 0.1 }}
               whileHover={{ scale: 1.04, x: -4 }}
-              className="flex items-center gap-4 px-5 py-3.5 rounded-2xl border border-white/15"
-              style={{ background: 'rgba(255,255,255,0.10)', backdropFilter: 'blur(8px)', minWidth: '200px' }}
+              className={`flex items-center gap-4 px-5 py-3.5 rounded-2xl border ${isObsidian ? 'border-[#D4AF37]/20' : 'border-white/15'}`}
+              style={{ 
+                background: isObsidian ? 'rgba(13, 13, 13, 0.7)' : 'rgba(255,255,255,0.10)', 
+                backdropFilter: 'blur(8px)', 
+                minWidth: '200px' 
+              }}
             >
               <span className="text-2xl">{stat.icon}</span>
               <div>
                 <p className="text-xl font-bold text-white">{stat.value}</p>
-                <p className="text-xs text-amber-200">{stat.label}</p>
+                <p className={`text-xs ${isObsidian ? 'text-[#E6C97A]' : 'text-amber-200'}`}>{stat.label}</p>
               </div>
             </motion.div>
           ))}

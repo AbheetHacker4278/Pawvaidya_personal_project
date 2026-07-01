@@ -65,17 +65,22 @@ export const uploadToFirebase = async (filePath, destinationPath, mimeType) => {
         };
 
         const [file] = await storageBucket.upload(filePath, options);
-        
-        // Wait, make it public explicitly just in case
+
+        // Try to make public as fallback, but we will use getSignedUrl for absolute reliability
         try {
             await file.makePublic();
         } catch (e) {
             console.warn("Could not make file public explicitly:", e.message);
         }
 
-        // Standard Cloud Storage public URL format:
-        const publicUrl = `https://storage.googleapis.com/${storageBucket.name}/${encodeURIComponent(file.name)}`;
-        
+        // Generate signed URL with far future expiration (approx. 50 years)
+        const [signedUrl] = await file.getSignedUrl({
+            action: 'read',
+            expires: '12-31-2075'
+        });
+
+        const publicUrl = signedUrl;
+
         // Clean up local file after upload
         try {
             if (fs.existsSync(filePath)) {
@@ -116,7 +121,8 @@ export const deleteFromFirebase = async (url) => {
         let filePath = null;
 
         if (url.startsWith(prefix)) {
-            filePath = decodeURIComponent(url.substring(prefix.length));
+            const rawPath = url.substring(prefix.length).split('?')[0];
+            filePath = decodeURIComponent(rawPath);
         } else if (url.includes(altPrefix) && url.includes(bucketName)) {
             // e.g. https://firebasestorage.googleapis.com/v0/b/bucket/o/path?alt=media
             const parts = url.split('/o/');

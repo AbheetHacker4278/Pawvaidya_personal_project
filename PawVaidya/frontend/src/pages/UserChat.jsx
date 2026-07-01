@@ -17,11 +17,16 @@ const UserChat = () => {
     const [loading, setLoading] = useState(true);
     const [socket, setSocket] = useState(null);
     const [isTyping, setIsTyping] = useState(false);
-    const messagesEndRef = useRef(null);
+    const messagesContainerRef = useRef(null);
     const fileInputRef = useRef(null);
 
     const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        if (messagesContainerRef.current) {
+            messagesContainerRef.current.scrollTo({
+                top: messagesContainerRef.current.scrollHeight,
+                behavior: "smooth"
+            });
+        }
     };
 
     useEffect(() => {
@@ -195,7 +200,7 @@ const UserChat = () => {
             </div>
 
             {/* Messages Area */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+            <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
                 {messages.map((msg, index) => {
                     const isOwn = msg.senderId === userData.id;
                     return (
@@ -225,7 +230,6 @@ const UserChat = () => {
                         </div>
                     );
                 })}
-                <div ref={messagesEndRef} />
             </div>
 
             {/* Input Area */}

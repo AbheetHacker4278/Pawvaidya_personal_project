@@ -13,6 +13,8 @@ import crypto from 'crypto'
 
 import { v2 as coludinary } from 'cloudinary';
 import appointmentModel from '../models/appointmentModel.js';
+import systemConfigModel from '../models/systemConfigModel.js';
+import transactionModel from '../models/transactionModel.js';
 import { transporter } from '../config/nodemailer.js';
 import WELCOME_EMAIL from '../mailservice/emailstemplate.js'
 import VERIFICATION_EMAIL_TEMPLATE from '../mailservice/emailtemplate2.js'
@@ -23,7 +25,6 @@ import { logActivity } from '../utils/activityLogger.js';
 import { euclideanDistance } from '../utils/faceUtils.js';
 import { USER_FACE_LOGIN_SUCCESS_TEMPLATE } from '../mailservice/userFaceLoginTemplate.js';
 import adminMessageModel from '../models/adminMessageModel.js';
-import systemConfigModel from '../models/systemConfigModel.js';
 import { getLocationFromIP, checkImpossibleTravel } from '../utils/fraudTracker.js';
 import deletionRequestModel from '../models/deletionRequestModel.js';
 import blacklistModel from '../models/blacklistModel.js';
@@ -679,6 +680,19 @@ export const getprofile = async (req, res) => {
             ? sub
             : { plan: 'None', status: 'None', expiryDate: null };
 
+        const obsidianRequestDoc = await subscriptionModel.findOne({
+            userId,
+            plan: 'Obsidian',
+            status: { $in: ['Pending', 'Approved'] }
+        });
+
+        const obsidianRequestData = obsidianRequestDoc ? {
+            status: obsidianRequestDoc.status,
+            approvedAt: obsidianRequestDoc.approvedAt,
+            expiryDate: obsidianRequestDoc.expiryDate,
+            amount: obsidianRequestDoc.amount
+        } : null;
+
         const userResponseData = {
             id: userdata._id,
             name: userdata.name,
@@ -705,6 +719,7 @@ export const getprofile = async (req, res) => {
             pawpoints: userdata.pawpoints || 0,
             videoCallsUsed: userdata.videoCallsUsed || 0,
             subscription: subscriptionData,
+            obsidianRequest: obsidianRequestData,
             isGoogleConnected: userdata.isGoogleConnected || false,
             isInstagramConnected: userdata.isInstagramConnected || false
         }
@@ -1132,6 +1147,7 @@ export const bookappointment = async (req, res) => {
             if (plan === 'Silver') { limit = 3; discountPercent = 10; }
             else if (plan === 'Gold') { limit = 6; discountPercent = 20; }
             else if (plan === 'Platinum') { limit = Infinity; discountPercent = 30; }
+            else if (plan === 'Obsidian') { limit = Infinity; discountPercent = 100; }
 
             if (weekCount < limit) {
                 const discountAmount = Math.round((finalFee * discountPercent) / 100);
@@ -1190,9 +1206,20 @@ export const bookappointment = async (req, res) => {
         let adminDiscountData = null;
         if (adminCouponCode) {
             const code = adminCouponCode.toUpperCase().trim();
+            const now = new Date();
+            await adminCouponModel.deleteMany({
+                code: { $in: ['HEALTHYPET15', 'FREEWELLNESS'] },
+                expiryDate: { $lte: now }
+            });
             const coupon = await adminCouponModel.findOne({ code, isActive: true });
 
             if (coupon) {
+                if (coupon.recipientEmails && coupon.recipientEmails.length > 0) {
+                    if (!userData || !coupon.recipientEmails.includes(userData.email)) {
+                        return res.json({ success: false, message: 'This platform coupon is not valid for your account' });
+                    }
+                }
+
                 const now = new Date();
                 const isExpired = new Date(coupon.expiryDate) < now;
                 const limitReached = coupon.usageLimit > 0 && coupon.usedCount >= coupon.usageLimit;
@@ -1230,20 +1257,75 @@ export const bookappointment = async (req, res) => {
         let payment = false;
 
         // Wallet Deduction Logic
-        if (useWallet && userData.pawWallet > 0) {
-            if (userData.pawWallet >= finalFee) {
-                // Wallet covers full final fee
+        const isObsidian = userData.subscription?.plan === 'Obsidian' && userData.subscription?.status === 'Active';
+        const creditLimit = isObsidian ? (userData.creditLine?.limit || 50000) : 0;
+        const creditSpent = isObsidian ? (userData.creditLine?.spent || 0) : 0;
+        const availableCredit = creditLimit - creditSpent;
+        const creditStatus = userData.creditLine?.status || 'None';
+
+        if (useWallet && (userData.pawWallet > 0 || (isObsidian && creditStatus === 'Active'))) {
+            const availableWalletAmount = (isObsidian && creditStatus === 'Active') ? (userData.pawWallet + availableCredit) : userData.pawWallet;
+            if (availableWalletAmount >= finalFee) {
+                // Wallet covers full final fee (potentially using credit line)
                 walletDeduction = finalFee;
                 finalFee = 0;
                 finalPaymentMethod = 'Wallet';
                 payment = true; // Fully paid
 
-                await userModel.findByIdAndUpdate(userId, {
-                    $inc: { pawWallet: -walletDeduction }
-                });
+                const creditNeeded = walletDeduction - userData.pawWallet;
+                if (creditNeeded > 0) {
+                    // Verify and update global credit pool
+                    let config = await systemConfigModel.findOne();
+                    if (!config) config = new systemConfigModel();
+                    if (!config.creditLinePool) {
+                        config.creditLinePool = { limit: 100000000, spent: 0, balance: 100000000 };
+                    }
+                    if (config.creditLinePool.balance < creditNeeded) {
+                        return res.json({ success: false, message: "Global Credit Line pool has insufficient funds." });
+                    }
+                    config.creditLinePool.spent += creditNeeded;
+                    config.creditLinePool.balance -= creditNeeded;
+                    await config.save();
+
+                    // Update user credit line details
+                    if (!userData.creditLine || userData.creditLine.status === 'None') {
+                        userData.creditLine = { limit: 50000, spent: 0, lastUsed: null, repaymentDeadline: null, status: 'Active' };
+                    }
+                    if (userData.creditLine.spent === 0) {
+                        userData.creditLine.repaymentDeadline = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+                    }
+                    userData.creditLine.spent += creditNeeded;
+                    userData.creditLine.lastUsed = new Date();
+
+                    await userModel.findByIdAndUpdate(userId, {
+                        $inc: { pawWallet: -walletDeduction },
+                        creditLine: userData.creditLine
+                    });
+                    
+                    // Log transaction
+                    try {
+                        const transaction = new transactionModel({
+                            userId: userData._id,
+                            type: 'Debit',
+                            amount: walletDeduction,
+                            description: `Appointment booking (Credit Line utilized: ₹${creditNeeded})`,
+                            paymentMethod: 'Credit Line',
+                            isOverdraftUsed: true,
+                            overdraftAmount: creditNeeded
+                        });
+                        await transaction.save();
+                    } catch (txnErr) {
+                        console.error("Failed to log booking transaction:", txnErr.message);
+                    }
+                } else {
+                    await userModel.findByIdAndUpdate(userId, {
+                        $inc: { pawWallet: -walletDeduction }
+                    });
+                }
+                
                 // Invalidate profile cache so wallet balance updates immediately
                 await deleteCache(`user_profile_${userId}`);
-            } else {
+            } else if (userData.pawWallet > 0) {
                 // Wallet partially covers fee
                 walletDeduction = userData.pawWallet;
                 finalFee -= walletDeduction;
@@ -1299,7 +1381,7 @@ export const bookappointment = async (req, res) => {
             meetLink, // Add the meet link to the appointment data
             date: new Date(),
             ...(appliedDiscount && { discountApplied: appliedDiscount }),
-            ...(adminDiscountData && { adminDiscountData: adminDiscountData }),
+            ...(adminDiscountData && { adminDiscountApplied: adminDiscountData }),
             paymentMethod: finalPaymentMethod,
             walletDeduction,
             pawpointsDeduction,
@@ -1728,9 +1810,9 @@ export const cancelAppointment = async (req, res) => {
             return res.json({ success: false, message: 'Unauthorized action' });
         }
 
-        await appointmentModel.findByIdAndUpdate(appointmentId, { 
-            cancelled: true, 
-            cancelledBy: isPaymentAbort ? 'user' : 'user', 
+        await appointmentModel.findByIdAndUpdate(appointmentId, {
+            cancelled: true,
+            cancelledBy: isPaymentAbort ? 'user' : 'user',
             cancelReason: isPaymentAbort ? 'Payment Aborted/Failed' : (reason || 'User cancelled')
         });
 
@@ -1974,6 +2056,15 @@ export const getUserMessages = async (req, res) => {
 
         const now = new Date();
 
+        // Prune expired outreach coupons and admin messages
+        await adminCouponModel.deleteMany({
+            code: { $in: ['HEALTHYPET15', 'FREEWELLNESS'] },
+            expiryDate: { $lte: now }
+        });
+        await adminMessageModel.deleteMany({
+            expiresAt: { $lte: now }
+        });
+
         // Get all active messages for users
         const messages = await adminMessageModel.find({
             isActive: true,
@@ -2185,9 +2276,25 @@ export const validateDiscount = async (req, res) => {
         }
 
         // 2. Fallback to Admin Coupons if no doctor discount found
+        const now = new Date();
+        await adminCouponModel.deleteMany({
+            code: { $in: ['HEALTHYPET15', 'FREEWELLNESS'] },
+            expiryDate: { $lte: now }
+        });
+
         const adminCoupon = await adminCouponModel.findOne({ code, isActive: true });
 
         if (adminCoupon) {
+            const userId = req.body.userId || req.userId;
+            const user = await userModel.findById(userId);
+            const userEmail = user ? user.email : null;
+
+            if (adminCoupon.recipientEmails && adminCoupon.recipientEmails.length > 0) {
+                if (!userEmail || !adminCoupon.recipientEmails.includes(userEmail)) {
+                    return res.json({ success: false, message: 'This platform coupon is not valid for your account' });
+                }
+            }
+
             if (new Date(adminCoupon.expiryDate) < new Date()) {
                 return res.json({ success: false, message: 'This platform coupon has expired' });
             }
@@ -2992,7 +3099,7 @@ export const connectSocialProfile = async (req, res) => {
         }
 
         await user.save();
-        
+
         // Invalidate Redis profile cache
         try {
             await deleteCache(`user_profile_${userId}`);

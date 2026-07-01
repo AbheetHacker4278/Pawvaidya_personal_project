@@ -9,6 +9,14 @@ const Customer360 = () => {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [customerData, setCustomerData] = useState(null);
+  const [nowTime, setNowTime] = useState(Date.now());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNowTime(Date.now());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     if (!socket) return;
@@ -222,6 +230,12 @@ const Customer360 = () => {
   const [refundReason, setRefundReason] = useState('');
   const [refundLoading, setRefundLoading] = useState(false);
 
+  const [reclaimModalOpen, setReclaimModalOpen] = useState(false);
+  const [reclaimAmount, setReclaimAmount] = useState('');
+  const [reclaimReason, setReclaimReason] = useState('');
+  const [reclaimLoading, setReclaimLoading] = useState(false);
+  const [selectedRefundLogId, setSelectedRefundLogId] = useState(null);
+
   const [grantModalOpen, setGrantModalOpen] = useState(false);
   const [grantPlan, setGrantPlan] = useState('Silver');
   const [grantDuration, setGrantDuration] = useState('1');
@@ -289,6 +303,40 @@ const Customer360 = () => {
       toast.error('Error processing refund.');
     } finally {
       setRefundLoading(false);
+    }
+  };
+
+  const handleReclaimRefund = async (e) => {
+    e.preventDefault();
+    if (!reclaimAmount || !reclaimReason) return toast.warning('Please fill out all fields.');
+
+    try {
+      setReclaimLoading(true);
+      const { data } = await axios.post(`${backendUrl}/api/cs/reclaim-refund`, {
+        email: customerData.user.email,
+        amount: reclaimAmount,
+        reason: reclaimReason,
+        refundLogId: selectedRefundLogId
+      }, { headers: { cstoken } });
+
+      if (data.success) {
+        toast.success(data.message);
+        setCustomerData({
+          ...customerData,
+          user: { ...customerData.user, pawWallet: data.newBalance }
+        });
+        setReclaimModalOpen(false);
+        setReclaimAmount('');
+        setReclaimReason('');
+        setSelectedRefundLogId(null);
+        fetchCustomerData({ preventDefault: () => {} }); // Refresh to show refund status
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      toast.error('Error reclaiming refund.');
+    } finally {
+      setReclaimLoading(false);
     }
   };
 
@@ -449,6 +497,7 @@ const Customer360 = () => {
                   </p>
                   <div className="flex gap-3 pt-2">
                     <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
+                      customerData.user.subscription?.plan === 'Obsidian' ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/50 font-black animate-pulse' :
                       customerData.user.subscription?.plan === 'Platinum' ? 'bg-purple-500/20 text-purple-200 border border-purple-500/50' : 
                       customerData.user.subscription?.plan === 'Gold' ? 'bg-amber-500/20 text-amber-200 border border-amber-500/50' : 
                       'bg-slate-500/50 text-slate-200'
@@ -467,17 +516,30 @@ const Customer360 = () => {
                 </div>
                 
                 {/* Wallet Info Box */}
-                <div className="ml-auto bg-white/10 backdrop-blur-md border border-white/20 p-5 rounded-2xl text-white text-center min-w-[200px]">
+                <div className="ml-auto bg-white/10 backdrop-blur-md border border-white/20 p-5 rounded-2xl text-white text-center min-w-[240px]">
                   <p className="text-slate-300 text-sm font-medium uppercase tracking-widest mb-1 flex items-center justify-center gap-1.5">
                     <FaWallet className="text-amber-400" /> PawWallet Balance
                   </p>
                   <p className="text-3xl font-black text-amber-400 mb-3">₹{customerData.user.pawWallet}</p>
-                  <button 
-                    onClick={() => setRefundModalOpen(true)}
-                    className="w-full py-1.5 bg-white/20 hover:bg-white/30 transition-colors rounded-lg text-sm font-bold"
-                  >
-                    Issue Refund
-                  </button>
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={() => setRefundModalOpen(true)}
+                      className="flex-1 py-1.5 bg-white/20 hover:bg-white/30 transition-colors rounded-lg text-xs font-bold"
+                    >
+                      Issue Refund
+                    </button>
+                    <button 
+                      onClick={() => {
+                        setSelectedRefundLogId(null);
+                        setReclaimAmount('');
+                        setReclaimReason('');
+                        setReclaimModalOpen(true);
+                      }}
+                      className="flex-1 py-1.5 bg-rose-500 hover:bg-rose-600 transition-colors rounded-lg text-xs font-bold text-white shadow-sm"
+                    >
+                      Reclaim Amt
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -587,6 +649,52 @@ const Customer360 = () => {
             </div>
           </div>
 
+          {customerData.user.subscription?.plan === 'Obsidian' && (
+            <div className="bg-gradient-to-r from-purple-950 via-slate-900 to-indigo-950 border border-purple-500/30 p-5 rounded-2xl shadow-xl text-white mb-6">
+              <div className="flex items-center gap-3 mb-2">
+                <FaCrown className="text-amber-400 text-2xl animate-pulse" />
+                <h3 className="font-extrabold text-xl tracking-wider text-[#D4AF37] uppercase">Obsidian Signature Pass Status</h3>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
+                <div className="bg-white/5 border border-white/10 p-3.5 rounded-xl">
+                  <span className="text-xs text-slate-400 block mb-0.5 font-bold">Request Status</span>
+                  <span className={`text-sm font-black uppercase tracking-wider ${
+                    customerData.user.subscription.status === 'Active' ? 'text-emerald-400' :
+                    customerData.user.subscription.status === 'Approved' ? 'text-indigo-400 animate-pulse' :
+                    customerData.user.subscription.status === 'Pending Approval' ? 'text-amber-400' :
+                    'text-rose-400'
+                  }`}>
+                    {customerData.user.subscription.status}
+                  </span>
+                </div>
+                <div className="bg-white/5 border border-white/10 p-3.5 rounded-xl">
+                  <span className="text-xs text-slate-400 block mb-0.5 font-bold">Expiry / Grace Period End</span>
+                  <span className="text-sm font-bold text-slate-200">
+                    {customerData.user.subscription.status === 'Approved' && customerData.user.subscription.approvedAt ? (
+                      (() => {
+                        const limit = new Date(customerData.user.subscription.approvedAt).getTime() + 24 * 60 * 60 * 1000;
+                        const diff = limit - nowTime;
+                        if (diff <= 0) return 'Expired';
+                        const h = Math.floor(diff / 3600000);
+                        const m = Math.floor((diff % 3600000) / 60000);
+                        const s = Math.floor((diff % 60000) / 1000);
+                        return `${h}h ${m}m ${s}s remaining`;
+                      })()
+                    ) : (
+                      customerData.user.subscription.expiryDate ? new Date(customerData.user.subscription.expiryDate).toLocaleDateString() : 'N/A'
+                    )}
+                  </span>
+                </div>
+                <div className="bg-white/5 border border-white/10 p-3.5 rounded-xl">
+                  <span className="text-xs text-slate-400 block mb-0.5 font-bold">Pricing Details</span>
+                  <span className="text-sm font-bold text-slate-200">
+                    {customerData.subscriptions?.find(s => s.plan === 'Obsidian')?.amount ? `₹${customerData.subscriptions.find(s => s.plan === 'Obsidian').amount.toLocaleString()}` : 'Custom Premium'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Subscriptions & Payment Matrix Row */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             
@@ -622,9 +730,9 @@ const Customer360 = () => {
                   <div key={sub._id} className="p-4 bg-slate-50 rounded-xl border border-slate-100 flex justify-between items-center">
                     <div>
                       <div className="flex items-center gap-2 mb-1">
-                        <FaCrown className={`text-lg ${sub.plan === 'Platinum' ? 'text-purple-500' : sub.plan === 'Gold' ? 'text-amber-500' : 'text-slate-400'}`} />
+                        <FaCrown className={`text-lg ${sub.plan === 'Obsidian' ? 'text-yellow-500 animate-pulse' : sub.plan === 'Platinum' ? 'text-purple-500' : sub.plan === 'Gold' ? 'text-amber-500' : 'text-slate-400'}`} />
                         <h4 className="font-bold text-slate-700">{sub.plan} Plan</h4>
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md uppercase ${sub.status === 'Active' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'}`}>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md uppercase ${sub.status === 'Active' ? 'bg-emerald-100 text-emerald-700' : sub.status === 'Pending' || sub.status === 'Pending Approval' || sub.status === 'Approved' ? 'bg-amber-100 text-amber-700 border border-amber-200 animate-pulse' : 'bg-slate-200 text-slate-600'}`}>
                           {sub.status}
                         </span>
                       </div>
@@ -638,9 +746,9 @@ const Customer360 = () => {
                   <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 flex justify-between items-center">
                     <div>
                       <div className="flex items-center gap-2 mb-1">
-                        <FaCrown className={`text-lg ${customerData.user.subscription.plan === 'Platinum' ? 'text-purple-500' : customerData.user.subscription.plan === 'Gold' ? 'text-amber-500' : 'text-slate-400'}`} />
+                        <FaCrown className={`text-lg ${customerData.user.subscription.plan === 'Obsidian' ? 'text-yellow-500 animate-pulse' : customerData.user.subscription.plan === 'Platinum' ? 'text-purple-500' : customerData.user.subscription.plan === 'Gold' ? 'text-amber-500' : 'text-slate-400'}`} />
                         <h4 className="font-bold text-slate-700">{customerData.user.subscription.plan} Plan</h4>
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md uppercase ${customerData.user.subscription.status === 'Active' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'}`}>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md uppercase ${customerData.user.subscription.status === 'Active' ? 'bg-emerald-100 text-emerald-700' : customerData.user.subscription.status === 'Pending' || customerData.user.subscription.status === 'Pending Approval' || customerData.user.subscription.status === 'Approved' ? 'bg-amber-100 text-amber-700 border border-amber-200 animate-pulse' : 'bg-slate-200 text-slate-600'}`}>
                           {customerData.user.subscription.status}
                         </span>
                       </div>
@@ -690,6 +798,125 @@ const Customer360 = () => {
               )}
             </div>
 
+          </div>
+
+          {/* Loyalty & Wellness Rewards Panel */}
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mt-6">
+            <div className="flex items-center justify-between mb-5 pb-4 border-b border-slate-100">
+              <div>
+                <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                  <span className="text-2xl">🎁</span> Active Loyalty &amp; Wellness Rewards
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">Admin-issued AI retention coupons active for this subscriber</p>
+              </div>
+              <span className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider ${
+                customerData.activeLoyaltyCoupons && customerData.activeLoyaltyCoupons.length > 0
+                  ? 'bg-violet-100 text-violet-700 border border-violet-200'
+                  : 'bg-slate-100 text-slate-500'
+              }`}>
+                {customerData.activeLoyaltyCoupons?.length || 0} Active
+              </span>
+            </div>
+
+            {customerData.activeLoyaltyCoupons && customerData.activeLoyaltyCoupons.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {customerData.activeLoyaltyCoupons.map((coupon) => {
+                  const isWellness = coupon.code === 'FREEWELLNESS';
+                  const expiryDate = new Date(coupon.expiryDate);
+                  const now = new Date();
+                  const hoursLeft = Math.ceil((expiryDate - now) / (1000 * 60 * 60));
+                  const daysLeft = Math.ceil((expiryDate - now) / (1000 * 60 * 60 * 24));
+                  const isExpiringSoon = hoursLeft <= 24;
+                  const isUsed = coupon.usedCount > 0;
+
+                  return (
+                    <div key={coupon.code} className={`relative overflow-hidden rounded-2xl border-2 p-5 ${
+                      isWellness
+                        ? 'border-emerald-200 bg-gradient-to-br from-emerald-50 to-teal-50'
+                        : 'border-violet-200 bg-gradient-to-br from-violet-50 to-indigo-50'
+                    }`}>
+                      <div className={`absolute -right-6 -top-6 w-24 h-24 rounded-full opacity-10 ${isWellness ? 'bg-emerald-500' : 'bg-violet-500'}`} />
+
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-xl">{isWellness ? '❤️' : '🏷️'}</span>
+                            <span className={`px-3 py-1 rounded-lg font-black text-sm uppercase tracking-widest ${
+                              isWellness ? 'bg-emerald-600 text-white' : 'bg-violet-600 text-white'
+                            }`}>
+                              {coupon.code}
+                            </span>
+                          </div>
+                          <p className={`text-xs font-bold mt-1 ${isWellness ? 'text-emerald-700' : 'text-violet-700'}`}>
+                            {isWellness
+                              ? '🩺 Complimentary Wellness Consultation'
+                              : '💸 15% Loyalty Discount on Next Booking'}
+                          </p>
+                        </div>
+                        <span className={`px-2 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                          isUsed
+                            ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
+                            : isExpiringSoon
+                              ? 'bg-rose-100 text-rose-700 border border-rose-200 animate-pulse'
+                              : 'bg-amber-100 text-amber-700 border border-amber-200'
+                        }`}>
+                          {isUsed ? '✅ Redeemed' : isExpiringSoon ? '⚠️ Expiring Soon' : '⏳ Pending'}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-3 mt-3 pt-3 border-t border-white/60">
+                        <div className="text-center">
+                          <p className={`text-xl font-black ${isWellness ? 'text-emerald-700' : 'text-violet-700'}`}>
+                            {coupon.discountValue === 100 ? 'FREE' : `${coupon.discountValue}%`}
+                          </p>
+                          <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Benefit</p>
+                        </div>
+                        <div className="text-center">
+                          <p className={`text-xl font-black ${isExpiringSoon ? 'text-rose-600' : 'text-slate-700'}`}>
+                            {daysLeft > 1 ? `${daysLeft}d` : `${hoursLeft}h`}
+                          </p>
+                          <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Remaining</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-xl font-black text-slate-700">{coupon.usedCount}</p>
+                          <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Used</p>
+                        </div>
+                      </div>
+
+                      <div className="mt-3 flex items-center gap-1.5">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Expires:</span>
+                        <span className={`text-[10px] font-black ${isExpiringSoon ? 'text-rose-500' : 'text-slate-600'}`}>
+                          {expiryDate.toLocaleDateString()} at {expiryDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+
+                      <div className={`mt-2 px-3 py-1.5 rounded-lg ${isWellness ? 'bg-emerald-100/60' : 'bg-violet-100/60'}`}>
+                        <p className={`text-[10px] font-bold ${isWellness ? 'text-emerald-700' : 'text-violet-700'}`}>
+                          {isWellness
+                            ? '🤖 AI Triggered: High churn risk — free wellness checkup issued by Admin'
+                            : '🤖 AI Triggered: Medium churn risk — 15% loyalty discount issued by Admin'}
+                        </p>
+                      </div>
+
+                      {/* CS Agent Info */}
+                      <div className="mt-2 px-3 py-1.5 bg-sky-50 rounded-lg border border-sky-100">
+                        <p className="text-[10px] font-bold text-sky-700">
+                          💬 CS Note: Inform the customer they can use code <strong>{coupon.code}</strong> at checkout.
+                          {isExpiringSoon && ' ⚠️ Expires very soon — mention urgency!'}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-10 text-slate-400">
+                <span className="text-4xl mb-3">🎫</span>
+                <p className="text-sm font-bold uppercase tracking-widest">No Active Rewards</p>
+                <p className="text-xs font-medium text-slate-400 mt-1">This user has no active loyalty or wellness coupons.</p>
+                <p className="text-xs text-slate-300 mt-0.5">Rewards are auto-issued when Admin triggers AI churn prediction on the subscriptions page.</p>
+              </div>
+            )}
           </div>
 
           {/* Premium Diagnostic Telemetry Logs */}
@@ -954,25 +1181,52 @@ const Customer360 = () => {
                 <FaUndo className="text-rose-500" /> Wallet Refund History
               </h3>
               <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-                {customerData.refundLogs.map(log => (
-                  <div key={log._id || log.id} className="p-4 bg-rose-50 rounded-xl border border-rose-100 flex justify-between items-center">
-                    <div>
-                      <p className="text-sm font-bold text-rose-800 mb-1">{log.activityDescription}</p>
-                      <div className="flex flex-wrap gap-2 mt-1">
-                        <p className="text-xs text-rose-600/70">Processed on: {new Date(log.timestamp).toLocaleString()}</p>
-                        {log.metadata?.reason && (
-                          <p className="text-[10px] font-bold text-rose-700 bg-rose-200/50 px-2 py-0.5 rounded uppercase tracking-tighter">Reason: {log.metadata.reason}</p>
+                {customerData.refundLogs.map(log => {
+                  const isRefund = log.activityType === 'refund';
+                  const isReclaimed = log.metadata?.reclaimed || false;
+                  return (
+                    <div key={log._id || log.id} className={`p-4 rounded-xl border ${isRefund ? 'bg-rose-50 border-rose-100' : 'bg-amber-50 border-amber-100'} flex justify-between items-center`}>
+                      <div>
+                        <p className={`text-sm font-bold ${isRefund ? 'text-rose-800' : 'text-amber-800'} mb-1`}>{log.activityDescription}</p>
+                        <div className="flex flex-wrap gap-2 mt-1">
+                          <p className={`text-xs ${isRefund ? 'text-rose-600/70' : 'text-amber-600/70'}`}>Processed on: {new Date(log.timestamp).toLocaleString()}</p>
+                          {log.metadata?.reason && (
+                            <p className={`text-[10px] font-bold ${isRefund ? 'text-rose-700 bg-rose-200/50' : 'text-amber-700 bg-amber-200/50'} px-2 py-0.5 rounded uppercase tracking-tighter`}>Reason: {log.metadata.reason}</p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        {log.metadata?.amount && (
+                          <div className="text-right">
+                            <p className={`font-black ${isRefund ? 'text-rose-600' : 'text-amber-600'}`}>{isRefund ? '+' : '-'}₹{log.metadata.amount}</p>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">{isRefund ? 'Added to Wallet' : 'Reclaimed/Deducted'}</p>
+                          </div>
+                        )}
+                        {isRefund && (
+                          <div>
+                            {isReclaimed ? (
+                              <span className="text-xs font-semibold text-amber-600 bg-amber-100 px-3 py-1 rounded-lg border border-amber-200">
+                                Reclaimed
+                              </span>
+                            ) : (
+                              <button
+                                onClick={() => {
+                                  setSelectedRefundLogId(log._id);
+                                  setReclaimAmount(log.metadata?.amount || '');
+                                  setReclaimReason(`Reclaim mistaken refund of ₹${log.metadata?.amount || ''}`);
+                                  setReclaimModalOpen(true);
+                                }}
+                                className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-1 shadow-sm"
+                              >
+                                <FaUndo size={10} /> Reclaim
+                              </button>
+                            )}
+                          </div>
                         )}
                       </div>
                     </div>
-                    {log.metadata?.amount && (
-                      <div className="text-right">
-                        <p className="font-black text-rose-600">+₹{log.metadata.amount}</p>
-                        <p className="text-[10px] font-bold text-rose-400 uppercase tracking-tight">Added to Wallet</p>
-                      </div>
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
@@ -1416,6 +1670,65 @@ const Customer360 = () => {
                       className="flex-1 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl shadow-lg shadow-rose-600/20 transition-all disabled:opacity-70"
                     >
                       {revokeLoading ? 'Revoking...' : 'Confirm Revocation'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* Reclaim Refund Modal */}
+          {reclaimModalOpen && (
+            <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in duration-200">
+                <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-amber-50">
+                  <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                    <FaUndo className="text-amber-500" /> Reclaim / Claw Back Amount
+                  </h3>
+                  <button onClick={() => setReclaimModalOpen(false)} className="text-slate-400 hover:text-slate-600 transition-colors">
+                    <FaTimes />
+                  </button>
+                </div>
+                <form onSubmit={handleReclaimRefund} className="p-6 space-y-4">
+                  {selectedRefundLogId && (
+                    <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 font-semibold break-all">
+                      Clawing back amount for Refund Log ID: {selectedRefundLogId}
+                    </div>
+                  )}
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-1">Clawback Amount (₹)</label>
+                    <input
+                      type="number"
+                      value={reclaimAmount}
+                      onChange={(e) => setReclaimAmount(e.target.value)}
+                      placeholder="Enter amount to claw back..."
+                      className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-amber-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-1">Reason / Internal Memo</label>
+                    <textarea
+                      value={reclaimReason}
+                      onChange={(e) => setReclaimReason(e.target.value)}
+                      placeholder="Explain why this refund is being clawed back..."
+                      rows="3"
+                      className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-amber-500 resize-none"
+                    ></textarea>
+                  </div>
+                  <div className="flex gap-4 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setReclaimModalOpen(false)}
+                      className="flex-1 py-2 font-bold text-slate-600 hover:bg-slate-50 rounded-xl transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={reclaimLoading}
+                      className="flex-1 py-2 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl shadow-lg shadow-amber-500/20 transition-all disabled:opacity-70"
+                    >
+                      {reclaimLoading ? 'Processing...' : 'Confirm Clawback'}
                     </button>
                   </div>
                 </form>

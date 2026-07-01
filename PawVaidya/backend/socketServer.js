@@ -95,6 +95,60 @@ export const initializeSocket = (server) => {
       console.log(`User ${socket.id} left room: ${roomId}`);
     });
 
+    // Ticket Calling events
+    socket.on('ticket-call-initiate', (data) => {
+      console.log(`Calling user in ticket room ticket-${data.ticketId} from ${data.callerName}`);
+      socket.to(`ticket-${data.ticketId}`).emit('incoming-ticket-call', {
+        ticketId: data.ticketId,
+        callerName: data.callerName,
+        fromSocketId: socket.id
+      });
+    });
+
+    socket.on('ticket-call-accept', (data) => {
+      console.log(`Call accepted in room ticket-${data.ticketId}`);
+      socket.to(data.toSocketId).emit('ticket-call-accepted', {
+        fromSocketId: socket.id
+      });
+    });
+
+    socket.on('ticket-call-decline', (data) => {
+      console.log(`Call declined in room ticket-${data.ticketId}`);
+      socket.to(data.toSocketId).emit('ticket-call-declined');
+    });
+
+    socket.on('ticket-call-end', (data) => {
+      console.log(`Call ended in room ticket-${data.ticketId}`);
+      socket.to(`ticket-${data.ticketId}`).emit('ticket-call-ended');
+    });
+
+    socket.on('ticket-offer', (data) => {
+      socket.to(data.toSocketId).emit('ticket-offer', {
+        offer: data.offer,
+        fromSocketId: socket.id
+      });
+    });
+
+    socket.on('ticket-answer', (data) => {
+      socket.to(data.toSocketId).emit('ticket-answer', {
+        answer: data.answer
+      });
+    });
+
+    socket.on('ticket-ice-candidate', (data) => {
+      socket.to(data.toSocketId).emit('ticket-ice-candidate', {
+        candidate: data.candidate
+      });
+    });
+
+    socket.on('ticket-typing-start', (data) => {
+      socket.to(`ticket-${data.ticketId}`).emit('ticket-typing-start');
+    });
+
+    socket.on('ticket-typing-stop', (data) => {
+      socket.to(`ticket-${data.ticketId}`).emit('ticket-typing-stop');
+    });
+
     socket.on('chat-message', (data) => {
       console.log(`Chat message in room ${data.appointmentId}:`, data.message);
       // Broadcast message to all other users in the room
@@ -191,6 +245,27 @@ export const initializeSocket = (server) => {
       console.log(`Socket ${socket.id} joined cs-agents room`);
     });
 
+    // CS Screen Mirroring / Shadowing
+    socket.on('cs-mirror-start', (employeeId) => {
+      socket.join(`cs-mirror-${employeeId}`);
+      console.log(`CS Agent ${employeeId} started screen mirroring`);
+    });
+
+    socket.on('cs-mirror-frame', (data) => {
+      // Broadcast screen frame and activity telemetry to anyone monitoring this agent
+      io.to(`cs-mirror-${data.employeeId}`).emit('cs-mirror-frame', data);
+    });
+
+    socket.on('cs-mirror-stop', (employeeId) => {
+      io.to(`cs-mirror-${employeeId}`).emit('cs-mirror-stop');
+      console.log(`CS Agent ${employeeId} stopped screen mirroring`);
+    });
+
+    socket.on('admin-mirror-join', (employeeId) => {
+      socket.join(`cs-mirror-${employeeId}`);
+      console.log(`Admin joined screen mirroring for agent: ${employeeId}`);
+    });
+
     // Co-Browsing Events
     socket.on('co-browse-request', (data) => {
       console.log(`Co-browse request from agent for ticket ${data.ticketId} targeting user ${data.userId}`);
@@ -219,6 +294,168 @@ export const initializeSocket = (server) => {
     socket.on('co-browse-highlight', (data) => {
       socket.to(`ticket-${data.ticketId}`).emit('co-browse-highlight', data);
     });
+
+    socket.on('co-browse-mouse-move', (data) => {
+      socket.to(`ticket-${data.ticketId}`).emit('co-browse-mouse-move', data);
+    });
+
+    socket.on('co-browse-draw-line', (data) => {
+      socket.to(`ticket-${data.ticketId}`).emit('co-browse-draw-line', data);
+    });
+
+    // ── CS Agent Behavioral Monitoring Events ──────────────────────────────
+
+    // Tab-switch / Focus-loss detection
+    // Emitted by CS agent when their tab loses focus during an active ticket session
+    socket.on('cs-agent-focus-loss', (data) => {
+      const { employeeId, employeeName, ticketId, lostAt } = data;
+      console.log(`[MONITOR] Focus loss: Agent ${employeeName} (${employeeId}) on ticket ${ticketId}`);
+      // Notify all admin watchers monitoring this agent
+      io.to(`cs-monitor-admin`).emit('cs-agent-alert', {
+        type: 'focus_loss',
+        employeeId,
+        employeeName,
+        ticketId,
+        message: `Agent ${employeeName} switched away from CS portal while handling ticket.`,
+        severity: 'medium',
+        timestamp: lostAt || new Date().toISOString()
+      });
+    });
+
+    // Copy-paste anomaly detection
+    // Emitted by CS agent when a suspiciously large paste is detected in the chat input
+    socket.on('cs-agent-paste-anomaly', (data) => {
+      const { employeeId, employeeName, ticketId, pastedLength, preview, pastedAt } = data;
+      console.log(`[MONITOR] Paste anomaly: Agent ${employeeName} pasted ${pastedLength} chars in ticket ${ticketId}`);
+      io.to(`cs-monitor-admin`).emit('cs-agent-alert', {
+        type: 'paste_anomaly',
+        employeeId,
+        employeeName,
+        ticketId,
+        message: `Agent ${employeeName} pasted ${pastedLength} characters — possible script/data exfiltration.`,
+        preview: preview || '',
+        severity: pastedLength > 2000 ? 'high' : 'medium',
+        timestamp: pastedAt || new Date().toISOString()
+      });
+    });
+
+    // Admin subscribes to real-time agent alerts feed
+    socket.on('admin-join-monitor', () => {
+      socket.join('cs-monitor-admin');
+      console.log(`Admin socket ${socket.id} joined cs-monitor-admin room`);
+    });
+
+    // Concurrent Ticket Overload Warning
+    // Emitted by CS agent whenever their active ticket count changes (from TicketDetail mount/unmount)
+    socket.on('cs-agent-ticket-count-update', async (data) => {
+      const { employeeId, employeeName, activeCount } = data;
+      const OVERLOAD_THRESHOLD = 3;
+      if (activeCount > OVERLOAD_THRESHOLD) {
+        io.to('cs-monitor-admin').emit('cs-agent-alert', {
+          type: 'ticket_overload',
+          employeeId,
+          employeeName,
+          message: `⚠️ Agent ${employeeName} has ${activeCount} open tickets simultaneously — burnout & quality risk!`,
+          severity: 'high',
+          activeCount,
+          timestamp: new Date().toISOString()
+        });
+        // Persist to DB
+        try {
+          const CSEmployee = (await import('./models/csEmployeeModel.js')).default;
+          await CSEmployee.findByIdAndUpdate(employeeId, {
+            activeTicketsCount: activeCount,
+            $push: {
+              monitoringAlerts: {
+                alertType: 'idle_alert',
+                message: `Concurrent ticket overload: ${activeCount} tickets open simultaneously.`,
+                severity: 'high',
+                timestamp: new Date(),
+                metadata: { subType: 'ticket_overload', activeCount }
+              }
+            }
+          });
+        } catch (e) { console.warn('[Monitor] Overload DB persist failed:', e.message); }
+      }
+    });
+
+    // CS Agent supervisor escalation alert
+    socket.on('cs-agent-supervisor-escalation', (data) => {
+      const { employeeId, employeeName, ticketId, message, severity, sentimentScore, label } = data;
+      console.log(`[MONITOR] Supervisor escalation request: Agent ${employeeName} (${employeeId}) on ticket ${ticketId} [Sentiment: ${label} (${sentimentScore})]`);
+      
+      io.to(`cs-monitor-admin`).emit('cs-agent-alert', {
+        type: 'supervisor_escalation',
+        employeeId,
+        employeeName,
+        ticketId,
+        message: message || `Agent ${employeeName} requested supervisor assistance on ticket #${ticketId}. Customer Sentiment: ${label.toUpperCase()} (${sentimentScore}).`,
+        severity: severity || 'high',
+        timestamp: new Date().toISOString()
+      });
+    });
+
+    // Flagged Language Detection
+    // Called from TicketDetail when agent submits a message — checked server-side for toxic words
+    socket.on('cs-agent-message-check', (data) => {
+      const { employeeId, employeeName, ticketId, message } = data;
+
+      // Tiered keyword lists
+      const HIGH_RISK = ['idiot', 'stupid', 'moron', 'shut up', 'bastard', 'hell with you', 'screw you'];
+      const MEDIUM_RISK = ['useless', 'pathetic', 'ridiculous', 'nonsense', 'crap', 'dumb'];
+      const lc = (message || '').toLowerCase();
+
+      const matchedHigh   = HIGH_RISK.filter(w => lc.includes(w));
+      const matchedMedium = MEDIUM_RISK.filter(w => lc.includes(w));
+
+      if (matchedHigh.length > 0 || matchedMedium.length > 0) {
+        const severity  = matchedHigh.length > 0 ? 'high' : 'medium';
+        const matched   = [...matchedHigh, ...matchedMedium];
+
+        io.to('cs-monitor-admin').emit('cs-agent-alert', {
+          type: 'language_violation',
+          employeeId,
+          employeeName,
+          ticketId,
+          message: `🚨 Flagged language from ${employeeName} in ticket #${ticketId}: [${matched.join(', ')}]`,
+          preview: message.substring(0, 200),
+          severity,
+          timestamp: new Date().toISOString()
+        });
+
+        // Persist to DB
+        import('./models/csEmployeeModel.js').then(({ default: CSEmployee }) => {
+          CSEmployee.findByIdAndUpdate(employeeId, {
+            $push: {
+              monitoringAlerts: {
+                alertType: 'language_violation',
+                message: `Policy-violating language used in ticket #${ticketId}: "${message.substring(0, 120)}"`,
+                severity,
+                timestamp: new Date(),
+                metadata: { ticketId, matchedWords: matched, subType: 'language_flag' }
+              }
+            }
+          }).catch(e => console.warn('[Monitor] Language flag DB persist failed:', e.message));
+        });
+      }
+    });
+
+    // Script Adherence score emission from CS portal
+    // CS portal periodically emits the script match score for admin visibility
+    socket.on('cs-agent-script-score', (data) => {
+      const { employeeId, employeeName, ticketId, score, templateName } = data;
+      io.to('cs-monitor-admin').emit('cs-agent-script-update', {
+        employeeId,
+        employeeName,
+        ticketId,
+        score,
+        templateName,
+        timestamp: new Date().toISOString()
+      });
+    });
+
+    // ──────────────────────────────────────────────────────────────────────
+
 
     // Emergency Appointment Events
     socket.on('register-doctor-emergency', (data) => {

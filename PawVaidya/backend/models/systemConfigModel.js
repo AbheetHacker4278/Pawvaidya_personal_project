@@ -6,6 +6,11 @@ const systemConfigSchema = new mongoose.Schema({
     maintenanceMessage: { type: String, default: "System is currently under maintenance. Please try again later." },
 
     // Dynamic Commission Engine
+    creditLinePool: {
+        limit: { type: Number, default: 100000000 }, // Default ₹10 Crore
+        spent: { type: Number, default: 0 },
+        balance: { type: Number, default: 100000000 }
+    },
     commissionRules: {
         defaultPercentage: { type: Number, default: 20 },
         specialityRules: [{

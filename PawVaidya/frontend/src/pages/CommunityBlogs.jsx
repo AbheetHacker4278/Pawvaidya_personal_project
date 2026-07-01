@@ -18,6 +18,7 @@ import {
   PencilIcon,
   FlagIcon
 } from '@heroicons/react/24/outline';
+import { ShieldAlert, Check, Shield } from 'lucide-react';
 import { HeartIcon as HeartSolidIcon } from '@heroicons/react/24/solid';
 import { extractLinks, getLinkSource, getSourceColor } from '../utils/linkUtils';
 
@@ -30,9 +31,10 @@ const B = {
   sand: '#e8d5b0',
   amber: '#c8860a',
   pale: '#fdf8f0',
+  warmWhite: '#fffaf3'
 };
 
-const CommunityBlogs = () => {
+const CommunityBlogs = ({ hideHeader = false }) => {
   const { t, i18n } = useTranslation();
   const { token, userdata, backendurl } = useContext(AppContext);
   const navigate = useNavigate();
@@ -52,6 +54,8 @@ const CommunityBlogs = () => {
   const [expandedComments, setExpandedComments] = useState({});
   const [newComments, setNewComments] = useState({});
   const [submittingComment, setSubmittingComment] = useState(false);
+
+  const isObsidian = userdata?.subscription?.status === 'Active' && userdata?.subscription?.plan === 'Obsidian';
 
   useEffect(() => { fetchBlogs(); }, [page, sortBy]);
 
@@ -249,61 +253,78 @@ const CommunityBlogs = () => {
   };
 
   return (
-    <div className="min-h-screen" style={{ background: B.cream }}>
+    <div className={hideHeader ? "" : "min-h-screen"} style={{ background: hideHeader ? "transparent" : (isObsidian ? '#050505' : B.cream) }}>
 
-      {/* ── Hero Header ──────────────────────────────────────────────────────── */}
-      <div className="relative overflow-hidden py-14 px-4" style={{ background: `linear-gradient(135deg, ${B.dark} 0%, ${B.mid} 60%, ${B.light} 100%)` }}>
-        {/* Dot grid */}
-        <div className="absolute inset-0 opacity-10 pointer-events-none"
-          style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
-        {/* Blobs */}
-        <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full opacity-10 blur-3xl pointer-events-none" style={{ background: B.amber }} />
-        <div className="absolute -bottom-16 -left-16 w-48 h-48 rounded-full opacity-10 blur-3xl pointer-events-none" style={{ background: '#fff' }} />
+      {/* ── Hero Header (Visible only when standalone) ────────────────────────── */}
+      {!hideHeader && (
+        <div className={`relative overflow-hidden py-14 px-4 ${isObsidian ? 'bg-gradient-to-br from-[#121212] via-[#0A0A0A] to-[#0E0E0E] border-b border-[#E6C97A]/25' : ''}`} style={!isObsidian ? { background: `linear-gradient(135deg, ${B.dark} 0%, ${B.mid} 60%, ${B.light} 100%)` } : {}}>
+          {/* Dot grid */}
+          <div className="absolute inset-0 opacity-10 pointer-events-none"
+            style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
+          {/* Blobs */}
+          <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full opacity-10 blur-3xl pointer-events-none" style={{ background: isObsidian ? '#E6C97A' : B.amber }} />
+          <div className="absolute -bottom-16 -left-16 w-48 h-48 rounded-full opacity-10 blur-3xl pointer-events-none" style={{ background: '#fff' }} />
 
-        <div className="relative z-10 max-w-6xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-            {/* Label pill */}
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest mb-3 border border-white/20"
-              style={{ background: 'rgba(255,255,255,0.10)', color: '#f0d080' }}>
-              <span>🐾</span> Community
-            </div>
-            <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">{t('blogs.title')}</h1>
-            <p className="text-sm" style={{ color: 'rgba(255,255,255,0.65)' }}>{t('blogs.subtitle')}</p>
-          </motion.div>
+          <div className="relative z-10 max-w-6xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+              {/* Label pill */}
+              <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest mb-3 border ${isObsidian ? 'bg-[#E6C97A]/15 border-[#E6C97A]/25 text-[#E6C97A]' : 'bg-white/10 border-white/20 text-[#f0d080]'}`}>
+                <span>🐾</span> Community
+              </div>
+              <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">{t('blogs.title')}</h1>
+              <p className={`text-sm ${isObsidian ? 'text-neutral-400' : 'text-white/60'}`}>{t('blogs.subtitle')}</p>
+            </motion.div>
 
-          {token && userdata && !userdata.isBanned && (
-            <motion.button
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.4, delay: 0.2 }}
-              whileHover={{ scale: 1.06, boxShadow: `0 8px 24px rgba(200,134,10,0.40)` }}
-              whileTap={{ scale: 0.97 }}
-              onClick={() => navigate('/create-blog')}
-              className="lg:hidden flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-white shadow-xl flex-shrink-0"
-              style={{ background: `linear-gradient(135deg, ${B.amber}, #e8a020)` }}
-            >
-              <PlusIcon className="w-5 h-5" />
-              {t('blogs.createPost')}
-            </motion.button>
-          )}
+            {token && userdata && !userdata.isBanned && (
+              <motion.button
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.4, delay: 0.2 }}
+                whileHover={{ scale: 1.06, boxShadow: isObsidian ? `0 8px 24px rgba(230,201,122,0.2)` : `0 8px 24px rgba(200,134,10,0.40)` }}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => navigate('/create-blog')}
+                className="lg:hidden flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-white shadow-xl flex-shrink-0"
+                style={{ background: isObsidian ? 'linear-gradient(135deg, #8C6D23, #E6C97A, #8C6D23)' : `linear-gradient(135deg, ${B.amber}, #e8a020)`, color: isObsidian ? '#000' : '#fff' }}
+              >
+                <PlusIcon className="w-5 h-5 text-current" />
+                {t('blogs.createPost')}
+              </motion.button>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="max-w-6xl mx-auto px-4 py-8 flex flex-col lg:flex-row gap-8 items-start">
         {/* ── Main Feed / Rooms Column ─────────────────────────────────────── */}
         <div className="flex-1 min-w-0 w-full">
 
           {/* ── View Toggle Bar ──────────────────────────────────────────────── */}
-          <div className="flex items-center gap-2 p-1.5 rounded-2xl mb-6 shadow-sm border inline-flex backdrop-blur-md" style={{ background: 'rgba(237, 228, 216, 0.85)', borderColor: B.sand }}>
+          <div
+            className={`flex items-center gap-2 p-1.5 rounded-2xl mb-6 shadow-sm border inline-flex backdrop-blur-md transition-colors ${isObsidian
+              ? 'bg-[#0E0E0E] border-zinc-800/80 text-white'
+              : 'bg-white/95 border-[#5a4035]/10'
+              }`}
+            style={!isObsidian ? { background: 'rgba(237, 228, 216, 0.85)', borderColor: B.sand } : {}}
+          >
             <button
               onClick={() => setViewMode('feed')}
-              className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all ${viewMode === 'feed' ? 'bg-amber-50 text-amber-700 shadow-sm' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'}`}
+              className={`px-6 py-2.5 rounded-xl font-black text-sm transition-all ${viewMode === 'feed'
+                ? (isObsidian
+                  ? 'bg-gradient-to-r from-[#8C6D23] via-[#E6C97A] to-[#8C6D23] text-black shadow-lg border border-[#E6C97A]/40'
+                  : 'bg-amber-50 text-amber-700 shadow-sm')
+                : (isObsidian ? 'text-neutral-400 hover:text-white' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50')
+                }`}
             >
               Public Feed
             </button>
             <button
               onClick={() => setViewMode('rooms')}
-              className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all ${viewMode === 'rooms' ? 'bg-amber-50 text-amber-700 shadow-sm' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'}`}
+              className={`px-6 py-2.5 rounded-xl font-black text-sm transition-all ${viewMode === 'rooms'
+                ? (isObsidian
+                  ? 'bg-gradient-to-r from-[#8C6D23] via-[#E6C97A] to-[#8C6D23] text-black shadow-lg border border-[#E6C97A]/40'
+                  : 'bg-amber-50 text-amber-700 shadow-sm')
+                : (isObsidian ? 'text-neutral-400 hover:text-white' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50')
+                }`}
             >
               Community Rooms
             </button>
@@ -320,18 +341,21 @@ const CommunityBlogs = () => {
                 transition={{ duration: 0.4, delay: 0.1 }}
                 className="flex items-center gap-3 mb-8"
               >
-                <span className="text-sm font-semibold" style={{ color: B.light }}>Sort by:</span>
+                <span className={`text-sm font-semibold ${isObsidian ? 'text-neutral-400' : ''}`} style={!isObsidian ? { color: B.light } : {}}>Sort by:</span>
                 <select
                   value={sortBy}
                   onChange={(e) => { setSortBy(e.target.value); setPage(1); }}
-                  className="px-4 py-2 rounded-xl text-sm font-semibold cursor-pointer focus:outline-none transition-all duration-200"
-                  style={{
+                  className={`px-4 py-2 rounded-xl text-sm font-semibold cursor-pointer focus:outline-none transition-all duration-200 ${isObsidian
+                    ? 'bg-[#0E0E0E] border border-zinc-800/80 text-white focus:border-[#E6C97A]'
+                    : 'focus:outline-none'
+                    }`}
+                  style={!isObsidian ? {
                     background: 'rgba(237, 228, 216, 0.85)',
                     backdropFilter: 'blur(16px)',
                     border: `1.5px solid ${B.sand}`,
                     color: B.dark,
                     boxShadow: '0 2px 8px rgba(90,64,53,0.07)',
-                  }}
+                  } : {}}
                 >
                   <option value="newest">{t('blogs.newestFirst')}</option>
                   <option value="oldest">{t('blogs.oldestFirst')}</option>
@@ -343,7 +367,7 @@ const CommunityBlogs = () => {
               {loading || translating ? (
                 <div className="flex flex-col items-center justify-center py-24">
                   <RunningDogLoader />
-                  <p className="mt-4 text-sm font-medium animate-pulse" style={{ color: B.light }}>
+                  <p className={`mt-4 text-sm font-medium animate-pulse ${isObsidian ? 'text-neutral-400' : ''}`} style={!isObsidian ? { color: B.light } : {}}>
                     {translating ? t('blogs.translating') : t('common.loading')}
                   </p>
                 </div>
@@ -352,12 +376,13 @@ const CommunityBlogs = () => {
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="text-center py-20 rounded-3xl border backdrop-blur-md"
-                  style={{ background: 'rgba(237, 228, 216, 0.85)', borderColor: B.sand }}
+                  className={`text-center py-20 rounded-3xl border backdrop-blur-md ${isObsidian ? 'bg-[#0E0E0E] border-[#E6C97A]/25 text-white' : ''
+                    }`}
+                  style={!isObsidian ? { background: 'rgba(237, 228, 216, 0.85)', borderColor: B.sand } : {}}
                 >
                   <div className="text-5xl mb-4">📝</div>
-                  <p className="text-lg font-bold mb-1" style={{ color: B.dark }}>{t('blogs.noBlogs')}</p>
-                  <p className="text-sm" style={{ color: B.light }}>Be the first to share something with the community!</p>
+                  <p className={`text-lg font-bold mb-1 ${isObsidian ? 'text-white' : ''}`} style={!isObsidian ? { color: B.dark } : {}}>{t('blogs.noBlogs')}</p>
+                  <p className={`text-sm ${isObsidian ? 'text-neutral-400' : ''}`} style={!isObsidian ? { color: B.light } : {}}>Be the first to share something with the community!</p>
                 </motion.div>
 
               ) : (
@@ -377,31 +402,38 @@ const CommunityBlogs = () => {
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -12 }}
                             transition={{ duration: 0.4, delay: index * 0.07 }}
-                            whileHover={{ border: `1px solid #7a5a48` }}
-                            className="rounded-2xl overflow-hidden transition-colors duration-200 flex shadow-sm hover:shadow-md backdrop-blur-md cursor-pointer"
-                            style={{ background: 'rgba(237, 228, 216, 0.85)', border: `1px solid ${B.sand}` }}
+                            className={`rounded-2xl overflow-hidden transition-all duration-300 flex shadow-sm hover:shadow-md backdrop-blur-md cursor-pointer ${isObsidian
+                              ? 'bg-[#0E0E0E] border border-zinc-800/80 hover:border-[#E6C97A]/40'
+                              : 'hover:border-[#7a5a48]'
+                              }`}
+                            style={!isObsidian ? { background: 'rgba(237, 228, 216, 0.85)', border: `1px solid ${B.sand}` } : {}}
                             onClick={() => navigate(`/blog/${blog._id}`)}
                           >
                             {/* ── Left Vote Column ─────────────────────────────── */}
-                            <div className="w-12 sm:w-14 flex-shrink-0 flex flex-col items-center py-4 gap-1.5" style={{ background: B.pale, borderRight: `1px solid ${B.sand}` }} onClick={(e) => e.stopPropagation()}>
+                            <div
+                              className={`w-12 sm:w-14 flex-shrink-0 flex flex-col items-center py-4 gap-1.5 transition-colors ${isObsidian ? 'bg-[#090909] border-r border-zinc-800/80' : ''
+                                }`}
+                              style={!isObsidian ? { background: B.pale, borderRight: `1px solid ${B.sand}` } : {}}
+                              onClick={(e) => e.stopPropagation()}
+                            >
                               <button
                                 onClick={(e) => handleLike(e, blog._id, isLiked)}
-                                className={`p-1.5 rounded-md transition-colors ${isLiked ? 'text-[#2e7d32] bg-[#2e7d32]/10' : 'text-gray-400 hover:bg-[#2e7d32]/10 hover:text-[#2e7d32]'}`}
+                                className={`p-1.5 rounded-md transition-colors ${isLiked ? 'text-[#E6C97A] bg-[#E6C97A]/10' : 'text-gray-400 hover:bg-[#E6C97A]/10 hover:text-[#E6C97A]'}`}
                                 title={isLiked ? "Unlike" : "Like"}
                               >
                                 <svg className="w-6 h-6" fill={isLiked ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 15l7-7 7 7" />
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 15l7-7 7 7" />
                                 </svg>
                               </button>
-                              <span className={`text-sm font-bold ${isLiked ? 'text-[#2e7d32]' : 'text-gray-600'}`}>
+                              <span className={`text-sm font-black ${isLiked ? 'text-[#E6C97A]' : (isObsidian ? 'text-white' : 'text-gray-600')}`}>
                                 {blog.likes?.length || 0}
                               </span>
                               <button
-                                className="p-1.5 rounded-md text-gray-400 hover:bg-gray-100 transition-colors"
+                                className={`p-1.5 rounded-md transition-colors ${isObsidian ? 'text-gray-600 hover:text-white' : 'text-gray-400 hover:bg-gray-100'}`}
                                 title="Downvote"
                               >
                                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7" />
                                 </svg>
                               </button>
                             </div>
@@ -416,7 +448,7 @@ const CommunityBlogs = () => {
                                       src={blog.userImage || assets.profile_pic}
                                       alt={blog.userName}
                                       className="w-12 h-12 rounded-full object-cover"
-                                      style={{ border: `2.5px solid ${B.sand}` }}
+                                      style={{ border: isObsidian ? '2px solid #E6C97A' : `2.5px solid ${B.sand}` }}
                                     />
                                     {/* Online dot */}
                                     <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white"
@@ -424,20 +456,25 @@ const CommunityBlogs = () => {
                                   </div>
                                   <div>
                                     <div className="flex items-center gap-2 flex-wrap">
-                                      <h3 className="font-bold text-base" style={{ color: B.dark }}>{blog.userName}</h3>
+                                      <h3 className={`font-black text-base flex items-center gap-1.5 ${isObsidian ? 'text-white' : 'text-[#3d2b1f]'}`}>
+                                        {blog.userName}
+                                        {isObsidian && (
+                                          <div className="w-3.5 h-3.5 rounded-full bg-[#E6C97A]/15 border border-[#E6C97A]/40 flex items-center justify-center text-[#E6C97A]">
+                                            <Check size={9} strokeWidth={4} />
+                                          </div>
+                                        )}
+                                      </h3>
                                       {blog.authorType === 'doctor' && (
-                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold text-white shadow-sm"
-                                          style={{ background: `linear-gradient(135deg, ${B.mid}, ${B.amber})` }}>
-                                          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                          </svg>
+                                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider text-white shadow-sm`}
+                                          style={{ background: isObsidian ? 'rgba(230,201,122,0.15)' : `linear-gradient(135deg, ${B.mid}, ${B.amber})`, border: isObsidian ? '1px solid rgba(230,201,122,0.35)' : 'none', color: isObsidian ? '#E6C97A' : '#ffffff' }}>
+                                          <Shield className="w-3 h-3 text-current" />
                                           {t('blogs.doctor')}
                                         </span>
                                       )}
                                     </div>
-                                    <p className="text-xs mt-0.5" style={{ color: B.light }}>
+                                    <p className="text-[11px] mt-0.5" style={{ color: isObsidian ? '#888888' : B.light }}>
                                       {blog.authorType === 'doctor' && blog.authorSpeciality && (
-                                        <span className="font-semibold" style={{ color: B.amber }}>{blog.authorSpeciality} • </span>
+                                        <span className="font-bold" style={{ color: isObsidian ? '#E6C97A' : B.amber }}>{blog.authorSpeciality} • </span>
                                       )}
                                       {formatDate(blog.createdAt)}
                                     </p>
@@ -451,7 +488,7 @@ const CommunityBlogs = () => {
                                       whileHover={{ scale: 1.12 }} whileTap={{ scale: 0.93 }}
                                       onClick={() => navigate(`/edit-blog/${blog._id}`)}
                                       className="p-2 rounded-xl transition-colors duration-200"
-                                      style={{ color: B.mid, background: '#f5ede8' }}
+                                      style={{ color: isObsidian ? '#E6C97A' : B.mid, background: isObsidian ? '#181818' : '#f5ede8' }}
                                     >
                                       <PencilIcon className="w-4 h-4" />
                                     </motion.button>
@@ -459,7 +496,7 @@ const CommunityBlogs = () => {
                                       whileHover={{ scale: 1.12 }} whileTap={{ scale: 0.93 }}
                                       onClick={() => handleDelete(blog._id)}
                                       className="p-2 rounded-xl transition-colors duration-200"
-                                      style={{ color: '#c0392b', background: '#fff5f5' }}
+                                      style={{ color: '#c0392b', background: isObsidian ? 'rgba(192,57,43,0.1)' : '#fff5f5' }}
                                     >
                                       <TrashIcon className="w-4 h-4" />
                                     </motion.button>
@@ -469,15 +506,16 @@ const CommunityBlogs = () => {
 
                               {/* ── Title ──────────────────────────────────────── */}
                               <h2
-                                className="text-xl md:text-2xl font-bold mb-3 cursor-pointer transition-colors duration-200 hover:underline"
-                                style={{ color: B.dark }}
+                                className={`text-xl md:text-2xl font-black mb-3 cursor-pointer transition-colors duration-200 hover:underline ${isObsidian ? 'text-white hover:text-[#E6C97A]' : ''
+                                  }`}
+                                style={!isObsidian ? { color: B.dark } : {}}
                                 onClick={() => navigate(`/blog/${blog._id}`)}
                               >
                                 {blog.translatedTitle || blog.title}
                               </h2>
 
                               {/* ── Content ────────────────────────────────────── */}
-                              <p className="text-sm leading-relaxed mb-4 whitespace-pre-wrap" style={{ color: '#4a3728' }}>
+                              <p className={`text-sm leading-relaxed mb-4 whitespace-pre-wrap ${isObsidian ? 'text-neutral-300' : ''}`} style={!isObsidian ? { color: '#4a3728' } : {}}>
                                 {blog.translatedContent || blog.content}
                                 {links.length > 0 && (
                                   <span className="block mt-2 flex flex-wrap gap-2">
@@ -486,7 +524,7 @@ const CommunityBlogs = () => {
                                       const colorClass = getSourceColor(source);
                                       return (
                                         <a key={idx} href={link} target="_blank" rel="noopener noreferrer"
-                                          className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium border ${colorClass} hover:opacity-80 transition-opacity no-underline`}
+                                          className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-bold border ${colorClass} hover:opacity-80 transition-opacity no-underline`}
                                           onClick={(e) => e.stopPropagation()}>
                                           🔗 {source}
                                         </a>
@@ -503,8 +541,11 @@ const CommunityBlogs = () => {
                                     <motion.span
                                       key={tagIndex}
                                       whileHover={{ scale: 1.08 }}
-                                      className="px-3 py-1 rounded-full text-xs font-semibold cursor-pointer transition-all duration-200"
-                                      style={{ background: '#fff8e6', color: B.amber, border: `1px solid #f0d080` }}
+                                      className={`px-3 py-1 rounded-full text-xs font-bold cursor-pointer transition-all duration-200 border ${isObsidian
+                                        ? 'bg-[#E6C97A]/10 border-[#E6C97A]/25 text-[#E6C97A]'
+                                        : ''
+                                        }`}
+                                      style={!isObsidian ? { background: '#fff8e6', color: B.amber, border: `1px solid #f0d080` } : {}}
                                     >
                                       #{tag}
                                     </motion.span>
@@ -519,8 +560,9 @@ const CommunityBlogs = () => {
                                     <motion.div
                                       key={imgIndex}
                                       whileHover={{ scale: 1.02 }}
-                                      className="overflow-hidden rounded-xl shadow-md cursor-pointer group"
-                                      style={{ border: `1px solid ${B.sand}` }}
+                                      className={`overflow-hidden rounded-xl shadow-md cursor-pointer group border ${isObsidian ? 'border-zinc-800' : ''
+                                        }`}
+                                      style={!isObsidian ? { border: `1px solid ${B.sand}` } : {}}
                                       onClick={() => window.open(image, '_blank')}
                                     >
                                       <img src={image} alt={`Blog image ${imgIndex + 1}`}
@@ -534,7 +576,7 @@ const CommunityBlogs = () => {
                               {blog.videos && blog.videos.length > 0 && (
                                 <div className="space-y-4 mb-4">
                                   {blog.videos.map((video, vidIndex) => (
-                                    <div key={vidIndex} className="rounded-xl overflow-hidden shadow-md" style={{ border: `1px solid ${B.sand}` }}>
+                                    <div key={vidIndex} className={`rounded-xl overflow-hidden shadow-md border ${isObsidian ? 'border-zinc-800' : ''}`} style={!isObsidian ? { border: `1px solid ${B.sand}` } : {}}>
                                       <video src={video} controls className="w-full">{t('blogs.videoNotSupported')}</video>
                                     </div>
                                   ))}
@@ -545,18 +587,17 @@ const CommunityBlogs = () => {
                               <div className="flex items-center gap-2 pt-2 mt-2" onClick={(e) => e.stopPropagation()}>
                                 {/* Comments */}
                                 <motion.button
-                                  whileHover={{ backgroundColor: '#fdf8f0' }}
+                                  whileHover={{ backgroundColor: isObsidian ? '#181818' : '#fdf8f0' }}
                                   onClick={() => toggleComments(blog._id)}
                                   className={`flex items-center gap-1.5 font-bold text-xs sm:text-sm px-2 py-1.5 rounded-md transition-colors duration-200 ${expandedComments[blog._id] ? 'bg-amber-50 text-amber-600' : ''}`}
-                                  style={{ color: expandedComments[blog._id] ? B.amber : B.light }}
+                                  style={{ color: expandedComments[blog._id] ? (isObsidian ? '#E6C97A' : B.amber) : (isObsidian ? '#A3A3A3' : B.light) }}
                                 >
                                   <ChatBubbleLeftIcon className="w-5 h-5" />
                                   {blog.comments?.length || 0} Comments
                                 </motion.button>
 
-
                                 {/* Views */}
-                                <div className="flex items-center gap-1.5 font-bold text-xs sm:text-sm px-2 py-1.5 rounded-md" style={{ color: B.light }}>
+                                <div className="flex items-center gap-1.5 font-bold text-xs sm:text-sm px-2 py-1.5 rounded-md" style={{ color: isObsidian ? '#A3A3A3' : B.light }}>
                                   <EyeIcon className="w-5 h-5" />
                                   {blog.views || 0}
                                 </div>
@@ -564,10 +605,10 @@ const CommunityBlogs = () => {
                                 {/* Report */}
                                 {userdata?.id !== blog.userId && (
                                   <motion.button
-                                    whileHover={{ backgroundColor: '#fff5f5' }}
+                                    whileHover={{ backgroundColor: isObsidian ? 'rgba(239, 68, 68, 0.1)' : '#fff5f5' }}
                                     onClick={() => setReportModal({ isOpen: true, blog })}
                                     className="flex items-center gap-1.5 font-bold text-xs sm:text-sm px-2 py-1.5 rounded-md transition-colors duration-200 hover:text-red-500"
-                                    style={{ color: B.light }}
+                                    style={{ color: isObsidian ? '#A3A3A3' : B.light }}
                                     title="Report this post"
                                   >
                                     <FlagIcon className="w-5 h-5" />
@@ -583,8 +624,8 @@ const CommunityBlogs = () => {
                                     initial={{ opacity: 0, height: 0 }}
                                     animate={{ opacity: 1, height: 'auto' }}
                                     exit={{ opacity: 0, height: 0 }}
-                                    className="mt-4 pt-4 border-t overflow-hidden"
-                                    style={{ borderColor: B.sand }}
+                                    className={`mt-4 pt-4 border-t overflow-hidden ${isObsidian ? 'border-zinc-800/80' : ''}`}
+                                    style={!isObsidian ? { borderColor: B.sand } : {}}
                                     onClick={(e) => e.stopPropagation()}
                                   >
                                     {/* Comment Input */}
@@ -594,7 +635,7 @@ const CommunityBlogs = () => {
                                           src={userdata.image || assets.profile_pic}
                                           alt="You"
                                           className="w-8 h-8 rounded-full object-cover flex-shrink-0"
-                                          style={{ border: `1px solid ${B.sand}` }}
+                                          style={{ border: isObsidian ? '1.5px solid #E6C97A' : `1px solid ${B.sand}` }}
                                         />
                                         <div className="flex-1 flex gap-2">
                                           <input
@@ -602,14 +643,17 @@ const CommunityBlogs = () => {
                                             placeholder="Add a comment..."
                                             value={newComments[blog._id] || ''}
                                             onChange={(e) => setNewComments({ ...newComments, [blog._id]: e.target.value })}
-                                            className="flex-1 bg-gray-50 border px-3 py-1.5 rounded-xl text-sm focus:outline-none focus:border-amber-400 focus:bg-white transition-colors"
-                                            style={{ borderColor: B.sand, color: B.dark }}
+                                            className={`flex-1 border px-3 py-1.5 rounded-xl text-sm focus:outline-none transition-colors ${isObsidian
+                                              ? 'bg-[#151515] border-zinc-800 text-white focus:border-[#E6C97A]'
+                                              : 'bg-gray-50 focus:bg-white'
+                                              }`}
+                                            style={!isObsidian ? { borderColor: B.sand, color: B.dark } : {}}
                                           />
                                           <button
                                             type="submit"
                                             disabled={submittingComment || !newComments[blog._id]?.trim()}
-                                            className="px-4 py-1.5 rounded-xl text-sm font-bold text-white transition-opacity disabled:opacity-50"
-                                            style={{ background: B.amber }}
+                                            className={`px-4 py-1.5 rounded-xl text-sm font-black transition-opacity disabled:opacity-50 text-black`}
+                                            style={{ background: isObsidian ? '#E6C97A' : B.amber }}
                                           >
                                             Post
                                           </button>
@@ -626,12 +670,13 @@ const CommunityBlogs = () => {
                                               src={comment.userImage || assets.profile_pic}
                                               alt={comment.userName}
                                               className="w-8 h-8 rounded-full object-cover flex-shrink-0"
-                                              style={{ border: `1px solid ${B.sand}` }}
+                                              style={{ border: isObsidian ? '1.5px solid #E6C97A' : `1px solid ${B.sand}` }}
                                             />
-                                            <div className="flex-1 bg-gray-50 rounded-xl p-3" style={{ border: `1px solid #f0f0f0` }}>
+                                            <div className={`flex-1 rounded-xl p-3 border ${isObsidian ? 'bg-[#151515] border-zinc-800/80 text-white' : 'bg-gray-50'
+                                              }`} style={!isObsidian ? { border: `1px solid #f0f0f0` } : {}}>
                                               <div className="flex items-center gap-2 mb-1">
-                                                <span className="font-bold text-sm" style={{ color: B.dark }}>{comment.userName}</span>
-                                                <span className="text-xs" style={{ color: B.light }}>{formatDate(comment.commentedAt)}</span>
+                                                <span className={`font-bold text-sm ${isObsidian ? 'text-white' : ''}`} style={!isObsidian ? { color: B.dark } : {}}>{comment.userName}</span>
+                                                <span className="text-xs" style={{ color: isObsidian ? '#888888' : B.light }}>{formatDate(comment.commentedAt)}</span>
                                                 {token && userdata && userdata.id === comment.userId && !userdata.isBanned && (
                                                   <button
                                                     onClick={() => handleDeleteComment(blog._id, comment._id)}
@@ -642,12 +687,12 @@ const CommunityBlogs = () => {
                                                   </button>
                                                 )}
                                               </div>
-                                              <p className="text-sm" style={{ color: B.mid }}>{comment.comment}</p>
+                                              <p className="text-sm" style={!isObsidian ? { color: B.mid } : {}}>{comment.comment}</p>
                                             </div>
                                           </div>
                                         ))
                                       ) : (
-                                        <div className="text-center py-6 text-sm italic" style={{ color: B.light }}>
+                                        <div className={`text-center py-6 text-sm italic ${isObsidian ? 'text-neutral-500' : ''}`} style={!isObsidian ? { color: B.light } : {}}>
                                           No comments yet. Be the first to share your thoughts!
                                         </div>
                                       )}
@@ -674,20 +719,23 @@ const CommunityBlogs = () => {
                         whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.95 }}
                         onClick={() => setPage(p => Math.max(1, p - 1))}
                         disabled={page === 1}
-                        className="px-6 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
-                        style={{
+                        className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed border ${isObsidian
+                          ? 'bg-[#0E0E0E] border-zinc-800 text-neutral-400 hover:text-white'
+                          : ''
+                          }`}
+                        style={!isObsidian ? {
                           background: page === 1 ? B.sand : 'rgba(237, 228, 216, 0.85)',
                           backdropFilter: 'blur(16px)',
                           color: B.mid,
                           border: `1.5px solid ${B.sand}`,
                           boxShadow: '0 2px 8px rgba(90,64,53,0.07)',
-                        }}
+                        } : {}}
                       >
                         {t('common.previous')}
                       </motion.button>
 
-                      <span className="px-5 py-2.5 rounded-xl font-bold text-sm"
-                        style={{ background: `linear-gradient(135deg, ${B.mid}, ${B.amber})`, color: '#fff', boxShadow: '0 4px 12px rgba(90,64,53,0.20)' }}>
+                      <span className="px-5 py-2.5 rounded-xl font-black text-sm"
+                        style={{ background: isObsidian ? '#E6C97A' : `linear-gradient(135deg, ${B.mid}, ${B.amber})`, color: isObsidian ? '#000' : '#fff', boxShadow: '0 4px 12px rgba(90,64,53,0.20)' }}>
                         {page} / {totalPages}
                       </span>
 
@@ -695,14 +743,17 @@ const CommunityBlogs = () => {
                         whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.95 }}
                         onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                         disabled={page === totalPages}
-                        className="px-6 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
-                        style={{
+                        className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed border ${isObsidian
+                          ? 'bg-[#0E0E0E] border-zinc-800 text-neutral-400 hover:text-white'
+                          : ''
+                          }`}
+                        style={!isObsidian ? {
                           background: page === totalPages ? B.sand : 'rgba(237, 228, 216, 0.85)',
                           backdropFilter: 'blur(16px)',
                           color: B.mid,
                           border: `1.5px solid ${B.sand}`,
                           boxShadow: '0 2px 8px rgba(90,64,53,0.07)',
-                        }}
+                        } : {}}
                       >
                         {t('common.next')}
                       </motion.button>
@@ -717,23 +768,32 @@ const CommunityBlogs = () => {
         {/* ── Right Sidebar (Community Info) ─────────────────────────────── */}
         <div className="hidden lg:block w-[320px] flex-shrink-0">
           <div className="sticky top-24 space-y-6">
-            <div className="rounded-2xl overflow-hidden shadow-sm backdrop-blur-md" style={{ background: 'rgba(237, 228, 216, 0.85)', border: `1px solid ${B.sand}` }}>
-              <div className="h-12" style={{ background: `linear-gradient(135deg, ${B.mid}, ${B.amber})` }} />
+            <div className={`rounded-2xl overflow-hidden shadow-xl border ${isObsidian ? 'bg-[#0E0E0E] border-zinc-800/80 shadow-[0_20px_50px_rgba(0,0,0,0.85)]' : ''
+              }`} style={!isObsidian ? { background: 'rgba(237, 228, 216, 0.85)', border: `1px solid ${B.sand}` } : {}}>
+              <div className="h-12" style={{ background: isObsidian ? 'linear-gradient(135deg, #1c140d, #2a2015, #0d0d0d)' : `linear-gradient(135deg, ${B.mid}, ${B.amber})` }} />
               <div className="p-5 relative">
-                <div className="absolute -top-6 left-5 w-14 h-14 rounded-full border-4 border-white flex items-center justify-center text-2xl shadow-sm" style={{ background: B.cream }}>
+                <div className={`absolute -top-6 left-5 w-14 h-14 rounded-full border-4 flex items-center justify-center text-2xl shadow-sm ${isObsidian ? 'bg-[#121212] border-zinc-800 text-[#E6C97A]' : ''
+                  }`} style={!isObsidian ? { background: B.cream, borderColor: '#ffffff' } : {}}>
                   🐾
                 </div>
-                <h2 className="font-bold text-lg mt-8 mb-2" style={{ color: B.dark }}>Pawvaidya Community</h2>
-                <p className="text-sm leading-relaxed mb-5" style={{ color: B.light }}>
+                <h2 className={`font-black text-lg mt-8 mb-2 flex items-center gap-1.5 ${isObsidian ? 'text-white' : ''}`} style={!isObsidian ? { color: B.dark } : {}}>
+                  Pawvaidya Community
+                  {isObsidian && (
+                    <div className="w-3.5 h-3.5 rounded-full bg-[#E6C97A]/15 border border-[#E6C97A]/40 flex items-center justify-center text-[#E6C97A]">
+                      <Check size={9} strokeWidth={4} />
+                    </div>
+                  )}
+                </h2>
+                <p className={`text-sm leading-relaxed mb-5 ${isObsidian ? 'text-neutral-400' : ''}`} style={!isObsidian ? { color: B.light } : {}}>
                   Welcome to the Pawvaidya Community! Share your pet stories, ask for advice, and connect with other pet lovers and veterinary professionals.
                 </p>
                 {token && userdata && !userdata.isBanned && (
                   <button
                     onClick={() => navigate('/create-blog')}
-                    className="w-full flex justify-center items-center gap-2 px-6 py-2.5 rounded-full font-bold text-white shadow-md transition-transform hover:scale-[1.02] active:scale-95 hover:shadow-lg"
-                    style={{ background: `linear-gradient(135deg, ${B.amber}, #e8a020)` }}
+                    className="w-full flex justify-center items-center gap-2 px-6 py-3 rounded-full font-black text-sm shadow-md transition-transform hover:scale-[1.02] active:scale-95 hover:shadow-lg"
+                    style={{ background: isObsidian ? 'linear-gradient(135deg, #8C6D23, #E6C97A, #8C6D23)' : `linear-gradient(135deg, ${B.amber}, #e8a020)`, color: isObsidian ? '#000000' : '#ffffff' }}
                   >
-                    <PlusIcon className="w-5 h-5" />
+                    <PlusIcon className="w-5 h-5 text-current stroke-[3]" />
                     Create Post
                   </button>
                 )}
@@ -741,11 +801,13 @@ const CommunityBlogs = () => {
             </div>
 
             {/* Rules card */}
-            <div className="rounded-2xl p-5 shadow-sm backdrop-blur-md" style={{ background: 'rgba(237, 228, 216, 0.85)', border: `1px solid ${B.sand}` }}>
-              <h3 className="font-bold mb-4 flex items-center gap-2" style={{ color: B.dark }}>
-                <span className="text-lg">📜</span> Community Rules
+            <div className={`rounded-2xl p-5 shadow-xl border ${isObsidian ? 'bg-[#0E0E0E] border-zinc-800/80 shadow-[0_20px_50px_rgba(0,0,0,0.85)] text-white' : ''
+              }`} style={!isObsidian ? { background: 'rgba(237, 228, 216, 0.85)', border: `1px solid ${B.sand}` } : {}}>
+              <h3 className={`font-black mb-4 flex items-center gap-2 ${isObsidian ? 'text-[#E6C97A]' : ''}`} style={!isObsidian ? { color: B.dark } : {}}>
+                {isObsidian ? <Shield size={18} className="text-[#E6C97A]" /> : <span className="text-lg">📜</span>}
+                Community Rules
               </h3>
-              <ul className="text-sm space-y-3 font-medium" style={{ color: B.mid }}>
+              <ul className={`text-sm space-y-3 font-semibold ${isObsidian ? 'text-neutral-400' : ''}`} style={!isObsidian ? { color: B.mid } : {}}>
                 <li className="flex gap-2"><span>1.</span> Be kind and respectful to everyone.</li>
                 <li className="flex gap-2"><span>2.</span> No medical misinformation. Verify with a vet.</li>
                 <li className="flex gap-2"><span>3.</span> Avoid spam or self-promotion.</li>
@@ -769,66 +831,71 @@ const CommunityBlogs = () => {
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
-              className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden"
+              className={`rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden border ${isObsidian ? 'bg-[#0E0E0E] border-zinc-800 text-white' : 'bg-white'
+                }`}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="p-6" style={{ background: `linear-gradient(to right, ${B.dark}, ${B.mid})` }}>
+              <div className="p-6" style={isObsidian ? { background: 'linear-gradient(135deg, #1c140d, #0E0E0E)' } : { background: `linear-gradient(to right, ${B.dark}, ${B.mid})` }}>
                 <h3 className="text-xl font-bold text-white flex items-center gap-2">
                   <FlagIcon className="w-6 h-6 text-red-400" />
                   Report Blog Post
                 </h3>
-                <p className="text-cream/80 text-sm mt-1">Help us understand what's wrong with this post.</p>
+                <p className={`text-sm mt-1 ${isObsidian ? 'text-neutral-400' : 'text-cream/80'}`}>Help us understand what's wrong with this post.</p>
               </div>
 
               <div className="p-6 space-y-4">
-                <div className="p-3 rounded-lg border border-amber-100 bg-amber-50">
-                  <p className="text-xs font-bold text-amber-800 uppercase tracking-wider mb-1">Reporting Post</p>
-                  <p className="text-sm text-gray-800 font-semibold line-clamp-1">{reportModal.blog?.title}</p>
+                <div className={`p-3 rounded-lg border ${isObsidian ? 'border-[#E6C97A]/20 bg-[#E6C97A]/5' : 'border-amber-100 bg-amber-50'
+                  }`}>
+                  <p className={`text-xs font-bold uppercase tracking-wider mb-1 ${isObsidian ? 'text-[#E6C97A]' : 'text-amber-800'}`}>Reporting Post</p>
+                  <p className={`text-sm font-semibold line-clamp-1 ${isObsidian ? 'text-white' : 'text-gray-800'}`}>{reportModal.blog?.title}</p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Reason for reporting</label>
+                  <label className={`block text-sm font-bold mb-2 ${isObsidian ? 'text-neutral-300' : 'text-gray-700'}`}>Reason for reporting</label>
                   <select
                     value={reportReason}
                     onChange={(e) => setReportReason(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-100 focus:border-amber-400 focus:outline-none transition-colors"
+                    className={`w-full px-4 py-3 rounded-xl border-2 focus:outline-none transition-colors ${isObsidian ? 'bg-[#151515] border-zinc-800 text-white focus:border-[#E6C97A]' : 'border-gray-100 focus:border-amber-400'
+                      }`}
                   >
                     <option value="inappropriate_content">Inappropriate Content</option>
                     <option value="copyright_violation">Copyright Violation</option>
                     <option value="medical_misinformation">Medical Misinformation</option>
-                    <option value="harassment">Harassment</option>
-                    <option value="spam">Spam</option>
+                    <option value="spam">Spam / Advertising</option>
                     <option value="other">Other</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Description</label>
+                  <label className={`block text-sm font-bold mb-2 ${isObsidian ? 'text-neutral-300' : 'text-gray-700'}`}>Detailed Description</label>
                   <textarea
-                    rows="4"
+                    rows={4}
                     value={reportDescription}
                     onChange={(e) => setReportDescription(e.target.value)}
-                    placeholder="Provide more details about why you are reporting this post..."
-                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-100 focus:border-amber-400 focus:outline-none transition-colors resize-none"
-                  ></textarea>
+                    placeholder="Provide specific details about why this post should be removed..."
+                    className={`w-full px-4 py-3 rounded-xl border-2 focus:outline-none transition-colors resize-none ${isObsidian ? 'bg-[#151515] border-zinc-800 text-white focus:border-[#E6C97A]' : 'border-gray-100 focus:border-amber-400'
+                      }`}
+                  />
                 </div>
+              </div>
 
-                <div className="flex items-center gap-3 pt-2">
-                  <button
-                    onClick={() => setReportModal({ isOpen: false, blog: null })}
-                    className="flex-1 py-3 rounded-xl font-bold text-gray-500 hover:bg-gray-100 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleReport}
-                    disabled={submittingReport}
-                    className="flex-1 py-3 rounded-xl font-bold text-white shadow-lg shadow-amber-200 transition-transform active:scale-95 disabled:opacity-50"
-                    style={{ background: B.amber }}
-                  >
-                    {submittingReport ? 'Submitting...' : 'Submit Report'}
-                  </button>
-                </div>
+              <div className={`p-6 border-t flex justify-end gap-3 ${isObsidian ? 'bg-[#0A0A0A] border-zinc-800/80' : 'bg-gray-50'
+                }`}>
+                <button
+                  onClick={() => setReportModal({ isOpen: false, blog: null })}
+                  className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-colors ${isObsidian ? 'text-neutral-400 hover:text-white hover:bg-zinc-950' : 'text-gray-500 hover:bg-gray-100'
+                    }`}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleReport}
+                  disabled={submittingReport || !reportDescription.trim()}
+                  className={`px-6 py-2.5 rounded-xl text-sm font-bold shadow-md transition-colors disabled:opacity-50 ${isObsidian ? 'bg-red-950/20 text-red-400 border border-red-900/30 hover:bg-red-950/45' : 'bg-red-600 text-white hover:bg-red-700'
+                    }`}
+                >
+                  {submittingReport ? 'Submitting...' : 'Submit Report'}
+                </button>
               </div>
             </motion.div>
           </motion.div>

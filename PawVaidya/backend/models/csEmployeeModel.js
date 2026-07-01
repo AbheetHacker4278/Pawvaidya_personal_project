@@ -4,6 +4,7 @@ const csEmployeeSchema = new mongoose.Schema({
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
+    isMaster: { type: Boolean, default: false },
     plainPassword: { type: String, default: '' },
     phone: { type: String, default: '' },
     bio: { type: String, default: '' },
@@ -61,6 +62,7 @@ const csEmployeeSchema = new mongoose.Schema({
         type: { type: String, enum: ['bonus', 'badge', 'other'], default: 'bonus' },
         value: { type: String, default: '' },
         message: { type: String, default: '' },
+        xpBonus: { type: Number, default: 0 },
         grantedAt: { type: Date, default: Date.now }
     }],
 
@@ -97,9 +99,36 @@ const csEmployeeSchema = new mongoose.Schema({
         durationSeconds: { type: Number, default: 0 }
     }],
 
+    // Voice Call Recordings
+    voiceCallRecordings: [{
+        url: { type: String, required: true },
+        ticketId: { type: String, default: '' },
+        recordedAt: { type: Date, default: Date.now },
+        durationSeconds: { type: Number, default: 0 }
+    }],
+
     joinedAt: { type: Date, default: Date.now },
     lastLogin: { type: Date, default: null },
     lastLoginIp: { type: String, default: null },
+    forgotPasswordRequested: { type: Boolean, default: false },
+    forgotPasswordRequestedAt: { type: Date, default: null },
+    biometricConfidenceHistory: [{
+        date: { type: Date, default: Date.now },
+        confidenceScore: { type: Number, default: 0 },
+        status: { type: String, default: 'Passed' }
+    }],
+    monitoringAlerts: [{
+        alertType: { type: String, required: true }, // 'refund_anomaly', 'language_violation', 'idle_alert'
+        message: { type: String, required: true },
+        timestamp: { type: Date, default: Date.now },
+        severity: { type: String, enum: ['low', 'medium', 'high'], default: 'medium' },
+        metadata: { type: mongoose.Schema.Types.Mixed, default: {} }
+    }],
+    idleTimeLogs: [{
+        date: { type: Date, default: Date.now },
+        durationSeconds: { type: Number, required: true },
+        ticketId: { type: String, default: '' }
+    }]
 }, { timestamps: true });
 
 const CSEmployee = mongoose.models.csEmployee || mongoose.model('csEmployee', csEmployeeSchema);

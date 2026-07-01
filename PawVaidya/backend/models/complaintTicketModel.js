@@ -57,6 +57,15 @@ const complaintTicketSchema = new mongoose.Schema({
     // Performance Tracking
     resolvedAt: { type: Date, default: null },
     handleTime: { type: Number, default: 0 }, // resolution time in seconds
+    aiQaAudit: {
+        score: { type: Number, default: null },
+        empathyScore: { type: Number, default: null },
+        professionalismScore: { type: Number, default: null },
+        scriptAdherenceScore: { type: Number, default: null },
+        coachingFeedback: { type: String, default: "" },
+        auditedAt: { type: Date, default: null }
+    },
+    isEscalatedToMaster: { type: Boolean, default: false }
 }, { timestamps: true });
 
 const ComplaintTicket = mongoose.models.complaintTicket || mongoose.model('complaintTicket', complaintTicketSchema);

@@ -28,6 +28,8 @@ const userSchema = new mongoose.Schema({
     resetOtpExpireAt: { type: Number, default: 0 },
     pawWallet: { type: Number, default: 0 },
     pawpoints: { type: Number, default: 0 },
+    pawWalletOverdraftLimit: { type: Number, default: 0 },
+    vcoId: { type: String, default: null },
     pawCode: { type: String, unique: true },
     referredBy: { type: String, default: "" },
     // Login/Logout tracking
@@ -59,14 +61,22 @@ const userSchema = new mongoose.Schema({
     },
     // Subscription tracking
     subscription: {
-        plan: { type: String, enum: ['None', 'Silver', 'Gold', 'Platinum'], default: 'None' },
-        status: { type: String, enum: ['Active', 'Expired', 'Cancelled', 'None'], default: 'None' },
+        plan: { type: String, enum: ['None', 'Silver', 'Gold', 'Platinum', 'Obsidian'], default: 'None' },
+        status: { type: String, enum: ['Active', 'Expired', 'Cancelled', 'None', 'Pending Approval', 'Approved'], default: 'None' },
         expiryDate: { type: Date, default: null },
         razorpaySubscriptionId: { type: String, default: null },
-        isGift: { type: Boolean, default: false }
+        isGift: { type: Boolean, default: false },
+        approvedAt: { type: Date, default: null }
     },
     videoCallsUsed: { type: Number, default: 0 },
-    emergencyPaymentStatus: { type: String, enum: ['No Dues', 'Pending Due Payment'], default: 'No Dues' }
+    emergencyPaymentStatus: { type: String, enum: ['No Dues', 'Pending Due Payment'], default: 'No Dues' },
+    creditLine: {
+        limit: { type: Number, default: 50000 },
+        spent: { type: Number, default: 0 },
+        lastUsed: { type: Date, default: null },
+        repaymentDeadline: { type: Date, default: null },
+        status: { type: String, enum: ['Active', 'Suspended', 'None'], default: 'None' }
+    }
 }, { timestamps: true })
 
 const userModel = mongoose.models.user || mongoose.model('user', userSchema);

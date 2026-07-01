@@ -24,6 +24,105 @@ body {
   /* Account for fixed navbar */
 }
 
+/* ─── Obsidian Theme Overrides ───────────────────────────────────────────── */
+
+body.obsidian-theme {
+  background-color: #050505 !important;
+}
+
+/* Background Overrides */
+body.obsidian-theme .bg-\[\#F2E4C6\],
+body.obsidian-theme .bg-\[\#f2e4c6\],
+body.obsidian-theme .bg-\[\#f2e4c7\],
+body.obsidian-theme .bg-\[\#F2E4C7\],
+body.obsidian-theme [style*="background: #F2E4C6"],
+body.obsidian-theme [style*="background: #f2e4c6"],
+body.obsidian-theme [style*="background: #f2e4c7"],
+body.obsidian-theme [style*="background: #F2E4C7"],
+body.obsidian-theme [style*="background-color: #F2E4C6"],
+body.obsidian-theme [style*="background-color: #f2e4c6"],
+body.obsidian-theme [style*="background-color: #f2e4c7"],
+body.obsidian-theme [style*="background-color: #F2E4C7"],
+body.obsidian-theme [style*="background: rgb(242, 228, 198)"],
+body.obsidian-theme [style*="background: rgb(242, 228, 199)"],
+body.obsidian-theme [style*="background-color: rgb(242, 228, 198)"],
+body.obsidian-theme [style*="background-color: rgb(242, 228, 199)"],
+body.obsidian-theme [style*="242, 228, 198"],
+body.obsidian-theme [style*="242, 228, 199"] {
+  background-color: #050505 !important;
+  background: #050505 !important;
+}
+
+body.obsidian-theme .bg-\[\#f2e4c7\]\/10,
+body.obsidian-theme .bg-\[\#f2e4c7\]\/30,
+body.obsidian-theme .bg-\[\#f2e4c7\]\/5 {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Card & Secondary Container Overrides (pale/sand) */
+body.obsidian-theme [style*="background: #fdf8f0"],
+body.obsidian-theme [style*="background-color: #fdf8f0"],
+body.obsidian-theme [style*="rgb(253, 248, 240)"],
+body.obsidian-theme [style*="253, 248, 240"] {
+  background-color: #121212 !important;
+  background: #121212 !important;
+}
+
+body.obsidian-theme [style*="background: #e8d5b0"],
+body.obsidian-theme [style*="background-color: #e8d5b0"],
+body.obsidian-theme [style*="rgb(232, 213, 176)"],
+body.obsidian-theme [style*="232, 213, 176"] {
+  background-color: #1c1c1c !important;
+  background: #1c1c1c !important;
+}
+
+/* Border Overrides */
+body.obsidian-theme [style*="border-color: #e8d5b0"],
+body.obsidian-theme [style*="border: 1px solid #e8d5b0"],
+body.obsidian-theme [style*="rgb(232, 213, 176)"] {
+  border-color: rgba(212, 175, 55, 0.25) !important;
+}
+
+/* Tailwind Text Color Class Overrides */
+body.obsidian-theme .text-\[\#3d2b1f\],
+body.obsidian-theme .text-\[\#3D2B1F\],
+body.obsidian-theme .text-\[\#2c1e14\],
+body.obsidian-theme .text-\[\#2C1E14\] {
+  color: #F5F2EA !important;
+}
+
+body.obsidian-theme .text-\[\#5A4035\],
+body.obsidian-theme .text-\[\#5a4035\] {
+  color: #B0B0B0 !important;
+}
+
+body.obsidian-theme .text-\[\#7a5a48\],
+body.obsidian-theme .text-\[\#7A5A48\] {
+  color: #8A8A8A !important;
+}
+
+/* Inline Style Text Color Overrides */
+body.obsidian-theme [style*="color: #3d2b1f"],
+body.obsidian-theme [style*="color: #2c1e14"],
+body.obsidian-theme [style*="color: rgb(61, 43, 31)"],
+body.obsidian-theme [style*="color: rgb(44, 30, 20)"],
+body.obsidian-theme [style*="61, 43, 31"],
+body.obsidian-theme [style*="44, 30, 20"] {
+  color: #F5F2EA !important;
+}
+
+body.obsidian-theme [style*="color: #5A4035"],
+body.obsidian-theme [style*="color: rgb(90, 64, 53)"],
+body.obsidian-theme [style*="90, 64, 53"] {
+  color: #B0B0B0 !important;
+}
+
+body.obsidian-theme [style*="color: #7a5a48"],
+body.obsidian-theme [style*="color: rgb(122, 90, 72)"],
+body.obsidian-theme [style*="122, 90, 72"] {
+  color: #8A8A8A !important;
+}
+
 /* Smooth scrolling for the entire page */
 html {
   scroll-behavior: smooth;

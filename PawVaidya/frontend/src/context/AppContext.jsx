@@ -97,7 +97,7 @@ const AppContextProvider = (props) => {
     }
 
     const getUnreadMessagesCount = async () => {
-        if (!token) return;
+        if (!token || systemConfig.maintenanceMode || systemConfig.killSwitch) return;
 
         try {
             const { data } = await axios.get(backendurl + '/api/user/messages', { headers: { token } })
@@ -396,6 +396,7 @@ const AppContextProvider = (props) => {
         getUserPetReports,
         getUserAppointments,
         systemConfig,
+        getSystemConfig,
         registerFace,
         loginWithFace,
         userPets, setUserPets,
@@ -422,7 +423,32 @@ const AppContextProvider = (props) => {
     useEffect(() => {
         getdoctorsdata()
         getSystemConfig()
+        const interval = setInterval(getSystemConfig, 30000)
+        return () => clearInterval(interval)
     }, [])
+
+    useEffect(() => {
+        const interceptor = axios.interceptors.response.use(
+            (response) => response,
+            (error) => {
+                if (error.response && error.response.status === 503) {
+                    const data = error.response.data;
+                    if (data && (data.maintenance || data.killSwitch)) {
+                        setSystemConfig({
+                            maintenanceMode: !!data.maintenance,
+                            killSwitch: !!data.killSwitch,
+                            maintenanceMessage: data.message || ""
+                        });
+                        toast.dismiss();
+                    }
+                }
+                return Promise.reject(error);
+            }
+        );
+        return () => {
+            axios.interceptors.response.eject(interceptor);
+        };
+    }, []);
 
     useEffect(() => {
         if (token) {
@@ -442,6 +468,20 @@ const AppContextProvider = (props) => {
             return () => clearInterval(interval)
         }
     }, [token, userdata])
+
+    useEffect(() => {
+        if (userdata) {
+            if (userdata.subscription?.plan && userdata.subscription?.status === 'Active') {
+                localStorage.setItem('subscriptionPlan', userdata.subscription.plan);
+            } else {
+                localStorage.removeItem('subscriptionPlan');
+            }
+        } else if (userdata === null || userdata === false) {
+            if (!authLoading) {
+                localStorage.removeItem('subscriptionPlan');
+            }
+        }
+    }, [userdata, authLoading]);
 
     return (
         <AppContext.Provider value={value}>

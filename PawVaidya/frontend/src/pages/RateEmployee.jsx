@@ -36,7 +36,7 @@ const RateEmployee = () => {
                 } else toast.error(data.message);
             } catch (err) {
                 toast.error('Failed to load. Returning to tickets.');
-                navigate('/my-tickets');
+                navigate('/support?tab=history');
             }
         };
         fetchTicket();

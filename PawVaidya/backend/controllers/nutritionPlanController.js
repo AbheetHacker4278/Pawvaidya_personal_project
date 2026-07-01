@@ -1,6 +1,12 @@
 import userModel from '../models/userModel.js';
 import nutritionPlanModel from '../models/nutritionPlanModel.js';
 import { generateGeminiContent } from '../utils/geminiHelper.js';
+import OpenAI from 'openai';
+
+const openai = new OpenAI({
+    apiKey: process.env.NVIDIA_NIM_API_KEY,
+    baseURL: 'https://integrate.api.nvidia.com/v1',
+});
 
 // POST /api/nutrition-plan/generate
 export const generateNutritionPlan = async (req, res) => {
@@ -14,17 +20,19 @@ export const generateNutritionPlan = async (req, res) => {
             return res.json({ success: false, message: "User not found." });
         }
 
-        const isAuthorized = (user.subscription?.plan === 'Gold' || user.subscription?.plan === 'Platinum') && user.subscription?.status === 'Active';
+        const isAuthorized = (user.subscription?.plan === 'Gold' || user.subscription?.plan === 'Platinum' || user.subscription?.plan === 'Obsidian') && user.subscription?.status === 'Active';
         if (!isAuthorized) {
-            return res.json({ 
-                success: false, 
-                message: "Access restricted. Gold or Platinum Active Membership is required for the AI Diet & Nutrition Planner." 
+            return res.json({
+                success: false,
+                message: "Access restricted. Gold or Platinum Active Membership is required for the AI Diet & Nutrition Planner."
             });
         }
 
         if (!petName || !animalType || !weight || !activityLevel) {
             return res.json({ success: false, message: "Missing required pet parameters (name, type, weight, activity level)." });
         }
+
+        const mappedActivityLevel = activityLevel === 'Normal' ? 'Moderate' : activityLevel;
 
         // 2. Formulate Prompt for Gemini
         const medicalConditionsText = (medicalConditions && Array.isArray(medicalConditions) && medicalConditions.length > 0)
@@ -61,16 +69,34 @@ Pet Profile for Calculation:
 - Breed: ${breed || "Unknown"}
 - Age: ${age || 1} years
 - Weight: ${weight} kg
-- Activity Level: ${activityLevel} (Low, Moderate, Active, Athletic)
+- Activity Level: ${mappedActivityLevel} (Low, Moderate, Active, Athletic)
 - Underlying Medical Conditions: ${medicalConditionsText}
 - Nutrition Goals / Specific Target Results: ${goals || "None Specified"}
 
 Respond ONLY with valid JSON. Do not include markdown code block formatting (like \`\`\`json) in your response. Ensure the recipes and caloric calculation are highly tailored to the species, medical conditions, and user's specific diet goals / target results provided (for example, low sodium/low protein details for kidney disease, lower calories for obesity, allergy-safe ingredients, weight loss/gain calorie levels, allergy-safe ingredients, muscle building proteins, etc.).
 `;
 
-        // 3. Query Gemini
-        const resultText = await generateGeminiContent({ prompt, jsonMode: true });
-        
+        // 3. Query NVIDIA DeepSeek API with Gemini fallback
+        let resultText = "";
+        try {
+            console.log("[Nutrition Controller] Querying NVIDIA DeepSeek model for customized meal plans...");
+            const completion = await openai.chat.completions.create({
+                model: "deepseek-ai/deepseek-v4-pro",
+                messages: [
+                    { role: "user", content: prompt }
+                ],
+                temperature: 1,
+                top_p: 0.95,
+                max_tokens: 16384,
+                chat_template_kwargs: { "thinking": false },
+                stream: false
+            });
+            resultText = completion.choices[0]?.message?.content || "";
+        } catch (deepseekError) {
+            console.warn("[Nutrition Controller] NVIDIA DeepSeek query failed, falling back to Gemini:", deepseekError.message);
+            resultText = await generateGeminiContent({ prompt, jsonMode: true });
+        }
+
         let cleanedJson = resultText;
         // Strip markdown backticks if returned despite instructions
         if (cleanedJson.startsWith("```")) {
@@ -88,7 +114,7 @@ Respond ONLY with valid JSON. Do not include markdown code block formatting (lik
             breed: breed || "Generic",
             age: Number(age || 1),
             weight: Number(weight),
-            activityLevel,
+            activityLevel: mappedActivityLevel,
             medicalConditions: medicalConditions || [],
             goals: goals || "",
             caloricTarget: planData.caloricTarget,

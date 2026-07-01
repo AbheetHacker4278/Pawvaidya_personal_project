@@ -12,7 +12,7 @@ const EmergencyLocator = () => {
   const leafletMapRef = useRef(null);
   const markersRef = useRef([]);
 
-  const SERPAPI_KEY = '00f37c3441854d431de3e46b1152bdc256622d8f1ea3c9f06a49591e2336ef2b';
+  const SERPAPI_KEY = import.meta.env.VITE_SERPAPI_KEY;
 
   useEffect(() => {
     initializeLeafletMap();

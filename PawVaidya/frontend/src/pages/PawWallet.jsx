@@ -19,6 +19,7 @@ const B = {
 
 const PawWallet = () => {
     const { userdata, loadUserProfileData, backendurl, token } = useContext(AppContext);
+    const isObsidian = userdata?.subscription?.plan === 'Obsidian';
     const { t } = useTranslation();
     const [showTopupModal, setShowTopupModal] = useState(false);
     const [topupAmount, setTopupAmount] = useState('');
@@ -314,54 +315,64 @@ const PawWallet = () => {
 
 
     return (
-        <div className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8 min-h-screen" style={{ color: B.dark }}>
+        <div className={`max-w-4xl mx-auto p-4 sm:p-6 lg:p-8 min-h-screen transition-all duration-300 ${isObsidian ? 'bg-[#050505] text-white' : ''}`} style={isObsidian ? {} : { color: B.dark }}>
 
             {/* Header */}
             <div className="mb-8 flex items-center justify-between">
                 <div>
                     <h1 className="text-3xl font-bold flex items-center gap-3">
-                        <span className="p-2 rounded-xl" style={{ backgroundColor: B.cream }}>
-                            <Wallet className="w-8 h-8" style={{ color: B.amber }} />
-                        </span>
-                        Paw Wallet
+                        {isObsidian ? (
+                            <span className="relative inline-flex items-center justify-center w-14 h-14 rounded-2xl border border-[#E6C97A]/30 bg-[#0d0d0d] shadow-[0_0_15px_rgba(230,201,122,0.15)] flex-shrink-0">
+                                <Wallet className="w-7 h-7 text-[#E6C97A] filter drop-shadow-[0_0_4px_rgba(230,201,122,0.4)]" />
+                            </span>
+                        ) : (
+                            <span className="p-2 rounded-xl" style={{ backgroundColor: B.cream }}>
+                                <Wallet className="w-8 h-8" style={{ color: B.amber }} />
+                            </span>
+                        )}
+                        <span className={isObsidian ? 'text-white font-extrabold tracking-tight' : ''}>Paw Wallet</span>
                     </h1>
-                    <p className="mt-2 text-[15px]" style={{ color: B.light }}>
+                    <p className="mt-2 text-[15px]" style={{ color: isObsidian ? '#a3a3a3' : B.light }}>
                         Manage your refunds and wallet balance.
                     </p>
                 </div>
             </div>
 
             {/* Wallets Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 {/* Balance Card */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="rounded-3xl p-8 relative overflow-hidden shadow-lg border flex flex-col justify-between"
-                    style={{
+                    className={`rounded-3xl p-6 relative overflow-hidden shadow-lg border flex flex-col justify-between ${
+                        isObsidian ? 'border-[#E6C97A]/25 bg-gradient-to-b from-[#121212] to-[#0A0A0A] shadow-[0_0_30px_rgba(230,201,122,0.05)]' : ''
+                    }`}
+                    style={isObsidian ? {} : {
                         background: `linear-gradient(135deg, ${B.dark}, ${B.mid})`,
                         borderColor: B.sand
                     }}
                 >
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4"></div>
+                    <div className="absolute top-0 right-0 w-48 h-48 bg-white opacity-[0.02] rounded-full blur-2xl -translate-y-1/2 translate-x-1/4"></div>
+                    {isObsidian && <Wallet className="absolute right-4 top-1/2 -translate-y-1/2 w-16 h-16 text-white/5 pointer-events-none" />}
 
                     <div className="relative z-10">
-                        <span className="text-xs uppercase font-black text-amber-300 tracking-wider">Personal Wallet</span>
-                        <div className="text-white mt-4">
-                            <p className="text-sm opacity-80 mb-1">Available Balance</p>
-                            <h2 className="text-4xl font-black tracking-tight" style={{ color: B.cream }}>
+                        <span className={`text-xs uppercase font-black tracking-wider ${isObsidian ? 'text-[#E6C97A]' : 'text-amber-300'}`}>Personal Wallet</span>
+                        <div className="mt-4">
+                            <p className={`text-xs mb-1 ${isObsidian ? 'text-neutral-400' : 'text-white opacity-85'}`}>Available Balance</p>
+                            <h2 className="text-3xl font-black tracking-tight" style={{ color: isObsidian ? '#E6C97A' : B.cream }}>
                                 ₹{balance.toLocaleString('en-IN')}
                             </h2>
                         </div>
                     </div>
 
-                    <div className="mt-6 flex justify-end">
+                    <div className="mt-6 flex justify-end z-10">
                         <button
                             onClick={() => setShowTopupModal(true)}
-                            className="bg-white px-5 py-2 rounded-xl font-semibold flex items-center gap-1.5 hover:bg-opacity-90 transition-all shadow-md text-xs"
-                            style={{ color: B.dark }}
+                            className={`px-4 py-2 rounded-xl font-bold flex items-center gap-1.5 hover:bg-opacity-90 transition-all shadow-md text-xs ${
+                                isObsidian ? 'border border-[#E6C97A]/35 bg-[#0A0A0A] text-[#E6C97A] hover:bg-[#E6C97A]/10' : 'bg-white text-[#3d2b1f]'
+                            }`}
                         >
-                            <Plus className="w-4 h-4" />
+                            <Plus className="w-3.5 h-3.5" />
                             Top Up
                         </button>
                     </div>
@@ -372,42 +383,86 @@ const PawWallet = () => {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.05 }}
-                    className="rounded-3xl p-8 relative overflow-hidden shadow-lg border flex flex-col justify-between"
-                    style={{
+                    className={`rounded-3xl p-6 relative overflow-hidden shadow-lg border flex flex-col justify-between ${
+                        isObsidian ? 'border-emerald-950/80 bg-gradient-to-b from-[#0A1813] to-[#050C0A] shadow-[0_0_20px_rgba(16,185,129,0.05)]' : ''
+                    }`}
+                    style={isObsidian ? {} : {
                         background: 'linear-gradient(135deg, #0f5132, #146c43)',
                         borderColor: '#a3cfbb'
                     }}
                 >
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4"></div>
+                    <div className="absolute top-0 right-0 w-48 h-48 bg-white opacity-[0.02] rounded-full blur-2xl -translate-y-1/2 translate-x-1/4"></div>
+                    {isObsidian && <Heart className="absolute right-4 top-1/2 -translate-y-1/2 w-16 h-16 text-emerald-500/5 pointer-events-none" />}
 
                     <div className="relative z-10">
-                        <span className="text-xs uppercase font-black text-emerald-200 tracking-wider">Campaign Wallet</span>
-                        <div className="text-white mt-4">
-                            <p className="text-sm opacity-80 mb-1">Collected Rescue Funds</p>
-                            <h2 className="text-4xl font-black tracking-tight text-white">
+                        <span className={`text-xs uppercase font-black tracking-wider ${isObsidian ? 'text-emerald-400' : 'text-emerald-200'}`}>Campaign Wallet</span>
+                        <div className="mt-4">
+                            <p className={`text-xs mb-1 ${isObsidian ? 'text-neutral-400' : 'text-white opacity-85'}`}>Rescue Funds</p>
+                            <h2 className={`text-3xl font-black tracking-tight ${isObsidian ? 'text-emerald-400' : 'text-white'}`}>
                                 ₹{campaignWalletBalance.toLocaleString('en-IN')}
                             </h2>
                         </div>
                     </div>
 
-                    <div className="mt-6">
-                        <span className="inline-flex items-center gap-1 text-[10px] text-emerald-100 font-bold bg-emerald-800/40 px-2.5 py-1 rounded-lg">
-                            <Heart size={10} className="fill-emerald-100" /> Dedicated Clinic Release Only
+                    <div className="mt-6 z-10">
+                        <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold px-2 py-0.5 rounded-lg ${
+                            isObsidian ? 'text-emerald-400 bg-emerald-950/40 border border-emerald-900/40' : 'text-emerald-100 bg-emerald-800/40'
+                        }`}>
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Clinic Release Only
+                        </span>
+                    </div>
+                </motion.div>
+
+                {/* Pawpoints Loyalty Card */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 }}
+                    className={`rounded-3xl p-6 relative overflow-hidden shadow-lg border flex flex-col justify-between ${
+                        isObsidian ? 'border-purple-950/80 bg-gradient-to-b from-[#13112E] to-[#0A091A] shadow-[0_0_20px_rgba(168,85,247,0.05)]' : ''
+                    }`}
+                    style={isObsidian ? {} : {
+                        background: 'linear-gradient(135deg, #1e1b4b, #312e81)',
+                        borderColor: '#c7d2fe'
+                    }}
+                >
+                    <div className="absolute top-0 right-0 w-48 h-48 bg-white opacity-[0.02] rounded-full blur-2xl -translate-y-1/2 translate-x-1/4"></div>
+                    {isObsidian && <Plus className="absolute right-4 top-1/2 -translate-y-1/2 w-16 h-16 text-purple-500/5 pointer-events-none" />}
+
+                    <div className="relative z-10">
+                        <span className={`text-xs uppercase font-black tracking-wider ${isObsidian ? 'text-purple-400' : 'text-indigo-200'}`}>Loyalty Rewards</span>
+                        <div className="mt-4">
+                            <p className={`text-xs mb-1 ${isObsidian ? 'text-neutral-400' : 'text-white opacity-85'}`}>Your Pawpoints</p>
+                            <h2 className="text-3xl font-black tracking-tight text-white flex items-center gap-1.5">
+                                🌟 {userdata?.pawpoints || 0}
+                            </h2>
+                        </div>
+                    </div>
+
+                    <div className="mt-6 z-10">
+                        <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-lg ${
+                            isObsidian ? 'text-purple-400 bg-purple-950/40 border border-purple-900/40' : 'text-indigo-100 bg-indigo-950/40'
+                        }`}>
+                            Redeem for treatments & discounts
                         </span>
                     </div>
                 </motion.div>
             </div>
 
             {/* Saved Cards Section */}
-            <div className="mb-8 bg-white border border-slate-100 p-6 rounded-3xl shadow-sm">
+            <div className={`mb-8 p-6 rounded-3xl shadow-sm border ${
+                isObsidian ? 'bg-[#0C0C0C] border-[#E6C97A]/15' : 'bg-white border-slate-100'
+            }`}>
                 <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-black flex items-center gap-2" style={{ color: B.dark }}>
-                        <CreditCard className="w-5 h-5 text-amber-600" />
+                    <h3 className={`text-lg font-black flex items-center gap-2 ${isObsidian ? 'text-white' : ''}`} style={isObsidian ? {} : { color: B.dark }}>
+                        <CreditCard className={`w-5 h-5 ${isObsidian ? 'text-[#E6C97A]' : 'text-amber-600'}`} />
                         Saved Cards
                     </h3>
                     <button
                         onClick={() => setShowAddCardModal(true)}
-                        className="flex items-center gap-1 text-xs font-black uppercase tracking-wider text-amber-600 hover:text-amber-700 transition-colors"
+                        className={`flex items-center gap-1 text-xs font-black uppercase tracking-wider transition-colors ${
+                            isObsidian ? 'text-[#E6C97A] hover:text-[#E6C97A]/80' : 'text-amber-600 hover:text-amber-700'
+                        }`}
                     >
                         <Plus className="w-3.5 h-3.5" />
                         Save New Card
@@ -415,7 +470,9 @@ const PawWallet = () => {
                 </div>
 
                 {savedCards.length === 0 ? (
-                    <div className="border border-dashed rounded-2xl p-6 text-center text-slate-400 font-semibold text-xs">
+                    <div className={`border border-dashed rounded-2xl p-6 text-center font-semibold text-xs ${
+                        isObsidian ? 'border-[#E6C97A]/15 text-neutral-500' : 'text-slate-400'
+                    }`}>
                         No saved cards. Add a card for instant wallet recharges.
                     </div>
                 ) : (
@@ -465,24 +522,26 @@ const PawWallet = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className="p-5 rounded-2xl flex flex-col gap-4 border"
-                style={{ backgroundColor: B.pale, borderColor: B.sand }}
+                className={`p-6 rounded-3xl flex flex-col gap-4 border ${
+                    isObsidian ? 'bg-[#0C0C0C] border-[#E6C97A]/15' : ''
+                }`}
+                style={isObsidian ? {} : { backgroundColor: B.pale, borderColor: B.sand }}
             >
                 <div className="flex items-start gap-3">
-                    <Info className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: B.amber }} />
+                    <ShieldCheck className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: isObsidian ? '#E6C97A' : B.amber }} />
                     <div>
-                        <h4 className="font-bold text-[15px]">Refund & Wallet Policy</h4>
-                        <p className="text-xs mt-1 leading-relaxed" style={{ color: B.light }}>
+                        <h4 className={`font-bold text-[15px] ${isObsidian ? 'text-white' : ''}`}>Refund & Wallet Policy</h4>
+                        <p className="text-xs mt-1 leading-relaxed" style={{ color: isObsidian ? '#a3a3a3' : B.light }}>
                             If a scheduled appointment is cancelled by a doctor or admin, the paid amount is automatically refunded here. You can use your personal wallet balance towards future bookings. Note: Self-cancelled appointments are not eligible for a refund.
                         </p>
                     </div>
                 </div>
 
-                <div className="flex items-start gap-3 border-t pt-4" style={{ borderColor: B.sand }}>
-                    <Heart className="w-5 h-5 flex-shrink-0 mt-0.5 text-emerald-600" />
+                <div className="flex items-start gap-3 border-t pt-4" style={{ borderColor: isObsidian ? 'rgba(230,201,122,0.15)' : B.sand }}>
+                    <ShieldCheck className="w-5 h-5 flex-shrink-0 mt-0.5 text-emerald-600" />
                     <div>
-                        <h4 className="font-bold text-[15px] text-emerald-800">Campaign Wallet Policy</h4>
-                        <p className="text-xs mt-1 leading-relaxed text-emerald-950">
+                        <h4 className={`font-bold text-[15px] ${isObsidian ? 'text-emerald-400' : 'text-emerald-800'}`}>Campaign Wallet Policy</h4>
+                        <p className={`text-xs mt-1 leading-relaxed ${isObsidian ? 'text-emerald-150/80' : 'text-emerald-950'}`}>
                             Funds collected from stray animal crowdfunding campaigns are locked and sent directly to partner veterinary clinics upon uploading valid treatment invoices as proof. <strong>These funds cannot be used for appointment bookings, subscription purchases, or any personal transactions.</strong>
                         </p>
                     </div>
@@ -492,24 +551,28 @@ const PawWallet = () => {
             {/* My Campaign Contributions list */}
             {myCampaigns.length > 0 && (
                 <div className="mt-8">
-                    <h3 className="text-lg font-black mb-4 flex items-center gap-2" style={{ color: B.dark }}>
-                        <Activity size={18} /> My Initiated Campaigns ({myCampaigns.length})
+                    <h3 className={`text-lg font-black mb-4 flex items-center gap-2 ${isObsidian ? 'text-white' : ''}`} style={isObsidian ? {} : { color: B.dark }}>
+                        <Activity size={18} className={isObsidian ? 'text-[#E6C97A]' : ''} /> My Initiated Campaigns ({myCampaigns.length})
                     </h3>
                     <div className="space-y-3">
                         {myCampaigns.map(camp => (
-                            <div key={camp._id} className="p-4 bg-white border rounded-2xl flex justify-between items-center text-xs">
+                            <div key={camp._id} className={`p-4 flex justify-between items-center text-xs border rounded-2xl ${
+                                isObsidian ? 'bg-[#0C0C0C] border-[#E6C97A]/15 text-white' : 'bg-white border-slate-200'
+                            }`}>
                                 <div>
-                                    <strong className="text-sm block" style={{ color: B.dark }}>{camp.title}</strong>
-                                    <span className="text-[10px] text-gray-400 block mt-1">
+                                    <strong className={`text-sm block ${isObsidian ? 'text-white' : ''}`} style={isObsidian ? {} : { color: B.dark }}>{camp.title}</strong>
+                                    <span className={`text-[10px] block mt-1 ${isObsidian ? 'text-neutral-400' : 'text-gray-400'}`}>
                                         End Date: {camp.endDate ? new Date(camp.endDate).toLocaleDateString() : 'N/A'} • Partner Vet: {camp.clinicName}
                                     </span>
                                 </div>
                                 <div className="text-right">
-                                    <span className="font-black text-emerald-600 block text-sm">₹{camp.raisedAmount} / ₹{camp.targetAmount}</span>
+                                    <span className={`font-black block text-sm ${isObsidian ? 'text-emerald-500' : 'text-emerald-600'}`}>₹{camp.raisedAmount} / ₹{camp.targetAmount}</span>
                                     <span className={`inline-block text-[9px] font-black uppercase px-2 py-0.5 rounded mt-1 ${
-                                        camp.status === 'Completed' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
-                                        camp.status === 'Cancelled' ? 'bg-red-50 text-red-700 border border-red-200' :
-                                        'bg-amber-50 text-amber-700 border border-amber-200'
+                                        camp.status === 'Completed' 
+                                            ? isObsidian ? 'bg-emerald-950/40 text-emerald-400 border border-emerald-900/40' : 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
+                                            : camp.status === 'Cancelled'
+                                                ? isObsidian ? 'bg-red-950/40 text-red-400 border border-red-900/40' : 'bg-red-50 text-red-700 border border-red-200'
+                                                : isObsidian ? 'bg-amber-950/40 text-amber-400 border border-amber-900/40' : 'bg-amber-50 text-amber-700 border border-amber-200'
                                     }`}>
                                         {camp.status}
                                     </span>
@@ -533,13 +596,15 @@ const PawWallet = () => {
                             initial={{ scale: 0.95, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             exit={{ scale: 0.95, opacity: 0 }}
-                            className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl"
-                            style={{ color: B.dark }}
+                            className={`rounded-2xl p-6 w-full max-w-md shadow-2xl border ${
+                                isObsidian ? 'bg-[#0A0A0A] border-[#E6C97A]/25 text-white' : 'bg-white text-slate-800'
+                            }`}
+                            style={isObsidian ? {} : { color: B.dark }}
                         >
-                            <h3 className="text-xl font-bold border-b pb-3 mb-4">Top Up Paw Wallet</h3>
+                            <h3 className="text-xl font-bold border-b pb-3 mb-4" style={{ borderColor: isObsidian ? 'rgba(230,201,122,0.15)' : '#e2e8f0' }}>Top Up Paw Wallet</h3>
                             <form onSubmit={payWithSaved ? handleSavedCardTopup : handleTopup}>
                                 <div className="mb-4">
-                                    <label className="block text-sm font-medium mb-1" style={{ color: B.light }}>Enter Amount (₹)</label>
+                                    <label className="block text-sm font-medium mb-1" style={{ color: isObsidian ? '#a3a3a3' : B.light }}>Enter Amount (₹)</label>
                                     <input
                                         type="number"
                                         min="100"
@@ -547,16 +612,20 @@ const PawWallet = () => {
                                         value={topupAmount}
                                         onChange={(e) => setTopupAmount(e.target.value)}
                                         placeholder="Min ₹100"
-                                        className="w-full px-4 py-3 rounded-xl border focus:outline-none focus:ring-2"
-                                        style={{ borderColor: B.sand, outlineColor: B.amber }}
+                                        className={`w-full px-4 py-3 rounded-xl border focus:outline-none focus:ring-2 ${
+                                            isObsidian ? 'bg-[#121212] border-[#E6C97A]/20 text-white focus:ring-[#E6C97A]/25' : ''
+                                        }`}
+                                        style={isObsidian ? {} : { borderColor: B.sand, outlineColor: B.amber }}
                                     />
                                     <div className="flex gap-2 mt-3 cursor-pointer select-none">
                                         {[100, 500, 1000, 2000].map(amt => (
                                             <span
                                                 key={amt}
                                                 onClick={() => setTopupAmount(amt)}
-                                                className="px-3 py-1.5 rounded-lg border text-sm font-medium hover:bg-opacity-20 transition-colors"
-                                                style={{ borderColor: B.sand, backgroundColor: topupAmount == amt ? B.sand : 'transparent' }}
+                                                className={`px-3 py-1.5 rounded-lg border text-sm font-medium hover:bg-opacity-20 transition-colors ${
+                                                    isObsidian ? 'border-[#E6C97A]/25 text-[#E6C97A]' : ''
+                                                }`}
+                                                style={isObsidian ? { backgroundColor: topupAmount == amt ? 'rgba(230, 201, 122, 0.15)' : 'transparent' } : { borderColor: B.sand, backgroundColor: topupAmount == amt ? B.sand : 'transparent' }}
                                             >
                                                 + ₹{amt}
                                             </span>
@@ -566,20 +635,20 @@ const PawWallet = () => {
 
                                 {/* Option to pay via Saved Cards */}
                                 {savedCards.length > 0 && (
-                                    <div className="mb-4 border-t pt-4">
+                                    <div className="mb-4 border-t pt-4" style={{ borderColor: isObsidian ? 'rgba(230,201,122,0.15)' : '#e2e8f0' }}>
                                         <label className="block text-xs font-bold text-slate-500 mb-2">PAYMENT METHOD</label>
                                         <div className="flex gap-2 mb-4">
                                             <button
                                                 type="button"
                                                 onClick={() => setPayWithSaved(false)}
-                                                className={`flex-1 py-2 px-3 border rounded-xl text-xs font-black uppercase transition-all ${!payWithSaved ? 'bg-amber-600 border-amber-600 text-white shadow-md' : 'bg-slate-50 border-slate-200 text-slate-600'}`}
+                                                className={`flex-1 py-2 px-3 border rounded-xl text-xs font-black uppercase transition-all ${!payWithSaved ? (isObsidian ? 'bg-[#E6C97A] border-[#E6C97A] text-black shadow-md' : 'bg-amber-600 border-amber-600 text-white shadow-md') : (isObsidian ? 'bg-zinc-900 border-zinc-800 text-neutral-400' : 'bg-slate-50 border-slate-200 text-slate-600')}`}
                                             >
                                                 New Card / Razorpay
                                             </button>
                                             <button
                                                 type="button"
                                                 onClick={() => setPayWithSaved(true)}
-                                                className={`flex-1 py-2 px-3 border rounded-xl text-xs font-black uppercase transition-all ${payWithSaved ? 'bg-amber-600 border-amber-600 text-white shadow-md' : 'bg-slate-50 border-slate-200 text-slate-600'}`}
+                                                className={`flex-1 py-2 px-3 border rounded-xl text-xs font-black uppercase transition-all ${payWithSaved ? (isObsidian ? 'bg-[#E6C97A] border-[#E6C97A] text-black shadow-md' : 'bg-amber-600 border-amber-600 text-white shadow-md') : (isObsidian ? 'bg-zinc-900 border-zinc-800 text-neutral-400' : 'bg-slate-50 border-slate-200 text-slate-600')}`}
                                             >
                                                 Saved Card
                                             </button>
@@ -592,7 +661,9 @@ const PawWallet = () => {
                                                     <select
                                                         value={selectedCardId}
                                                         onChange={(e) => setSelectedCardId(e.target.value)}
-                                                        className="w-full px-4 py-2 text-sm rounded-xl border focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 bg-slate-50"
+                                                        className={`w-full px-4 py-2 text-sm rounded-xl border focus:outline-none focus:ring-2 ${
+                                                            isObsidian ? 'bg-[#121212] border-[#E6C97A]/20 text-white focus:ring-[#E6C97A]/25' : 'bg-slate-50'
+                                                        }`}
                                                     >
                                                         {savedCards.map(c => (
                                                             <option key={c._id} value={c._id}>
@@ -610,7 +681,9 @@ const PawWallet = () => {
                                                         value={cvv}
                                                         onChange={(e) => setCvv(e.target.value.replace(/\D/g, ''))}
                                                         placeholder="•••"
-                                                        className="w-24 px-4 py-2 text-center text-sm font-bold tracking-widest rounded-xl border focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 bg-slate-50"
+                                                        className={`w-24 px-4 py-2 text-center text-sm font-bold tracking-widest rounded-xl border focus:outline-none focus:ring-2 ${
+                                                            isObsidian ? 'bg-[#121212] border-[#E6C97A]/20 text-white focus:ring-[#E6C97A]/25 font-mono' : 'bg-slate-50'
+                                                        }`}
                                                     />
                                                 </div>
                                             </div>
@@ -618,20 +691,24 @@ const PawWallet = () => {
                                     </div>
                                 )}
 
-                                <div className="flex gap-3 justify-end mt-6 pt-4 border-t">
+                                <div className="flex gap-3 justify-end mt-6 pt-4 border-t" style={{ borderColor: isObsidian ? 'rgba(230,201,122,0.15)' : '#e2e8f0' }}>
                                     <button
                                         type="button"
                                         onClick={() => { setShowTopupModal(false); setTopupAmount(''); setCvv(''); }}
-                                        className="px-4 py-2 rounded-xl font-medium border"
-                                        style={{ borderColor: B.sand, color: B.light }}
+                                        className={`px-4 py-2 rounded-xl font-medium border ${
+                                            isObsidian ? 'border-[#E6C97A]/20 text-neutral-300 hover:bg-white/5' : ''
+                                        }`}
+                                        style={isObsidian ? {} : { borderColor: B.sand, color: B.light }}
                                         disabled={isProcessing}
                                     >
                                         Cancel
                                     </button>
                                     <button
                                         type="submit"
-                                        className="px-6 py-2 rounded-xl font-semibold text-white flex items-center gap-2 transition-all hover:bg-opacity-90"
-                                        style={{ backgroundColor: B.amber }}
+                                        className={`px-6 py-2 rounded-xl font-semibold text-white flex items-center gap-2 transition-all hover:bg-opacity-90 ${
+                                            isObsidian ? 'bg-[#E6C97A] text-black hover:bg-[#E6C97A]/90 disabled:bg-neutral-800 disabled:text-neutral-500' : ''
+                                        }`}
+                                        style={isObsidian ? {} : { backgroundColor: B.amber }}
                                         disabled={isProcessing || !topupAmount || topupAmount < 100 || (payWithSaved && (!selectedCardId || cvv.length < 3))}
                                     >
                                         {isProcessing ? 'Processing...' : 'Proceed to Pay'}
@@ -656,12 +733,14 @@ const PawWallet = () => {
                             initial={{ scale: 0.95, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             exit={{ scale: 0.95, opacity: 0 }}
-                            className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl"
-                            style={{ color: B.dark }}
+                            className={`rounded-2xl p-6 w-full max-w-md shadow-2xl border ${
+                                isObsidian ? 'bg-[#0A0A0A] border-[#E6C97A]/25 text-white' : 'bg-white text-slate-800'
+                            }`}
+                            style={isObsidian ? {} : { color: B.dark }}
                         >
-                            <div className="flex justify-between items-center border-b pb-3 mb-4">
-                                <h3 className="text-lg font-bold flex items-center gap-2">
-                                    <CreditCard className="w-5 h-5 text-amber-600" />
+                            <div className="flex justify-between items-center border-b pb-3 mb-4" style={{ borderColor: isObsidian ? 'rgba(230,201,122,0.15)' : '#e2e8f0' }}>
+                                <h3 className={`text-lg font-bold flex items-center gap-2 ${isObsidian ? 'text-white' : ''}`}>
+                                    <CreditCard className={`w-5 h-5 ${isObsidian ? 'text-[#E6C97A]' : 'text-amber-600'}`} />
                                     Save Payment Card
                                 </h3>
                                 <button onClick={() => setShowAddCardModal(false)} className="text-slate-400 hover:text-slate-600">
@@ -671,7 +750,7 @@ const PawWallet = () => {
 
                             {/* Live card preview */}
                             <div
-                                className="mb-6 p-5 rounded-2xl text-white relative overflow-hidden flex flex-col justify-between h-40 shadow-lg"
+                                className="mb-6 p-5 rounded-2xl text-white relative overflow-hidden flex flex-col justify-between h-40 shadow-lg border border-white/10"
                                 style={{
                                     background: newCardNumber ? getCardGradient(getCardTypeFromNum(newCardNumber)) : 'linear-gradient(135deg, #475569, #334155)'
                                 }}
@@ -710,7 +789,9 @@ const PawWallet = () => {
                                         value={newCardHolder}
                                         onChange={(e) => setNewCardHolder(e.target.value)}
                                         placeholder="e.g. John Doe"
-                                        className="w-full px-4 py-2 text-sm rounded-xl border focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                                        className={`w-full px-4 py-2 text-sm rounded-xl border focus:outline-none focus:ring-2 ${
+                                            isObsidian ? 'bg-[#121212] border-[#E6C97A]/20 text-white focus:ring-[#E6C97A]/25' : ''
+                                        }`}
                                     />
                                 </div>
                                 <div>
@@ -722,7 +803,9 @@ const PawWallet = () => {
                                         value={formatCardNumber(newCardNumber)}
                                         onChange={(e) => setNewCardNumber(e.target.value.replace(/\s/g, ''))}
                                         placeholder="4111 2222 3333 4444"
-                                        className="w-full px-4 py-2 text-sm rounded-xl border focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 font-mono"
+                                        className={`w-full px-4 py-2 text-sm rounded-xl border focus:outline-none focus:ring-2 font-mono ${
+                                            isObsidian ? 'bg-[#121212] border-[#E6C97A]/20 text-white focus:ring-[#E6C97A]/25' : ''
+                                        }`}
                                     />
                                     {newCardNumber && (
                                         <p className={`text-[10px] font-bold mt-1 ${validateLuhn(newCardNumber) ? 'text-emerald-600' : 'text-rose-500'}`}>
@@ -737,7 +820,9 @@ const PawWallet = () => {
                                             required
                                             value={newExpiryMonth}
                                             onChange={(e) => setNewExpiryMonth(e.target.value)}
-                                            className="w-full px-4 py-2 text-sm rounded-xl border focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                                            className={`w-full px-4 py-2 text-sm rounded-xl border focus:outline-none focus:ring-2 ${
+                                                isObsidian ? 'bg-[#121212] border-[#E6C97A]/20 text-white focus:ring-[#E6C97A]/25' : ''
+                                            }`}
                                         >
                                             <option value="">Month</option>
                                             {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
@@ -751,7 +836,9 @@ const PawWallet = () => {
                                             required
                                             value={newExpiryYear}
                                             onChange={(e) => setNewExpiryYear(e.target.value)}
-                                            className="w-full px-4 py-2 text-sm rounded-xl border focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                                            className={`w-full px-4 py-2 text-sm rounded-xl border focus:outline-none focus:ring-2 ${
+                                                isObsidian ? 'bg-[#121212] border-[#E6C97A]/20 text-white focus:ring-[#E6C97A]/25' : ''
+                                            }`}
                                         >
                                             <option value="">Year</option>
                                             {Array.from({ length: 15 }, (_, i) => new Date().getFullYear() + i).map(y => (
@@ -761,18 +848,22 @@ const PawWallet = () => {
                                     </div>
                                 </div>
 
-                                <div className="flex gap-3 justify-end pt-4 border-t">
+                                <div className="flex gap-3 justify-end pt-4 border-t" style={{ borderColor: isObsidian ? 'rgba(230,201,122,0.15)' : '#e2e8f0' }}>
                                     <button
                                         type="button"
                                         onClick={() => setShowAddCardModal(false)}
-                                        className="px-4 py-2 text-sm rounded-xl font-medium border"
+                                        className={`px-4 py-2 text-sm rounded-xl font-medium border ${
+                                            isObsidian ? 'border-[#E6C97A]/20 text-neutral-300 hover:bg-white/5' : ''
+                                        }`}
                                     >
                                         Cancel
                                     </button>
                                     <button
                                         type="submit"
                                         disabled={savingCard || !validateLuhn(newCardNumber)}
-                                        className="px-6 py-2 text-sm rounded-xl font-semibold text-white bg-amber-600 hover:bg-amber-700 disabled:opacity-50 transition-all"
+                                        className={`px-6 py-2 text-sm rounded-xl font-semibold text-white transition-all ${
+                                            isObsidian ? 'bg-[#E6C97A] text-black hover:bg-[#E6C97A]/90 disabled:bg-neutral-800 disabled:text-neutral-500' : 'bg-amber-600 hover:bg-amber-700 disabled:opacity-50'
+                                        }`}
                                     >
                                         {savingCard ? 'Saving...' : 'Save Card'}
                                     </button>

@@ -18,7 +18,10 @@ import {
     Percent,
     Gift,
     Star,
-    Shield
+    Shield,
+    Brain,
+    Sparkles,
+    RefreshCw
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
@@ -29,6 +32,75 @@ const FinancialCalculations = () => {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [activeTab, setActiveTab] = useState('bookings');
+    const [aiAnalysis, setAiAnalysis] = useState(null);
+    const [generatingAi, setGeneratingAi] = useState(false);
+
+    const generateAiAnalysis = async () => {
+        try {
+            setGeneratingAi(true);
+            const { data } = await axios.get(`${backendurl}/api/admin/financial-analysis`, {
+                headers: { atoken }
+            });
+            if (data.success) {
+                setAiAnalysis(data.analysis);
+                toast.success("AI CFO Analysis generated successfully!");
+            } else {
+                toast.error(data.message || "Failed to generate AI analysis");
+            }
+        } catch (error) {
+            console.error("AI analysis error:", error);
+            toast.error("Failed to call AI analysis endpoint");
+        } finally {
+            setGeneratingAi(false);
+        }
+    };
+
+    const parseBoldText = (text) => {
+        const parts = text.split(/(\*\*.*?\*\*)/g);
+        return parts.map((part, index) => {
+            if (part.startsWith('**') && part.endsWith('**')) {
+                return <strong key={index} className="font-extrabold text-slate-900">{part.slice(2, -2)}</strong>;
+            }
+            return part;
+        });
+    };
+
+    const renderMarkdown = (text) => {
+        if (!text) return null;
+        
+        const lines = text.split('\n');
+        return lines.map((line, idx) => {
+            if (line.startsWith('###') || line.startsWith('##') || line.startsWith('#')) {
+                const cleanText = line.replace(/^#+\s*/, '');
+                return (
+                    <h3 key={idx} className="text-lg font-black text-slate-800 tracking-tight mt-6 mb-3 flex items-center gap-2">
+                        <span className="w-1.5 h-4 bg-emerald-500 rounded-full text-emerald-500"></span>
+                        {parseBoldText(cleanText)}
+                    </h3>
+                );
+            }
+            
+            if (line.trim().startsWith('-') || line.trim().startsWith('*')) {
+                const cleanText = line.trim().replace(/^[-*]\s*/, '');
+                return (
+                    <div key={idx} className="flex items-start gap-3 my-2 pl-4">
+                        <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full mt-2 flex-shrink-0"></span>
+                        <p className="text-slate-600 text-sm font-medium leading-relaxed">{parseBoldText(cleanText)}</p>
+                    </div>
+                );
+            }
+
+            if (line.trim() === '') {
+                return <div key={idx} className="h-2" />;
+            }
+
+            return (
+                <p key={idx} className="text-slate-600 text-sm font-medium leading-relaxed my-2">
+                    {parseBoldText(line)}
+                </p>
+            );
+        });
+    };
 
     const fetchFinanceData = async () => {
         try {
@@ -147,6 +219,78 @@ const FinancialCalculations = () => {
                 />
             </div>
 
+
+            {/* AI Financial Analysis Section */}
+            <div className="bg-white rounded-[2.5rem] border border-slate-100 p-8 shadow-xl shadow-slate-200/50">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6">
+                    <div className="flex items-center gap-4">
+                        <div className="p-4 bg-gradient-to-tr from-emerald-500 to-teal-500 rounded-3xl text-white shadow-lg shadow-emerald-100">
+                            <Brain size={24} className="animate-pulse" />
+                        </div>
+                        <div>
+                            <div className="flex items-center gap-2">
+                                <h2 className="text-xl font-black text-slate-800 tracking-tight">AI CFO Financial Intelligence</h2>
+                                <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[9px] font-black uppercase tracking-widest rounded-full">Active</span>
+                            </div>
+                            <p className="text-slate-400 font-bold uppercase tracking-widest text-[9px] mt-0.5">Automated treasury audit & campaign spend analysis</p>
+                        </div>
+                    </div>
+                    <div>
+                        {aiAnalysis && (
+                            <button
+                                onClick={generateAiAnalysis}
+                                disabled={generatingAi}
+                                className="flex items-center gap-2 px-5 py-2.5 bg-slate-900 text-white hover:bg-black disabled:bg-slate-300 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-md"
+                            >
+                                <RefreshCw size={14} className={generatingAi ? "animate-spin" : ""} />
+                                Recalculate AI Audit
+                            </button>
+                        )}
+                    </div>
+                </div>
+
+                {!aiAnalysis && !generatingAi && (
+                    <div className="p-8 rounded-3xl bg-gradient-to-r from-slate-50 to-emerald-50/20 border border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                        <div className="max-w-2xl">
+                            <p className="text-sm font-bold text-slate-700 leading-relaxed">
+                                Generate a comprehensive real-time financial audit. The AI CFO will analyze your gross earnings, membership conversions, discount coupons overhead, and customer service refunds to deliver strategic recommendations on spend optimization.
+                            </p>
+                        </div>
+                        <button
+                            onClick={generateAiAnalysis}
+                            className="flex items-center gap-2 px-6 py-4 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:brightness-105 transition-all shadow-lg shadow-emerald-200"
+                        >
+                            <Sparkles size={16} />
+                            Generate CFO Analysis
+                        </button>
+                    </div>
+                )}
+
+                {generatingAi && (
+                    <div className="p-10 rounded-3xl bg-slate-50 border border-slate-100 flex flex-col items-center justify-center text-center space-y-4">
+                        <div className="relative">
+                            <div className="w-16 h-16 rounded-full border-4 border-emerald-100 border-t-emerald-500 animate-spin"></div>
+                            <Sparkles className="absolute inset-0 m-auto text-emerald-500 animate-bounce" size={20} />
+                        </div>
+                        <div>
+                            <p className="text-sm font-black text-slate-800 tracking-tight">AI CFO is Auditing the Ledger...</p>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Cross-referencing bookings, memberships, active coupons, and CS refund logs</p>
+                        </div>
+                        <div className="w-64 bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                            <div className="bg-emerald-500 h-full rounded-full animate-pulse" style={{ width: '70%' }}></div>
+                        </div>
+                    </div>
+                )}
+
+                {aiAnalysis && !generatingAi && (
+                    <div className="p-8 rounded-3xl bg-slate-50/50 border border-slate-100/80 prose max-w-none">
+                        <div className="space-y-2">
+                            {renderMarkdown(aiAnalysis)}
+                        </div>
+                    </div>
+                )}
+            </div>
+
             {/* Middle Section: Active Discounts Analysis */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Active Discounts Analysis */}
@@ -201,6 +345,7 @@ const FinancialCalculations = () => {
                                 <tr>
                                     <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Coupon Code</th>
                                     <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Benefit</th>
+                                    <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Target User</th>
                                     <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Expires</th>
                                     <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Usage</th>
                                 </tr>
@@ -216,6 +361,15 @@ const FinancialCalculations = () => {
                                         <td className="px-8 py-6">
                                             <p className="font-bold text-slate-700 text-sm">
                                                 {coupon.type === 'percentage' ? `${coupon.value}% OFF` : `₹${coupon.value} FLAT`}
+                                            </p>
+                                        </td>
+                                        <td className="px-8 py-6">
+                                            <p className="text-xs font-bold text-slate-700">
+                                                {coupon.recipientEmails && coupon.recipientEmails.length > 0 ? (
+                                                    coupon.recipientEmails.join(', ')
+                                                ) : (
+                                                    <span className="text-slate-400 italic">All Users</span>
+                                                )}
                                             </p>
                                         </td>
                                         <td className="px-8 py-6">
@@ -275,6 +429,12 @@ const FinancialCalculations = () => {
                             className={`px-8 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${activeTab === 'manual' ? 'bg-white text-rose-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                         >
                             CS Manual Audits
+                        </button>
+                        <button 
+                            onClick={() => setActiveTab('outreach')}
+                            className={`px-8 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${activeTab === 'outreach' ? 'bg-white text-violet-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                        >
+                            Campaign Outreach
                         </button>
                     </div>
                 </div>
@@ -394,7 +554,12 @@ const FinancialCalculations = () => {
                                     <tr key={idx} className="hover:bg-slate-50/30 transition-all group">
                                         <td className="px-10 py-8">
                                             <div className="flex items-center gap-4">
-                                                <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-blue-500 shadow-sm">
+                                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-sm ${
+                                                    sub.plan === 'Obsidian' ? 'bg-yellow-500/20 text-yellow-500 animate-pulse' :
+                                                    sub.plan === 'Platinum' ? 'bg-purple-500/20 text-purple-500' :
+                                                    sub.plan === 'Gold' ? 'bg-amber-500/20 text-amber-500' :
+                                                    'bg-blue-50 text-blue-500'
+                                                }`}>
                                                     <Star size={18} />
                                                 </div>
                                                 <p className="font-black text-slate-800 text-sm tracking-tight">{sub.plan} Membership</p>
@@ -406,6 +571,7 @@ const FinancialCalculations = () => {
                                         <td className="px-10 py-8">
                                             <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
                                                 sub.status === 'Active' ? 'bg-emerald-100 text-emerald-700' : 
+                                                sub.status === 'Pending' ? 'bg-amber-100 text-amber-700 border border-amber-200 animate-pulse' :
                                                 sub.status === 'Expired' ? 'bg-slate-100 text-slate-600' : 
                                                 'bg-rose-100 text-rose-700'
                                             }`}>
@@ -444,7 +610,7 @@ const FinancialCalculations = () => {
                                 </tr>
                             </tfoot>
                         </table>
-                    ) : (
+                    ) : activeTab === 'manual' ? (
                         <table className="w-full text-left border-collapse">
                             <thead className="bg-slate-50/50">
                                 <tr>
@@ -463,8 +629,14 @@ const FinancialCalculations = () => {
                                     <tr key={idx} className="hover:bg-slate-50/30 transition-all group">
                                         <td className="px-10 py-8">
                                             <div className="flex items-center gap-4">
-                                                <div className={`w-10 h-10 ${log.activityType === 'refund' ? 'bg-rose-50 text-rose-500' : 'bg-purple-50 text-purple-500'} rounded-xl flex items-center justify-center shadow-sm`}>
-                                                    {log.activityType === 'refund' ? <TrendingDown size={18} /> : <Gift size={18} />}
+                                                <div className={`w-10 h-10 ${
+                                                    log.activityType === 'refund' ? 'bg-rose-50 text-rose-500' :
+                                                    log.activityType === 'reclaim_refund' ? 'bg-emerald-50 text-emerald-600' :
+                                                    'bg-purple-50 text-purple-500'
+                                                } rounded-xl flex items-center justify-center shadow-sm`}>
+                                                    {log.activityType === 'refund' ? <TrendingDown size={18} /> :
+                                                     log.activityType === 'reclaim_refund' ? <TrendingUp size={18} /> :
+                                                     <Gift size={18} />}
                                                 </div>
                                                 <p className="font-bold text-slate-700 text-sm max-w-xs">{log.activityDescription}</p>
                                             </div>
@@ -474,7 +646,11 @@ const FinancialCalculations = () => {
                                             <p className="text-[10px] font-bold text-slate-400 mt-0.5">ID: {log.metadata?.employeeId?.substring(0, 8)}</p>
                                         </td>
                                         <td className="px-10 py-8">
-                                            <p className="text-sm font-black text-rose-600 tracking-tight">-₹{Number(log.metadata?.amount || 0).toLocaleString()}</p>
+                                            <p className={`text-sm font-black tracking-tight ${
+                                                log.activityType === 'reclaim_refund' ? 'text-emerald-600' : 'text-rose-600'
+                                            }`}>
+                                                {log.activityType === 'reclaim_refund' ? '+' : '-'}₹{Number(log.metadata?.amount || 0).toLocaleString()}
+                                            </p>
                                         </td>
                                         <td className="px-10 py-8">
                                             <p className="text-xs font-medium text-slate-500 bg-slate-50 p-3 rounded-xl border border-slate-100 italic">
@@ -491,6 +667,132 @@ const FinancialCalculations = () => {
                                 ))}
                             </tbody>
                         </table>
+                    ) : (
+                        <div className="p-8 space-y-8">
+                            <div>
+                                <h3 className="text-lg font-black text-slate-800 tracking-tight mb-4 flex items-center gap-2">
+                                    <span className="w-1.5 h-4 bg-violet-500 rounded-full"></span>
+                                    Generated Outreach Campaigns (Liability & User Mapping)
+                                </h3>
+                                <div className="overflow-x-auto border border-slate-100 rounded-2xl">
+                                    <table className="w-full text-left border-collapse">
+                                        <thead className="bg-slate-50/50">
+                                            <tr>
+                                                <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-100">Coupon Code</th>
+                                                <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-100">Campaign Benefit</th>
+                                                <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-100">Generated For (Recipient User)</th>
+                                                <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-100">Expires</th>
+                                                <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-100">Usage Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-50">
+                                            {(financeData?.discounts?.adminCoupons || []).filter(c => c.recipientEmails && c.recipientEmails.length > 0).map((coupon, i) => (
+                                                <tr key={i} className="hover:bg-slate-50/30 transition-colors">
+                                                    <td className="px-8 py-5">
+                                                        <span className="px-3 py-1.5 bg-violet-600 text-white rounded-lg font-black text-xs uppercase tracking-widest">
+                                                            {coupon.code}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-8 py-5">
+                                                        <p className="font-bold text-slate-700 text-sm">
+                                                            {coupon.type === 'percentage' ? `${coupon.value}% OFF` : `₹${coupon.value} FLAT`}
+                                                        </p>
+                                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
+                                                            {coupon.value === 100 ? 'Complimentary Service' : 'Retention Discount'}
+                                                        </p>
+                                                    </td>
+                                                    <td className="px-8 py-5">
+                                                        {coupon.recipientEmails.map((email, idx) => (
+                                                            <div key={idx} className="flex flex-col mb-1 last:mb-0">
+                                                                <span className="text-sm font-black text-slate-800">{coupon.recipientNames?.[idx] || 'Valued Subscriber'}</span>
+                                                                <span className="text-[10px] font-bold text-slate-400">{email}</span>
+                                                            </div>
+                                                        ))}
+                                                    </td>
+                                                    <td className="px-8 py-5">
+                                                        <p className="text-xs font-black text-rose-500 uppercase">
+                                                            {new Date(coupon.expiry).toLocaleDateString()}
+                                                        </p>
+                                                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
+                                                            {new Date(coupon.expiry).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                        </p>
+                                                    </td>
+                                                    <td className="px-8 py-5">
+                                                        <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
+                                                            coupon.used > 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+                                                        }`}>
+                                                            {coupon.used > 0 ? 'REDEEMED' : 'PENDING'}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                            {(financeData?.discounts?.adminCoupons || []).filter(c => c.recipientEmails && c.recipientEmails.length > 0).length === 0 && (
+                                                <tr>
+                                                    <td colSpan={5} className="px-8 py-10 text-center text-slate-400 text-sm font-bold italic">
+                                                        No active targeted outreach coupons generated in the system.
+                                                    </td>
+                                                </tr>
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <div>
+                                <h3 className="text-lg font-black text-slate-800 tracking-tight mb-4 flex items-center gap-2">
+                                    <span className="w-1.5 h-4 bg-emerald-500 rounded-full"></span>
+                                    Realized Campaign Deductions (Admin Funded)
+                                </h3>
+                                <div className="overflow-x-auto border border-slate-100 rounded-2xl">
+                                    <table className="w-full text-left border-collapse">
+                                        <thead className="bg-slate-50/50">
+                                            <tr>
+                                                <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-100">Customer</th>
+                                                <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-100">Coupon Used</th>
+                                                <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-100">Doctor</th>
+                                                <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-100">Deduction Amount</th>
+                                                <th className="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-100">Date & Time</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-50">
+                                            {(financeData?.breakdown || []).filter(item => item.adminDiscount > 0).map((item, idx) => (
+                                                <tr key={idx} className="hover:bg-slate-50/30 transition-all">
+                                                    <td className="px-8 py-5">
+                                                        <div className="flex flex-col">
+                                                            <span className="text-sm font-black text-slate-800">{item.user}</span>
+                                                            <span className="text-[10px] font-bold text-slate-400">{item.userEmail || 'N/A'}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-8 py-5">
+                                                        <span className="px-2.5 py-1 bg-slate-900 text-white rounded text-[10px] font-black uppercase tracking-widest">
+                                                            {item.discount?.code || 'ADMIN_OUTREACH'}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-8 py-5 text-sm font-bold text-slate-700">Dr. {item.doctor}</td>
+                                                    <td className="px-8 py-5">
+                                                        <p className="text-sm font-black text-rose-600 tracking-tight">-₹{item.adminDiscount.toLocaleString()}</p>
+                                                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Admin Deducted</p>
+                                                    </td>
+                                                    <td className="px-8 py-5">
+                                                        <p className="text-[10px] font-black text-slate-500 tracking-tight leading-relaxed">
+                                                            {new Date(item.timestamp).toLocaleDateString()}<br/>
+                                                            {new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                        </p>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                            {(financeData?.breakdown || []).filter(item => item.adminDiscount > 0).length === 0 && (
+                                                <tr>
+                                                    <td colSpan={5} className="px-8 py-10 text-center text-slate-400 text-sm font-bold italic">
+                                                        No realized campaign outreach deductions yet.
+                                                    </td>
+                                                </tr>
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
                     )}
                 </div>
             </div>

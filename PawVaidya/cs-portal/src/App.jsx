@@ -13,6 +13,7 @@ import EmployeeProfile from './pages/EmployeeProfile';
 import AdminChat from './pages/AdminChat';
 import Customer360 from './pages/Customer360';
 import Notifications from './pages/Notifications';
+import CSLeaderboard from './pages/CSLeaderboard';
 import IncomingRequestModal from './components/IncomingRequestModal';
 import BreakOverlay from './components/BreakOverlay';
 import PostBreakVerifyOverlay from './components/PostBreakVerifyOverlay';
@@ -21,7 +22,7 @@ import ShiftTimerBar from './components/ShiftTimerBar';
 import ScreenRecordOverlay from './components/ScreenRecordOverlay';
 
 import { CSContext } from './context/CSContext';
-import { FaCommentAlt, FaPause, FaSignOutAlt, FaChevronDown, FaChevronUp, FaCheck, FaBars, FaUser, FaFileAlt, FaChartBar, FaBell } from 'react-icons/fa';
+import { FaCommentAlt, FaPause, FaSignOutAlt, FaChevronDown, FaChevronUp, FaCheck, FaBars, FaUser, FaFileAlt, FaChartBar, FaBell, FaTrophy } from 'react-icons/fa';
 
 const PrivateRoute = ({ children }) => {
   const { cstoken, loading } = useContext(CSContext);
@@ -259,6 +260,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
            {navLink('/customer-360', 'Customer 360', <FaUser />)}
            {navLink('/chat', 'Admin Comms', <FaCommentAlt />)}
            {navLink('/profile', 'My Performance', <FaChartBar />)}
+           {navLink('/leaderboard', 'Speedway Arena', <FaTrophy />)}
            {navLink('/notifications', 'Notifications', <FaBell />, unreadCsMessagesCount)}
         </div>
 
@@ -330,6 +332,19 @@ const App = () => {
   const isAuthPage = ['/login', '/register', '/face-verify'].includes(location.pathname);
   const { isUploadingRecording } = useContext(CSContext);
 
+  if (isAuthPage) {
+    return (
+      <div className="min-h-screen w-full bg-slate-950 overflow-hidden relative">
+        <ToastContainer position="top-right" autoClose={3000} hideProgressBar theme="light" />
+        <Routes>
+          <Route path="/login"       element={<Login />} />
+          <Route path="/register"    element={<Register />} />
+          <Route path="/face-verify" element={<FaceVerify />} />
+        </Routes>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 flex">
       <ToastContainer position="top-right" autoClose={3000} hideProgressBar theme="light" />
@@ -349,19 +364,17 @@ const App = () => {
         </div>
       )}
       
-      {!isAuthPage && <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />}
+      <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
       
-      <main className={`flex-1 transition-all duration-500 ${!isAuthPage ? 'lg:ml-72 pt-16 lg:pt-0' : ''}`}>
-        <div className={`max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-10`}>
+      <main className="flex-1 transition-all duration-500 lg:ml-72 pt-16 lg:pt-0">
+        <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-10">
           <Routes>
-            <Route path="/login"       element={<Login />} />
-            <Route path="/register"    element={<Register />} />
-            <Route path="/face-verify" element={<FaceVerify />} />
             <Route path="/"            element={<PrivateRoute><CSDashboard /></PrivateRoute>} />
             <Route path="/queue"       element={<PrivateRoute><ComplaintQueue /></PrivateRoute>} />
             <Route path="/ticket/:id"  element={<PrivateRoute><TicketDetail /></PrivateRoute>} />
             <Route path="/customer-360" element={<PrivateRoute><Customer360 /></PrivateRoute>} />
             <Route path="/profile"     element={<PrivateRoute><EmployeeProfile /></PrivateRoute>} />
+            <Route path="/leaderboard" element={<PrivateRoute><CSLeaderboard /></PrivateRoute>} />
             <Route path="/chat"        element={<PrivateRoute><AdminChat /></PrivateRoute>} />
             <Route path="/notifications" element={<PrivateRoute><Notifications /></PrivateRoute>} />
           </Routes>

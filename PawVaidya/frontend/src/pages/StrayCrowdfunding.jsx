@@ -10,6 +10,7 @@ import {
 
 const StrayCrowdfunding = () => {
     const { token, userdata, backendurl, loadUserProfileData } = useContext(AppContext);
+    const isObsidian = userdata?.subscription?.status === 'Active' && userdata?.subscription?.plan === 'Obsidian';
 
     // Coordinate state
     const [coords, setCoords] = useState(null);
@@ -586,25 +587,33 @@ const StrayCrowdfunding = () => {
     };
 
     return (
-        <div className="min-h-screen pt-24 pb-16">
+        <div className={`min-h-screen pt-24 pb-16 transition-colors duration-500 ${isObsidian ? 'bg-[#050505] text-[#F5F2EA]' : ''}`}>
             <div className="max-w-6xl mx-auto px-4">
                 {/* Header Section */}
-                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-12 border-b border-[#e8d5b0] pb-8">
+                <div className={`flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-12 border-b pb-8 transition-colors duration-500 ${isObsidian ? 'border-[#E6C97A]/25' : 'border-[#e8d5b0]'}`}>
                     <div>
-                        <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-black uppercase tracking-wider mb-3 border border-emerald-200">
+                        <span className={`inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-black uppercase tracking-wider mb-3 border ${
+                            isObsidian 
+                                ? 'bg-[#E6C97A]/10 border-[#E6C97A]/25 text-[#E6C97A]' 
+                                : 'bg-emerald-100 text-emerald-700 border-emerald-200'
+                        }`}>
                             <MapPin size={12} /> Geolocation Stray Care
                         </span>
-                        <h1 className="text-4xl sm:text-5xl font-black tracking-tight" style={{ color: B.dark }}>
+                        <h1 className={`text-4xl sm:text-5xl font-black tracking-tight transition-colors duration-500 ${isObsidian ? 'text-[#F5F2EA]' : ''}`} style={!isObsidian ? { color: B.dark } : {}}>
                             Stray Crowdfunding
                         </h1>
-                        <p className="mt-2 font-medium" style={{ color: B.light }}>
+                        <p className={`mt-2 font-medium transition-colors duration-500 ${isObsidian ? 'text-neutral-400' : ''}`} style={!isObsidian ? { color: B.light } : {}}>
                             View and fund active stray animal medical campaigns. Compulsory owner contribution. Direct vet partner payouts.
                         </p>
                     </div>
                     {token && (
                         <button
                             onClick={() => setShowCreateModal(true)}
-                            className="px-6 py-3.5 bg-gradient-to-r from-emerald-600 to-[#5A4035] text-white rounded-2xl text-sm font-black shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-transform flex items-center gap-2"
+                            className={`px-6 py-3.5 rounded-2xl text-sm font-black shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-2 ${
+                                isObsidian 
+                                    ? 'bg-gradient-to-r from-[#8C6D23] via-[#E6C97A] to-[#8C6D23] text-black shadow-[#E6C97A]/10' 
+                                    : 'bg-gradient-to-r from-emerald-600 to-[#5A4035] text-white shadow-lg'
+                            }`}
                         >
                             <PlusCircle size={18} /> Initiate Rescue Campaign
                         </button>
@@ -612,25 +621,33 @@ const StrayCrowdfunding = () => {
                 </div>
 
                 {/* Location indicator */}
-                <div className="mb-8 p-4 rounded-2xl bg-amber-50/50 border border-[#e8d5b0] flex items-center justify-between">
+                <div className={`mb-8 p-4 rounded-2xl flex items-center justify-between border transition-all duration-300 ${
+                    isObsidian 
+                        ? 'bg-[#0E0E0E] border-zinc-800/80 shadow-[0_10px_30px_rgba(0,0,0,0.5)]' 
+                        : 'bg-amber-50/50 border-[#e8d5b0]'
+                }`}>
                     <div className="flex items-center gap-3">
-                        <MapPin className="text-emerald-600" size={20} />
+                        <MapPin className={isObsidian ? 'text-[#E6C97A]' : 'text-emerald-600'} size={20} />
                         <div>
-                            <span className="text-[10px] font-black text-emerald-800 uppercase block">Active Geolocation Status</span>
+                            <span className={`text-[10px] font-black uppercase block ${isObsidian ? 'text-[#E6C97A]' : 'text-emerald-800'}`}>Active Geolocation Status</span>
                             {locationLoading ? (
-                                <span className="text-xs text-gray-500 font-bold">Acquiring GPS coordinates...</span>
+                                <span className={`text-xs font-bold ${isObsidian ? 'text-neutral-500' : 'text-gray-500'}`}>Acquiring GPS coordinates...</span>
                             ) : coords ? (
-                                <span className="text-xs text-gray-800 font-bold">
+                                <span className={`text-xs font-bold ${isObsidian ? 'text-neutral-300' : 'text-gray-800'}`}>
                                     Radius coordinates: {coords.latitude.toFixed(4)}, {coords.longitude.toFixed(4)}
                                 </span>
                             ) : (
-                                <span className="text-xs text-gray-500 font-bold">Coords not loaded</span>
+                                <span className={`text-xs font-bold ${isObsidian ? 'text-neutral-500' : 'text-gray-500'}`}>Coords not loaded</span>
                             )}
                         </div>
                     </div>
                     <button
                         onClick={getUserLocation}
-                        className="p-2 text-emerald-700 hover:bg-emerald-50 rounded-xl"
+                        className={`p-2 rounded-xl transition-colors ${
+                            isObsidian 
+                                ? 'text-[#E6C97A] hover:bg-[#E6C97A]/10' 
+                                : 'text-emerald-700 hover:bg-emerald-50'
+                        }`}
                         title="Reload GPS Location"
                     >
                         <RefreshCw size={16} />
@@ -640,13 +657,17 @@ const StrayCrowdfunding = () => {
                 {/* Main Campaigns Grid */}
                 {campaignsLoading ? (
                     <div className="flex justify-center py-24">
-                        <RefreshCw className="animate-spin text-emerald-600" size={32} />
+                        <RefreshCw className={`animate-spin ${isObsidian ? 'text-[#E6C97A]' : 'text-emerald-600'}`} size={32} />
                     </div>
                 ) : campaigns.length === 0 ? (
-                    <div className="p-12 rounded-[2.5rem] bg-white border border-[#e8d5b0] shadow-xl flex flex-col items-center justify-center text-center min-h-[400px]">
-                        <Heart size={56} className="text-emerald-200 mb-4" />
-                        <h3 className="text-xl font-black text-[#2c1e14]">No Rescue Campaigns Nearby</h3>
-                        <p className="text-xs text-gray-500 max-w-sm mt-1 leading-relaxed">
+                    <div className={`p-12 rounded-[2.5rem] shadow-xl flex flex-col items-center justify-center text-center min-h-[400px] border transition-all duration-500 ${
+                        isObsidian 
+                            ? 'bg-[#0E0E0E] border-zinc-800/80 shadow-[0_20px_50px_rgba(0,0,0,0.95)]' 
+                            : 'bg-white border-[#e8d5b0]'
+                    }`}>
+                        <Heart size={56} className={`${isObsidian ? 'text-[#E6C97A]/20' : 'text-emerald-200'} mb-4`} />
+                        <h3 className={`text-xl font-black ${isObsidian ? 'text-[#F5F2EA]' : 'text-[#2c1e14]'}`}>No Rescue Campaigns Nearby</h3>
+                        <p className={`text-xs max-w-sm mt-1 leading-relaxed ${isObsidian ? 'text-neutral-400' : 'text-gray-500'}`}>
                             No stray animal medical campaigns were found within a 100km radius. If you know a stray animal needing surgery or treatment, initiate a campaign above!
                         </p>
                     </div>
@@ -659,13 +680,21 @@ const StrayCrowdfunding = () => {
                             const isExpired = camp.endDate ? new Date() > new Date(camp.endDate) : false;
 
                             return (
-                                <div key={camp._id} className="bg-white rounded-[2rem] border border-[#e8d5b0] shadow-md hover:shadow-xl transition-all overflow-hidden flex flex-col justify-between relative">
+                                <div key={camp._id} className={`rounded-[2rem] border transition-all overflow-hidden flex flex-col justify-between relative ${
+                                    isObsidian 
+                                        ? 'bg-[#0E0E0E] border-zinc-800/80 hover:border-[#E6C97A]/30 shadow-[0_15px_35px_rgba(0,0,0,0.8)]' 
+                                        : 'bg-white border-[#e8d5b0] shadow-md hover:shadow-xl'
+                                }`}>
                                     {(isCreator || isAdmin) && (
                                         <div className="absolute top-3 right-3 flex gap-2 z-10">
                                             {camp.status === 'Active' && (
                                                 <button
                                                     onClick={() => handleOpenEdit(camp)}
-                                                    className="p-2 bg-white/90 hover:bg-white text-amber-700 rounded-full shadow border border-amber-100 transition-colors"
+                                                    className={`p-2 rounded-full shadow border transition-colors ${
+                                                        isObsidian 
+                                                            ? 'bg-zinc-900/90 hover:bg-zinc-800 text-[#E6C97A] border-zinc-700/50' 
+                                                            : 'bg-white/90 hover:bg-white text-amber-700 border-amber-100'
+                                                    }`}
                                                     title="Edit Campaign"
                                                 >
                                                     <Edit size={14} />
@@ -673,7 +702,11 @@ const StrayCrowdfunding = () => {
                                             )}
                                             <button
                                                 onClick={() => handleDeleteCampaign(camp._id)}
-                                                className="p-2 bg-white/90 hover:bg-white text-red-600 rounded-full shadow border border-red-100 transition-colors"
+                                                className={`p-2 rounded-full shadow border transition-colors ${
+                                                    isObsidian 
+                                                        ? 'bg-zinc-900/90 hover:bg-zinc-800 text-red-400 border-zinc-700/50' 
+                                                        : 'bg-white/90 hover:bg-white text-red-600 border-red-100'
+                                                }`}
                                                 title="Delete Campaign"
                                             >
                                                 <Trash2 size={14} />
@@ -688,7 +721,7 @@ const StrayCrowdfunding = () => {
                                             className="w-full h-48 object-cover"
                                         />
                                     ) : (
-                                        <div className="w-full h-48 bg-emerald-50 flex items-center justify-center text-emerald-600">
+                                        <div className={`w-full h-48 flex items-center justify-center ${isObsidian ? 'bg-zinc-900/50 text-[#E6C97A]/40' : 'bg-emerald-50 text-emerald-600'}`}>
                                             <Heart size={48} className="opacity-40" />
                                         </div>
                                     )}
@@ -696,22 +729,26 @@ const StrayCrowdfunding = () => {
                                     <div className="p-6 flex-1 flex flex-col justify-between">
                                         <div>
                                             <div className="flex items-center justify-between mb-2">
-                                                <span className="text-[10px] font-black uppercase bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded border border-emerald-200">
+                                                <span className={`text-[10px] font-black uppercase px-2.5 py-1 rounded border ${
+                                                    isObsidian 
+                                                        ? 'bg-[#E6C97A]/10 border-[#E6C97A]/25 text-[#E6C97A]' 
+                                                        : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                                }`}>
                                                     {camp.animalType}
                                                 </span>
-                                                <span className="text-xs font-black text-gray-500">
+                                                <span className={`text-xs font-black ${isObsidian ? 'text-neutral-400' : 'text-gray-500'}`}>
                                                     {camp.clinicName}
                                                 </span>
                                             </div>
 
-                                            <h3 className="font-black text-lg text-[#2c1e14] mb-2 truncate">
+                                            <h3 className={`font-black text-lg mb-2 truncate ${isObsidian ? 'text-[#F5F2EA]' : 'text-[#2c1e14]'}`}>
                                                 {camp.title}
                                             </h3>
-                                            <p className="text-xs text-gray-500 line-clamp-3 mb-4">
+                                            <p className={`text-xs line-clamp-3 mb-4 ${isObsidian ? 'text-neutral-400' : 'text-gray-500'}`}>
                                                 {camp.description}
                                             </p>
 
-                                            <div className="flex justify-between items-center text-[10px] text-gray-400 font-bold mb-4">
+                                            <div className={`flex justify-between items-center text-[10px] font-bold mb-4 ${isObsidian ? 'text-neutral-500' : 'text-gray-400'}`}>
                                                 <span className="flex items-center gap-1">
                                                     <Calendar size={12} />
                                                     {camp.endDate ? `Ends: ${new Date(camp.endDate).toLocaleDateString()}` : ''}
@@ -725,29 +762,33 @@ const StrayCrowdfunding = () => {
                                         <div className="space-y-4">
                                             {/* Progress Bar */}
                                             <div>
-                                                <div className="flex justify-between text-xs font-bold text-gray-700 mb-1.5">
+                                                <div className={`flex justify-between text-xs font-bold mb-1.5 ${isObsidian ? 'text-neutral-300' : 'text-gray-700'}`}>
                                                     <span>Raised: ₹{camp.raisedAmount}</span>
                                                     <span>Target: ₹{camp.targetAmount}</span>
                                                 </div>
-                                                <div className="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                                                <div className={`w-full h-2.5 rounded-full overflow-hidden ${isObsidian ? 'bg-zinc-800' : 'bg-gray-100'}`}>
                                                     <div
                                                         className={`h-full transition-all duration-500 ${
-                                                            camp.status === 'Completed' ? 'bg-emerald-600' :
-                                                            camp.status === 'Cancelled' ? 'bg-red-500' :
-                                                            isExpired ? 'bg-amber-500' : 'bg-emerald-600'
+                                                            isObsidian 
+                                                                ? 'bg-gradient-to-r from-[#8C6D23] via-[#E6C97A] to-[#8C6D23]' 
+                                                                : (camp.status === 'Completed' ? 'bg-emerald-600' :
+                                                                   camp.status === 'Cancelled' ? 'bg-red-500' :
+                                                                   isExpired ? 'bg-amber-500' : 'bg-emerald-600')
                                                         }`}
                                                         style={{ width: `${percent}%` }}
                                                     />
                                                 </div>
                                                 <div className="flex justify-between items-center mt-1">
-                                                    <span className="text-[10px] font-black text-emerald-700 block">
+                                                    <span className={`text-[10px] font-black block ${isObsidian ? 'text-[#E6C97A]' : 'text-emerald-700'}`}>
                                                         {percent}% Funded
                                                     </span>
-                                                    <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded ${
-                                                        camp.status === 'Completed' ? 'bg-emerald-50 text-emerald-700' :
-                                                        camp.status === 'Cancelled' ? 'bg-red-50 text-red-700' :
-                                                        camp.status === 'Suspended' ? 'bg-gray-100 text-gray-700 font-bold border border-gray-300' :
-                                                        'bg-amber-50 text-amber-700'
+                                                    <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded border ${
+                                                        isObsidian 
+                                                            ? 'bg-[#E6C97A]/10 text-[#E6C97A] border-[#E6C97A]/25'
+                                                            : (camp.status === 'Completed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                                                               camp.status === 'Cancelled' ? 'bg-red-50 text-red-700 border-red-200' :
+                                                               camp.status === 'Suspended' ? 'bg-gray-100 text-gray-700 border-gray-300' :
+                                                               'bg-amber-50 text-amber-700 border-amber-200')
                                                     }`}>
                                                         {camp.status === 'Suspended' ? 'Suspended Campaign' : camp.status}
                                                     </span>
@@ -757,21 +798,33 @@ const StrayCrowdfunding = () => {
                                             <div className="grid grid-cols-2 gap-3 pt-2">
                                                 <button
                                                     onClick={() => loadCampaignDetails(camp._id)}
-                                                    className="w-full py-2.5 border border-[#e8d5b0] hover:bg-amber-50 rounded-xl text-xs font-black text-[#5A4035]"
+                                                    className={`w-full py-2.5 rounded-xl text-xs font-black border transition-colors ${
+                                                        isObsidian 
+                                                            ? 'border-zinc-800 text-neutral-300 hover:bg-zinc-800/50 hover:border-[#E6C97A]/30' 
+                                                            : 'border-[#e8d5b0] hover:bg-amber-50 text-[#5A4035]'
+                                                    }`}
                                                 >
                                                     View Details
                                                 </button>
                                                 {camp.status === 'Active' && !isExpired ? (
                                                     <button
                                                         onClick={() => handleDonateInit(camp)}
-                                                        className="w-full py-2.5 bg-[#5A4035] text-white hover:bg-[#7a5a48] rounded-xl text-xs font-black"
+                                                        className={`w-full py-2.5 rounded-xl text-xs font-black transition-colors ${
+                                                            isObsidian 
+                                                                ? 'bg-gradient-to-r from-[#8C6D23] via-[#E6C97A] to-[#8C6D23] text-black hover:opacity-95' 
+                                                                : 'bg-[#5A4035] text-white hover:bg-[#7a5a48]'
+                                                        }`}
                                                     >
                                                         Contribute
                                                     </button>
                                                 ) : (
                                                     <button
                                                         disabled
-                                                        className="w-full py-2.5 bg-gray-100 text-gray-400 rounded-xl text-xs font-black cursor-not-allowed"
+                                                        className={`w-full py-2.5 rounded-xl text-xs font-black cursor-not-allowed ${
+                                                            isObsidian 
+                                                                ? 'bg-zinc-900 text-neutral-600' 
+                                                                : 'bg-gray-100 text-gray-400'
+                                                        }`}
                                                     >
                                                         Closed
                                                     </button>
@@ -793,18 +846,18 @@ const StrayCrowdfunding = () => {
                                 initial={{ opacity: 0, scale: 0.95 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 exit={{ opacity: 0, scale: 0.95 }}
-                                className="bg-[#fdf8f0] rounded-[2.5rem] shadow-2xl p-8 max-w-2xl w-full border border-[#e8d5b0] max-h-[85vh] overflow-y-auto"
+                                className={`rounded-[2.5rem] shadow-2xl p-8 max-w-2xl w-full border max-h-[85vh] overflow-y-auto transition-colors duration-500 ${isObsidian ? 'bg-[#0E0E0E] border-zinc-800 text-[#F5F2EA]' : 'bg-[#fdf8f0] border-[#e8d5b0]'}`}
                             >
                                 <div className="flex justify-between items-start mb-6">
                                     <div>
-                                        <h2 className="text-2xl font-black text-[#2c1e14]">{activeCampaign.title}</h2>
-                                        <span className="text-[10px] text-gray-400 block mt-1 font-bold">
+                                        <h2 className={`text-2xl font-black ${isObsidian ? 'text-[#F5F2EA]' : 'text-[#2c1e14]'}`}>{activeCampaign.title}</h2>
+                                        <span className={`text-[10px] block mt-1 font-bold ${isObsidian ? 'text-neutral-500' : 'text-gray-400'}`}>
                                             Created by: {activeCampaign.creatorId?.name || "Unknown Owner"} ({activeCampaign.creatorId?.email || ""})
                                         </span>
                                     </div>
                                     <button
                                         onClick={() => setActiveCampaign(null)}
-                                        className="p-1 text-gray-400 hover:bg-gray-100 rounded-full"
+                                        className={`p-1 rounded-full transition-colors ${isObsidian ? 'text-neutral-400 hover:bg-zinc-800' : 'text-gray-400 hover:bg-gray-100'}`}
                                     >
                                         <X size={20} />
                                     </button>
@@ -819,41 +872,43 @@ const StrayCrowdfunding = () => {
                                         />
                                     )}
 
-                                    <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100 flex justify-between text-xs">
+                                    <div className={`p-4 rounded-2xl border flex justify-between text-xs transition-colors ${isObsidian ? 'bg-[#121212] border-zinc-800' : 'bg-emerald-50 border-emerald-100'}`}>
                                         <div>
-                                            <span className="text-[10px] font-black text-emerald-800 uppercase block">Treatment Veterinary Partner</span>
-                                            <strong className="text-emerald-950 text-sm mt-0.5 block">{activeCampaign.clinicName}</strong>
+                                            <span className={`text-[10px] font-black uppercase block ${isObsidian ? 'text-[#E6C97A]' : 'text-emerald-800'}`}>Treatment Veterinary Partner</span>
+                                            <strong className={`text-sm mt-0.5 block ${isObsidian ? 'text-[#F5F2EA] font-extrabold' : 'text-emerald-950 font-bold'}`}>{activeCampaign.clinicName}</strong>
                                         </div>
                                         {activeCampaign.clinicAccountId && (
                                             <div className="text-right">
-                                                <span className="text-[10px] font-black text-emerald-800 uppercase block">Razorpay Split ID</span>
-                                                <code className="text-[10px] text-gray-600 block mt-0.5">{activeCampaign.clinicAccountId}</code>
+                                                <span className={`text-[10px] font-black uppercase block ${isObsidian ? 'text-[#E6C97A]' : 'text-emerald-800'}`}>Razorpay Split ID</span>
+                                                <code className={`text-[10px] block mt-0.5 ${isObsidian ? 'text-neutral-400 font-mono' : 'text-gray-600'}`}>{activeCampaign.clinicAccountId}</code>
                                             </div>
                                         )}
                                     </div>
 
                                     <div>
-                                        <h3 className="font-black text-sm text-[#2c1e14] mb-2">Description</h3>
-                                        <p className="text-xs text-gray-600 leading-relaxed">{activeCampaign.description}</p>
+                                        <h3 className={`font-black text-sm mb-2 ${isObsidian ? 'text-[#E6C97A]' : 'text-[#2c1e14]'}`}>Description</h3>
+                                        <p className={`text-xs leading-relaxed ${isObsidian ? 'text-neutral-400' : 'text-gray-600'}`}>{activeCampaign.description}</p>
                                     </div>
 
                                     {/* Donation metrics */}
                                     <div className="grid grid-cols-3 gap-4">
-                                        <div className="p-4 bg-white border rounded-2xl text-center">
-                                            <span className="text-[9px] font-black text-gray-400 uppercase">Target Amount</span>
-                                            <span className="text-lg font-black text-[#5A4035] block mt-1">₹{activeCampaign.targetAmount}</span>
+                                        <div className={`p-4 border rounded-2xl text-center transition-colors ${isObsidian ? 'bg-[#121212] border-zinc-800' : 'bg-white'}`}>
+                                            <span className={`text-[9px] font-black uppercase ${isObsidian ? 'text-neutral-500' : 'text-gray-400'}`}>Target Amount</span>
+                                            <span className={`text-lg font-black block mt-1 ${isObsidian ? 'text-neutral-300' : 'text-[#5A4035]'}`}>₹{activeCampaign.targetAmount}</span>
                                         </div>
-                                        <div className="p-4 bg-white border rounded-2xl text-center">
-                                            <span className="text-[9px] font-black text-gray-400 uppercase">Total Raised</span>
-                                            <span className="text-lg font-black text-emerald-600 block mt-1">₹{activeCampaign.raisedAmount}</span>
+                                        <div className={`p-4 border rounded-2xl text-center transition-colors ${isObsidian ? 'bg-[#121212] border-zinc-800' : 'bg-white'}`}>
+                                            <span className={`text-[9px] font-black uppercase ${isObsidian ? 'text-neutral-500' : 'text-gray-400'}`}>Total Raised</span>
+                                            <span className={`text-lg font-black block mt-1 ${isObsidian ? 'text-[#E6C97A]' : 'text-emerald-600'}`}>₹{activeCampaign.raisedAmount}</span>
                                         </div>
-                                        <div className="p-4 bg-white border rounded-2xl text-center">
-                                            <span className="text-[9px] font-black text-gray-400 uppercase">Status</span>
+                                        <div className={`p-4 border rounded-2xl text-center transition-colors ${isObsidian ? 'bg-[#121212] border-zinc-800' : 'bg-white'}`}>
+                                            <span className={`text-[9px] font-black uppercase ${isObsidian ? 'text-neutral-500' : 'text-gray-400'}`}>Status</span>
                                             <span className={`text-xs font-black px-2 py-0.5 rounded border inline-block mt-2 ${
-                                                activeCampaign.status === 'Completed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                                                activeCampaign.status === 'Cancelled' ? 'bg-red-50 text-red-700 border-red-200' :
-                                                activeCampaign.status === 'Suspended' ? 'bg-gray-100 text-gray-700 border-gray-300' :
-                                                'bg-amber-50 text-amber-700 border-amber-200'
+                                                isObsidian 
+                                                    ? 'bg-[#E6C97A]/10 text-[#E6C97A] border-[#E6C97A]/25' 
+                                                    : (activeCampaign.status === 'Completed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                                                       activeCampaign.status === 'Cancelled' ? 'bg-red-50 text-red-700 border-red-200' :
+                                                       activeCampaign.status === 'Suspended' ? 'bg-gray-100 text-gray-700 border-gray-300' :
+                                                       'bg-amber-50 text-amber-700 border-amber-200')
                                             }`}>
                                                 {activeCampaign.status === 'Suspended' ? 'Suspended Campaign' : activeCampaign.status}
                                             </span>
@@ -862,7 +917,7 @@ const StrayCrowdfunding = () => {
 
                                     {/* Refunded or bill details */}
                                     {activeCampaign.status === 'Suspended' && (
-                                        <div className="p-4 bg-red-50 text-red-700 border border-red-200 rounded-2xl flex items-center gap-3">
+                                        <div className={`p-4 border rounded-2xl flex items-center gap-3 ${isObsidian ? 'bg-red-950/20 text-red-400 border-red-900/30' : 'bg-red-50 text-red-700 border-red-200'}`}>
                                             <ShieldAlert size={20} />
                                             <div className="text-xs">
                                                 <strong className="block">Suspended Campaign</strong>
@@ -872,7 +927,7 @@ const StrayCrowdfunding = () => {
                                     )}
 
                                     {activeCampaign.isRefunded && activeCampaign.status !== 'Suspended' && (
-                                        <div className="p-4 bg-red-50 text-red-700 border border-red-200 rounded-2xl flex items-center gap-3">
+                                        <div className={`p-4 border rounded-2xl flex items-center gap-3 ${isObsidian ? 'bg-red-950/20 text-red-400 border-red-900/30' : 'bg-red-50 text-red-700 border-red-200'}`}>
                                             <ShieldAlert size={20} />
                                             <div className="text-xs">
                                                 <strong className="block">Contributions Refunded</strong>
@@ -882,9 +937,9 @@ const StrayCrowdfunding = () => {
                                     )}
 
                                     {activeCampaign.proofBillUrl && (
-                                        <div className="p-4 bg-emerald-50 text-emerald-950 border border-emerald-200 rounded-2xl flex items-center justify-between">
+                                        <div className={`p-4 border rounded-2xl flex items-center justify-between ${isObsidian ? 'bg-zinc-900 border-zinc-800 text-[#F5F2EA]' : 'bg-emerald-50 text-emerald-950 border-emerald-200'}`}>
                                             <div className="flex items-center gap-3">
-                                                <FileText size={20} className="text-emerald-700" />
+                                                <FileText size={20} className={isObsidian ? 'text-[#E6C97A]' : 'text-emerald-700'} />
                                                 <div className="text-xs">
                                                     <strong className="block">Treatment Proof Uploaded</strong>
                                                     The veterinary treatment bill has been verified.
@@ -894,7 +949,7 @@ const StrayCrowdfunding = () => {
                                                 href={activeCampaign.proofBillUrl}
                                                 target="_blank"
                                                 rel="noreferrer"
-                                                className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-black hover:bg-emerald-700"
+                                                className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${isObsidian ? 'bg-[#E6C97A] text-black hover:bg-[#8c6d23]' : 'bg-emerald-600 text-white hover:bg-emerald-700'}`}
                                             >
                                                 View Bill
                                             </a>
@@ -903,42 +958,42 @@ const StrayCrowdfunding = () => {
 
                                     {/* Motive reached - upload proof billing for creator */}
                                     {activeCampaign.raisedAmount >= activeCampaign.targetAmount && (
-                                        <div className="p-5 bg-amber-50 border border-[#e8d5b0] rounded-2xl space-y-4">
-                                            <h4 className="font-black text-[#2c1e14] text-xs uppercase flex items-center gap-1.5">
-                                                <Sparkles className="text-amber-600" size={16} /> Campaign Target Met!
+                                        <div className={`p-5 rounded-2xl space-y-4 border ${isObsidian ? 'bg-[#121212] border-zinc-800' : 'bg-amber-50 border-[#e8d5b0]'}`}>
+                                            <h4 className={`font-black text-xs uppercase flex items-center gap-1.5 ${isObsidian ? 'text-[#E6C97A]' : 'text-[#2c1e14]'}`}>
+                                                <Sparkles className={isObsidian ? 'text-[#E6C97A]' : 'text-amber-600'} size={16} /> Campaign Target Met!
                                             </h4>
                                             {activeCampaign.proofBillUrl ? (
-                                                <p className="text-xs text-emerald-800">
+                                                <p className={`text-xs ${isObsidian ? 'text-emerald-400' : 'text-emerald-800'}`}>
                                                     You have already uploaded an invoice/receipt. If it was incorrect or needs updating, you can attach a new file below to replace it.
                                                 </p>
                                             ) : (
-                                                <p className="text-xs text-gray-600">
+                                                <p className={`text-xs ${isObsidian ? 'text-neutral-400' : 'text-gray-600'}`}>
                                                     Since the campaign target amount has been successfully gathered, the funds are held securely. The campaign initiator must upload the official clinic treatment invoice/bill to release the funds.
                                                 </p>
                                             )}
 
                                             {checkIsCreator(activeCampaign) ? (
                                                 <div className="space-y-3">
-                                                    <label className="block text-xs font-bold text-gray-700">
+                                                    <label className={`block text-xs font-bold ${isObsidian ? 'text-neutral-300' : 'text-gray-700'}`}>
                                                         {activeCampaign.proofBillUrl ? "Replace/Re-upload Invoice File" : "Select Invoice File"}
                                                     </label>
                                                     <input
                                                         type="file"
                                                         accept=".jpg,.jpeg,.png,.pdf"
                                                         onChange={(e) => setProofFile(e.target.files?.[0])}
-                                                        className="w-full text-xs"
+                                                        className="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:bg-zinc-800 file:text-neutral-300 hover:file:bg-zinc-700"
                                                     />
                                                     <button
                                                         onClick={() => handleUploadProof(activeCampaign._id)}
                                                         disabled={proofLoading}
-                                                        className="w-full py-2.5 bg-emerald-600 text-white font-black hover:bg-emerald-700 rounded-xl text-xs flex justify-center items-center gap-2"
+                                                        className={`w-full py-2.5 font-black rounded-xl text-xs flex justify-center items-center gap-2 ${isObsidian ? 'bg-[#E6C97A] text-black hover:bg-[#8c6d23]' : 'bg-emerald-600 text-white hover:bg-emerald-700'}`}
                                                     >
                                                         {proofLoading ? "Uploading..." : activeCampaign.proofBillUrl ? "Upload Corrected Bill" : "Upload Bill & Release Funds"}
                                                     </button>
                                                 </div>
                                             ) : (
                                                 !activeCampaign.proofBillUrl && (
-                                                    <p className="text-xs text-gray-500 italic">
+                                                    <p className={`text-xs italic ${isObsidian ? 'text-neutral-500' : 'text-gray-500'}`}>
                                                         Awaiting veterinary invoice/bill upload by campaign creator ({activeCampaign.creatorId?.name}).
                                                     </p>
                                                 )
@@ -948,11 +1003,11 @@ const StrayCrowdfunding = () => {
 
                                     {/* Campaign failed refund panel */}
                                     {(activeCampaign.endDate && new Date() > new Date(activeCampaign.endDate)) && activeCampaign.raisedAmount < activeCampaign.targetAmount && !activeCampaign.isRefunded && (
-                                        <div className="p-5 bg-red-50 border border-red-200 rounded-2xl space-y-4">
-                                            <h4 className="font-black text-red-800 text-xs uppercase flex items-center gap-1.5">
+                                        <div className={`p-5 border rounded-2xl space-y-4 ${isObsidian ? 'bg-red-950/20 border-red-900/30' : 'bg-red-50 border-red-200'}`}>
+                                            <h4 className={`font-black text-xs uppercase flex items-center gap-1.5 ${isObsidian ? 'text-red-400' : 'text-red-800'}`}>
                                                 <ShieldAlert size={16} /> Campaign Target Period Expired
                                             </h4>
-                                            <p className="text-xs text-red-950">
+                                            <p className={`text-xs ${isObsidian ? 'text-red-300' : 'text-red-950'}`}>
                                                 This campaign expired on {new Date(activeCampaign.endDate).toLocaleDateString()} without reaching the required goal amount. The owner must issue immediate refunds to all contributors' wallets.
                                             </p>
 
@@ -961,7 +1016,7 @@ const StrayCrowdfunding = () => {
                                                     <button
                                                         onClick={() => handleRefundCampaign(activeCampaign._id)}
                                                         disabled={refundLoading}
-                                                        className="flex-1 py-3 bg-red-600 text-white font-black hover:bg-red-700 rounded-xl text-xs"
+                                                        className={`flex-1 py-3 font-black rounded-xl text-xs ${isObsidian ? 'bg-red-700/30 border border-red-600/40 text-red-300 hover:bg-red-700/50' : 'bg-red-600 text-white hover:bg-red-700'}`}
                                                     >
                                                         {refundLoading ? "Refunding..." : "Refund All Contributors"}
                                                     </button>
@@ -971,7 +1026,7 @@ const StrayCrowdfunding = () => {
                                                     <button
                                                         onClick={() => handleAdminStrictAction(activeCampaign._id)}
                                                         disabled={adminActionLoading}
-                                                        className="flex-1 py-3 bg-black text-white font-black hover:bg-zinc-800 rounded-xl text-xs"
+                                                        className={`flex-1 py-3 font-black rounded-xl text-xs ${isObsidian ? 'bg-neutral-800 border border-zinc-700 text-neutral-300 hover:bg-neutral-700' : 'bg-black text-white hover:bg-zinc-800'}`}
                                                     >
                                                         {adminActionLoading ? "Processing..." : "Take Strict Action (Ban Owner)"}
                                                     </button>
@@ -982,25 +1037,25 @@ const StrayCrowdfunding = () => {
 
                                     {/* Contributors List */}
                                     <div>
-                                        <h3 className="font-black text-sm text-[#2c1e14] mb-3 flex items-center gap-1.5">
+                                        <h3 className={`font-black text-sm mb-3 flex items-center gap-1.5 ${isObsidian ? 'text-[#E6C97A]' : 'text-[#2c1e14]'}`}>
                                             <Users size={16} /> Contributions History ({activeCampaign.contributions?.length || 0})
                                         </h3>
                                         {activeCampaign.contributions && activeCampaign.contributions.length > 0 ? (
                                             <div className="space-y-2 max-h-48 overflow-y-auto pr-2 scrollbar-thin">
                                                 {activeCampaign.contributions.map((con, idx) => (
-                                                    <div key={idx} className="p-3 bg-white rounded-xl border flex justify-between items-center text-xs">
+                                                    <div key={idx} className={`p-3 rounded-xl border flex justify-between items-center text-xs ${isObsidian ? 'bg-[#121212] border-zinc-800' : 'bg-white'}`}>
                                                         <div>
-                                                            <strong className="text-[#5A4035]">{con.userName}</strong>
-                                                            <span className="text-[10px] text-gray-400 block mt-0.5">
+                                                            <strong className={isObsidian ? 'text-neutral-200' : 'text-[#5A4035]'}>{con.userName}</strong>
+                                                            <span className={`text-[10px] block mt-0.5 ${isObsidian ? 'text-neutral-500' : 'text-gray-400'}`}>
                                                                 {new Date(con.date).toLocaleDateString()}
                                                             </span>
                                                         </div>
-                                                        <span className="font-black text-emerald-600 font-mono">+₹{con.amount}</span>
+                                                        <span className={`font-black font-mono ${isObsidian ? 'text-[#E6C97A]' : 'text-emerald-600'}`}>+₹{con.amount}</span>
                                                     </div>
                                                 ))}
                                             </div>
                                         ) : (
-                                            <p className="text-xs text-gray-400 italic">No contributions recorded yet. Be the first to help!</p>
+                                            <p className={`text-xs italic ${isObsidian ? 'text-neutral-500' : 'text-gray-400'}`}>No contributions recorded yet. Be the first to help!</p>
                                         )}
                                     </div>
 
@@ -1010,7 +1065,7 @@ const StrayCrowdfunding = () => {
                                                 {activeCampaign.status === 'Active' && (
                                                     <button
                                                         onClick={() => handleOpenEdit(activeCampaign)}
-                                                        className="flex-1 py-3.5 bg-amber-600 text-white font-black hover:bg-amber-700 rounded-2xl text-xs flex items-center justify-center gap-1.5 transition-all active:scale-[0.98]"
+                                                        className={`flex-1 py-3.5 text-xs font-black rounded-2xl flex items-center justify-center gap-1.5 transition-all active:scale-[0.98] ${isObsidian ? 'bg-amber-700/20 border border-amber-600/30 text-amber-400 hover:bg-amber-700/35' : 'bg-amber-600 text-white hover:bg-amber-700'}`}
                                                     >
                                                         <Edit size={14} />
                                                         <span>Edit Campaign</span>
@@ -1020,7 +1075,7 @@ const StrayCrowdfunding = () => {
                                                     onClick={() => {
                                                         handleDeleteCampaign(activeCampaign._id);
                                                     }}
-                                                    className="flex-1 py-3.5 bg-red-600 text-white font-black hover:bg-red-700 rounded-2xl text-xs flex items-center justify-center gap-1.5 transition-all active:scale-[0.98]"
+                                                    className={`flex-1 py-3.5 text-xs font-black rounded-2xl flex items-center justify-center gap-1.5 transition-all active:scale-[0.98] ${isObsidian ? 'bg-red-700/20 border border-red-600/30 text-red-400 hover:bg-red-700/35' : 'bg-red-600 text-white hover:bg-red-700'}`}
                                                 >
                                                     <Trash2 size={14} />
                                                     <span>Delete Campaign</span>
@@ -1031,7 +1086,7 @@ const StrayCrowdfunding = () => {
                                                 <button
                                                     onClick={() => handleRefundCampaign(activeCampaign._id)}
                                                     disabled={refundLoading}
-                                                    className="w-full py-3.5 bg-rose-700 hover:bg-rose-800 text-white font-black rounded-2xl text-xs flex items-center justify-center gap-1.5 transition-all active:scale-[0.98] shadow-md shadow-rose-100"
+                                                    className={`w-full py-3.5 font-black rounded-2xl text-xs flex items-center justify-center gap-1.5 transition-all active:scale-[0.98] shadow-md ${isObsidian ? 'bg-rose-950/40 border border-rose-900/40 text-rose-300 hover:bg-rose-950/60 shadow-none' : 'bg-rose-700 hover:bg-rose-800 text-white shadow-rose-100'}`}
                                                 >
                                                     <ShieldAlert size={14} />
                                                     <span>{refundLoading ? "Refunding..." : "Suspend Campaign & Refund Contributors"}</span>
@@ -1046,7 +1101,7 @@ const StrayCrowdfunding = () => {
                                                 setActiveCampaign(null);
                                                 handleDonateInit(activeCampaign);
                                             }}
-                                            className="w-full py-4 bg-emerald-600 text-white font-black hover:bg-emerald-700 rounded-2xl text-sm transition-all active:scale-[0.98] mt-4"
+                                            className={`w-full py-4 font-black rounded-2xl text-sm transition-all active:scale-[0.98] mt-4 ${isObsidian ? 'bg-gradient-to-r from-[#8C6D23] to-[#E6C97A] text-black shadow-lg shadow-[#E6C97A]/5' : 'bg-emerald-600 text-white hover:bg-emerald-700'}`}
                                         >
                                             Contribute Now
                                         </button>
@@ -1065,13 +1120,13 @@ const StrayCrowdfunding = () => {
                                 initial={{ opacity: 0, scale: 0.95 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 exit={{ opacity: 0, scale: 0.95 }}
-                                className="bg-[#fdf8f0] rounded-[2.5rem] shadow-2xl p-8 max-w-md w-full border border-[#e8d5b0] max-h-[90vh] overflow-y-auto"
+                                className={`rounded-[2.5rem] shadow-2xl p-8 max-w-md w-full border max-h-[90vh] overflow-y-auto transition-colors duration-500 ${isObsidian ? 'bg-[#0E0E0E] border-zinc-800 text-[#F5F2EA]' : 'bg-[#fdf8f0] border-[#e8d5b0]'}`}
                             >
                                 <div className="flex justify-between items-start mb-6">
-                                    <h2 className="text-2xl font-black text-[#2c1e14]">Initiate Stray Campaign</h2>
+                                    <h2 className={`text-2xl font-black ${isObsidian ? 'text-[#F5F2EA]' : 'text-[#2c1e14]'}`}>Initiate Stray Campaign</h2>
                                     <button
                                         onClick={() => setShowCreateModal(false)}
-                                        className="p-1 text-gray-400 hover:bg-gray-100 rounded-full"
+                                        className={`p-1 rounded-full transition-colors ${isObsidian ? 'text-neutral-400 hover:bg-zinc-800' : 'text-gray-400 hover:bg-gray-100'}`}
                                     >
                                         <X size={20} />
                                     </button>
@@ -1079,36 +1134,36 @@ const StrayCrowdfunding = () => {
 
                                 <form onSubmit={handleCreateCampaign} className="space-y-4">
                                     <div>
-                                        <label className="block text-xs font-black uppercase text-gray-400 mb-2">Campaign Title</label>
+                                        <label className={`block text-xs font-black uppercase mb-2 ${isObsidian ? 'text-[#E6C97A]' : 'text-gray-400'}`}>Campaign Title</label>
                                         <input
                                             type="text"
                                             value={title}
                                             onChange={(e) => setTitle(e.target.value)}
                                             placeholder="E.g., Surgery for Injured Stray Dog"
                                             required
-                                            className="w-full px-5 py-3.5 bg-white border rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#c8860a] text-sm text-[#5A4035]"
+                                            className={`w-full px-5 py-3.5 border rounded-2xl focus:outline-none focus:ring-2 text-sm transition-all ${isObsidian ? 'bg-[#121212] border-zinc-800 focus:ring-[#E6C97A] text-white focus:border-[#E6C97A]/50' : 'bg-white focus:ring-[#c8860a] text-[#5A4035]'}`}
                                         />
                                     </div>
 
                                     <div>
-                                        <label className="block text-xs font-black uppercase text-gray-400 mb-2">Detailed Case Description</label>
+                                        <label className={`block text-xs font-black uppercase mb-2 ${isObsidian ? 'text-[#E6C97A]' : 'text-gray-400'}`}>Detailed Case Description</label>
                                         <textarea
                                             value={description}
                                             onChange={(e) => setDescription(e.target.value)}
                                             placeholder="Explain the animal's condition, required surgery/treatment, and vet advice..."
                                             required
                                             rows="3"
-                                            className="w-full px-5 py-3.5 bg-white border rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#c8860a] text-sm text-[#5A4035]"
+                                            className={`w-full px-5 py-3.5 border rounded-2xl focus:outline-none focus:ring-2 text-sm transition-all ${isObsidian ? 'bg-[#121212] border-zinc-800 focus:ring-[#E6C97A] text-white focus:border-[#E6C97A]/50' : 'bg-white focus:ring-[#c8860a] text-[#5A4035]'}`}
                                         />
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-xs font-black uppercase text-gray-400 mb-2">Animal Type</label>
+                                            <label className={`block text-xs font-black uppercase mb-2 ${isObsidian ? 'text-[#E6C97A]' : 'text-gray-400'}`}>Animal Type</label>
                                             <select
                                                 value={animalType}
                                                 onChange={(e) => setAnimalType(e.target.value)}
-                                                className="w-full px-5 py-3.5 bg-white border rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#c8860a] text-sm text-[#5A4035]"
+                                                className={`w-full px-5 py-3.5 border rounded-2xl focus:outline-none focus:ring-2 text-sm transition-all ${isObsidian ? 'bg-[#121212] border-zinc-800 focus:ring-[#E6C97A] text-white focus:border-[#E6C97A]/50' : 'bg-white focus:ring-[#c8860a] text-[#5A4035]'}`}
                                             >
                                                 <option value="Dog">Dog</option>
                                                 <option value="Cat">Cat</option>
@@ -1118,72 +1173,72 @@ const StrayCrowdfunding = () => {
                                             </select>
                                         </div>
                                         <div>
-                                            <label className="block text-xs font-black uppercase text-gray-400 mb-2">Target Amount (INR)</label>
+                                            <label className={`block text-xs font-black uppercase mb-2 ${isObsidian ? 'text-[#E6C97A]' : 'text-gray-400'}`}>Target Amount (INR)</label>
                                             <input
                                                 type="number"
                                                 value={targetAmount}
                                                 onChange={(e) => setTargetAmount(e.target.value)}
                                                 placeholder="E.g., 8500"
                                                 required
-                                                className="w-full px-5 py-3.5 bg-white border rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#c8860a] text-sm text-[#5A4035]"
+                                                className={`w-full px-5 py-3.5 border rounded-2xl focus:outline-none focus:ring-2 text-sm transition-all ${isObsidian ? 'bg-[#121212] border-zinc-800 focus:ring-[#E6C97A] text-white focus:border-[#E6C97A]/50' : 'bg-white focus:ring-[#c8860a] text-[#5A4035]'}`}
                                             />
                                         </div>
                                     </div>
 
                                     <div>
-                                        <label className="block text-xs font-black uppercase text-gray-400 mb-2">Partner Veterinary Clinic Name</label>
+                                        <label className={`block text-xs font-black uppercase mb-2 ${isObsidian ? 'text-[#E6C97A]' : 'text-gray-400'}`}>Partner Veterinary Clinic Name</label>
                                         <input
                                             type="text"
                                             value={clinicName}
                                             onChange={(e) => setClinicName(e.target.value)}
                                             placeholder="E.g., Dr. Sharma Pet Hospital"
                                             required
-                                            className="w-full px-5 py-3.5 bg-white border rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#c8860a] text-sm text-[#5A4035]"
+                                            className={`w-full px-5 py-3.5 border rounded-2xl focus:outline-none focus:ring-2 text-sm transition-all ${isObsidian ? 'bg-[#121212] border-zinc-800 focus:ring-[#E6C97A] text-white focus:border-[#E6C97A]/50' : 'bg-white focus:ring-[#c8860a] text-[#5A4035]'}`}
                                         />
                                     </div>
 
                                     <div>
-                                        <label className="block text-xs font-black uppercase text-gray-400 mb-2">Clinic Account Payout ID (Optional)</label>
+                                        <label className={`block text-xs font-black uppercase mb-2 ${isObsidian ? 'text-[#E6C97A]' : 'text-gray-400'}`}>Clinic Account Payout ID (Optional)</label>
                                         <input
                                             type="text"
                                             value={clinicAccountId}
                                             onChange={(e) => setClinicAccountId(e.target.value)}
                                             placeholder="Razorpay clinic linked account token"
-                                            className="w-full px-5 py-3.5 bg-white border rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#c8860a] text-sm text-[#5A4035]"
+                                            className={`w-full px-5 py-3.5 border rounded-2xl focus:outline-none focus:ring-2 text-sm transition-all ${isObsidian ? 'bg-[#121212] border-zinc-800 focus:ring-[#E6C97A] text-white focus:border-[#E6C97A]/50' : 'bg-white focus:ring-[#c8860a] text-[#5A4035]'}`}
                                         />
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-xs font-black uppercase text-gray-400 mb-2">Campaign Duration (Days)</label>
+                                            <label className={`block text-xs font-black uppercase mb-2 ${isObsidian ? 'text-[#E6C97A]' : 'text-gray-400'}`}>Campaign Duration (Days)</label>
                                             <input
                                                 type="number"
                                                 min="1"
                                                 value={durationDays}
                                                 onChange={(e) => setDurationDays(e.target.value)}
                                                 required
-                                                className="w-full px-5 py-3.5 bg-white border rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#c8860a] text-sm text-[#5A4035]"
+                                                className={`w-full px-5 py-3.5 border rounded-2xl focus:outline-none focus:ring-2 text-sm transition-all ${isObsidian ? 'bg-[#121212] border-zinc-800 focus:ring-[#E6C97A] text-white focus:border-[#E6C97A]/50' : 'bg-white focus:ring-[#c8860a] text-[#5A4035]'}`}
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-xs font-black uppercase text-gray-400 mb-2 font-bold text-emerald-800">Self-Contribution (Min ₹500)</label>
+                                            <label className={`block text-xs font-black uppercase mb-2 ${isObsidian ? 'text-[#E6C97A]' : 'text-emerald-800'}`}>Self-Contribution (Min ₹500)</label>
                                             <input
                                                 type="number"
                                                 min="500"
                                                 value={selfContributionAmount}
                                                 onChange={(e) => setSelfContributionAmount(e.target.value)}
                                                 required
-                                                className="w-full px-5 py-3.5 bg-white border border-emerald-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#c8860a] text-sm text-[#5A4035] font-black"
+                                                className={`w-full px-5 py-3.5 border rounded-2xl focus:outline-none focus:ring-2 text-sm font-black transition-all ${isObsidian ? 'bg-[#121212] border-zinc-800 focus:ring-[#E6C97A] text-white border-zinc-700/80 focus:border-[#E6C97A]/50' : 'bg-white border-emerald-300 focus:ring-[#c8860a] text-[#5A4035]'}`}
                                             />
                                         </div>
                                     </div>
 
                                     <div>
-                                        <label className="block text-xs font-black uppercase text-gray-400 mb-2">Payment Method for Self Contribution</label>
+                                        <label className={`block text-xs font-black uppercase mb-2 ${isObsidian ? 'text-[#E6C97A]' : 'text-gray-400'}`}>Payment Method for Self Contribution</label>
                                         <select
                                             value={paymentMethod}
                                             onChange={(e) => setPaymentMethod(e.target.value)}
-                                            className="w-full px-5 py-3.5 bg-white border rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#c8860a] text-sm text-[#5A4035]"
+                                            className={`w-full px-5 py-3.5 border rounded-2xl focus:outline-none focus:ring-2 text-sm transition-all ${isObsidian ? 'bg-[#121212] border-zinc-800 focus:ring-[#E6C97A] text-white focus:border-[#E6C97A]/50' : 'bg-white focus:ring-[#c8860a] text-[#5A4035]'}`}
                                         >
                                             <option value="razorpay">Razorpay Card/UPI</option>
                                             <option value="wallet">Paw Wallet (Available: ₹{userdata?.pawWallet || 0})</option>
@@ -1191,19 +1246,19 @@ const StrayCrowdfunding = () => {
                                     </div>
 
                                     <div>
-                                        <label className="block text-xs font-black uppercase text-gray-400 mb-2">Upload Case Photo</label>
+                                        <label className={`block text-xs font-black uppercase mb-2 ${isObsidian ? 'text-[#E6C97A]' : 'text-gray-400'}`}>Upload Case Photo</label>
                                         <input
                                             type="file"
                                             onChange={handleFileChange}
                                             accept="image/*"
-                                            className="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100"
+                                            className={`w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black ${isObsidian ? 'file:bg-zinc-800 file:text-neutral-300 hover:file:bg-zinc-700' : 'file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100'}`}
                                         />
                                     </div>
 
                                     <button
                                         type="submit"
                                         disabled={createLoading}
-                                        className="w-full py-4 bg-emerald-600 text-white font-black hover:bg-emerald-700 rounded-2xl text-sm flex justify-center items-center gap-2"
+                                        className={`w-full py-4 font-black rounded-2xl text-sm flex justify-center items-center gap-2 ${isObsidian ? 'bg-gradient-to-r from-[#8C6D23] to-[#E6C97A] text-black hover:opacity-95' : 'bg-emerald-600 text-white hover:bg-emerald-700'}`}
                                     >
                                         {createLoading ? (
                                             <>
@@ -1228,16 +1283,16 @@ const StrayCrowdfunding = () => {
                                 initial={{ opacity: 0, scale: 0.95 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 exit={{ opacity: 0, scale: 0.95 }}
-                                className="bg-[#fdf8f0] rounded-[2.5rem] shadow-2xl p-8 max-w-md w-full border border-[#e8d5b0] max-h-[90vh] overflow-y-auto"
+                                className={`rounded-[2.5rem] shadow-2xl p-8 max-w-md w-full border max-h-[90vh] overflow-y-auto transition-colors duration-500 ${isObsidian ? 'bg-[#0E0E0E] border-zinc-800 text-[#F5F2EA]' : 'bg-[#fdf8f0] border-[#e8d5b0]'}`}
                             >
                                 <div className="flex justify-between items-start mb-6">
-                                    <h2 className="text-2xl font-black text-[#2c1e14]">Edit Rescue Campaign</h2>
+                                    <h2 className={`text-2xl font-black ${isObsidian ? 'text-[#F5F2EA]' : 'text-[#2c1e14]'}`}>Edit Rescue Campaign</h2>
                                     <button
                                         onClick={() => {
                                             setShowEditModal(false);
                                             setEditingCampaign(null);
                                         }}
-                                        className="p-1 text-gray-400 hover:bg-gray-100 rounded-full"
+                                        className={`p-1 rounded-full transition-colors ${isObsidian ? 'text-neutral-400 hover:bg-zinc-800' : 'text-gray-400 hover:bg-gray-100'}`}
                                     >
                                         <X size={20} />
                                     </button>
@@ -1245,34 +1300,34 @@ const StrayCrowdfunding = () => {
 
                                 <form onSubmit={handleEditCampaign} className="space-y-4">
                                     <div>
-                                        <label className="block text-xs font-black uppercase text-gray-400 mb-2">Campaign Title</label>
+                                        <label className={`block text-xs font-black uppercase mb-2 ${isObsidian ? 'text-[#E6C97A]' : 'text-gray-400'}`}>Campaign Title</label>
                                         <input
                                             type="text"
                                             value={editTitle}
                                             onChange={(e) => setEditTitle(e.target.value)}
                                             required
-                                            className="w-full px-5 py-3.5 bg-white border rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#c8860a] text-sm text-[#5A4035]"
+                                            className={`w-full px-5 py-3.5 border rounded-2xl focus:outline-none focus:ring-2 text-sm transition-all ${isObsidian ? 'bg-[#121212] border-zinc-800 focus:ring-[#E6C97A] text-white focus:border-[#E6C97A]/50' : 'bg-white focus:ring-[#c8860a] text-[#5A4035]'}`}
                                         />
                                     </div>
 
                                     <div>
-                                        <label className="block text-xs font-black uppercase text-gray-400 mb-2">Detailed Case Description</label>
+                                        <label className={`block text-xs font-black uppercase mb-2 ${isObsidian ? 'text-[#E6C97A]' : 'text-gray-400'}`}>Detailed Case Description</label>
                                         <textarea
                                             value={editDescription}
                                             onChange={(e) => setEditDescription(e.target.value)}
                                             required
                                             rows="3"
-                                            className="w-full px-5 py-3.5 bg-white border rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#c8860a] text-sm text-[#5A4035]"
+                                            className={`w-full px-5 py-3.5 border rounded-2xl focus:outline-none focus:ring-2 text-sm transition-all ${isObsidian ? 'bg-[#121212] border-zinc-800 focus:ring-[#E6C97A] text-white focus:border-[#E6C97A]/50' : 'bg-white focus:ring-[#c8860a] text-[#5A4035]'}`}
                                         />
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-xs font-black uppercase text-gray-400 mb-2">Animal Type</label>
+                                            <label className={`block text-xs font-black uppercase mb-2 ${isObsidian ? 'text-[#E6C97A]' : 'text-gray-400'}`}>Animal Type</label>
                                             <select
                                                 value={editAnimalType}
                                                 onChange={(e) => setEditAnimalType(e.target.value)}
-                                                className="w-full px-5 py-3.5 bg-white border rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#c8860a] text-sm text-[#5A4035]"
+                                                className={`w-full px-5 py-3.5 border rounded-2xl focus:outline-none focus:ring-2 text-sm transition-all ${isObsidian ? 'bg-[#121212] border-zinc-800 focus:ring-[#E6C97A] text-white focus:border-[#E6C97A]/50' : 'bg-white focus:ring-[#c8860a] text-[#5A4035]'}`}
                                             >
                                                 <option value="Dog">Dog</option>
                                                 <option value="Cat">Cat</option>
@@ -1282,52 +1337,52 @@ const StrayCrowdfunding = () => {
                                             </select>
                                         </div>
                                         <div>
-                                            <label className="block text-xs font-black uppercase text-gray-400 mb-2">Target Amount (INR)</label>
+                                            <label className={`block text-xs font-black uppercase mb-2 ${isObsidian ? 'text-[#E6C97A]' : 'text-gray-400'}`}>Target Amount (INR)</label>
                                             <input
                                                 type="number"
                                                 value={editTargetAmount}
                                                 onChange={(e) => setEditTargetAmount(e.target.value)}
                                                 required
-                                                className="w-full px-5 py-3.5 bg-white border rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#c8860a] text-sm text-[#5A4035]"
+                                                className={`w-full px-5 py-3.5 border rounded-2xl focus:outline-none focus:ring-2 text-sm transition-all ${isObsidian ? 'bg-[#121212] border-zinc-800 focus:ring-[#E6C97A] text-white focus:border-[#E6C97A]/50' : 'bg-white focus:ring-[#c8860a] text-[#5A4035]'}`}
                                             />
                                         </div>
                                     </div>
 
                                     <div>
-                                        <label className="block text-xs font-black uppercase text-gray-400 mb-2">Partner Veterinary Clinic Name</label>
+                                        <label className={`block text-xs font-black uppercase mb-2 ${isObsidian ? 'text-[#E6C97A]' : 'text-gray-400'}`}>Partner Veterinary Clinic Name</label>
                                         <input
                                             type="text"
                                             value={editClinicName}
                                             onChange={(e) => setEditClinicName(e.target.value)}
                                             required
-                                            className="w-full px-5 py-3.5 bg-white border rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#c8860a] text-sm text-[#5A4035]"
+                                            className={`w-full px-5 py-3.5 border rounded-2xl focus:outline-none focus:ring-2 text-sm transition-all ${isObsidian ? 'bg-[#121212] border-zinc-800 focus:ring-[#E6C97A] text-white focus:border-[#E6C97A]/50' : 'bg-white focus:ring-[#c8860a] text-[#5A4035]'}`}
                                         />
                                     </div>
 
                                     <div>
-                                        <label className="block text-xs font-black uppercase text-gray-400 mb-2">Clinic Account Payout ID</label>
+                                        <label className={`block text-xs font-black uppercase mb-2 ${isObsidian ? 'text-[#E6C97A]' : 'text-gray-400'}`}>Clinic Account Payout ID</label>
                                         <input
                                             type="text"
                                             value={editClinicAccountId}
                                             onChange={(e) => setEditClinicAccountId(e.target.value)}
-                                            className="w-full px-5 py-3.5 bg-white border rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#c8860a] text-sm text-[#5A4035]"
+                                            className={`w-full px-5 py-3.5 border rounded-2xl focus:outline-none focus:ring-2 text-sm transition-all ${isObsidian ? 'bg-[#121212] border-zinc-800 focus:ring-[#E6C97A] text-white focus:border-[#E6C97A]/50' : 'bg-white focus:ring-[#c8860a] text-[#5A4035]'}`}
                                         />
                                     </div>
 
                                     <div>
-                                        <label className="block text-xs font-black uppercase text-gray-400 mb-2">Upload New Case Photo (Optional)</label>
+                                        <label className={`block text-xs font-black uppercase mb-2 ${isObsidian ? 'text-[#E6C97A]' : 'text-gray-400'}`}>Upload New Case Photo (Optional)</label>
                                         <input
                                             type="file"
                                             onChange={handleEditFileChange}
                                             accept="image/*"
-                                            className="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100"
+                                            className={`w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black ${isObsidian ? 'file:bg-zinc-800 file:text-neutral-300 hover:file:bg-zinc-700' : 'file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100'}`}
                                         />
                                     </div>
 
                                     <button
                                         type="submit"
                                         disabled={editLoading}
-                                        className="w-full py-4 bg-emerald-600 text-white font-black hover:bg-emerald-700 rounded-2xl text-sm"
+                                        className={`w-full py-4 font-black rounded-2xl text-sm ${isObsidian ? 'bg-gradient-to-r from-[#8C6D23] to-[#E6C97A] text-black hover:opacity-95' : 'bg-emerald-600 text-white hover:bg-emerald-700'}`}
                                     >
                                         {editLoading ? "Updating..." : "Save Changes"}
                                     </button>
@@ -1345,13 +1400,13 @@ const StrayCrowdfunding = () => {
                                 initial={{ opacity: 0, scale: 0.95 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 exit={{ opacity: 0, scale: 0.95 }}
-                                className="bg-[#fdf8f0] rounded-[2.5rem] shadow-2xl p-8 max-w-sm w-full border border-[#e8d5b0]"
+                                className={`rounded-[2.5rem] shadow-2xl p-8 max-w-sm w-full border transition-colors duration-500 ${isObsidian ? 'bg-[#0E0E0E] border-zinc-800 text-[#F5F2EA]' : 'bg-[#fdf8f0] border-[#e8d5b0]'}`}
                             >
                                 <div className="flex justify-between items-start mb-6">
-                                    <h2 className="text-xl font-black text-[#2c1e14]">Contribute to Rescue</h2>
+                                    <h2 className={`text-xl font-black ${isObsidian ? 'text-[#F5F2EA]' : 'text-[#2c1e14]'}`}>Contribute to Rescue</h2>
                                     <button
                                         onClick={() => setShowDonateModal(false)}
-                                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors"
+                                        className={`p-2 rounded-xl transition-all ${isObsidian ? 'text-neutral-400 hover:text-red-500 hover:bg-red-950/40' : 'text-gray-400 hover:text-red-500 hover:bg-red-50'}`}
                                     >
                                         <X size={20} />
                                     </button>
@@ -1359,23 +1414,23 @@ const StrayCrowdfunding = () => {
 
                                 <form onSubmit={processContribution} className="space-y-5">
                                     <div>
-                                        <span className="text-[10px] font-black text-emerald-800 uppercase block">Selected Case</span>
-                                        <strong className="text-[#5A4035] text-sm block mt-0.5">{targetCampaign.title}</strong>
+                                        <span className={`text-[10px] font-black uppercase block ${isObsidian ? 'text-[#E6C97A]' : 'text-emerald-800'}`}>Selected Case</span>
+                                        <strong className={`text-sm block mt-0.5 ${isObsidian ? 'text-neutral-200 font-extrabold' : 'text-[#5A4035] font-bold'}`}>{targetCampaign.title}</strong>
                                     </div>
 
                                     <div>
-                                        <label className="block text-xs font-black uppercase text-gray-400 mb-2">Choose Payment Method</label>
+                                        <label className={`block text-xs font-black uppercase text-gray-400 mb-2`}>Choose Payment Method</label>
                                         <div className="grid grid-cols-2 gap-3">
                                             <button
                                                 type="button"
                                                 onClick={() => setDonatePaymentMethod('razorpay')}
                                                 className={`py-3 px-4 rounded-2xl border-2 flex flex-col items-center justify-center gap-1.5 transition-all ${
                                                     donatePaymentMethod === 'razorpay'
-                                                        ? 'border-emerald-600 bg-emerald-50/60 text-emerald-900 shadow-sm scale-[1.02]'
-                                                        : 'border-[#e8d5b0] bg-white text-gray-500 hover:bg-amber-50/30'
+                                                        ? (isObsidian ? 'border-[#E6C97A] bg-[#E6C97A]/10 text-white scale-[1.02]' : 'border-emerald-600 bg-emerald-50/60 text-emerald-900 shadow-sm scale-[1.02]')
+                                                        : (isObsidian ? 'border-zinc-800 bg-[#121212] text-neutral-400 hover:bg-zinc-800/35' : 'border-[#e8d5b0] bg-white text-gray-500 hover:bg-amber-50/30')
                                                 }`}
                                             >
-                                                <CreditCard size={18} className={donatePaymentMethod === 'razorpay' ? 'text-emerald-600' : 'text-gray-400'} />
+                                                <CreditCard size={18} className={donatePaymentMethod === 'razorpay' ? (isObsidian ? 'text-[#E6C97A]' : 'text-emerald-600') : 'text-gray-400'} />
                                                 <span className="text-xs font-extrabold">Razorpay Card/UPI</span>
                                             </button>
                                             <button
@@ -1383,18 +1438,18 @@ const StrayCrowdfunding = () => {
                                                 onClick={() => setDonatePaymentMethod('wallet')}
                                                 className={`py-3 px-4 rounded-2xl border-2 flex flex-col items-center justify-center gap-1.5 transition-all ${
                                                     donatePaymentMethod === 'wallet'
-                                                        ? 'border-emerald-600 bg-emerald-50/60 text-emerald-900 shadow-sm scale-[1.02]'
-                                                        : 'border-[#e8d5b0] bg-white text-gray-500 hover:bg-amber-50/30'
+                                                        ? (isObsidian ? 'border-[#E6C97A] bg-[#E6C97A]/10 text-white scale-[1.02]' : 'border-emerald-600 bg-emerald-50/60 text-emerald-900 shadow-sm scale-[1.02]')
+                                                        : (isObsidian ? 'border-zinc-800 bg-[#121212] text-neutral-400 hover:bg-zinc-800/35' : 'border-[#e8d5b0] bg-white text-gray-500 hover:bg-amber-50/30')
                                                 }`}
                                             >
-                                                <Gift size={18} className={donatePaymentMethod === 'wallet' ? 'text-emerald-600' : 'text-gray-400'} />
+                                                <Gift size={18} className={donatePaymentMethod === 'wallet' ? (isObsidian ? 'text-[#E6C97A]' : 'text-emerald-600') : 'text-gray-400'} />
                                                 <span className="text-xs font-extrabold">Paw Wallet</span>
                                             </button>
                                         </div>
                                         {donatePaymentMethod === 'wallet' && (
-                                            <div className="mt-2.5 p-3 rounded-xl bg-emerald-50/50 border border-emerald-100 flex items-center justify-between">
-                                                <span className="text-[11px] font-bold text-[#5A4035]">Available Balance</span>
-                                                <strong className="text-xs font-black text-emerald-700">₹{userdata?.pawWallet || 0}</strong>
+                                            <div className={`mt-2.5 p-3 rounded-xl border flex items-center justify-between ${isObsidian ? 'bg-[#121212] border-zinc-800' : 'bg-emerald-50/50 border-emerald-100'}`}>
+                                                <span className={`text-[11px] font-bold ${isObsidian ? 'text-neutral-400' : 'text-[#5A4035]'}`}>Available Balance</span>
+                                                <strong className={`text-xs font-black ${isObsidian ? 'text-[#E6C97A]' : 'text-emerald-700'}`}>₹{userdata?.pawWallet || 0}</strong>
                                             </div>
                                         )}
                                     </div>
@@ -1402,7 +1457,7 @@ const StrayCrowdfunding = () => {
                                     <div>
                                         <label className="block text-xs font-black uppercase text-gray-400 mb-2">Contribution Amount (INR)</label>
                                         <div className="relative">
-                                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#5A4035] font-black text-sm">₹</span>
+                                            <span className={`absolute left-4 top-1/2 -translate-y-1/2 font-black text-sm ${isObsidian ? 'text-[#E6C97A]' : 'text-[#5A4035]'}`}>₹</span>
                                             <input
                                                 type="number"
                                                 value={donateAmount}
@@ -1410,7 +1465,7 @@ const StrayCrowdfunding = () => {
                                                 placeholder="E.g., 500"
                                                 required
                                                 min="1"
-                                                className="w-full pl-9 pr-5 py-4 bg-white border border-[#e8d5b0] rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-600 text-sm text-[#5A4035] font-black"
+                                                className={`w-full pl-9 pr-5 py-4 border rounded-2xl focus:outline-none focus:ring-2 text-sm font-black transition-all ${isObsidian ? 'bg-[#121212] border-zinc-800 focus:ring-[#E6C97A] text-white focus:border-[#E6C97A]/50' : 'bg-white border-[#e8d5b0] focus:ring-emerald-600 text-[#5A4035]'}`}
                                             />
                                         </div>
                                     </div>
@@ -1418,7 +1473,11 @@ const StrayCrowdfunding = () => {
                                     <button
                                         type="submit"
                                         disabled={donateLoading}
-                                        className="w-full py-4 rounded-2xl text-white font-black bg-gradient-to-r from-emerald-600 to-[#5A4035] shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                                        className={`w-full py-4 rounded-2xl text-white font-black shadow-lg transition-all flex items-center justify-center gap-2 ${
+                                            isObsidian 
+                                                ? 'bg-gradient-to-r from-[#8C6D23] to-[#E6C97A] text-black shadow-[#E6C97A]/5 hover:opacity-95' 
+                                                : 'bg-gradient-to-r from-emerald-600 to-[#5A4035] shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]'
+                                        }`}
                                     >
                                         {donateLoading ? (
                                             <>

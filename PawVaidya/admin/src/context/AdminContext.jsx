@@ -659,6 +659,121 @@ const AdminContextProvider = (props) => {
         }
     };
 
+    const approveObsidianPass = async (subscriptionId) => {
+        try {
+            const { data } = await axios.post(
+                `${backendurl}/api/admin/approve-obsidian`,
+                { subscriptionId },
+                { headers: { atoken } }
+            );
+            if (data.success) {
+                toast.success(data.message);
+                getAllSubscriptions(); // Refresh the list
+                return true;
+            } else {
+                toast.error(data.message);
+                return false;
+            }
+        } catch (error) {
+            toast.error(error.message || 'Failed to approve Obsidian pass');
+            return false;
+        }
+    };
+
+    const rejectObsidianPass = async (subscriptionId, reason) => {
+        try {
+            const { data } = await axios.post(
+                `${backendurl}/api/admin/reject-obsidian`,
+                { subscriptionId, reason },
+                { headers: { atoken } }
+            );
+            if (data.success) {
+                toast.success(data.message);
+                getAllSubscriptions(); // Refresh the list
+                return true;
+            } else {
+                toast.error(data.message);
+                return false;
+            }
+        } catch (error) {
+            toast.error(error.message || 'Failed to reject Obsidian pass');
+            return false;
+        }
+    };
+
+    const analyzeObsidianUser = async (subscriptionId) => {
+        try {
+            const { data } = await axios.get(
+                `${backendurl}/api/admin/analyze-obsidian-user/${subscriptionId}`,
+                { headers: { atoken } }
+            );
+            return data;
+        } catch (error) {
+            toast.error(error.message || 'Failed to perform AI eligibility analysis');
+            return { success: false, message: error.message };
+        }
+    };
+
+    const predictChurnAI = async (activeSubscriptions, appointments) => {
+        try {
+            const { data } = await axios.post(
+                `${backendurl}/api/admin/predict-churn`,
+                {},
+                { headers: { atoken } }
+            );
+            if (data.success) {
+                return data.predictions;
+            } else {
+                toast.error(data.message);
+                return null;
+            }
+        } catch (error) {
+            console.error("AI Churn Prediction Request Failed:", error);
+            return null;
+        }
+    };
+
+    const createAdminCreditTopupOrder = async (amount) => {
+        try {
+            const { data } = await axios.post(
+                `${backendurl}/api/admin/obsidian/admin/credit-topup-order`,
+                { amount },
+                { headers: { atoken } }
+            );
+            return data;
+        } catch (error) {
+            toast.error(error.message || 'Failed to create topup order');
+            return { success: false, message: error.message };
+        }
+    };
+
+    const verifyAdminCreditTopup = async (paymentData) => {
+        try {
+            const { data } = await axios.post(
+                `${backendurl}/api/admin/obsidian/admin/verify-credit-topup`,
+                paymentData,
+                { headers: { atoken } }
+            );
+            return data;
+        } catch (error) {
+            toast.error(error.message || 'Failed to verify topup');
+            return { success: false, message: error.message };
+        }
+    };
+
+    const getAdminCreditStats = async () => {
+        try {
+            const { data } = await axios.get(
+                `${backendurl}/api/admin/obsidian/admin/credit-stats`,
+                { headers: { atoken } }
+            );
+            return data;
+        } catch (error) {
+            toast.error(error.message || 'Failed to fetch credit stats');
+            return { success: false, message: error.message };
+        }
+    };
+
     // ── Admin Intelligence Functions ──────────────────────────────────────────
     const getFraudAlerts = async () => {
         try {
@@ -956,6 +1071,9 @@ const AdminContextProvider = (props) => {
         contentViolationCount, setContentViolationCount,
         adminLocation, setAdminLocation,
         subscriptions, loadingSubscriptions, getAllSubscriptions, revokeSubscription,
+        approveObsidianPass, rejectObsidianPass, analyzeObsidianUser,
+        predictChurnAI,
+        createAdminCreditTopupOrder, verifyAdminCreditTopup, getAdminCreditStats,
         getRedisStats, getRedisHistory
     }
 

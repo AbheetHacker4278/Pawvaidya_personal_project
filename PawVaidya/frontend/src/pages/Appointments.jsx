@@ -14,6 +14,7 @@ const Appointments = () => {
   const { t } = useTranslation();
   const { docId } = useParams();
   const { doctors, backendurl, token, getdoctorsdata, userdata, userPets, fetchUserPets, authLoading, isDoctorsLoading } = useContext(AppContext);
+  const isObsidian = userdata?.subscription?.plan === 'Obsidian' && userdata?.subscription?.status === 'Active';
   const daysofWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const navigate = useNavigate();
 
@@ -65,25 +66,25 @@ const Appointments = () => {
 
   const LoadingState = ({ step }) => {
     const icons = [
-      <Stethoscope className="w-12 h-12 animate-pulse" style={{ color: '#5A4035' }} />,
-      <Calendar className="w-12 h-12 animate-bounce" style={{ color: '#5A4035' }} />,
-      <CheckCircle className="w-12 h-12 animate-ping" style={{ color: '#c8860a' }} />
+      <Stethoscope className="w-12 h-12 animate-pulse" style={{ color: isObsidian ? '#E6C97A' : '#5A4035' }} />,
+      <Calendar className="w-12 h-12 animate-bounce" style={{ color: isObsidian ? '#E6C97A' : '#5A4035' }} />,
+      <CheckCircle className="w-12 h-12 animate-ping" style={{ color: isObsidian ? '#E6C97A' : '#c8860a' }} />
     ];
 
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="p-8 rounded-2xl max-w-md w-full mx-4 shadow-2xl" style={{ background: '#e8d5b0', border: '1px solid #e8d5b0' }}>
+        <div className="p-8 rounded-2xl max-w-md w-full mx-4 shadow-2xl" style={{ background: isObsidian ? '#121212' : '#e8d5b0', border: isObsidian ? '1px solid rgba(212,175,55,0.2)' : '1px solid #e8d5b0' }}>
           <div className="flex flex-col items-center">
             <div className="mb-4">
               {icons[step]}
             </div>
-            <div className="relative w-64 h-2 rounded-full mb-4" style={{ background: '#e8d5b0' }}>
+            <div className="relative w-64 h-2 rounded-full mb-4" style={{ background: isObsidian ? 'rgba(255,255,255,0.1)' : '#e8d5b0' }}>
               <div
                 className="absolute top-0 left-0 h-full rounded-full transition-all duration-500"
-                style={{ width: `${(step + 1) * 33.33}%`, background: 'linear-gradient(to right, #5A4035, #c8860a)' }}
+                style={{ width: `${(step + 1) * 33.33}%`, background: isObsidian ? 'linear-gradient(to right, #E6C97A, #c8860a)' : 'linear-gradient(to right, #5A4035, #c8860a)' }}
               />
             </div>
-            <p className="text-lg font-medium text-center" style={{ color: '#3d2b1f' }}>
+            <p className="text-lg font-medium text-center" style={{ color: isObsidian ? '#F5F2EA' : '#3d2b1f' }}>
               {loadingMessages[step]}
             </p>
           </div>
@@ -100,18 +101,18 @@ const Appointments = () => {
     ];
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white p-8 rounded-lg max-w-md w-full mx-4">
+        <div className={`p-8 rounded-lg max-w-md w-full mx-4 ${isObsidian ? 'bg-[#121212] border border-neutral-800' : 'bg-white'}`}>
           <div className="flex flex-col items-center">
             <div className="mb-4">
               {icons[step]}
             </div>
-            <div className="relative w-64 h-2 bg-gray-200 rounded-full mb-4">
+            <div className="relative w-64 h-2 rounded-full mb-4" style={{ background: isObsidian ? 'rgba(255,255,255,0.1)' : 'rgb(229, 231, 235)' }}>
               <div
                 className="absolute top-0 left-0 h-full bg-red-500 rounded-full transition-all duration-500"
                 style={{ width: `${(step + 1) * 33.33}%` }}
               />
             </div>
-            <p className="text-lg font-medium text-gray-800 text-center">
+            <p className={`text-lg font-medium text-center ${isObsidian ? 'text-white' : 'text-gray-800'}`}>
               {loadingMessages[step + 3]}
             </p>
           </div>
@@ -122,19 +123,19 @@ const Appointments = () => {
 
   const ActiveAppointmentLoadingState = () => {
     return (
-      <div className="mt-4 p-6 bg-gray-100 border border-gray-200 rounded-lg animate-pulse">
+      <div className={`mt-4 p-6 border rounded-lg animate-pulse ${isObsidian ? 'bg-[#1c1c1c] border-neutral-800' : 'bg-gray-100 border-gray-200'}`}>
         <div className="flex items-center space-x-2">
           <Loader className="w-6 h-6 text-primary animate-spin" />
-          <div className="h-4 bg-gray-300 rounded w-48"></div>
+          <div className={`h-4 rounded w-48 ${isObsidian ? 'bg-neutral-800' : 'bg-gray-300'}`}></div>
         </div>
         <div className="mt-4 space-y-3">
-          <div className="h-3 bg-gray-300 rounded w-full"></div>
-          <div className="h-3 bg-gray-300 rounded w-5/6"></div>
-          <div className="h-3 bg-gray-300 rounded w-4/6"></div>
+          <div className={`h-3 rounded w-full ${isObsidian ? 'bg-neutral-800' : 'bg-gray-300'}`}></div>
+          <div className={`h-3 rounded w-5/6 ${isObsidian ? 'bg-neutral-800' : 'bg-gray-300'}`}></div>
+          <div className={`h-3 rounded w-4/6 ${isObsidian ? 'bg-neutral-800' : 'bg-gray-300'}`}></div>
         </div>
         <div className="mt-4 flex gap-3">
-          <div className="h-10 bg-gray-300 rounded w-40"></div>
-          <div className="h-10 bg-gray-300 rounded w-40"></div>
+          <div className={`h-10 rounded w-40 ${isObsidian ? 'bg-neutral-800' : 'bg-gray-300'}`}></div>
+          <div className={`h-10 rounded w-40 ${isObsidian ? 'bg-neutral-800' : 'bg-gray-300'}`}></div>
         </div>
       </div>
     );
@@ -757,14 +758,14 @@ const Appointments = () => {
 
   if (authLoading || (isDoctorsLoading && doctors.length === 0)) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen" style={{ background: '#F2E4C6' }}>
+      <div className="flex flex-col items-center justify-center min-h-screen" style={{ background: isObsidian ? '#050505' : '#F2E4C6' }}>
         <div className="relative">
-          <div className="w-16 h-16 border-4 border-[#5A4035]/20 border-t-[#c8860a] rounded-full animate-spin" />
+          <div className={`w-16 h-16 border-4 rounded-full animate-spin ${isObsidian ? 'border-[#E6C97A]/20 border-t-[#E6C97A]' : 'border-[#5A4035]/20 border-t-[#c8860a]'}`} />
           <div className="absolute inset-0 flex items-center justify-center">
-            <Stethoscope className="w-6 h-6 text-[#5A4035]/40" />
+            <Stethoscope className="w-6 h-6" style={{ color: isObsidian ? '#E6C97A' : '#5A4035' }} />
           </div>
         </div>
-        <p className="mt-6 text-[#5A4035] font-bold animate-pulse tracking-wide">
+        <p className="mt-6 font-bold animate-pulse tracking-wide" style={{ color: isObsidian ? '#E6C97A' : '#5A4035' }}>
           Verifying Clinical Connection...
         </p>
       </div>
@@ -781,22 +782,28 @@ const Appointments = () => {
 
   if (!docInfo && !isDoctorsLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-6 text-center" style={{ background: '#F2E4C6' }}>
+      <div className="flex flex-col items-center justify-center min-h-screen p-6 text-center" style={{ background: isObsidian ? '#050505' : '#F2E4C6' }}>
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className="bg-white/80 backdrop-blur-md p-10 rounded-[30px] border-2 border-[#e8d5b0] shadow-2xl max-w-md"
+          className={`backdrop-blur-md p-10 rounded-[30px] border-2 shadow-2xl max-w-md ${
+            isObsidian ? 'bg-[#121212]/80 border-neutral-800' : 'bg-white/80 border-[#e8d5b0]'
+          }`}
         >
-          <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+          <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 ${
+            isObsidian ? 'bg-red-950/30' : 'bg-red-100'
+          }`}>
             <X className="w-10 h-10 text-red-500" />
           </div>
-          <h2 className="text-2xl font-black text-[#3d2b1f] mb-3">Doctor Not Found</h2>
-          <p className="text-[#7a5a48] font-medium mb-8">
+          <h2 className={`text-2xl font-black mb-3 ${isObsidian ? 'text-white' : 'text-[#3d2b1f]'}`}>Doctor Not Found</h2>
+          <p className={`font-medium mb-8 ${isObsidian ? 'text-neutral-400' : 'text-[#7a5a48]'}`}>
             The medical professional you're looking for might have moved or is currently unavailable.
           </p>
           <button
             onClick={() => navigate('/doctors')}
-            className="w-full py-4 rounded-xl bg-[#5A4035] text-white font-bold shadow-lg hover:scale-[1.02] active:scale-98 transition-all"
+            className={`w-full py-4 rounded-xl font-bold shadow-lg hover:scale-[1.02] active:scale-98 transition-all ${
+              isObsidian ? 'bg-[#E6C97A] text-black' : 'bg-[#5A4035] text-white'
+            }`}
           >
             Browse Other Doctors
           </button>
@@ -811,7 +818,7 @@ const Appointments = () => {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
       className="pb-20"
-      style={{ background: '#F2E4C6', minHeight: '100vh' }}
+      style={{ background: isObsidian ? '#050505' : '#F2E4C6', minHeight: '100vh' }}
     >
       {/* Doctor Info Section */}
       <div className="flex flex-col sm:flex-row gap-6 max-w-7xl mx-auto px-4 pt-10">
@@ -866,15 +873,15 @@ const Appointments = () => {
                 key={label}
                 className="flex flex-col items-center justify-center py-3 px-2 rounded-2xl text-center"
                 style={{
-                  background: 'rgba(255,255,255,0.72)',
+                  background: isObsidian ? 'rgba(18, 18, 18, 0.8)' : 'rgba(255,255,255,0.72)',
                   backdropFilter: 'blur(12px)',
-                  border: '1px solid rgba(232,213,176,0.7)',
-                  boxShadow: '0 2px 12px rgba(61,43,31,0.07)'
+                  border: isObsidian ? '1px solid rgba(212, 175, 55, 0.2)' : '1px solid rgba(232,213,176,0.7)',
+                  boxShadow: isObsidian ? '0 4px 20px rgba(0,0,0,0.5)' : '0 2px 12px rgba(61,43,31,0.07)'
                 }}
               >
                 <span className="text-xl mb-1">{icon}</span>
-                <p className="text-[11px] font-bold truncate w-full" style={{ color: '#5A4035' }}>{value}</p>
-                <p className="text-[10px]" style={{ color: '#a08060' }}>{label}</p>
+                <p className="text-[11px] font-bold truncate w-full" style={{ color: isObsidian ? '#F5F2EA' : '#5A4035' }}>{value}</p>
+                <p className="text-[10px]" style={{ color: isObsidian ? '#8A8A8A' : '#a08060' }}>{label}</p>
               </div>
             ))}
           </motion.div>
@@ -890,11 +897,11 @@ const Appointments = () => {
           <div
             className="relative overflow-hidden rounded-3xl shadow-2xl h-full"
             style={{
-              background: 'rgba(243, 235, 214, 0.9)',
+              background: isObsidian ? 'rgba(18, 18, 18, 0.85)' : 'rgba(243, 235, 214, 0.9)',
               backdropFilter: 'blur(20px)',
               WebkitBackdropFilter: 'blur(20px)',
-              border: '1px solid rgba(232,213,176,0.7)',
-              boxShadow: '0 20px 60px rgba(61,43,31,0.14), 0 4px 16px rgba(61,43,31,0.07)'
+              border: isObsidian ? '1px solid rgba(212, 175, 55, 0.2)' : '1px solid rgba(232,213,176,0.7)',
+              boxShadow: isObsidian ? '0 20px 60px rgba(0,0,0,0.6), 0 4px 16px rgba(0,0,0,0.3)' : '0 20px 60px rgba(61,43,31,0.14), 0 4px 16px rgba(61,43,31,0.07)'
             }}
           >
             {/* ── Animated top accent bar ── */}
@@ -922,7 +929,7 @@ const Appointments = () => {
                 transition={{ delay: 0.4 }}
               >
                 <h1 className="text-3xl md:text-4xl font-extrabold leading-tight flex items-center gap-3 flex-wrap"
-                  style={{ color: '#3d2b1f' }}
+                  style={{ color: isObsidian ? '#F5F2EA' : '#3d2b1f' }}
                 >
                   {docInfo.name}
                   <motion.img
@@ -945,10 +952,13 @@ const Appointments = () => {
               >
                 <div
                   className="flex items-center gap-2 px-4 py-2 rounded-full"
-                  style={{ background: '#f5ede8', border: '1px solid #e8d5b0' }}
+                  style={{
+                    background: isObsidian ? '#121212' : '#f5ede8',
+                    border: isObsidian ? '1px solid rgba(212, 175, 55, 0.2)' : '1px solid #e8d5b0'
+                  }}
                 >
-                  <Award className="w-4 h-4 flex-shrink-0" style={{ color: '#c8860a' }} />
-                  <span className="text-sm font-semibold" style={{ color: '#5A4035' }}>
+                  <Award className="w-4 h-4 flex-shrink-0" style={{ color: isObsidian ? '#E6C97A' : '#c8860a' }} />
+                  <span className="text-sm font-semibold" style={{ color: isObsidian ? '#B0B0B0' : '#5A4035' }}>
                     {docInfo.degree} · {translateSpeciality(docInfo.speciality, t)}
                   </span>
                 </div>
@@ -968,7 +978,7 @@ const Appointments = () => {
               </motion.div>
 
               {/* ── Divider ── */}
-              <div className="h-px rounded-full" style={{ background: 'linear-gradient(to right, #e8d5b0, transparent)' }} />
+              <div className="h-px rounded-full" style={{ background: isObsidian ? 'linear-gradient(to right, rgba(212, 175, 55, 0.25), transparent)' : 'linear-gradient(to right, #e8d5b0, transparent)' }} />
 
               {/* ── About ── */}
               <motion.div
@@ -978,12 +988,15 @@ const Appointments = () => {
               >
                 <div className="flex items-center gap-2 mb-2">
                   <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
-                    style={{ background: '#fff8e6', border: '1px solid #f0d080' }}>
-                    <Info className="w-3.5 h-3.5" style={{ color: '#c8860a' }} />
+                    style={{
+                      background: isObsidian ? 'rgba(212,175,55,0.1)' : '#fff8e6',
+                      border: isObsidian ? '1px solid rgba(212,175,55,0.25)' : '1px solid #f0d080'
+                    }}>
+                    <Info className="w-3.5 h-3.5" style={{ color: isObsidian ? '#E6C97A' : '#c8860a' }} />
                   </div>
-                  <h3 className="text-sm font-bold uppercase tracking-wider" style={{ color: '#5A4035' }}>About</h3>
+                  <h3 className="text-sm font-bold uppercase tracking-wider" style={{ color: isObsidian ? '#F5F2EA' : '#5A4035' }}>About</h3>
                 </div>
-                <p className="text-[14px] leading-relaxed" style={{ color: '#6b5040' }}>{docInfo.about}</p>
+                <p className="text-[14px] leading-relaxed" style={{ color: isObsidian ? '#B0B0B0' : '#6b5040' }}>{docInfo.about}</p>
               </motion.div>
 
               {/* ── Fee row ── */}
@@ -991,9 +1004,12 @@ const Appointments = () => {
                 initial={{ opacity: 0, y: 14 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.7 }}
-                whileHover={{ y: -2, boxShadow: '0 8px 24px rgba(200,134,10,0.18)' }}
+                whileHover={{ y: -2, boxShadow: isObsidian ? '0 8px 24px rgba(0,0,0,0.5)' : '0 8px 24px rgba(200,134,10,0.18)' }}
                 className="flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300"
-                style={{ background: 'linear-gradient(135deg, #fffdf7, #fff8e6)', border: '1.5px solid #f0d080' }}
+                style={{
+                  background: isObsidian ? 'linear-gradient(135deg, #161616, #121212)' : 'linear-gradient(135deg, #fffdf7, #fff8e6)',
+                  border: isObsidian ? '1.5px solid rgba(212, 175, 55, 0.25)' : '1.5px solid #f0d080'
+                }}
               >
                 <div
                   className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
@@ -1002,8 +1018,8 @@ const Appointments = () => {
                   <IndianRupee className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: '#a08060' }}>Approx. Treatment Fee</p>
-                  <p className="text-2xl font-black leading-tight" style={{ color: '#3d2b1f' }}>₹{docInfo.fees || 'N/A'}</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: isObsidian ? '#8A8A8A' : '#a08060' }}>Approx. Treatment Fee</p>
+                  <p className="text-2xl font-black leading-tight" style={{ color: isObsidian ? '#F5F2EA' : '#3d2b1f' }}>₹{docInfo.fees || 'N/A'}</p>
                 </div>
                 <motion.div
                   className="ml-auto text-xs font-bold px-3 py-1 rounded-full"
@@ -1024,21 +1040,29 @@ const Appointments = () => {
               >
                 {docInfo.address?.Location && (
                   <motion.div
-                    whileHover={{ y: -3, scale: 1.04, boxShadow: '0 6px 18px rgba(200,134,10,0.20)' }}
+                    whileHover={{ y: -3, scale: 1.04, boxShadow: isObsidian ? '0 6px 18px rgba(0,0,0,0.4)' : '0 6px 18px rgba(200,134,10,0.20)' }}
                     className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold cursor-default transition-all"
-                    style={{ background: '#fff8e6', color: '#7a5a48', border: '1.5px solid #f0d080' }}
+                    style={{
+                      background: isObsidian ? '#121212' : '#fff8e6',
+                      color: isObsidian ? '#B0B0B0' : '#7a5a48',
+                      border: isObsidian ? '1.5px solid rgba(212, 175, 55, 0.25)' : '1.5px solid #f0d080'
+                    }}
                   >
-                    <MapPin className="w-3.5 h-3.5" style={{ color: '#c8860a' }} />
+                    <MapPin className="w-3.5 h-3.5" style={{ color: isObsidian ? '#E6C97A' : '#c8860a' }} />
                     {docInfo.address.Location}
                   </motion.div>
                 )}
                 {docInfo.address?.line && (
                   <motion.div
-                    whileHover={{ y: -3, scale: 1.04, boxShadow: '0 6px 18px rgba(90,64,53,0.12)' }}
+                    whileHover={{ y: -3, scale: 1.04, boxShadow: isObsidian ? '0 6px 18px rgba(0,0,0,0.4)' : '0 6px 18px rgba(90,64,53,0.12)' }}
                     className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold cursor-default transition-all"
-                    style={{ background: '#f5ede8', color: '#5A4035', border: '1.5px solid #e8d5b0' }}
+                    style={{
+                      background: isObsidian ? '#1c1c1c' : '#f5ede8',
+                      color: isObsidian ? '#B0B0B0' : '#5A4035',
+                      border: isObsidian ? '1.5px solid rgba(212, 175, 55, 0.2)' : '1.5px solid #e8d5b0'
+                    }}
                   >
-                    <MapPin className="w-3.5 h-3.5" style={{ color: '#5A4035' }} />
+                    <MapPin className="w-3.5 h-3.5" style={{ color: isObsidian ? '#E6C97A' : '#5A4035' }} />
                     {docInfo.address.line}
                   </motion.div>
                 )}
@@ -1052,10 +1076,13 @@ const Appointments = () => {
                   transition={{ delay: 0.9 }}
                   whileHover={{ y: -2 }}
                   className="flex items-start gap-3 px-4 py-3 rounded-2xl transition-all"
-                  style={{ background: '#fdf8f0', border: '1px dashed #e8d5b0' }}
+                  style={{
+                    background: isObsidian ? '#121212' : '#fdf8f0',
+                    border: isObsidian ? '1px dashed rgba(212, 175, 55, 0.25)' : '1px dashed #e8d5b0'
+                  }}
                 >
-                  <MapPin className="w-4 h-4 mt-1 flex-shrink-0" style={{ color: '#c8860a' }} />
-                  <p className="text-[13px] leading-relaxed" style={{ color: '#6b5040' }}>{docInfo.full_address}</p>
+                  <MapPin className="w-4 h-4 mt-1 flex-shrink-0" style={{ color: isObsidian ? '#E6C97A' : '#c8860a' }} />
+                  <p className="text-[13px] leading-relaxed" style={{ color: isObsidian ? '#8A8A8A' : '#6b5040' }}>{docInfo.full_address}</p>
                 </motion.div>
               )}
 
@@ -1074,16 +1101,25 @@ const Appointments = () => {
       >
         <div
           className="rounded-3xl shadow-2xl overflow-hidden"
-          style={{ background: '#f3ebd6', border: '1px solid #e8d5b0' }}
+          style={{
+            background: isObsidian ? '#121212' : '#f3ebd6',
+            border: isObsidian ? '1px solid rgba(212, 175, 55, 0.2)' : '1px solid #e8d5b0'
+          }}
         >
           {/* Premium section header */}
           <div
             className="px-8 py-6 flex items-center gap-4"
-            style={{ background: 'linear-gradient(135deg, #5A4035 0%, #7a5a48 60%, #5A4035 100%)' }}
+            style={{
+              background: isObsidian ? 'linear-gradient(135deg, #0a0a0a 0%, #1c1c1c 60%, #0a0a0a 100%)' : 'linear-gradient(135deg, #5A4035 0%, #7a5a48 60%, #5A4035 100%)',
+              borderBottom: isObsidian ? '1px solid rgba(212,175,55,0.2)' : 'none'
+            }}
           >
             <div
               className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
-              style={{ background: 'rgba(200,134,10,0.22)', border: '1px solid rgba(200,134,10,0.35)' }}
+              style={{
+                background: isObsidian ? 'rgba(230,201,122,0.1)' : 'rgba(200,134,10,0.22)',
+                border: isObsidian ? '1px solid rgba(230,201,122,0.2)' : '1px solid rgba(200,134,10,0.35)'
+              }}
             >
               <Calendar className="w-6 h-6" style={{ color: '#f0c060' }} />
             </div>
@@ -1108,7 +1144,11 @@ const Appointments = () => {
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.5 }}
-                className="mt-4 p-6 bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-300 rounded-2xl shadow-lg"
+                className={`mt-4 p-6 border-2 rounded-2xl shadow-lg ${
+                  isObsidian
+                    ? 'bg-gradient-to-br from-yellow-950/20 to-amber-950/20 border-yellow-900/50'
+                    : 'bg-gradient-to-br from-yellow-50 to-orange-50 border-yellow-300'
+                }`}
               >
                 <div className="flex items-center mb-4">
                   <motion.div
@@ -1117,9 +1157,9 @@ const Appointments = () => {
                   >
                     <Calendar className="w-7 h-7 text-yellow-600 mr-3" />
                   </motion.div>
-                  <p className="text-yellow-900 font-bold text-xl">Active Appointment</p>
+                  <p className={`font-bold text-xl ${isObsidian ? 'text-yellow-500' : 'text-yellow-900'}`}>Active Appointment</p>
                 </div>
-                <p className="text-yellow-700 mb-4">You already have an active appointment. Please complete or cancel it before booking a new one.</p>
+                <p className={`mb-4 ${isObsidian ? 'text-neutral-300' : 'text-yellow-700'}`}>You already have an active appointment. Please complete or cancel it before booking a new one.</p>
 
                 {activeAppointmentInfo && (
                   <motion.div
@@ -1127,32 +1167,35 @@ const Appointments = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
                     className="p-5 rounded-xl shadow-md mb-4"
-                    style={{ background: '#fefcf0', border: '1px solid #e8d5b0' }}
+                    style={{
+                      background: isObsidian ? '#181818' : '#fefcf0',
+                      border: isObsidian ? '1px solid rgba(212, 175, 55, 0.2)' : '1px solid #e8d5b0'
+                    }}
                   >
-                    <p className="font-bold text-gray-800 mb-3 flex items-center gap-2">
+                    <p className={`font-bold mb-3 flex items-center gap-2 ${isObsidian ? 'text-white' : 'text-gray-800'}`}>
                       <CheckCircle className="w-5 h-5 text-green-500" />
                       Appointment Details
                     </p>
                     <div className="space-y-3">
                       <motion.div
                         whileHover={{ x: 5 }}
-                        className="flex items-center gap-3 text-gray-700"
+                        className={`flex items-center gap-3 ${isObsidian ? 'text-neutral-300' : 'text-gray-700'}`}
                       >
-                        <Stethoscope className="w-5 h-5 text-[#5A4035]" />
+                        <Stethoscope className="w-5 h-5" style={{ color: isObsidian ? '#E6C97A' : '#5A4035' }} />
                         <span><strong>Doctor:</strong> {activeAppointmentInfo.docData.name}</span>
                       </motion.div>
                       <motion.div
                         whileHover={{ x: 5 }}
-                        className="flex items-center gap-3 text-gray-700"
+                        className={`flex items-center gap-3 ${isObsidian ? 'text-neutral-300' : 'text-gray-700'}`}
                       >
-                        <Calendar className="w-5 h-5 text-[#5A4035]" />
+                        <Calendar className="w-5 h-5" style={{ color: isObsidian ? '#E6C97A' : '#5A4035' }} />
                         <span><strong>Date:</strong> {activeAppointmentInfo.slotDate?.split('_').join(' / ')}</span>
                       </motion.div>
                       <motion.div
                         whileHover={{ x: 5 }}
-                        className="flex items-center gap-3 text-gray-700"
+                        className={`flex items-center gap-3 ${isObsidian ? 'text-neutral-300' : 'text-gray-700'}`}
                       >
-                        <Clock className="w-5 h-5 text-[#5A4035]" />
+                        <Clock className="w-5 h-5" style={{ color: isObsidian ? '#E6C97A' : '#5A4035' }} />
                         <span><strong>Time:</strong> {activeAppointmentInfo.slotTime}</span>
                       </motion.div>
                     </div>
@@ -1161,11 +1204,14 @@ const Appointments = () => {
 
                 <div className="flex flex-col sm:flex-row gap-3">
                   <motion.button
-                    whileHover={{ scale: 1.05, boxShadow: '0 10px 30px rgba(90,64,53,0.25)' }}
+                    whileHover={{ scale: 1.05, boxShadow: isObsidian ? '0 10px 30px rgba(0,0,0,0.5)' : '0 10px 30px rgba(90,64,53,0.25)' }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => navigate('/my-appointments')}
                     className="flex-1 text-white px-6 py-3 rounded-xl font-semibold shadow-lg flex items-center justify-center gap-2 group"
-                    style={{ background: 'linear-gradient(135deg, #5A4035, #7a5a48)' }}
+                    style={{
+                      background: isObsidian ? 'linear-gradient(135deg, #1f1f1f, #121212)' : 'linear-gradient(135deg, #5A4035, #7a5a48)',
+                      border: isObsidian ? '1px solid rgba(212, 175, 55, 0.2)' : 'none'
+                    }}
                   >
                     <Calendar className="w-5 h-5 group-hover:rotate-12 transition-transform" />
                     View My Appointments
@@ -1288,19 +1334,19 @@ const Appointments = () => {
                       <motion.div
                         initial={{ scale: 0.9, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
-                        className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl"
+                        className={`rounded-2xl p-6 max-w-md w-full shadow-2xl ${isObsidian ? 'bg-[#121212] border border-zinc-800' : 'bg-white'}`}
                       >
                         <div className="flex items-center justify-between mb-4">
-                          <h3 className="text-2xl font-bold text-gray-800">Request Unban</h3>
+                          <h3 className={`text-2xl font-bold ${isObsidian ? 'text-white' : 'text-gray-800'}`}>Request Unban</h3>
                           <button
                             onClick={() => setShowUnbanRequestModal(false)}
-                            className="p-2 hover:bg-gray-100 rounded-full transition"
+                            className={`p-2 rounded-full transition ${isObsidian ? 'hover:bg-zinc-800' : 'hover:bg-gray-100'}`}
                           >
-                            <X className="w-6 h-6 text-gray-600" />
+                            <X className={`w-6 h-6 ${isObsidian ? 'text-neutral-400' : 'text-gray-600'}`} />
                           </button>
                         </div>
 
-                        <p className="text-gray-600 mb-4">
+                        <p className={`text-sm mb-4 leading-relaxed ${isObsidian ? 'text-neutral-400' : 'text-gray-600'}`}>
                           Please explain why you believe your ban should be lifted. Admin will review your request.
                         </p>
 
@@ -1308,21 +1354,22 @@ const Appointments = () => {
                           value={unbanRequestMessage}
                           onChange={(e) => setUnbanRequestMessage(e.target.value)}
                           placeholder="Enter your reason here..."
-                          className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 resize-none" style={{ borderColor: '#e8d5b0', outlineColor: '#5A4035' }}
+                          className={`w-full px-4 py-3 border rounded-lg focus:outline-none resize-none ${isObsidian ? 'bg-zinc-900 border-zinc-700 text-white focus:ring-1 focus:ring-amber-500' : 'focus:ring-2'}`}
+                          style={isObsidian ? {} : { borderColor: '#e8d5b0', outlineColor: '#5A4035' }}
                           rows="5"
                         />
 
                         <div className="flex gap-3 mt-4">
                           <button
                             onClick={() => setShowUnbanRequestModal(false)}
-                            className="flex-1 px-4 py-3 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition"
+                            className={`flex-1 px-4 py-3 font-semibold rounded-lg transition ${isObsidian ? 'bg-zinc-800 text-white hover:bg-zinc-700' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
                           >
                             Cancel
                           </button>
                           <button
                             onClick={submitUnbanRequest}
-                            className="flex-1 px-4 py-3 text-white font-semibold rounded-lg hover:shadow-lg transition"
-                            style={{ background: 'linear-gradient(135deg, #c8860a, #e8a020)' }}
+                            className={`flex-1 px-4 py-3 font-semibold rounded-lg hover:shadow-lg transition ${isObsidian ? 'text-black' : 'text-white'}`}
+                            style={{ background: isObsidian ? 'linear-gradient(135deg, #c8860a, #E6C97A)' : 'linear-gradient(135deg, #c8860a, #e8a020)' }}
                           >
                             Submit Request
                           </button>
@@ -1339,29 +1386,29 @@ const Appointments = () => {
                       transition={{ delay: 0.6 }}
                       className="p-6 rounded-3xl"
                       style={{
-                        background: 'rgba(232, 213, 176, 0.45)',
+                        background: isObsidian ? 'rgba(28, 28, 28, 0.7)' : 'rgba(232, 213, 176, 0.45)',
                         backdropFilter: 'blur(10px)',
-                        border: '1.5px solid #e8d5b0',
-                        boxShadow: '0 8px 32px rgba(90,64,53,0.05)'
+                        border: isObsidian ? '1.5px solid rgba(212, 175, 55, 0.2)' : '1.5px solid #e8d5b0',
+                        boxShadow: isObsidian ? '0 8px 32px rgba(0,0,0,0.4)' : '0 8px 32px rgba(90,64,53,0.05)'
                       }}
                     >
-                      <p className="text-xl font-bold mb-6 flex items-center gap-3" style={{ color: '#3d2b1f' }}>
-                        <span className="p-2 rounded-xl bg-[#5A4035] text-white">🐾</span>
+                      <p className="text-xl font-bold mb-6 flex items-center gap-3" style={{ color: isObsidian ? '#F5F2EA' : '#3d2b1f' }}>
+                        <span className={`p-2 rounded-xl text-white ${isObsidian ? 'bg-[#E6C97A] text-black' : 'bg-[#5A4035]'}`}>🐾</span>
                         Who is this appointment for?
                       </p>
 
                       <div className="flex flex-col gap-6">
                         {/* Toggle between My Pets and Stray */}
-                        <div className="flex p-1.5 rounded-2xl bg-gray-100/50 self-start">
+                        <div className={`flex p-1.5 rounded-2xl self-start ${isObsidian ? 'bg-zinc-900 border border-neutral-800' : 'bg-gray-100/50'}`}>
                           <button
                             onClick={() => { setIsStray(false); setShowStrayInput(false); }}
-                            className={`px-6 py-2.5 rounded-xl font-bold transition-all duration-300 ${!isStray ? 'bg-[#5A4035] text-white shadow-lg' : 'text-gray-500 hover:text-[#5A4035]'}`}
+                            className={`px-6 py-2.5 rounded-xl font-bold transition-all duration-300 ${!isStray ? (isObsidian ? 'bg-[#E6C97A] text-black shadow-lg' : 'bg-[#5A4035] text-white shadow-lg') : (isObsidian ? 'text-neutral-400 hover:text-[#E6C97A]' : 'text-gray-500 hover:text-[#5A4035]')}`}
                           >
                             My Pets
                           </button>
                           <button
                             onClick={() => { setIsStray(true); setShowStrayInput(true); setUseWallet(false); }}
-                            className={`px-6 py-2.5 rounded-xl font-bold transition-all duration-300 ${isStray ? 'bg-[#c8860a] text-white shadow-lg' : 'text-gray-500 hover:text-[#c8860a]'}`}
+                            className={`px-6 py-2.5 rounded-xl font-bold transition-all duration-300 ${isStray ? 'bg-[#c8860a] text-white shadow-lg' : (isObsidian ? 'text-neutral-400 hover:text-[#c8860a]' : 'text-gray-500 hover:text-[#c8860a]')}`}
                           >
                             Stray Animal
                           </button>
@@ -1376,15 +1423,15 @@ const Appointments = () => {
                                     key={pet._id}
                                     whileHover={{ y: -5 }}
                                     onClick={() => setSelectedPetId(pet._id)}
-                                    className={`relative min-w-[120px] p-4 rounded-2xl cursor-pointer border-2 transition-all flex flex-col items-center gap-3 ${selectedPetId === pet._id ? 'border-[#5A4035] bg-[#5A4035]/5 shadow-md' : 'border-transparent bg-white/50 hover:bg-white'}`}
+                                    className={`relative min-w-[120px] p-4 rounded-2xl cursor-pointer border-2 transition-all flex flex-col items-center gap-3 ${selectedPetId === pet._id ? (isObsidian ? 'border-[#E6C97A] bg-[#E6C97A]/10 shadow-md' : 'border-[#5A4035] bg-[#5A4035]/5 shadow-md') : (isObsidian ? 'border-transparent bg-neutral-900/60 hover:bg-neutral-800' : 'border-transparent bg-white/50 hover:bg-white')}`}
                                   >
-                                    <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-[#e8d5b0]">
+                                    <div className={`w-16 h-16 rounded-full overflow-hidden border-2 ${isObsidian ? 'border-[#E6C97A]/40' : 'border-[#e8d5b0]'}`}>
                                       <img src={pet.image} alt={pet.name} className="w-full h-full object-cover" />
                                     </div>
-                                    <span className={`font-bold text-sm ${selectedPetId === pet._id ? 'text-[#5A4035]' : 'text-gray-600'}`}>{pet.name}</span>
+                                    <span className={`font-bold text-sm ${selectedPetId === pet._id ? (isObsidian ? 'text-[#E6C97A]' : 'text-[#5A4035]') : (isObsidian ? 'text-neutral-300' : 'text-gray-600')}`}>{pet.name}</span>
                                     {selectedPetId === pet._id && (
-                                      <div className="absolute top-2 right-2 w-5 h-5 bg-[#5A4035] rounded-full flex items-center justify-center">
-                                        <CheckCircle className="w-3.5 h-3.5 text-white" />
+                                      <div className={`absolute top-2 right-2 w-5 h-5 rounded-full flex items-center justify-center ${isObsidian ? 'bg-[#E6C97A]' : 'bg-[#5A4035]'}`}>
+                                        <CheckCircle className={`w-3.5 h-3.5 ${isObsidian ? 'text-black' : 'text-white'}`} />
                                       </div>
                                     )}
                                   </motion.div>
@@ -1392,18 +1439,18 @@ const Appointments = () => {
                                 <motion.div
                                   whileHover={{ y: -5 }}
                                   onClick={() => navigate('/my-pets')}
-                                  className="min-w-[120px] p-4 rounded-2xl cursor-pointer border-2 border-dashed border-[#e8d5b0] bg-white/30 flex flex-col items-center justify-center gap-2 hover:bg-white/50 transition-all"
+                                  className={`min-w-[120px] p-4 rounded-2xl cursor-pointer border-2 border-dashed flex flex-col items-center justify-center gap-2 transition-all ${isObsidian ? 'border-neutral-800 bg-neutral-900/40 hover:bg-neutral-800/60' : 'border-[#e8d5b0] bg-white/30 hover:bg-white/50'}`}
                                 >
-                                  <div className="w-10 h-10 rounded-full bg-[#5A4035]/10 flex items-center justify-center text-[#5A4035] font-bold text-xl">+</div>
-                                  <span className="text-gray-500 font-semibold text-xs text-center">Add New Pet</span>
+                                  <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-xl ${isObsidian ? 'bg-[#E6C97A]/10 text-[#E6C97A]' : 'bg-[#5A4035]/10 text-[#5A4035]'}`}>+</div>
+                                  <span className={`font-semibold text-xs text-center ${isObsidian ? 'text-neutral-400' : 'text-gray-500'}`}>Add New Pet</span>
                                 </motion.div>
                               </div>
                             ) : (
-                              <div className="text-center py-8 px-4 rounded-2xl bg-white/50 border border-dashed border-[#e8d5b0]">
+                              <div className={`text-center py-8 px-4 rounded-2xl border border-dashed ${isObsidian ? 'bg-neutral-900/40 border-neutral-800' : 'bg-white/50 border-[#e8d5b0]'}`}>
                                 <p className="text-gray-500 mb-4 font-medium italic">No pets found in your profile.</p>
                                 <button
                                   onClick={() => navigate('/my-pets')}
-                                  className="px-6 py-2 rounded-xl bg-[#5A4035] text-white font-bold text-sm shadow-md"
+                                  className={`px-6 py-2 rounded-xl font-bold text-sm shadow-md ${isObsidian ? 'bg-[#E6C97A] text-black' : 'bg-[#5A4035] text-white'}`}
                                 >
                                   Register Your Pet
                                 </button>
@@ -1414,29 +1461,29 @@ const Appointments = () => {
                           <motion.div
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
-                            className="bg-white/80 p-6 rounded-2xl border-2 border-[#c8860a]/30"
+                            className={`p-6 rounded-2xl border-2 ${isObsidian ? 'bg-[#181818] border-neutral-800' : 'bg-white/80 border-[#c8860a]/30'}`}
                           >
-                            <p className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
-                              <Info className="w-4 h-4 text-[#c8860a]" />
+                            <p className={`text-sm font-bold mb-3 flex items-center gap-2 ${isObsidian ? 'text-white' : 'text-gray-700'}`}>
+                              <Info className={`w-4 h-4 ${isObsidian ? 'text-[#E6C97A]' : 'text-[#c8860a]'}`} />
                               Stray Medical Request
                             </p>
-                            <p className="text-xs text-gray-500 mb-4 leading-relaxed">
+                            <p className={`text-xs mb-4 leading-relaxed ${isObsidian ? 'text-neutral-400' : 'text-gray-500'}`}>
                               Booking for a stray animal helps our clinic track community health cases. Please specify the animal type if known.
                             </p>
                             <div className="space-y-4">
                               <div>
-                                <label className="block text-xs font-bold text-[#5A4035] mb-2 uppercase tracking-wider">Animal Species / Type</label>
+                                <label className={`block text-xs font-bold mb-2 uppercase tracking-wider ${isObsidian ? 'text-[#E6C97A]' : 'text-[#5A4035]'}`}>Animal Species / Type</label>
                                 <input
                                   type="text"
                                   placeholder="e.g. Dog, Cat, Bird, Unknown"
                                   value={strayType}
                                   onChange={(e) => setStrayType(e.target.value)}
-                                  className="w-full px-4 py-3 rounded-xl border-2 border-[#e8d5b0] focus:border-[#c8860a] outline-none transition-all font-medium text-gray-700"
+                                  className={`w-full px-4 py-3 rounded-xl border-2 outline-none transition-all font-medium ${isObsidian ? 'bg-[#121212] border-neutral-800 focus:border-[#E6C97A] text-white' : 'border-[#e8d5b0] text-gray-700 focus:border-[#c8860a]'}`}
                                 />
                               </div>
-                              <div className="flex items-center gap-2 px-3 py-2 bg-[#fdf3e7] rounded-lg border border-[#f5e1c8]">
+                              <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${isObsidian ? 'bg-yellow-950/20 border-yellow-900/50' : 'bg-[#fdf3e7] border-[#f5e1c8]'}`}>
                                 <Shield className="w-4 h-4 text-[#c8860a]" />
-                                <span className="text-[10px] text-[#8e6b4e] font-semibold">Priority consultation available for critical street rescues.</span>
+                                <span className={`text-[10px] font-semibold ${isObsidian ? 'text-[#E6C97A]' : 'text-[#8e6b4e]'}`}>Priority consultation available for critical street rescues.</span>
                               </div>
                             </div>
                           </motion.div>
@@ -1452,7 +1499,7 @@ const Appointments = () => {
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.7 }}
                       className="text-lg font-semibold mb-4"
-                      style={{ color: '#3d2b1f' }}
+                      style={{ color: isObsidian ? '#F5F2EA' : '#3d2b1f' }}
                     >
                       Select Date
                     </motion.p>
@@ -1475,35 +1522,35 @@ const Appointments = () => {
                             className="min-w-[80px] text-center py-5 px-3 rounded-2xl cursor-pointer flex flex-col items-center gap-1"
                             style={isSelected
                               ? {
-                                background: 'linear-gradient(145deg, #5A4035, #7a5a48)',
-                                color: '#fff',
-                                boxShadow: '0 10px 28px rgba(90,64,53,0.38)',
-                                border: '2px solid transparent'
-                              }
+                                  background: isObsidian ? 'linear-gradient(145deg, #E6C97A, #c8860a)' : 'linear-gradient(145deg, #5A4035, #7a5a48)',
+                                  color: isObsidian ? '#000' : '#fff',
+                                  boxShadow: isObsidian ? '0 10px 28px rgba(0,0,0,0.5)' : '0 10px 28px rgba(90,64,53,0.38)',
+                                  border: '2px solid transparent'
+                                }
                               : {
-                                background: 'rgba(232, 213, 176, 0.55)',
-                                border: '2px solid #e8d5b0',
-                                color: '#3d2b1f',
-                                backdropFilter: 'blur(8px)'
-                              }
+                                  background: isObsidian ? 'rgba(28, 28, 28, 0.7)' : 'rgba(232, 213, 176, 0.55)',
+                                  border: isObsidian ? '2px solid rgba(212, 175, 55, 0.2)' : '2px solid #e8d5b0',
+                                  color: isObsidian ? '#fff' : '#3d2b1f',
+                                  backdropFilter: 'blur(8px)'
+                                }
                             }
                           >
                             {/* Month */}
                             <span
                               className="text-[10px] font-bold tracking-widest px-2 py-0.5 rounded-full"
                               style={isSelected
-                                ? { background: 'rgba(200,134,10,0.35)', color: '#f0c060' }
-                                : { background: '#f5ede8', color: '#c8860a' }
+                                ? { background: isObsidian ? 'rgba(0,0,0,0.2)' : 'rgba(200,134,10,0.35)', color: isObsidian ? '#000' : '#f0c060' }
+                                : { background: isObsidian ? '#121212' : '#f5ede8', color: isObsidian ? '#E6C97A' : '#c8860a' }
                               }
                             >
                               {monthStr}
                             </span>
                             {/* Date number */}
-                            <span className={`text-3xl font-black leading-none ${isSelected ? 'text-white' : 'text-[#3d2b1f]'}`}>
+                            <span className={`text-3xl font-black leading-none ${isSelected ? (isObsidian ? 'text-black' : 'text-white') : (isObsidian ? 'text-white' : 'text-[#3d2b1f]')}`}>
                               {dayNum}
                             </span>
                             {/* Day name */}
-                            <span className={`text-[11px] font-semibold ${isSelected ? 'text-white/80' : 'text-[#7a5a48]'}`}>
+                            <span className={`text-[11px] font-semibold ${isSelected ? (isObsidian ? 'text-black/80' : 'text-white/80') : (isObsidian ? 'text-neutral-400' : 'text-[#7a5a48]')}`}>
                               {dayName}
                             </span>
                           </motion.div>
@@ -1519,7 +1566,7 @@ const Appointments = () => {
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.8 }}
                       className="text-lg font-semibold mb-4"
-                      style={{ color: '#3d2b1f' }}
+                      style={{ color: isObsidian ? '#F5F2EA' : '#3d2b1f' }}
                     >
                       Select Time Slot
                     </motion.p>
@@ -1539,8 +1586,8 @@ const Appointments = () => {
                                 whileTap={{ scale: 0.95 }}
                                 onClick={() => setSlotTime(item.time)}
                                 className={`px-6 py-3 rounded-xl cursor-pointer font-semibold transition-all duration-300 ${item.time === slotTime
-                                  ? 'bg-gradient-to-r from-[#5A4035] to-[#7a5a48] text-white shadow-xl scale-105'
-                                  : 'bg-[#fefcf0]/80 border-2 border-[#5A4035]/60 text-[#5A4035] hover:bg-[#5A4035] hover:text-white hover:shadow-lg'
+                                  ? (isObsidian ? 'bg-[#E6C97A] text-black shadow-xl scale-105' : 'bg-gradient-to-r from-[#5A4035] to-[#7a5a48] text-white shadow-xl scale-105')
+                                  : (isObsidian ? 'bg-zinc-900 border-2 border-neutral-800 text-neutral-300 hover:bg-[#E6C97A] hover:text-black hover:shadow-lg' : 'bg-[#fefcf0]/80 border-2 border-[#5A4035]/60 text-[#5A4035] hover:bg-[#5A4035] hover:text-white hover:shadow-lg')
                                   }`}
                               >
                                 <div className="flex items-center gap-2">
@@ -1564,15 +1611,15 @@ const Appointments = () => {
                     <div
                       className="rounded-2xl overflow-hidden"
                       style={{
-                        border: '2px dashed #d4a76a',
-                        background: 'linear-gradient(135deg, #fefcf0 0%, #fdf8eb 100%)',
-                        boxShadow: '0 4px 20px rgba(200,134,10,0.08)'
+                        border: isObsidian ? '2px dashed rgba(212, 175, 55, 0.4)' : '2px dashed #d4a76a',
+                        background: isObsidian ? 'linear-gradient(135deg, #1c1c1c 0%, #121212 100%)' : 'linear-gradient(135deg, #fefcf0 0%, #fdf8eb 100%)',
+                        boxShadow: isObsidian ? '0 4px 20px rgba(0,0,0,0.4)' : '0 4px 20px rgba(200,134,10,0.08)'
                       }}
                     >
                       {/* Header strip */}
                       <div
                         className="px-5 py-3 flex items-center gap-2.5"
-                        style={{ background: 'linear-gradient(135deg, #7a5a48, #5A4035)' }}
+                        style={{ background: isObsidian ? 'linear-gradient(135deg, #1f1f1f, #121212)' : 'linear-gradient(135deg, #7a5a48, #5A4035)', borderBottom: isObsidian ? '1px solid rgba(212, 175, 55, 0.2)' : 'none' }}
                       >
                         <motion.span
                           animate={{ rotate: [0, -10, 10, -10, 0] }}
@@ -1606,9 +1653,9 @@ const Appointments = () => {
                                 style={{
                                   background: appliedAdminCoupon?.code === coupon.code
                                     ? 'linear-gradient(135deg,#10b981,#059669)'
-                                    : 'linear-gradient(135deg,#f0fdf4,#dcfce7)',
+                                    : (isObsidian ? 'linear-gradient(135deg,#162a1e,#0b1d12)' : 'linear-gradient(135deg,#f0fdf4,#dcfce7)'),
                                   border: `1.5px dashed #10b981`,
-                                  color: appliedAdminCoupon?.code === coupon.code ? '#fff' : '#047857'
+                                  color: appliedAdminCoupon?.code === coupon.code ? '#fff' : (isObsidian ? '#81e6a7' : '#047857')
                                 }}
                               >
                                 <span className="font-mono tracking-wider">{coupon.code}</span>
@@ -1629,14 +1676,14 @@ const Appointments = () => {
                               </motion.button>
                             ))}
                           </div>
-                          <div className="my-3 border-t" style={{ borderColor: '#dcfce7' }} />
+                          <div className={`my-3 border-t ${isObsidian ? 'border-neutral-800' : 'border-[#dcfce7]'}`} />
                         </div>
                       )}
 
                       {/* Active Coupons Showcase */}
                       {activeCoupons.length > 0 && (
                         <div className="px-5 pb-1 pt-2">
-                          <p className="text-xs font-semibold mb-2" style={{ color: '#7a5a48' }}>🎁 Available Offers — click to apply:</p>
+                          <p className="text-xs font-semibold mb-2" style={{ color: isObsidian ? '#E6C97A' : '#7a5a48' }}>🎁 Available Offers — click to apply:</p>
                           <div className="flex flex-wrap gap-2">
                             {activeCoupons.map((coupon, i) => (
                               <motion.button
@@ -1644,24 +1691,24 @@ const Appointments = () => {
                                 initial={{ opacity: 0, scale: 0.85 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 transition={{ delay: i * 0.07 }}
-                                whileHover={{ scale: 1.06, y: -2, boxShadow: '0 6px 18px rgba(200,134,10,0.22)' }}
+                                whileHover={{ scale: 1.06, y: -2, boxShadow: isObsidian ? '0 6px 18px rgba(0,0,0,0.5)' : '0 6px 18px rgba(200,134,10,0.22)' }}
                                 whileTap={{ scale: 0.97 }}
                                 onClick={() => applyDiscount(coupon.code)}
                                 className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all"
                                 style={{
                                   background: appliedDoctorCoupon?.code === coupon.code
                                     ? 'linear-gradient(135deg,#10b981,#059669)'
-                                    : 'linear-gradient(135deg,#fff8ed,#fef3c7)',
-                                  border: `1.5px dashed ${appliedDoctorCoupon?.code === coupon.code ? '#10b981' : '#d4a76a'}`,
-                                  color: appliedDoctorCoupon?.code === coupon.code ? '#fff' : '#7a5a48'
+                                    : (isObsidian ? 'linear-gradient(135deg,#241e17,#1c1610)' : 'linear-gradient(135deg,#fff8ed,#fef3c7)'),
+                                  border: `1.5px dashed ${appliedDoctorCoupon?.code === coupon.code ? '#10b981' : (isObsidian ? 'rgba(212,175,55,0.4)' : '#d4a76a')}`,
+                                  color: appliedDoctorCoupon?.code === coupon.code ? '#fff' : (isObsidian ? '#E6C97A' : '#7a5a48')
                                 }}
                               >
                                 <span className="font-mono tracking-wider">{coupon.code}</span>
                                 <span
                                   className="px-1.5 py-0.5 rounded-md text-xs"
                                   style={{
-                                    background: appliedDoctorCoupon?.code === coupon.code ? 'rgba(255,255,255,0.2)' : '#7a5a48',
-                                    color: '#fff'
+                                    background: appliedDoctorCoupon?.code === coupon.code ? 'rgba(255,255,255,0.2)' : (isObsidian ? 'rgba(212, 175, 55, 0.2)' : '#7a5a48'),
+                                    color: appliedDoctorCoupon?.code === coupon.code ? '#fff' : (isObsidian ? '#E6C97A' : '#fff')
                                   }}
                                 >
                                   {coupon.discountType === 'percentage'
@@ -1676,7 +1723,7 @@ const Appointments = () => {
                               </motion.button>
                             ))}
                           </div>
-                          <div className="my-3 border-t" style={{ borderColor: '#e8d5b0' }} />
+                          <div className={`my-3 border-t ${isObsidian ? 'border-neutral-800' : 'border-[#e8d5b0]'}`} />
                         </div>
                       )}
 
@@ -1695,11 +1742,11 @@ const Appointments = () => {
                               onKeyDown={(e) => e.key === 'Enter' && applyDiscount()}
                               placeholder="e.g. SAVE20, PAWCARE"
                               disabled={appliedAdminCoupon && appliedDoctorCoupon}
-                              className="w-full pl-4 pr-10 py-3 rounded-xl font-mono font-bold text-base uppercase focus:outline-none transition-all duration-300"
+                              className={`w-full pl-4 pr-10 py-3 rounded-xl font-mono font-bold text-base uppercase focus:outline-none transition-all duration-300`}
                               style={{
-                                border: `2px solid ${(appliedAdminCoupon && appliedDoctorCoupon) ? '#10b981' : discountError ? '#ef4444' : '#d4a76a'}`,
-                                background: (appliedAdminCoupon && appliedDoctorCoupon) ? '#f0fdf4' : '#fff',
-                                color: '#3d2b1f',
+                                border: `2px solid ${(appliedAdminCoupon && appliedDoctorCoupon) ? '#10b981' : discountError ? '#ef4444' : (isObsidian ? 'rgba(212,175,55,0.3)' : '#d4a76a')}`,
+                                background: (appliedAdminCoupon && appliedDoctorCoupon) ? (isObsidian ? '#0f2416' : '#f0fdf4') : (isObsidian ? '#121212' : '#fff'),
+                                color: isObsidian ? '#fff' : '#3d2b1f',
                                 letterSpacing: '0.1em'
                               }}
                             />
@@ -1707,7 +1754,7 @@ const Appointments = () => {
                             {discountCode && (
                               <button
                                 onClick={() => { setDiscountCode(''); setDiscountError(''); }}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                                className={`absolute right-3 top-1/2 -translate-y-1/2 transition-colors ${isObsidian ? 'text-neutral-500 hover:text-neutral-300' : 'text-gray-400 hover:text-gray-600'}`}
                               >
                                 <X className="w-4 h-4" />
                               </button>
@@ -1721,16 +1768,16 @@ const Appointments = () => {
 
                           {/* Apply button */}
                           <motion.button
-                            whileHover={!discountLoading && !(appliedAdminCoupon && appliedDoctorCoupon) ? { scale: 1.05, boxShadow: '0 8px 20px rgba(200,134,10,0.35)' } : {}}
+                            whileHover={!discountLoading && !(appliedAdminCoupon && appliedDoctorCoupon) ? { scale: 1.05, boxShadow: isObsidian ? '0 8px 20px rgba(0,0,0,0.5)' : '0 8px 20px rgba(200,134,10,0.35)' } : {}}
                             whileTap={!discountLoading && !(appliedAdminCoupon && appliedDoctorCoupon) ? { scale: 0.97 } : {}}
                             onClick={() => applyDiscount()}
                             disabled={discountLoading || !discountCode.trim() || (appliedAdminCoupon && appliedDoctorCoupon)}
-                            className="px-6 py-3 rounded-xl font-bold text-white text-sm transition-all flex items-center gap-2 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
-                            style={{ background: 'linear-gradient(135deg, #c8860a, #e8a020)' }}
+                            className={`px-6 py-3 rounded-xl font-bold text-sm transition-all flex items-center gap-2 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed ${isObsidian ? 'text-black' : 'text-white'}`}
+                            style={{ background: isObsidian ? 'linear-gradient(135deg, #E6C97A, #c8860a)' : 'linear-gradient(135deg, #c8860a, #e8a020)' }}
                           >
                             {discountLoading ? (
                               <>
-                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                <div className={`w-4 h-4 border-2 border-t-transparent rounded-full animate-spin ${isObsidian ? 'border-black' : 'border-white'}`} />
                                 Checking...
                               </>
                             ) : (
@@ -1751,12 +1798,12 @@ const Appointments = () => {
                               exit={{ opacity: 0, height: 0 }}
                               transition={{ type: 'spring', stiffness: 400 }}
                               className="mt-3 flex items-center gap-2 px-4 py-2.5 rounded-xl mb-4"
-                              style={{ background: '#fef2f2', border: '1.5px solid #fca5a5' }}
+                              style={{ background: isObsidian ? 'rgba(239, 68, 68, 0.1)' : '#fef2f2', border: isObsidian ? '1.5px solid rgba(239, 68, 68, 0.4)' : '1.5px solid #fca5a5' }}
                             >
                               <span className="text-red-500 flex-shrink-0">
                                 <X className="w-4 h-4" />
                               </span>
-                              <p className="text-red-600 text-sm font-medium">{discountError}</p>
+                              <p className={`text-sm font-medium ${isObsidian ? 'text-red-400' : 'text-red-600'}`}>{discountError}</p>
                             </motion.div>
                           )}
                         </AnimatePresence>
@@ -1780,7 +1827,7 @@ const Appointments = () => {
                                     if (coupon.type === 'admin') setAppliedAdminCoupon(null);
                                     else setAppliedDoctorCoupon(null);
                                   }}
-                                  className="absolute top-2 right-2 bg-red-100 text-red-600 hover:bg-red-500 hover:text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 z-10"
+                                  className={`absolute top-2 right-2 p-1 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 z-10 ${isObsidian ? 'bg-red-950/40 text-red-400 hover:bg-red-600 hover:text-white' : 'bg-red-100 text-red-600 hover:bg-red-500 hover:text-white'}`}
                                   title="Remove Coupon"
                                 >
                                   <X className="w-4 h-4" />
@@ -1806,15 +1853,15 @@ const Appointments = () => {
                                 </div>
 
                                 {/* Price breakdown */}
-                                <div className="px-4 py-3" style={{ background: '#f0fdf4' }}>
+                                <div className="px-4 py-3" style={{ background: isObsidian ? '#0f2416' : '#f0fdf4' }}>
                                   <div className="flex items-center justify-between">
                                     <div>
-                                      <p className="text-emerald-800 font-bold text-base">
+                                      <p className={`font-bold text-base ${isObsidian ? 'text-emerald-400' : 'text-emerald-800'}`}>
                                         {coupon.discountType === 'percentage'
                                           ? `${coupon.discountValue}% OFF`
                                           : `₹${coupon.discountValue} OFF`}
                                       </p>
-                                      <p className="text-emerald-600 text-xs mt-0.5 flex flex-col gap-0.5">
+                                      <p className={`text-xs mt-0.5 flex flex-col gap-0.5 ${isObsidian ? 'text-emerald-500' : 'text-emerald-600'}`}>
                                         <span>Code: <span className="font-mono font-bold tracking-wider">{coupon.code}</span></span>
                                       </p>
                                     </div>
@@ -1823,7 +1870,7 @@ const Appointments = () => {
                                         initial={{ scale: 0.5 }}
                                         animate={{ scale: 1 }}
                                         transition={{ type: 'spring', stiffness: 400, delay: 0.2 }}
-                                        className="text-emerald-700 font-black text-xl"
+                                        className={`font-black text-xl ${isObsidian ? 'text-emerald-300' : 'text-emerald-700'}`}
                                       >
                                         -{coupon.type === 'admin' ? `₹${coupon.amount || coupon.discountAmount}` : (coupon.discountType === 'percentage' ? `${coupon.discountValue}%` : `₹${coupon.discountValue}`)}
                                       </motion.p>
@@ -1837,8 +1884,8 @@ const Appointments = () => {
 
                         {/* Helper text */}
                         {!(appliedAdminCoupon && appliedDoctorCoupon) && !discountError && (
-                          <p className="text-xs mt-3 flex items-center gap-1.5" style={{ color: '#a08060' }}>
-                            💡 <span className="font-medium bg-amber-50 px-1.5 py-0.5 rounded border border-amber-100">Pro Tip:</span> You can apply up to TWO coupons (1 Platform + 1 Doctor)
+                          <p className="text-xs mt-3 flex items-center gap-1.5" style={{ color: isObsidian ? '#E6C97A' : '#a08060' }}>
+                            💡 <span className={`font-medium px-1.5 py-0.5 rounded border ${isObsidian ? 'bg-[#E6C97A]/15 text-[#E6C97A] border-[#E6C97A]/30' : 'bg-amber-50 text-[#5A4035] border-amber-100'}`}>Pro Tip:</span> You can apply up to TWO coupons (1 Platform + 1 Doctor)
                           </p>
                         )}
                       </div>
@@ -1853,9 +1900,9 @@ const Appointments = () => {
                       transition={{ delay: 0.9 }}
                       className="mt-7 p-6 rounded-2xl relative overflow-hidden group border"
                       style={{
-                        background: 'linear-gradient(135deg, #1e293b, #0f172a)',
-                        borderColor: 'rgba(255,255,255,0.1)',
-                        boxShadow: '0 8px 30px rgba(0,0,0,0.15)'
+                        background: isObsidian ? 'linear-gradient(135deg, #121212, #050505)' : 'linear-gradient(135deg, #1e293b, #0f172a)',
+                        borderColor: isObsidian ? 'rgba(212, 175, 55, 0.25)' : 'rgba(255,255,255,0.1)',
+                        boxShadow: isObsidian ? '0 8px 30px rgba(0,0,0,0.4)' : '0 8px 30px rgba(0,0,0,0.15)'
                       }}
                     >
                       {/* Decorative elements */}
@@ -1865,19 +1912,19 @@ const Appointments = () => {
                       <div className="relative z-10">
                         <div className="flex items-center justify-between mb-5">
                           <div className="flex items-center gap-3">
-                            <div className="p-2 rounded-xl bg-white/10 backdrop-blur-md">
-                              <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
+                            <div className={`p-2 rounded-xl backdrop-blur-md ${isObsidian ? 'bg-[#E6C97A]/10' : 'bg-white/10'}`}>
+                              <Star className={`w-5 h-5 ${isObsidian ? 'text-[#E6C97A] fill-[#E6C97A]' : 'text-yellow-400 fill-yellow-400'}`} />
                             </div>
                             <div>
                               <p className="text-white font-black text-sm tracking-wide uppercase">
                                 {subscriptionUsage.plan} PLAN BENEFITS
                               </p>
-                              <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Active Member Status</p>
+                              <p className={`text-[10px] font-bold uppercase tracking-widest ${isObsidian ? 'text-[#E6C97A]/75' : 'text-slate-400'}`}>Active Member Status</p>
                             </div>
                           </div>
                           <div className="text-right">
-                            <div className="px-3 py-1 bg-emerald-500/20 rounded-full backdrop-blur-md border border-emerald-500/30">
-                              <p className="text-emerald-400 font-black text-xs">
+                            <div className={`px-3 py-1 rounded-full backdrop-blur-md border ${isObsidian ? 'bg-amber-950/20 border-[#E6C97A]/30' : 'bg-emerald-500/20 border-emerald-500/30'}`}>
+                              <p className={`font-black text-xs ${isObsidian ? 'text-[#E6C97A]' : 'text-emerald-400'}`}>
                                 {subscriptionUsage.plan === 'Silver' ? '10%' : subscriptionUsage.plan === 'Gold' ? '20%' : '30%'} DISCOUNT
                               </p>
                             </div>
@@ -1892,20 +1939,20 @@ const Appointments = () => {
                               {subscriptionUsage.count} / {subscriptionUsage.limit === 'Unlimited' ? '∞' : subscriptionUsage.limit} used
                             </p>
                           </div>
-                          <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">
+                          <div className={`h-2 w-full rounded-full overflow-hidden border ${isObsidian ? 'bg-neutral-800 border-neutral-800' : 'bg-white/5 border-white/5'}`}>
                             <motion.div
                               initial={{ width: 0 }}
                               animate={{ width: subscriptionUsage.limit === 'Unlimited' ? '100%' : `${(subscriptionUsage.count / subscriptionUsage.limit) * 100}%` }}
                               transition={{ duration: 1.5, ease: "circOut" }}
                               className="h-full rounded-full"
                               style={{
-                                background: 'linear-gradient(to right, #3b82f6, #a855f7)'
+                                background: isObsidian ? 'linear-gradient(to right, #c8860a, #E6C97A)' : 'linear-gradient(to right, #3b82f6, #a855f7)'
                               }}
                             />
                           </div>
                           <div className="flex items-start gap-2 pt-1">
-                            <Info className="w-3.5 h-3.5 text-blue-400 mt-0.5 flex-shrink-0" />
-                            <p className="text-slate-400 text-[10px] font-semibold leading-relaxed">
+                            <Info className={`w-3.5 h-3.5 mt-0.5 flex-shrink-0 ${isObsidian ? 'text-[#E6C97A]' : 'text-blue-400'}`} />
+                            <p className={`text-[10px] font-semibold leading-relaxed ${isObsidian ? 'text-neutral-400' : 'text-slate-400'}`}>
                               {subscriptionUsage.remaining === 0
                                 ? "Weekly quota reached. Regular consultation fee will be applied for new bookings."
                                 : `Tier-based discount active. You have ${subscriptionUsage.remaining === 'Unlimited' ? 'unlimited' : subscriptionUsage.remaining} more discounted slots this week.`}
@@ -1922,12 +1969,12 @@ const Appointments = () => {
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: 1 }}
-                      className="mt-6 p-4 rounded-2xl bg-white/40 border border-[#e8d5b0]/50"
+                      className={`mt-6 p-4 rounded-2xl border ${isObsidian ? 'bg-zinc-900/40 border-neutral-800/80' : 'bg-white/40 border-[#e8d5b0]/50'}`}
                     >
                       <div className="space-y-2">
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-500 font-medium">Base Fee</span>
-                          <span className="text-gray-900 font-bold">₹{docInfo.fees}</span>
+                          <span className={`font-medium ${isObsidian ? 'text-neutral-400' : 'text-gray-500'}`}>Base Fee</span>
+                          <span className={`font-bold ${isObsidian ? 'text-white' : 'text-gray-900'}`}>₹{docInfo.fees}</span>
                         </div>
 
                         {calculateFinalFee().subDiscountAmount > 0 && (
@@ -1947,9 +1994,9 @@ const Appointments = () => {
                           </div>
                         )}
 
-                        <div className="pt-2 mt-2 border-t border-[#e8d5b0]/50 flex justify-between items-center text-lg">
-                          <span className="text-[#3d2b1f] font-black italic">Final Amount</span>
-                          <span className="text-[#c8860a] font-black text-xl">₹{calculateFinalFee().finalFee}</span>
+                        <div className={`pt-2 mt-2 border-t flex justify-between items-center text-lg ${isObsidian ? 'border-neutral-800' : 'border-[#e8d5b0]/50'}`}>
+                          <span className={`font-black italic ${isObsidian ? 'text-[#E6C97A]' : 'text-[#3d2b1f]'}`}>Final Amount</span>
+                          <span className={`font-black text-xl ${isObsidian ? 'text-[#E6C97A]' : 'text-[#c8860a]'}`}>₹{calculateFinalFee().finalFee}</span>
                         </div>
                       </div>
                     </motion.div>
@@ -1964,15 +2011,15 @@ const Appointments = () => {
                   >
                     <motion.button
                       whileHover={slotTime && docSlots[slotIndex]?.[0]?.datetime && (userdata && userdata.isFaceRegistered) ? {
-                        boxShadow: '0 24px 48px rgba(200,134,10,0.45)'
+                        boxShadow: isObsidian ? '0 24px 48px rgba(0,0,0,0.6)' : '0 24px 48px rgba(200,134,10,0.45)'
                       } : {}}
                       whileTap={slotTime && docSlots[slotIndex]?.[0]?.datetime && (userdata && userdata.isFaceRegistered) ? { scale: 0.98 } : {}}
                       onClick={triggerBooking}
                       disabled={!slotTime || !docSlots[slotIndex]?.[0]?.datetime || (userdata && !userdata.isFaceRegistered)}
                       className="relative w-full py-5 rounded-2xl font-extrabold text-lg flex items-center justify-center gap-3 overflow-hidden transition-all duration-300"
                       style={!slotTime || !docSlots[slotIndex]?.[0]?.datetime || (userdata && !userdata.isFaceRegistered)
-                        ? { background: '#e8d5b0', color: '#a08060', cursor: 'not-allowed' }
-                        : { background: 'linear-gradient(135deg, #c8860a, #e8a020, #c8860a)', backgroundSize: '200%', color: '#fff', boxShadow: '0 10px 28px rgba(200,134,10,0.32)' }
+                        ? (isObsidian ? { background: '#1c1c1c', color: '#555', cursor: 'not-allowed', border: '1px solid rgba(212,175,55,0.1)' } : { background: '#e8d5b0', color: '#a08060', cursor: 'not-allowed' })
+                        : (isObsidian ? { background: 'linear-gradient(135deg, #c8860a, #E6C97A, #c8860a)', backgroundSize: '200%', color: '#000', boxShadow: '0 10px 28px rgba(0,0,0,0.5)' } : { background: 'linear-gradient(135deg, #c8860a, #e8a020, #c8860a)', backgroundSize: '200%', color: '#fff', boxShadow: '0 10px 28px rgba(200,134,10,0.32)' })
                       }
                     >
                       {/* Shimmer sweep */}
@@ -1994,14 +2041,14 @@ const Appointments = () => {
                         <motion.div
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
-                          className="mt-4 p-4 rounded-xl bg-red-50 border border-red-200 flex items-center gap-3"
+                          className={`mt-4 p-4 rounded-xl flex items-center gap-3 border ${isObsidian ? 'bg-red-950/20 border-red-900/40 text-red-200' : 'bg-red-50 border border-red-200 text-red-900'}`}
                         >
-                          <div className="p-2 bg-red-100 rounded-lg text-red-600">
+                          <div className={`p-2 rounded-lg ${isObsidian ? 'bg-red-900/50 text-red-400' : 'bg-red-100 text-red-600'}`}>
                             <Shield className="w-5 h-5" />
                           </div>
                           <div>
-                            <p className="text-red-900 font-bold text-sm">Action Required: Biometric Setup</p>
-                            <p className="text-red-700 text-xs">Face registration is mandatory for booking. <span className="underline cursor-pointer font-bold" onClick={() => navigate('/my-profile')}>Setup in Profile</span></p>
+                            <p className={`font-bold text-sm ${isObsidian ? 'text-red-400' : 'text-red-900'}`}>Action Required: Biometric Setup</p>
+                            <p className={`text-xs ${isObsidian ? 'text-red-300/80' : 'text-red-700'}`}>Face registration is mandatory for booking. <span className="underline cursor-pointer font-bold" onClick={() => navigate('/my-profile')}>Setup in Profile</span></p>
                           </div>
                         </motion.div>
                       )}
@@ -2031,35 +2078,39 @@ const Appointments = () => {
       {/* Payment Selection Modal */}
       <AnimatePresence>
         {showPaymentModal && (
-          <div className="fixed inset-0 z-[60] flex items-center justify-center px-4" style={{ backgroundColor: 'rgba(90,64,53,0.35)', backdropFilter: 'blur(6px)' }}>
+          <div className="fixed inset-0 z-[60] flex items-center justify-center px-4" style={{ backgroundColor: isObsidian ? 'rgba(0,0,0,0.7)' : 'rgba(90,64,53,0.35)', backdropFilter: 'blur(8px)' }}>
             <motion.div
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
               className="rounded-[30px] shadow-2xl p-6 sm:p-8 max-w-sm w-full"
-              style={{ background: 'rgba(237, 228, 216, 0.95)', border: '2px solid rgba(255,255,255,0.4)' }}
+              style={{
+                background: isObsidian ? '#121212' : 'rgba(237, 228, 216, 0.95)',
+                border: isObsidian ? '2px solid rgba(212, 175, 55, 0.3)' : '2px solid rgba(255,255,255,0.4)',
+                boxShadow: isObsidian ? '0 10px 40px rgba(0,0,0,0.8)' : '0 10px 40px rgba(90,64,53,0.2)'
+              }}
             >
               <div className="text-center mb-6">
-                <h3 className="text-2xl font-black tracking-tight" style={{ color: '#3d2b1f' }}>Confirm Payment</h3>
-                <p className="text-sm mt-1 font-medium" style={{ color: '#7a5a48' }}>How would you like to pay?</p>
+                <h3 className="text-2xl font-black tracking-tight" style={{ color: isObsidian ? '#fff' : '#3d2b1f' }}>Confirm Payment</h3>
+                <p className="text-sm mt-1 font-medium" style={{ color: isObsidian ? '#E6C97A' : '#7a5a48' }}>How would you like to pay?</p>
               </div>
               <div className="flex flex-col gap-4">
                 {/* Wallet Toggle — hidden for stray appointments */}
                 {isStray && (
-                  <div className="p-4 rounded-2xl border-2 border-amber-300/50 bg-amber-50/50">
+                  <div className={`p-4 rounded-2xl border-2 ${isObsidian ? 'border-amber-950/50 bg-amber-950/20 text-amber-200' : 'border-amber-300/50 bg-amber-50/50 text-amber-900'}`}>
                     <div className="flex items-center gap-2">
                       <span className="text-amber-600 text-base">🚫</span>
-                      <p className="text-amber-800 font-bold text-sm">Wallet payments are not available for stray animal appointments.</p>
+                      <p className={`font-bold text-sm ${isObsidian ? 'text-amber-400' : 'text-amber-800'}`}>Wallet payments are not available for stray animal appointments.</p>
                     </div>
-                    <p className="text-amber-600 text-xs mt-1 ml-7">Please pay via Cash or Card only.</p>
+                    <p className={`text-xs mt-1 ml-7 ${isObsidian ? 'text-amber-400/80' : 'text-amber-600'}`}>Please pay via Cash or Card only.</p>
                   </div>
                 )}
                 {!isStray && userdata && userdata.pawWallet > 0 && (
                   <div
                     className="p-4 rounded-2xl border-2 transition-all cursor-pointer"
                     style={{
-                      borderColor: useWallet ? '#c8860a' : '#e8d5b0',
-                      background: useWallet ? 'rgba(200,134,10,0.05)' : 'white'
+                      borderColor: useWallet ? '#E6C97A' : (isObsidian ? 'rgba(212,175,55,0.2)' : '#e8d5b0'),
+                      background: useWallet ? (isObsidian ? 'rgba(230,201,122,0.1)' : 'rgba(200,134,10,0.05)') : (isObsidian ? '#1a1a1a' : 'white')
                     }}
                     onClick={() => setUseWallet(!useWallet)}
                   >
@@ -2067,13 +2118,13 @@ const Appointments = () => {
                       <div className="flex items-center gap-2">
                         <motion.div
                           animate={useWallet ? { rotate: [0, 15, 0] } : {}}
-                          className="p-1.5 rounded-lg bg-amber-100 text-amber-600"
+                          className={`p-1.5 rounded-lg ${isObsidian ? 'bg-amber-950/50 text-[#E6C97A]' : 'bg-amber-100 text-amber-600'}`}
                         >
                           <Shield className="w-4 h-4" />
                         </motion.div>
-                        <span className="font-bold text-sm" style={{ color: '#3d2b1f' }}>Paw Wallet</span>
+                        <span className="font-bold text-sm" style={{ color: isObsidian ? '#fff' : '#3d2b1f' }}>Paw Wallet</span>
                       </div>
-                      <div className={`w-10 h-5 rounded-full relative transition-colors duration-300 ${useWallet ? 'bg-[#c8860a]' : 'bg-gray-200'}`}>
+                      <div className={`w-10 h-5 rounded-full relative transition-colors duration-300 ${useWallet ? (isObsidian ? 'bg-[#E6C97A]' : 'bg-[#c8860a]') : (isObsidian ? 'bg-zinc-800' : 'bg-gray-200')}`}>
                         <motion.div
                           animate={{ x: useWallet ? 20 : 2 }}
                           className="absolute top-1 w-3 h-3 bg-white rounded-full shadow-sm"
@@ -2081,9 +2132,9 @@ const Appointments = () => {
                       </div>
                     </div>
                     <div className="flex justify-between items-end">
-                      <p className="text-xs font-medium text-gray-500">Available: ₹{userdata.pawWallet}</p>
+                      <p className={`text-xs font-medium ${isObsidian ? 'text-neutral-400' : 'text-gray-500'}`}>Available: ₹{userdata.pawWallet}</p>
                       {useWallet && (
-                        <p className="text-xs font-bold text-amber-600">
+                        <p className={`text-xs font-bold ${isObsidian ? 'text-[#E6C97A]' : 'text-amber-600'}`}>
                           -{userdata.pawWallet >= calculateFinalFee().finalFee ? 'Full amount covered' : `₹${userdata.pawWallet} deducted`}
                         </p>
                       )}
@@ -2099,8 +2150,8 @@ const Appointments = () => {
                   <div
                     className="p-4 rounded-2xl border-2 transition-all cursor-pointer"
                     style={{
-                      borderColor: usePawpoints ? '#c8860a' : '#e8d5b0',
-                      background: usePawpoints ? 'rgba(200,134,10,0.05)' : 'white'
+                      borderColor: usePawpoints ? '#E6C97A' : (isObsidian ? 'rgba(212,175,55,0.2)' : '#e8d5b0'),
+                      background: usePawpoints ? (isObsidian ? 'rgba(230,201,122,0.1)' : 'rgba(200,134,10,0.05)') : (isObsidian ? '#1a1a1a' : 'white')
                     }}
                     onClick={() => setUsePawpoints(!usePawpoints)}
                   >
@@ -2108,13 +2159,13 @@ const Appointments = () => {
                       <div className="flex items-center gap-2">
                         <motion.div
                           animate={usePawpoints ? { rotate: [0, 15, 0] } : {}}
-                          className="p-1.5 rounded-lg bg-amber-100 text-amber-600"
+                          className={`p-1.5 rounded-lg ${isObsidian ? 'bg-amber-950/50 text-[#E6C97A]' : 'bg-amber-100 text-amber-600'}`}
                         >
                           <Star className="w-4 h-4 fill-amber-500" />
                         </motion.div>
-                        <span className="font-bold text-sm" style={{ color: '#3d2b1f' }}>Pawpoints (1 pt = ₹0.5)</span>
+                        <span className="font-bold text-sm" style={{ color: isObsidian ? '#fff' : '#3d2b1f' }}>Pawpoints (1 pt = ₹0.5)</span>
                       </div>
-                      <div className={`w-10 h-5 rounded-full relative transition-colors duration-300 ${usePawpoints ? 'bg-[#c8860a]' : 'bg-gray-200'}`}>
+                      <div className={`w-10 h-5 rounded-full relative transition-colors duration-300 ${usePawpoints ? (isObsidian ? 'bg-[#E6C97A]' : 'bg-[#c8860a]') : (isObsidian ? 'bg-zinc-800' : 'bg-gray-200')}`}>
                         <motion.div
                           animate={{ x: usePawpoints ? 20 : 2 }}
                           className="absolute top-1 w-3 h-3 bg-white rounded-full shadow-sm"
@@ -2122,9 +2173,9 @@ const Appointments = () => {
                       </div>
                     </div>
                     <div className="flex justify-between items-end">
-                      <p className="text-xs font-medium text-gray-500">Available: {userdata.pawpoints} pts (₹{userdata.pawpoints * 0.5})</p>
+                      <p className={`text-xs font-medium ${isObsidian ? 'text-neutral-400' : 'text-gray-500'}`}>Available: {userdata.pawpoints} pts (₹{userdata.pawpoints * 0.5})</p>
                       {usePawpoints && (
-                        <p className="text-xs font-bold text-amber-600">
+                        <p className={`text-xs font-bold ${isObsidian ? 'text-[#E6C97A]' : 'text-amber-600'}`}>
                           -{((useWallet ? calculateFinalFee().finalFee - userdata.pawWallet : calculateFinalFee().finalFee) <= (userdata.pawpoints * 0.5)) ? 'Full remaining amount covered' : `₹${userdata.pawpoints * 0.5} deducted`}
                         </p>
                       )}
@@ -2136,8 +2187,8 @@ const Appointments = () => {
                 {getRemainingAmount() === 0 ? (
                   <button
                     onClick={() => bookappointment((usePawpoints && !useWallet) ? "Pawpoints" : "Wallet", useWallet, usePawpoints)}
-                    className="w-full flex justify-center items-center gap-2 py-4 rounded-xl font-extrabold text-white transition-all shadow-lg active:scale-95"
-                    style={{ background: 'linear-gradient(135deg, #c8860a, #e8a020)' }}
+                    className={`w-full flex justify-center items-center gap-2 py-4 rounded-xl font-extrabold transition-all shadow-lg active:scale-95 ${isObsidian ? 'text-black' : 'text-white'}`}
+                    style={{ background: isObsidian ? 'linear-gradient(135deg, #c8860a, #E6C97A)' : 'linear-gradient(135deg, #c8860a, #e8a020)' }}
                   >
                     Pay FULL Amount using Credits
                   </button>
@@ -2154,7 +2205,11 @@ const Appointments = () => {
                     <button
                       onClick={() => bookappointment("Cash")}
                       className="w-full flex justify-center items-center gap-2 py-4 rounded-xl font-bold transition-all hover:scale-[1.03]"
-                      style={{ border: '2px solid #d4a76a', color: '#c8860a', background: 'rgba(255,255,255,0.7)' }}
+                      style={{
+                        border: isObsidian ? '2px solid rgba(212,175,55,0.4)' : '2px solid #d4a76a',
+                        color: isObsidian ? '#E6C97A' : '#c8860a',
+                        background: isObsidian ? '#1c1c1c' : 'rgba(255,255,255,0.7)'
+                      }}
                     >
                       <CheckCircle className="w-5 h-5" />
                       {(useWallet || usePawpoints) ? `Pay Remaining ₹${getRemainingAmount()} at Clinic` : "Pay Cash at Clinic"}
@@ -2165,7 +2220,7 @@ const Appointments = () => {
               <button
                 onClick={() => setShowPaymentModal(false)}
                 className="mt-6 w-full font-medium text-sm underline opacity-80 hover:opacity-100 transition-opacity"
-                style={{ color: '#7a5a48' }}
+                style={{ color: isObsidian ? '#E6C97A' : '#7a5a48' }}
               >
                 Cancel
               </button>

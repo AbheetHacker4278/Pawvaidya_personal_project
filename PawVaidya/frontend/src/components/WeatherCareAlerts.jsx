@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sun, CloudRain, Snowflake, ThermometerSun, Wind, MapPin, Droplets, CloudLightning, Cloud, Sparkles, Eye } from 'lucide-react';
+import { Sun, CloudRain, Snowflake, ThermometerSun, Wind, MapPin, Droplets, CloudLightning, Cloud, Sparkles, Moon, PawPrint, ChevronRight } from 'lucide-react';
+import { AppContext } from '../context/AppContext';
 
 const weatherTheme = (temp, code) => {
     if (code === 0 || code === 1) {
@@ -9,9 +10,9 @@ const weatherTheme = (temp, code) => {
             icon: <Sun className="w-12 h-12 text-amber-400" strokeWidth={1.5} />,
             iconGlow: "drop-shadow-[0_0_12px_rgba(251,191,36,0.8)]",
             badge: "☀️",
-            accent: "#f9a825",
-            accentBg: "rgba(249,168,37,0.15)",
-            accentBorder: "rgba(249,168,37,0.3)",
+            accent: "#E6C97A",
+            accentBg: "rgba(230,201,122,0.15)",
+            accentBorder: "rgba(230,201,122,0.25)",
             gradient: "from-amber-500/20 to-orange-600/10",
             advice: temp > 28 ? "Warm day! Walk early morning or late evening to protect paws." : "Perfect weather! Great time for a sunny walk.",
             alertIcon: "🐾"
@@ -86,9 +87,9 @@ const weatherTheme = (temp, code) => {
             icon: <Sun className="w-12 h-12 text-amber-400" strokeWidth={1.5} />,
             iconGlow: "drop-shadow-[0_0_12px_rgba(251,191,36,0.8)]",
             badge: "☀️",
-            accent: "#f9a825",
-            accentBg: "rgba(249,168,37,0.15)",
-            accentBorder: "rgba(249,168,37,0.3)",
+            accent: "#E6C97A",
+            accentBg: "rgba(230,201,122,0.15)",
+            accentBorder: "rgba(230,201,122,0.25)",
             gradient: "from-amber-500/20 to-orange-600/10",
             advice: "Great weather for a walk!",
             alertIcon: "🐾"
@@ -97,6 +98,8 @@ const weatherTheme = (temp, code) => {
 };
 
 const WeatherCareAlerts = () => {
+    const { userdata } = useContext(AppContext);
+    const isObsidian = userdata?.subscription?.plan === 'Obsidian' && userdata?.subscription?.status === 'Active';
     const [weatherData, setWeatherData] = useState(null);
     const [humidity, setHumidity] = useState(null);
     const [locationName, setLocationName] = useState("");
@@ -156,104 +159,169 @@ const WeatherCareAlerts = () => {
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-                className="w-full px-4 sm:px-6 pt-5 pb-4"
+                className="w-full px-4 pt-5 pb-4"
             >
-                <div
-                    className="w-full grid grid-cols-1 sm:grid-cols-3 gap-3"
-                >
+                <div className="w-full grid grid-cols-1 sm:grid-cols-3 gap-6">
                     {/* ── Card 1: Temperature & Location ── */}
                     <motion.div
                         whileHover={{ scale: 1.01 }}
-                        className="relative overflow-hidden rounded-2xl p-4 flex flex-col justify-between"
-                        style={{
-                            background: 'rgba(255,255,255,0.04)',
-                            border: `1px solid ${theme.accentBorder}`,
-                            backdropFilter: 'blur(12px)'
-                        }}
+                        className={`relative overflow-hidden rounded-2xl p-5 flex flex-col justify-between min-h-[140px] ${
+                            isObsidian
+                                ? 'bg-[#0E0E0E]/80 border border-[#E6C97A]/15 shadow-[0_0_15px_rgba(0,0,0,0.5)]'
+                                : 'bg-white/40 border border-white/20'
+                        }`}
+                        style={{ backdropFilter: 'blur(12px)' }}
                     >
                         {/* Glow accent */}
-                        <div className="absolute -top-8 -left-8 w-32 h-32 rounded-full blur-3xl pointer-events-none" style={{ background: theme.accentBg }} />
+                        <div className="absolute -top-8 -left-8 w-32 h-32 rounded-full blur-3xl pointer-events-none" style={{ background: isObsidian ? 'rgba(230,201,122,0.15)' : theme.accentBg }} />
 
-                        <div className="flex items-center justify-between mb-3">
-                            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
-                                <MapPin className="w-3 h-3" style={{ color: theme.accent }} />
-                                <span className="text-[11px] font-medium text-white/70 tracking-wide">{locationName}</span>
+                        <div className="flex items-center justify-between mb-3 z-10">
+                            <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full ${isObsidian ? 'bg-black/40 border border-zinc-800' : 'bg-white/10 border border-white/10'}`}>
+                                <MapPin className="w-3.5 h-3.5 text-[#E6C97A]" />
+                                <span className="text-[11px] font-bold text-white/90 tracking-wide">{locationName}</span>
                             </div>
-                            <span className="text-[11px] font-bold uppercase tracking-widest" style={{ color: theme.accent, opacity: 0.7 }}>Live</span>
-                        </div>
-
-                        <div className="flex items-end gap-3">
-                            <span className="text-[56px] font-black text-white leading-none tracking-tighter" style={{ fontFamily: 'Inter, sans-serif' }}>
-                                {Math.round(temperature)}°
+                            <span className="text-[11px] font-bold uppercase tracking-widest text-[#E6C97A] flex items-center gap-1">
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#E6C97A] animate-ping" />
+                                Live
                             </span>
-                            <div className="pb-1.5 flex flex-col">
-                                <span className="text-base font-bold leading-tight" style={{ color: theme.accent }}>{theme.condition}</span>
-                                <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-white/30 mt-0.5">Real-time update</span>
+                        </div>
+
+                        <div className="flex items-end justify-between z-10 mt-auto">
+                            <div className="flex items-end gap-3">
+                                <span className="text-[56px] sm:text-[64px] font-black text-white leading-none tracking-tighter" style={{ fontFamily: 'Inter, sans-serif' }}>
+                                    {Math.round(temperature)}°
+                                </span>
+                                <div className="pb-1.5 flex flex-col">
+                                    <span className="text-base font-bold leading-tight text-[#E6C97A]">{theme.condition}</span>
+                                    <span className="text-[9px] font-bold uppercase tracking-[0.15em] text-white/30 mt-0.5">Real-time update</span>
+                                </div>
                             </div>
+
+                            {isObsidian && (
+                                <div className="relative w-24 h-24 pointer-events-none z-0 flex items-center justify-center -mb-4 -mr-4">
+                                    <Moon className="w-14 h-14 text-[#E6C97A] fill-[#E6C97A] drop-shadow-[0_0_15px_rgba(230,201,122,0.5)] absolute top-0 right-4 rotate-12" />
+                                    <Cloud className="w-14 h-14 text-zinc-700 fill-zinc-800 absolute bottom-4 right-0 drop-shadow-[0_4px_10px_rgba(0,0,0,0.8)]" strokeWidth={1} />
+                                </div>
+                            )}
                         </div>
                     </motion.div>
 
-                    {/* ── Card 2: Icon & Stats ── */}
-                    <motion.div
-                        whileHover={{ scale: 1.01 }}
-                        className="relative overflow-hidden rounded-2xl p-4 flex flex-col items-center justify-center gap-3"
-                        style={{
-                            background: 'rgba(255,255,255,0.04)',
-                            border: '1px solid rgba(255,255,255,0.08)',
-                            backdropFilter: 'blur(12px)'
-                        }}
-                    >
-                        {/* Animated icon */}
+                    {/* ── Card 2: Humidity & Wind ── */}
+                    {isObsidian ? (
                         <motion.div
-                            animate={{ y: [0, -6, 0], rotate: [0, 5, -5, 0] }}
-                            transition={{ repeat: Infinity, duration: 5, ease: "easeInOut" }}
-                            className={theme.iconGlow}
+                            whileHover={{ scale: 1.01 }}
+                            className="relative overflow-hidden rounded-2xl p-5 flex flex-col justify-end min-h-[140px] bg-[#0E0E0E]/80 border border-[#E6C97A]/15 shadow-[0_0_15px_rgba(0,0,0,0.5)]"
                         >
-                            {theme.icon}
-                        </motion.div>
+                            {/* Sun graphic at top center */}
+                            <div className="absolute -top-14 left-1/2 -translate-x-1/2 w-36 h-36 rounded-full flex items-center justify-center opacity-70">
+                                <div className="absolute inset-0 bg-gradient-to-b from-[#E6C97A]/25 to-transparent blur-xl rounded-full" />
+                                <Sun className="w-10 h-10 text-[#E6C97A]/30 animate-[spin_60s_linear_infinite]" strokeWidth={1.5} />
+                            </div>
 
-                        {/* Metrics Row */}
-                        <div className="flex items-center gap-4 w-full justify-center px-2">
-                            <div className="flex items-center gap-2 flex-1 justify-center px-3 py-2 rounded-xl" style={{ background: 'rgba(255,255,255,0.06)' }}>
-                                <Droplets className="w-3.5 h-3.5 text-sky-300 flex-shrink-0" />
-                                <span className="text-white font-semibold text-sm">{humidity ?? '--'}%</span>
+                            {/* Metrics Row */}
+                            <div className="flex items-center w-full justify-between px-2 z-10 mt-auto">
+                                <div className="flex flex-col items-center flex-1 justify-center">
+                                    <div className="flex items-center gap-2">
+                                        <Droplets className="w-5 h-5 text-sky-400 drop-shadow-[0_0_8px_rgba(56,189,248,0.5)]" />
+                                        <span className="text-white font-black text-lg">{humidity ?? '--'}%</span>
+                                    </div>
+                                    <span className="text-neutral-500 font-bold text-[10px] uppercase tracking-wider mt-1">Humidity</span>
+                                </div>
+
+                                <div className="w-[1px] h-10 bg-zinc-800 mx-2" />
+
+                                <div className="flex flex-col items-center flex-1 justify-center">
+                                    <div className="flex items-center gap-2">
+                                        <Wind className="w-5 h-5 text-[#E6C97A] drop-shadow-[0_0_8px_rgba(230,201,122,0.4)]" />
+                                        <span className="text-white font-black text-lg">{windspeed} km/h</span>
+                                    </div>
+                                    <span className="text-neutral-500 font-bold text-[10px] uppercase tracking-wider mt-1">Wind Speed</span>
+                                </div>
                             </div>
-                            <div className="flex items-center gap-2 flex-1 justify-center px-3 py-2 rounded-xl" style={{ background: 'rgba(255,255,255,0.06)' }}>
-                                <Wind className="w-3.5 h-3.5 text-slate-300 flex-shrink-0" />
-                                <span className="text-white font-semibold text-sm">{windspeed} km/h</span>
+                        </motion.div>
+                    ) : (
+                        <motion.div
+                            whileHover={{ scale: 1.01 }}
+                            className="relative overflow-hidden rounded-2xl p-4 flex flex-col items-center justify-center gap-3 bg-white/40 border border-white/20"
+                            style={{ backdropFilter: 'blur(12px)' }}
+                        >
+                            {/* Animated icon */}
+                            <motion.div
+                                animate={{ y: [0, -6, 0], rotate: [0, 5, -5, 0] }}
+                                transition={{ repeat: Infinity, duration: 5, ease: "easeInOut" }}
+                                className={theme.iconGlow}
+                            >
+                                {theme.icon}
+                            </motion.div>
+
+                            {/* Metrics Row */}
+                            <div className="flex items-center gap-4 w-full justify-center px-2">
+                                <div className="flex items-center gap-2 flex-1 justify-center px-3 py-2 rounded-xl bg-white/10">
+                                    <Droplets className="w-3.5 h-3.5 text-sky-300 flex-shrink-0" />
+                                    <span className="text-white font-semibold text-sm">{humidity ?? '--'}%</span>
+                                </div>
+                                <div className="flex items-center gap-2 flex-1 justify-center px-3 py-2 rounded-xl bg-white/10">
+                                    <Wind className="w-3.5 h-3.5 text-slate-300 flex-shrink-0" />
+                                    <span className="text-white font-semibold text-sm">{windspeed} km/h</span>
+                                </div>
                             </div>
-                        </div>
-                    </motion.div>
+                        </motion.div>
+                    )}
 
                     {/* ── Card 3: Paw Care Alert ── */}
-                    <motion.div
-                        whileHover={{ scale: 1.01 }}
-                        className="relative overflow-hidden rounded-2xl p-4 flex flex-col justify-between"
-                        style={{
-                            background: `linear-gradient(135deg, rgba(200,134,10,0.12) 0%, rgba(58,35,22,0.5) 100%)`,
-                            border: '1px solid rgba(200,134,10,0.35)',
-                            backdropFilter: 'blur(12px)'
-                        }}
-                    >
-                        {/* Top glow */}
-                        <div className="absolute top-0 right-0 w-20 h-20 blur-2xl rounded-full" style={{ background: 'rgba(200,134,10,0.2)' }} />
-                        {/* Left accent line */}
-                        <div className="absolute left-0 top-4 bottom-4 w-[3px] rounded-full" style={{ background: 'linear-gradient(to bottom, #f9a825, rgba(249,168,37,0.2))' }} />
+                    {isObsidian ? (
+                        <motion.div
+                            whileHover={{ scale: 1.01 }}
+                            className="relative overflow-hidden rounded-2xl p-5 flex flex-col justify-between min-h-[140px] bg-[#0E0E0E]/80 border border-[#E6C97A]/15 shadow-[0_0_15px_rgba(0,0,0,0.5)]"
+                        >
+                            {/* Faint Paw watermark in top right */}
+                            <div className="absolute top-4 right-4 opacity-[0.03] text-[#E6C97A] pointer-events-none">
+                                <svg viewBox="0 0 24 24" className="w-16 h-16" fill="currentColor">
+                                    <path d="M12 14c-1.66 0-3 1.34-3 3 0 2 2 3.5 3 3.5s3-1.5 3-3.5c0-1.66-1.34-3-3-3zm-4.5-2.5c-.83 0-1.5-.67-1.5-1.5S6.67 8.5 7.5 8.5s1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm9 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm-6.2-3c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm3.4 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z" />
+                                </svg>
+                            </div>
 
-                        <div className="flex items-center gap-2 mb-2 pl-3">
-                            <Sparkles className="w-4 h-4 text-amber-400" />
-                            <span className="text-[11px] font-black uppercase tracking-widest text-white">Paw Care Alert</span>
-                        </div>
+                            <div className="flex items-center gap-2 mb-2">
+                                <Sparkles className="w-4 h-4 text-[#E6C97A]" />
+                                <span className="text-[11px] font-black uppercase tracking-widest text-white">Paw Care Alert</span>
+                            </div>
 
-                        <p className="text-white/80 text-[13px] leading-relaxed font-medium pl-3 flex-1">
-                            {theme.advice}
-                        </p>
+                            <p className="text-white/80 text-[13px] leading-relaxed font-medium flex-1">
+                                {theme.advice}
+                            </p>
 
-                        <div className="mt-2 pl-3 flex items-center gap-1.5">
-                            <span className="text-xs">{theme.alertIcon}</span>
-                            <span className="text-[10px] font-semibold text-white/30 uppercase tracking-wider">PawVaidya Weather</span>
-                        </div>
-                    </motion.div>
+                            <div className="mt-2 flex items-center justify-between z-10">
+                                <div className="flex items-center gap-1.5">
+                                    <span className="text-xs">⚡</span>
+                                    <span className="text-[10px] font-semibold text-white/30 uppercase tracking-wider">PawVaidya Weather</span>
+                                </div>
+                                <ChevronRight className="w-4 h-4 text-[#E6C97A] cursor-pointer" />
+                            </div>
+                        </motion.div>
+                    ) : (
+                        <motion.div
+                            whileHover={{ scale: 1.01 }}
+                            className="relative overflow-hidden rounded-2xl p-4 flex flex-col justify-between bg-white/40 border border-white/20"
+                            style={{ backdropFilter: 'blur(12px)' }}
+                        >
+                            {/* Left accent line */}
+                            <div className="absolute left-0 top-4 bottom-4 w-[3px] rounded-full bg-amber-500" />
+
+                            <div className="flex items-center gap-2 mb-2 pl-3">
+                                <Sparkles className="w-4 h-4 text-amber-500" />
+                                <span className="text-[11px] font-black uppercase tracking-widest text-white">Paw Care Alert</span>
+                            </div>
+
+                            <p className="text-white/80 text-[13px] leading-relaxed font-medium pl-3 flex-1">
+                                {theme.advice}
+                            </p>
+
+                            <div className="mt-2 pl-3 flex items-center gap-1.5">
+                                <span className="text-xs">{theme.alertIcon}</span>
+                                <span className="text-[10px] font-semibold text-white/30 uppercase tracking-wider">PawVaidya Weather</span>
+                            </div>
+                        </motion.div>
+                    )}
                 </div>
             </motion.div>
         </AnimatePresence>

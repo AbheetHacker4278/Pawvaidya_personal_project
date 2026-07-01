@@ -121,10 +121,10 @@ const DoctorDashboard = () => {
         completedReqs.forEach(r => {
           const plan = (r.userId?.subscription?.plan || '').toLowerCase();
           const amt = r.amount || 0;
-          if (plan.includes('platinum'))    earningsByTier['Platinum'] += amt;
-          else if (plan.includes('gold'))   earningsByTier['Gold']     += amt;
-          else if (plan.includes('silver')) earningsByTier['Silver']   += amt;
-          else                              earningsByTier['Non-Sub']  += amt;
+          if (plan.includes('platinum')) earningsByTier['Platinum'] += amt;
+          else if (plan.includes('gold')) earningsByTier['Gold'] += amt;
+          else if (plan.includes('silver')) earningsByTier['Silver'] += amt;
+          else earningsByTier['Non-Sub'] += amt;
         });
 
         setEmergencyStats({
@@ -569,7 +569,7 @@ const DoctorDashboard = () => {
         {/* Stats Cards Grid */}
         {loadingEmergency ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 relative z-10">
-            {[1,2,3,4,5].map(i => (
+            {[1, 2, 3, 4, 5].map(i => (
               <div key={i} className="bg-white/10 rounded-2xl h-20 animate-pulse" />
             ))}
           </div>
@@ -681,9 +681,9 @@ const DoctorDashboard = () => {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
               { label: '💎 Platinum', key: 'Platinum', color: 'bg-indigo-50 border-indigo-100 text-indigo-700', rate: '₹200/case' },
-              { label: '🥇 Gold',     key: 'Gold',     color: 'bg-amber-50  border-amber-100  text-amber-700',  rate: '₹300/case' },
-              { label: '🥈 Silver',   key: 'Silver',   color: 'bg-slate-50  border-slate-200  text-slate-700',  rate: '₹400/case' },
-              { label: '👤 Non-Sub',  key: 'Non-Sub',  color: 'bg-rose-50   border-rose-100   text-rose-700',   rate: '₹500/case' },
+              { label: '🥇 Gold', key: 'Gold', color: 'bg-amber-50  border-amber-100  text-amber-700', rate: '₹300/case' },
+              { label: '🥈 Silver', key: 'Silver', color: 'bg-slate-50  border-slate-200  text-slate-700', rate: '₹400/case' },
+              { label: '👤 Non-Sub', key: 'Non-Sub', color: 'bg-rose-50   border-rose-100   text-rose-700', rate: '₹500/case' },
             ].map(({ label, key, color, rate }) => (
               <div key={key} className={`border rounded-xl p-3 ${color}`}>
                 <p className="text-xs font-black">{label}</p>

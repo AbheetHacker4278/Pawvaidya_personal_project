@@ -1,5 +1,5 @@
 import express from 'express';
-import { appointmentCancel, appointmentComplete, appointmentsDoctor, doctorDashboard, doctorProfile, doctorslist, logindoctor, updateDoctorProfile, logoutdoctor, getDoctorMessages, markDoctorMessageAsRead, getDoctorById, updateDoctorLocation, createReminder, getDoctorReminders, updateReminder, deleteReminder, getDailyEarnings, createDiscount, getDoctorDiscounts, updateDiscount, deleteDiscount, getPublicDoctorDiscounts, registerFaceDr, clockInDr, checkAttendanceStatus, changeavailablity, scanQrCode, processQrWalletPayment, updateVideoStatus, addVideoSlot, getVideoSlots, deleteVideoSlot, toggleVideoSlotStatus } from '../controllers/doctorController.js';
+import { appointmentCancel, appointmentComplete, appointmentsDoctor, doctorDashboard, doctorProfile, doctorslist, logindoctor, updateDoctorProfile, logoutdoctor, getDoctorMessages, markDoctorMessageAsRead, getDoctorById, updateDoctorLocation, createReminder, getDoctorReminders, updateReminder, deleteReminder, getDailyEarnings, createDiscount, getDoctorDiscounts, updateDiscount, deleteDiscount, getPublicDoctorDiscounts, registerFaceDr, clockInDr, checkAttendanceStatus, changeavailablity, scanQrCode, processQrWalletPayment, updateVideoStatus, addVideoSlot, getVideoSlots, deleteVideoSlot, toggleVideoSlotStatus, getVcoClients } from '../controllers/doctorController.js';
 import { createDoctorBlog, getDoctorBlogs, updateDoctorBlog, deleteDoctorBlog, getAllBlogsForDoctor, toggleLikeBlog, addCommentToBlog, incrementBlogView, getBlogDetails } from '../controllers/doctorBlogController.js';
 import { getActivePolls, voteInPoll } from '../controllers/pollController.js';
 import { authDoctor } from '../middleware/authDoctor.js';
@@ -25,6 +25,7 @@ doctorrouter.get('/dashboard', authDoctor, doctorDashboard)
 doctorrouter.get('/profile', authDoctor, doctorProfile)
 doctorrouter.post('/update-profile', upload.single('image'), authDoctor, securityMonitor, updateDoctorProfile)
 doctorrouter.post('/location', authDoctor, updateDoctorLocation)
+doctorrouter.get('/vco-clients', authDoctor, getVcoClients)
 
 // Doctor messages routes
 doctorrouter.post('/messages', authDoctor, getDoctorMessages)

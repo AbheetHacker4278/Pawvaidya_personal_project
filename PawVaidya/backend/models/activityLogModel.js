@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 
 const activityLogSchema = new mongoose.Schema({
     userId: { type: String, default: null }, // Can be user, doctor or admin ID
-    userType: { type: String, enum: ['user', 'doctor', 'admin'], required: true }, // 'user', 'doctor' or 'admin'
+    userType: { type: String, enum: ['user', 'doctor', 'admin', 'unknown'], required: true }, // 'user', 'doctor', 'admin' or 'unknown'
     activityType: { type: String, required: true }, // 'login', 'logout', 'page_view', 'action', etc.
     activityDescription: { type: String, required: true }, // Detailed description
     timestamp: { type: Date, default: Date.now },

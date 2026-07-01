@@ -4,13 +4,30 @@ import http from 'http';
 let io;
 
 export const initializeSocket = (server) => {
-  const allowedorigins = process.env.ALLOWED_ORIGINS
+  // Hardcoded production origins — always trusted regardless of env var
+  const ALWAYS_ALLOWED = [
+    'http://localhost:5173',
+    'http://localhost:5174',
+    'http://localhost:5175',
+    'http://localhost:5176',
+    'https://pawvaidya-79qq.onrender.com',
+    'https://pawvaidya-admin-uy9o.onrender.com',
+    'https://customer-service-kx9x.onrender.com',
+  ];
+  const extraOrigins = process.env.ALLOWED_ORIGINS
     ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
-    : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'https://pawvaidya-79qq.onrender.com', 'https://pawvaidya-admin-uy9o.onrender.com'];
+    : [];
+  const allowedorigins = [...new Set([...ALWAYS_ALLOWED, ...extraOrigins])];
+  console.log('[Socket.io CORS] Allowed origins:', allowedorigins);
 
   io = new Server(server, {
     cors: {
-      origin: allowedorigins,
+      origin: (origin, callback) => {
+        if (!origin) return callback(null, true);
+        if (allowedorigins.includes(origin)) return callback(null, true);
+        console.warn(`[Socket.io CORS] Blocked origin: ${origin}`);
+        return callback(new Error(`Socket.io CORS: origin '${origin}' not allowed`));
+      },
       methods: ['GET', 'POST'],
       credentials: true
     },

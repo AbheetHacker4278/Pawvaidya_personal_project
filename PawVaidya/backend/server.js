@@ -79,25 +79,39 @@ mongoose.connection.on('connected', () => {
 initializeSocket(server);
 
 //middleware
-const allowedorigins = process.env.ALLOWED_ORIGINS
+// Hardcoded production origins — always trusted regardless of env var
+const ALWAYS_ALLOWED = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://localhost:5175',
+  'http://localhost:5176',
+  'https://pawvaidya-79qq.onrender.com',
+  'https://pawvaidya-admin-uy9o.onrender.com',
+  'https://customer-service-kx9x.onrender.com',
+];
+// Merge env var origins with hardcoded ones so a misconfigured env var can't block valid origins
+const extraOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
-  : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'http://localhost:5176', 'https://pawvaidya-79qq.onrender.com', 'https://pawvaidya-admin-uy9o.onrender.com', 'https://customer-service-kx9x.onrender.com'];
+  : [];
+const allowedorigins = [...new Set([...ALWAYS_ALLOWED, ...extraOrigins])];
+console.log('[CORS] Allowed origins:', allowedorigins);
 
 // CORS must come FIRST — before body parsers and all other middleware
 // This ensures browser preflight OPTIONS requests get proper headers
 const corsOptions = {
   origin: (origin, callback) => {
-    // Allow requests with no origin (mobile apps, curl, Postman)
+    // Allow requests with no origin (mobile apps, curl, Postman, server-to-server)
     if (!origin) return callback(null, true);
     if (allowedorigins.includes(origin)) {
       return callback(null, true);
     }
+    console.warn(`[CORS] Blocked origin: ${origin}`);
     return callback(new Error(`CORS: Origin '${origin}' not allowed`));
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'token', 'atoken', 'dtoken'],
-  optionsSuccessStatus: 200 // Some legacy browsers choke on 204
+  optionsSuccessStatus: 200,
 };
 
 app.use(cors(corsOptions));
